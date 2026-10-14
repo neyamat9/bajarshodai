@@ -47,6 +47,7 @@ import {
 import { UpdateProductDto } from './dto/update-product.dto';
 import {
   AdminProductQueryDto,
+  DailySheetDto,
   AttachImagesDto,
   ImageUploadQueryDto,
   ReorderImagesDto,
@@ -98,6 +99,15 @@ export class ProductController {
       take: 200,
     });
     return rows.map((r) => ({ tag: r.tag, products: r._count.tag }));
+  }
+
+  @Put('daily-sheet')
+  @ApiOperation({
+    summary:
+      'The daily price and stock sheet: change the price, stock or on/off state of many products at once. Each row is saved on its own; the answer lists what worked.',
+  })
+  dailySheet(@Body() dto: DailySheetDto, @CurrentUser() admin: User) {
+    return this.products.dailySheet(dto, admin.id);
   }
 
   @Get(':id')

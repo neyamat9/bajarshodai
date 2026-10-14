@@ -35,7 +35,6 @@ export class MediaService {
       banners,
       brands,
       categories,
-      subCategories,
       settings,
     ] = await Promise.all([
       this.prisma.productImage.findMany({
@@ -55,10 +54,6 @@ export class MediaService {
         select: { id: true, name: true },
       }),
       this.prisma.category.findMany({
-        where: { OR: [{ image: has }, { icon: has }] },
-        select: { id: true, name: true },
-      }),
-      this.prisma.subCategory.findMany({
         where: { OR: [{ image: has }, { icon: has }] },
         select: { id: true, name: true },
       }),
@@ -89,12 +84,6 @@ export class MediaService {
       })),
       ...categories.map((c) => ({
         type: 'category',
-        id: c.id,
-        label: c.name,
-        field: 'image/icon',
-      })),
-      ...subCategories.map((c) => ({
-        type: 'sub-category',
         id: c.id,
         label: c.name,
         field: 'image/icon',

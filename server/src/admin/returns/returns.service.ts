@@ -8,6 +8,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { OrderNotifierService } from '../../common/notifications';
 import { StockService } from '../../common/inventory';
 import { writeAudit } from '../../common/audit';
+import { toNum } from '../../common/utils/qty';
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -97,7 +98,7 @@ export class AdminReturnsService {
           await this.stock.change(tx, {
             productId: item.orderItem.productId,
             variantId: item.orderItem.variantId,
-            change: item.quantity,
+            change: toNum(item.quantity),
             reason: 'RETURN',
             reference: `Return for order ${req.order.orderNumber}`,
             lenient: true,
@@ -285,8 +286,11 @@ export class AdminReturnsService {
       _sum: { quantity: true },
     });
 
-    const orderedUnits = order.items.reduce((sum, i) => sum + i.quantity, 0);
-    const fullyRefunded = (refunded._sum.quantity ?? 0) >= orderedUnits;
+    const orderedUnits = order.items.reduce(
+      (sum, i) => sum + toNum(i.quantity),
+      0,
+    );
+    const fullyRefunded = toNum(refunded._sum.quantity) >= orderedUnits;
 
     await tx.order.update({
       where: { id: orderId },

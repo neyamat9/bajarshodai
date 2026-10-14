@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BrandModule } from './brand/brand.module';
 import { CategoryModule } from './category/category.module';
-import { SubCategoryModule } from './sub-category/sub-category.module';
+import { UnitsModule } from './units/units.module';
 import { ProductModule } from './product/product.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { AdminOrdersModule } from './orders/orders.module';
@@ -28,7 +28,7 @@ import { AdminAuditLogsModule } from './audit-logs/audit-logs.module';
   imports: [
     BrandModule,
     CategoryModule,
-    SubCategoryModule,
+    UnitsModule,
     ProductModule,
     DashboardModule,
     AdminOrdersModule,
@@ -54,7 +54,6 @@ import { AdminAuditLogsModule } from './audit-logs/audit-logs.module';
   exports: [
     BrandModule,
     CategoryModule,
-    SubCategoryModule,
     ProductModule,
     DashboardModule,
     AdminOrdersModule,

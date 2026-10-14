@@ -8,8 +8,16 @@ export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List all active categories with subcategories' })
+  @ApiOperation({
+    summary: 'The category tree: top-level categories with their children nested',
+  })
   async findAll() {
+    return this.categoriesService.findAll();
+  }
+
+  @Get('tree')
+  @ApiOperation({ summary: 'Same as the list: the whole category tree' })
+  async tree() {
     return this.categoriesService.findAll();
   }
 

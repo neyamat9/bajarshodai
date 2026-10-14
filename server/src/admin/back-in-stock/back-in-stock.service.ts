@@ -11,6 +11,7 @@ import {
   RequestsListDto,
   WaitingListDto,
 } from './back-in-stock.dto';
+import { toNum } from '../../common/utils/qty';
 
 @Injectable()
 export class AdminBackInStockService {
@@ -145,7 +146,7 @@ export class AdminBackInStockService {
       },
     });
     if (!product) throw new NotFoundException('Product not found');
-    let stock = product.stock;
+    let stock = toNum(product.stock);
     if (product._count.variants > 0) {
       if (!dto.variantId) throw new BadRequestException('Choose a variant');
       const v = await this.prisma.productVariant.findFirst({
@@ -156,7 +157,7 @@ export class AdminBackInStockService {
         throw new BadRequestException(
           'That variant does not belong to this product',
         );
-      stock = v.stock;
+      stock = toNum(v.stock);
     }
     if (stock <= 0)
       throw new BadRequestException(

@@ -21,6 +21,7 @@ import { UploadsModule } from './common/uploads';
 import { InventoryModule } from './common/inventory';
 import { AuditModule } from './common/audit';
 import { DisplayOrderModule } from './common/display-order';
+import { CategoryTreeModule } from './common/categories';
 import { BackInStockModule } from './common/back-in-stock';
 import { AdminFeedModule } from './common/admin-feed';
 import { CustomerModule } from './customer/customer.module';
@@ -45,6 +46,7 @@ import { CustomerModule } from './customer/customer.module';
     InventoryModule,
     AuditModule,
     DisplayOrderModule,
+    CategoryTreeModule,
     BackInStockModule,
     AdminFeedModule,
     ActivityModule,

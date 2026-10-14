@@ -10,6 +10,7 @@ import { SettingsService } from '../settings';
 import { MailService, escapeHtml, renderEmailLayout } from '../mail';
 import { tr } from '../i18n';
 import { NotificationsService } from '../notifications';
+import { toNum } from '../utils/qty';
 
 const MAX_ATTEMPTS = 3;
 const BATCH = 200;
@@ -120,7 +121,7 @@ export class BackInStockAlertService implements OnModuleInit, OnModuleDestroy {
         ? variantById.get(sub.variantId)
         : undefined;
       // a request for one variant waits for THAT variant
-      if (sub.variantId && (!variant || variant.stock <= 0)) continue;
+      if (sub.variantId && (!variant || toNum(variant.stock) <= 0)) continue;
 
       // Claim it first: if two servers run at once, only one sends.
       const claimed = await this.prisma.backInStockSubscription.updateMany({

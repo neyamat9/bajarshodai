@@ -15,6 +15,8 @@ import {
 } from '../shipping/shipping.service';
 import { CheckoutSummaryDto } from './dto/checkout-summary.dto';
 import { CartOwner, cartOwnerWhere } from '../../common/cart/cart-owner';
+import { assertQuantity, saleRuleOf } from '../../common/cart/quantity-rules';
+import { fmtQty, round3, toNum } from '../../common/utils/qty';
 
 type Db = PrismaService | Prisma.TransactionClient;
 
@@ -30,6 +32,18 @@ const cartInclude = {
       sellingPrice: true,
       freeShipping: true,
       categoryId: true,
+      sellStep: true,
+      minQty: true,
+      isWeighed: true,
+      unit: {
+        select: {
+          shortLabel: true,
+          shortLabelBn: true,
+          allowDecimal: true,
+          defaultStep: true,
+          defaultMinQty: true,
+        },
+      },
       images: { where: { isMain: true }, take: 1, select: { url: true } },
     },
   },
@@ -109,15 +123,25 @@ export class CheckoutService {
     const items = cartItems.map((ci) => {
       const unitPrice = Number(ci.variant?.price ?? ci.product.sellingPrice);
       // Items with a variant are limited by that variant's stock.
-      const availableStock = ci.variant ? ci.variant.stock : ci.product.stock;
+      const availableStock = toNum(
+        ci.variant ? ci.variant.stock : ci.product.stock,
+      );
+      const quantity = toNum(ci.quantity);
       let issue: string | null = null;
       if (ci.product.status !== 'ACTIVE') {
         issue = 'This product is no longer available';
-      } else if (availableStock < ci.quantity) {
+      } else if (availableStock < quantity) {
         issue =
           availableStock <= 0
             ? 'Out of stock'
-            : `Only ${availableStock} left in stock`;
+            : `Only ${fmtQty(availableStock)} left in stock`;
+      } else {
+        // the unit may have changed since the item went into the cart
+        try {
+          assertQuantity(quantity, saleRuleOf(ci.product), ci.product.name);
+        } catch (e) {
+          issue = e instanceof Error ? e.message : 'Check the quantity';
+        }
       }
       if (issue) issues.push(`${ci.product.name}: ${issue}`);
 
@@ -130,8 +154,8 @@ export class CheckoutService {
         image: ci.product.images[0]?.url ?? null,
         variantName: ci.variant?.name ?? null,
         unitPrice,
-        quantity: ci.quantity,
-        lineTotal: round2(unitPrice * ci.quantity),
+        quantity,
+        lineTotal: round2(unitPrice * quantity),
         availableStock,
         issue,
       };
@@ -183,7 +207,7 @@ export class CheckoutService {
 
     return {
       items,
-      itemCount: items.reduce((sum, i) => sum + i.quantity, 0),
+      itemCount: items.length,
       subtotal,
       shipping,
       coupon: couponResult

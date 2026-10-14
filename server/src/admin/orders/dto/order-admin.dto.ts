@@ -313,10 +313,15 @@ export class OrderLineDto {
   @IsUUID()
   variantId?: string;
 
-  @ApiProperty({ minimum: 1, maximum: 100 })
+  @ApiProperty({
+    minimum: 0.001,
+    maximum: 100,
+    description:
+      'Quantity (0.5 kg is fine for a product sold in parts). For a weighed item this is the final weight.',
+  })
   @Type(() => Number)
-  @IsInt()
-  @Min(1)
+  @IsNumber({ maxDecimalPlaces: 3 })
+  @Min(0.001)
   @Max(100)
   quantity: number;
 

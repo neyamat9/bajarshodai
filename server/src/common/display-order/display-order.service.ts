@@ -3,7 +3,7 @@ import { BannerPosition } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CacheService } from '../cache';
 
-export type OrderedModel = 'category' | 'subCategory' | 'brand' | 'banner';
+export type OrderedModel = 'category' | 'brand' | 'banner' | 'unit';
 
 // Saves a drag-and-drop order: displayOrder = the position in the list.
 // The list must name EVERY item of the group exactly once, so two items can
@@ -46,7 +46,9 @@ export class DisplayOrderService {
         ? 'brands:'
         : model === 'banner'
           ? 'banners:'
-          : 'categories:',
+          : model === 'unit'
+            ? 'units'
+            : 'categories:',
     );
     this.cache.delByPrefix('home');
     return { success: true, count: ids.length, ids };
@@ -59,16 +61,17 @@ export class DisplayOrderService {
     let rows: { id: string }[];
     switch (model) {
       case 'category':
-        rows = await this.prisma.category.findMany({ select: { id: true } });
+        // categories are ordered among their siblings (same parent; none = top level)
+        rows = await this.prisma.category.findMany({
+          where: { parentCategoryId: scope.categoryId ?? null },
+          select: { id: true },
+        });
         break;
       case 'brand':
         rows = await this.prisma.brand.findMany({ select: { id: true } });
         break;
-      case 'subCategory':
-        rows = await this.prisma.subCategory.findMany({
-          where: { parentCategoryId: scope.categoryId },
-          select: { id: true },
-        });
+      case 'unit':
+        rows = await this.prisma.unit.findMany({ select: { id: true } });
         break;
       case 'banner':
         rows = await this.prisma.banner.findMany({
@@ -87,8 +90,8 @@ export class DisplayOrderService {
         return this.prisma.category.update(args);
       case 'brand':
         return this.prisma.brand.update(args);
-      case 'subCategory':
-        return this.prisma.subCategory.update(args);
+      case 'unit':
+        return this.prisma.unit.update(args);
       case 'banner':
         return this.prisma.banner.update(args);
     }

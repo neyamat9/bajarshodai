@@ -6,6 +6,7 @@ import {
 import type { User } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SubscribeBackInStockDto } from './back-in-stock.dto';
+import { toNum } from '../../common/utils/qty';
 
 const MAX_WAITING_PER_EMAIL = 20;
 
@@ -48,11 +49,11 @@ export class CustomerBackInStockService {
           'That option does not belong to this product',
         );
       variantId = v.id;
-      outOfStock = v.stock <= 0;
+      outOfStock = toNum(v.stock) <= 0;
     } else {
       if (dto.variantId)
         throw new BadRequestException('This product has no options');
-      outOfStock = product.stock <= 0;
+      outOfStock = toNum(product.stock) <= 0;
     }
     if (!outOfStock) {
       throw new BadRequestException('This item is in stock right now');

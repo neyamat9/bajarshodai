@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CacheService } from '../../common/cache';
+import { CategoryTreeService } from '../../common/categories';
 import { Prisma } from '@prisma/client';
 import {
   ProductQueryDto,
@@ -12,6 +13,7 @@ import {
   buildProductWhere,
   buildScopeWhere,
   facetValueCompare,
+  inCategories,
 } from './product-filters';
 
 const productInclude = {
@@ -20,7 +22,6 @@ const productInclude = {
   unit: true,
   brand: true,
   category: true,
-  subCategory: true,
   tags: true,
   priceHistory: { orderBy: { recordedAt: 'desc' as const }, take: 30 },
 } satisfies Prisma.ProductInclude;
@@ -100,8 +101,8 @@ export function toCard(p: CardRow) {
       regular > price && regular > 0
         ? Math.round(((regular - price) / regular) * 100)
         : 0,
-    inStock: p.stock > 0,
-    stock: p.stock,
+    inStock: Number(p.stock) > 0,
+    stock: Number(p.stock),
     avgRating: Number(p.avgRating ?? 0),
     reviewCount: p.reviewCount,
     isNew: p.isNew,
@@ -151,6 +152,7 @@ export class ProductsService {
   constructor(
     private prisma: PrismaService,
     private cache: CacheService,
+    private categoryTree: CategoryTreeService,
   ) {}
 
   async findAll(query: ProductQueryDto) {
@@ -380,20 +382,34 @@ export class ProductsService {
               take: 30,
             }),
             this.prisma.category.findMany({
-              where: { status: 'ACTIVE', name: { contains: q, mode: ci } },
-              select: { name: true, slug: true, image: true },
-              take: 4,
-            }),
-            this.prisma.subCategory.findMany({
               where: {
                 status: 'ACTIVE',
-                name: { contains: q, mode: ci },
-                parentCategory: { status: 'ACTIVE' },
+                parentCategoryId: null,
+                OR: [
+                  { name: { contains: q, mode: ci } },
+                  { nameBn: { contains: q, mode: ci } },
+                ],
+              },
+              select: { name: true, nameBn: true, slug: true, image: true },
+              take: 4,
+            }),
+            // categories below the top level (any depth)
+            this.prisma.category.findMany({
+              where: {
+                status: 'ACTIVE',
+                parentCategoryId: { not: null },
+                OR: [
+                  { name: { contains: q, mode: ci } },
+                  { nameBn: { contains: q, mode: ci } },
+                ],
               },
               select: {
                 name: true,
+                nameBn: true,
                 slug: true,
-                parentCategory: { select: { name: true, slug: true } },
+                parentCategory: {
+                  select: { name: true, nameBn: true, slug: true },
+                },
               },
               take: 4,
             }),
@@ -452,7 +468,12 @@ export class ProductsService {
       `products:section:sale:${q.category ?? ''}:${page}:${limit}`,
       async () => {
         const categoryFilter = q.category
-          ? Prisma.sql`AND p."categoryId" IN (SELECT c.id FROM "Category" c WHERE c.slug = ${q.category})`
+          ? Prisma.sql`AND p."categoryId" IN (
+              WITH RECURSIVE t AS (
+                SELECT c.id FROM "Category" c WHERE c.slug = ${q.category}
+                UNION ALL
+                SELECT c.id FROM "Category" c JOIN t ON c."parentCategoryId" = t.id
+              ) SELECT id FROM t)`
           : Prisma.empty;
         const [rows, countRows] = await Promise.all([
           this.prisma.$queryRaw<{ id: string }[]>`
@@ -527,28 +548,34 @@ export class ProductsService {
     const select = {
       id: true,
       name: true,
+      nameBn: true,
       slug: true,
       image: true,
       icon: true,
-      subCategories: {
+      childCategories: {
         where: { status: 'ACTIVE' as const },
         orderBy: { displayOrder: 'asc' as const },
-        select: { name: true, slug: true, image: true, icon: true },
+        select: { name: true, nameBn: true, slug: true, image: true, icon: true },
       },
     } satisfies Prisma.CategorySelect;
     const flagged = await this.prisma.category.findMany({
-      where: { status: 'ACTIVE', isHomepage: true },
+      where: { status: 'ACTIVE', isHomepage: true, parentCategoryId: null },
       select,
       orderBy: { displayOrder: 'asc' },
     });
-    if (flagged.length) return flagged;
-    // Nothing marked for the home page yet: show the first active ones.
-    return this.prisma.category.findMany({
-      where: { status: 'ACTIVE' },
-      select,
-      orderBy: { displayOrder: 'asc' },
-      take: 8,
-    });
+    // Nothing marked for the home page yet: show the first active top-level ones.
+    const rows = flagged.length
+      ? flagged
+      : await this.prisma.category.findMany({
+          where: { status: 'ACTIVE', parentCategoryId: null },
+          select,
+          orderBy: { displayOrder: 'asc' },
+          take: 8,
+        });
+    return rows.map(({ childCategories, ...c }) => ({
+      ...c,
+      subCategories: childCategories,
+    }));
   }
 
   private async section(
@@ -565,7 +592,7 @@ export class ProductsService {
         const where: Prisma.ProductWhereInput = {
           AND: [
             { status: 'ACTIVE' },
-            q.category ? { category: { slug: q.category } } : {},
+            q.category ? inCategories([q.category]) : {},
             extra,
           ],
         };
@@ -619,7 +646,11 @@ export class ProductsService {
 
     if (!product) throw new NotFoundException('Product not found');
 
-    return toPublicProduct(product);
+    return {
+      ...toPublicProduct(product),
+      // root → the product's own category, for the breadcrumb
+      categoryPath: await this.categoryTree.path(product.categoryId),
+    };
   }
 
   async getFeatured(limit = 8) {

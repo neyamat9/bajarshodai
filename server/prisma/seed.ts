@@ -62,7 +62,7 @@ const units: UnitSeed[] = [
 // ---------------------------------------------------------------------------
 // Categories (top level) and sub-categories, English + Bangla.
 // ---------------------------------------------------------------------------
-type Sub = { name: string; nameBn: string };
+type Sub = { name: string; nameBn: string; children?: Sub[] };
 type Cat = { name: string; nameBn: string; subs: Sub[] };
 
 const categories: Cat[] = [
@@ -70,7 +70,14 @@ const categories: Cat[] = [
     name: 'Fruits & Vegetables',
     nameBn: 'ফল ও সবজি',
     subs: [
-      { name: 'Fresh Vegetables', nameBn: 'তাজা সবজি' },
+      {
+        name: 'Fresh Vegetables',
+        nameBn: 'তাজা সবজি',
+        children: [
+          { name: 'Roots & Tubers', nameBn: 'মূল ও কন্দ সবজি' },
+          { name: 'Gourds & Squash', nameBn: 'লাউ, কুমড়া ও ঝিঙ্গা' },
+        ],
+      },
       { name: 'Fresh Fruits', nameBn: 'তাজা ফল' },
       { name: 'Leafy Greens', nameBn: 'শাক-পাতা' },
       { name: 'Onion, Garlic & Chilli', nameBn: 'পেঁয়াজ, রসুন ও মরিচ' },
@@ -80,7 +87,14 @@ const categories: Cat[] = [
     name: 'Fish',
     nameBn: 'মাছ',
     subs: [
-      { name: 'Freshwater Fish', nameBn: 'মিঠা পানির মাছ' },
+      {
+        name: 'Freshwater Fish',
+        nameBn: 'মিঠা পানির মাছ',
+        children: [
+          { name: 'Rui, Katla & Mrigel', nameBn: 'রুই, কাতলা ও মৃগেল' },
+          { name: 'Pangas & Tilapia', nameBn: 'পাঙ্গাস ও তেলাপিয়া' },
+        ],
+      },
       { name: 'Hilsa & Sea Fish', nameBn: 'ইলিশ ও সামুদ্রিক মাছ' },
       { name: 'Prawn & Crab', nameBn: 'চিংড়ি ও কাঁকড়া' },
       { name: 'Dried Fish', nameBn: 'শুঁটকি মাছ' },
@@ -207,7 +221,7 @@ type ProductSeed = {
 
 const products: ProductSeed[] = [
   // Vegetables
-  { name: 'Potato', nameBn: 'আলু', cat: 'Fruits & Vegetables', sub: 'Fresh Vegetables', unit: 'kg', price: 45, stock: 300, step: 0.5, minQty: 0.5, desc: 'Fresh local potatoes.', descBn: 'তাজা দেশি আলু।', featured: true },
+  { name: 'Potato', nameBn: 'আলু', cat: 'Fruits & Vegetables', sub: 'Roots & Tubers', unit: 'kg', price: 45, stock: 300, step: 0.5, minQty: 0.5, desc: 'Fresh local potatoes.', descBn: 'তাজা দেশি আলু।', featured: true },
   { name: 'Tomato', nameBn: 'টমেটো', cat: 'Fruits & Vegetables', sub: 'Fresh Vegetables', unit: 'kg', price: 70, regular: 85, stock: 150, step: 0.5, minQty: 0.5, desc: 'Ripe red tomatoes.', descBn: 'পাকা লাল টমেটো।', featured: true },
   { name: 'Brinjal', nameBn: 'বেগুন', cat: 'Fruits & Vegetables', sub: 'Fresh Vegetables', unit: 'kg', price: 60, stock: 120, step: 0.5, minQty: 0.5, desc: 'Fresh brinjal.', descBn: 'তাজা বেগুন।' },
   { name: 'Local Onion', nameBn: 'দেশি পেঁয়াজ', cat: 'Fruits & Vegetables', sub: 'Onion, Garlic & Chilli', unit: 'kg', price: 80, stock: 250, step: 0.5, minQty: 1, desc: 'Local onion.', descBn: 'দেশি পেঁয়াজ।' },
@@ -219,9 +233,9 @@ const products: ProductSeed[] = [
   { name: 'Orange', nameBn: 'কমলা', cat: 'Fruits & Vegetables', sub: 'Fresh Fruits', unit: 'kg', price: 220, stock: 50, step: 0.5, minQty: 0.5, desc: 'Juicy oranges.', descBn: 'রসালো কমলা।' },
   { name: 'Papaya', nameBn: 'পেঁপে', cat: 'Fruits & Vegetables', sub: 'Fresh Fruits', unit: 'kg', price: 60, stock: 60, step: 0.5, minQty: 1, desc: 'Fresh papaya.', descBn: 'তাজা পেঁপে।' },
   // Fish
-  { name: 'Rui Fish', nameBn: 'রুই মাছ', cat: 'Fish', sub: 'Freshwater Fish', unit: 'kg', price: 380, stock: 40, step: 0.5, minQty: 1, weighed: true, desc: 'Fresh rui. Cleaned and cut on request.', descBn: 'তাজা রুই মাছ। চাইলে কেটে পরিষ্কার করে দেওয়া হয়।', featured: true },
-  { name: 'Tilapia', nameBn: 'তেলাপিয়া', cat: 'Fish', sub: 'Freshwater Fish', unit: 'kg', price: 220, stock: 40, step: 0.5, minQty: 0.5, weighed: true, desc: 'Fresh tilapia.', descBn: 'তাজা তেলাপিয়া মাছ।' },
-  { name: 'Pangas', nameBn: 'পাঙ্গাস', cat: 'Fish', sub: 'Freshwater Fish', unit: 'kg', price: 190, stock: 40, step: 0.5, minQty: 0.5, weighed: true, desc: 'Fresh pangas.', descBn: 'তাজা পাঙ্গাস মাছ।' },
+  { name: 'Rui Fish', nameBn: 'রুই মাছ', cat: 'Fish', sub: 'Rui, Katla & Mrigel', unit: 'kg', price: 380, stock: 40, step: 0.5, minQty: 1, weighed: true, desc: 'Fresh rui. Cleaned and cut on request.', descBn: 'তাজা রুই মাছ। চাইলে কেটে পরিষ্কার করে দেওয়া হয়।', featured: true },
+  { name: 'Tilapia', nameBn: 'তেলাপিয়া', cat: 'Fish', sub: 'Pangas & Tilapia', unit: 'kg', price: 220, stock: 40, step: 0.5, minQty: 0.5, weighed: true, desc: 'Fresh tilapia.', descBn: 'তাজা তেলাপিয়া মাছ।' },
+  { name: 'Pangas', nameBn: 'পাঙ্গাস', cat: 'Fish', sub: 'Pangas & Tilapia', unit: 'kg', price: 190, stock: 40, step: 0.5, minQty: 0.5, weighed: true, desc: 'Fresh pangas.', descBn: 'তাজা পাঙ্গাস মাছ।' },
   { name: 'Hilsa (Ilish)', nameBn: 'ইলিশ মাছ', cat: 'Fish', sub: 'Hilsa & Sea Fish', unit: 'kg', price: 1800, stock: 20, step: 0.5, minQty: 0.5, weighed: true, desc: 'Fresh hilsa, about 1 kg each.', descBn: 'তাজা ইলিশ, প্রতিটি প্রায় ১ কেজি।', featured: true },
   { name: 'Golda Prawn', nameBn: 'গলদা চিংড়ি', cat: 'Fish', sub: 'Prawn & Crab', unit: 'kg', price: 1200, stock: 15, step: 0.5, minQty: 0.5, weighed: true, desc: 'Large golda prawns.', descBn: 'বড় গলদা চিংড়ি।' },
   // Meat
@@ -286,25 +300,30 @@ async function seedCategories() {
       },
     });
     catIds.set(cat.name, category.id);
-    for (const [si, sub] of cat.subs.entries()) {
-      const subSlug = `${catSlug}-${slug(sub.name)}`;
-      const row = await prisma.subCategory.upsert({
-        where: { slug: subSlug },
-        update: { nameBn: sub.nameBn },
-        create: {
-          name: sub.name,
-          nameBn: sub.nameBn,
-          slug: subSlug,
-          parentCategoryId: category.id,
-          status: 'ACTIVE',
-          displayOrder: si,
-        },
-      });
-      subIds.set(`${cat.name}|${sub.name}`, row.id);
-    }
+    // sub-categories at any depth: each one is a Category whose parent is the level above
+    const addLevel = async (list: Sub[], parentId: string, parentSlug: string) => {
+      for (const [si, sub] of list.entries()) {
+        const subSlug = `${parentSlug}-${slug(sub.name)}`;
+        const row = await prisma.category.upsert({
+          where: { slug: subSlug },
+          update: { nameBn: sub.nameBn, parentCategoryId: parentId },
+          create: {
+            name: sub.name,
+            nameBn: sub.nameBn,
+            slug: subSlug,
+            parentCategoryId: parentId,
+            status: 'ACTIVE',
+            displayOrder: si,
+          },
+        });
+        subIds.set(`${cat.name}|${sub.name}`, row.id);
+        if (sub.children?.length) await addLevel(sub.children, row.id, subSlug);
+      }
+    };
+    await addLevel(cat.subs, category.id, catSlug);
   }
   console.log(
-    `  ✓ ${categories.length} categories, ${subIds.size} sub-categories`,
+    `  ✓ ${categories.length} categories, ${subIds.size} sub-categories (3 levels)`,
   );
   return { catIds, subIds };
 }
@@ -316,10 +335,10 @@ async function seedProducts(
 ) {
   let n = 0;
   for (const p of products) {
-    const categoryId = catIds.get(p.cat);
-    const subCategoryId = subIds.get(`${p.cat}|${p.sub}`);
+    // the product sits in the deepest category it belongs to
+    const categoryId = subIds.get(`${p.cat}|${p.sub}`);
     const unitId = unitIds.get(p.unit);
-    if (!categoryId || !subCategoryId || !unitId) {
+    if (!categoryId || !unitId) {
       throw new Error(`Seed data problem for product "${p.name}"`);
     }
     const regular = p.regular ?? p.price;
@@ -330,9 +349,7 @@ async function seedProducts(
       shortDescription: p.desc,
       shortDescriptionBn: p.descBn,
       categoryId,
-      subCategoryId,
-      categoryName: p.cat,
-      subCategoryName: p.sub,
+      categoryName: p.sub,
       unitId,
       packSize: p.pack ?? null,
       sellStep: p.step ?? null,

@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma, StockLogReason } from '@prisma/client';
 import { addAdminNotification } from '../admin-feed/admin-feed';
 import { writeAudit } from '../audit/audit.service';
+import { round3, toNum } from '../utils/qty';
 
 type Tx = Prisma.TransactionClient;
 
@@ -37,12 +38,11 @@ export interface StockChangeResult {
 @Injectable()
 export class StockService {
   async change(tx: Tx, input: StockChangeInput): Promise<StockChangeResult> {
-    if (!Number.isInteger(input.change) || input.change === 0) {
-      throw new BadRequestException(
-        'Stock change must be a non-zero whole number',
-      );
+    const change = round3(input.change);
+    if (!Number.isFinite(change) || change === 0) {
+      throw new BadRequestException('Stock change must be a non-zero number');
     }
-    const { productId, change } = input;
+    const { productId } = input;
     const variantId = input.variantId ?? null;
 
     let before: number;
@@ -54,7 +54,7 @@ export class StockService {
       });
       if (!variant)
         throw new BadRequestException('Variant not found for this product');
-      before = variant.stock;
+      before = toNum(variant.stock);
 
       const updated = await tx.productVariant.updateMany({
         where: {
@@ -64,10 +64,11 @@ export class StockService {
         data: { stock: { increment: change } },
       });
       if (updated.count === 0)
-        throw new InsufficientStockError(variant.stock, -change);
-      after = (
-        await tx.productVariant.findUniqueOrThrow({ where: { id: variantId } })
-      ).stock;
+        throw new InsufficientStockError(toNum(variant.stock), -change);
+      after = toNum(
+        (await tx.productVariant.findUniqueOrThrow({ where: { id: variantId } }))
+          .stock,
+      );
       await this.syncProductStock(tx, productId);
     } else {
       const product = await tx.product.findUniqueOrThrow({
@@ -89,8 +90,8 @@ export class StockService {
         return {
           productId,
           variantId: null,
-          before: product.stock,
-          after: product.stock,
+          before: toNum(product.stock),
+          after: toNum(product.stock),
         };
       }
       if (product._count.variants > 0) {
@@ -98,7 +99,7 @@ export class StockService {
           'This product has variants. Change the stock of a variant instead.',
         );
       }
-      before = product.stock;
+      before = toNum(product.stock);
       const updated = await tx.product.updateMany({
         where: {
           id: productId,
@@ -107,9 +108,10 @@ export class StockService {
         data: { stock: { increment: change } },
       });
       if (updated.count === 0)
-        throw new InsufficientStockError(product.stock, -change);
-      after = (await tx.product.findUniqueOrThrow({ where: { id: productId } }))
-        .stock;
+        throw new InsufficientStockError(toNum(product.stock), -change);
+      after = toNum(
+        (await tx.product.findUniqueOrThrow({ where: { id: productId } })).stock,
+      );
     }
 
     await tx.stockLog.create({
@@ -206,11 +208,11 @@ export class StockService {
     tx: Tx,
     input: Omit<StockChangeInput, 'change'> & { quantity: number },
   ): Promise<StockChangeResult | null> {
-    if (!Number.isInteger(input.quantity) || input.quantity < 0) {
-      throw new BadRequestException('Stock must be a whole number, 0 or more');
+    if (!Number.isFinite(input.quantity) || input.quantity < 0) {
+      throw new BadRequestException('Stock must be a number, 0 or more');
     }
     const variantId = input.variantId ?? null;
-    const current = variantId
+    const raw = variantId
       ? (
           await tx.productVariant.findFirst({
             where: { id: variantId, productId: input.productId },
@@ -218,9 +220,9 @@ export class StockService {
         )?.stock
       : (await tx.product.findUniqueOrThrow({ where: { id: input.productId } }))
           .stock;
-    if (current === undefined)
+    if (raw === undefined)
       throw new BadRequestException('Variant not found for this product');
-    const diff = input.quantity - current;
+    const diff = round3(input.quantity - toNum(raw));
     if (diff === 0) return null;
     return this.change(tx, { ...input, change: diff });
   }

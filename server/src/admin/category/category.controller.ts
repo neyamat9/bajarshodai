@@ -1,5 +1,8 @@
 import { Put } from '@nestjs/common';
-import { DisplayOrderService, ReorderDto } from '../../common/display-order';
+import {
+  DisplayOrderService,
+  ReorderCategoriesDto,
+} from '../../common/display-order';
 import {
   Controller,
   Get,
@@ -38,10 +41,12 @@ export class CategoryController {
   @Put('reorder')
   @ApiOperation({
     summary:
-      'Save the display order of categories (drag & drop). Send all ids in the wanted order.',
+      'Save the display order of the categories under one parent (drag & drop). Send all their ids in the wanted order.',
   })
-  reorder(@Body() dto: ReorderDto) {
-    return this.displayOrder.reorder('category', dto.ids);
+  reorder(@Body() dto: ReorderCategoriesDto) {
+    return this.displayOrder.reorder('category', dto.ids, {
+      categoryId: dto.categoryId,
+    });
   }
 
   // Create a new category

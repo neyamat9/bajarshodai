@@ -47,11 +47,6 @@ enum CategoryStatus {
   INACTIVE
 }
 
-enum SubCategoryStatus {
-  ACTIVE
-  INACTIVE
-}
-
 enum StockLogReason {
   RESTOCK
   SALE
@@ -363,7 +358,7 @@ model Brand {
 
 model Category {
   id              String         @id @default(uuid())
-  name            String         @unique
+  name            String
   nameBn          String?
   descriptionBn   String?
   slug            String         @unique
@@ -380,33 +375,6 @@ model Category {
   parentCategory   Category?  @relation("CategoryHierarchy", fields: [parentCategoryId], references: [id])
   childCategories  Category[] @relation("CategoryHierarchy")
 
-  subCategories SubCategory[]
-  products      Product[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([slug])
-  @@index([status])
-  @@index([parentCategoryId])
-}
-
-model SubCategory {
-  id            String            @id @default(uuid())
-  name          String
-  nameBn        String?
-  descriptionBn String?
-  slug          String            @unique
-  image         String?
-  icon          String?
-  description   String?
-  isHomepage    Boolean           @default(false)
-  status        SubCategoryStatus @default(ACTIVE)
-  displayOrder  Int               @default(0)
-
-  parentCategoryId String
-  parentCategory   Category @relation(fields: [parentCategoryId], references: [id])
-
   products Product[]
 
   createdAt DateTime @default(now())
@@ -414,8 +382,8 @@ model SubCategory {
 
   @@unique([name, parentCategoryId])
   @@index([slug])
-  @@index([parentCategoryId])
   @@index([status])
+  @@index([parentCategoryId])
 }
 
 // Units of sale (kg, piece, packet ...). Managed by the admin, so a new unit
@@ -464,7 +432,6 @@ model Product {
   isWeighed          Boolean       @default(false) // final weight may differ at packing
   brandName          String? // Denormalized for fast queries
   categoryName       String? // Denormalized for fast queries
-  subCategoryName    String? // Denormalized for fast queries
   purchasePoint      Int           @default(0)
   status             ProductStatus @default(ACTIVE)
 
@@ -484,7 +451,7 @@ model Product {
   priceBeforeDiscount Decimal?  @db.Decimal(12, 2)
 
   // Inventory
-  stock             Int     @default(0)
+  stock             Decimal @default(0) @db.Decimal(10, 3)
   lowStockThreshold Int     @default(5)
   allowBackorder    Boolean @default(false)
   soldCount         Int     @default(0)
@@ -535,9 +502,6 @@ model Product {
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
 
-  subCategoryId String?
-  subCategory   SubCategory? @relation(fields: [subCategoryId], references: [id])
-
   images            ProductImage[]
   variants          ProductVariant[]
   reviews           Review[]
@@ -560,7 +524,6 @@ model Product {
   @@index([productCode])
   @@index([status])
   @@index([categoryId])
-  @@index([subCategoryId])
   @@index([brandId])
   @@index([unitId])
   @@index([sellingPrice])
@@ -598,7 +561,7 @@ model ProductVariant {
   sku      String   @unique
   barcode  String?
   price    Decimal? @db.Decimal(12, 2) // Override base product price
-  stock    Int      @default(0)
+  stock    Decimal  @default(0) @db.Decimal(10, 3)
   imageUrl String?
 
   // Variant attributes (e.g., color, size, storage, RAM)
@@ -657,12 +620,12 @@ model PriceHistory {
 
 model StockLog {
   id             String         @id @default(uuid())
-  change         Int // + for restock, - for sale
+  change         Decimal        @db.Decimal(10, 3) // + for restock, - for sale
   reason         StockLogReason
   reference      String? // Order ID, Transfer ID, etc.
   note           String?
-  quantityBefore Int?
-  quantityAfter  Int?
+  quantityBefore Decimal?       @db.Decimal(10, 3)
+  quantityAfter  Decimal?       @db.Decimal(10, 3)
 
   adminId String?
   admin   User?   @relation("AdminStockLogs", fields: [adminId], references: [id])
@@ -757,8 +720,8 @@ model ProductQuestion {
 // ============================================================
 
 model CartItem {
-  id       String @id @default(uuid())
-  quantity Int    @default(1)
+  id       String  @id @default(uuid())
+  quantity Decimal @default(1) @db.Decimal(10, 3)
 
   // Exactly one of userId / guestToken is set. Guests are identified by the
   // x-guest-token header (a client-held UUID).
@@ -899,7 +862,7 @@ model OrderCounter {
 
 model OrderItem {
   id       String  @id @default(uuid())
-  quantity Int
+  quantity Decimal @db.Decimal(10, 3)
   price    Decimal @db.Decimal(12, 2) // Snapshot of price at time of order
   total    Decimal @db.Decimal(12, 2)
 
@@ -911,6 +874,14 @@ model OrderItem {
   productImage String?
   variantName  String?
   variantSku   String?
+  // The unit text at order time (renaming a unit later never changes old orders)
+  unitLabel   String?
+  unitLabelBn String?
+  // For weighed items: what was ordered, and what the packer finally weighed
+  orderedQty Decimal? @db.Decimal(10, 3)
+  finalQty   Decimal? @db.Decimal(10, 3)
+  finalTotal Decimal? @db.Decimal(12, 2)
+
   productId    String
   product      Product @relation(fields: [productId], references: [id])
 
@@ -1128,7 +1099,7 @@ model ReturnRequest {
 
 model ReturnItem {
   id           String  @id @default(uuid())
-  quantity     Int
+  quantity     Decimal @db.Decimal(10, 3)
   refundAmount Decimal @db.Decimal(12, 2)
   condition    String? // "New", "Opened", "Damaged"
 

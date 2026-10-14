@@ -1,99 +1,64 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { CacheService } from '../../common/cache';
+import {
+  CategoryNode,
+  CategoryTreeService,
+} from '../../common/categories';
+
+/** Finds a node anywhere in the tree. */
+function find(nodes: CategoryNode[], slug: string): CategoryNode | undefined {
+  for (const n of nodes) {
+    if (n.slug === slug) return n;
+    const hit = find(n.children, slug);
+    if (hit) return hit;
+  }
+  return undefined;
+}
+
+/** Adds `subCategories` (= the direct children) next to `children` for the older storefront code. */
+function withAlias(n: CategoryNode): CategoryNode & {
+  subCategories: CategoryNode[];
+} {
+  return {
+    ...n,
+    children: n.children.map(withAlias),
+    subCategories: n.children.map(withAlias),
+  };
+}
 
 @Injectable()
 export class CategoriesService {
-  constructor(
-    private prisma: PrismaService,
-    private cache: CacheService,
-  ) {}
+  constructor(private tree: CategoryTreeService) {}
 
+  /** The whole shop tree: top-level categories with their children nested. */
   async findAll() {
-    return this.cache.getOrSet(
-      'categories:tree',
-      () =>
-        this.prisma.category.findMany({
-          where: { status: 'ACTIVE' },
-          include: {
-            subCategories: {
-              where: { status: 'ACTIVE' },
-              orderBy: { displayOrder: 'asc' },
-            },
-            _count: { select: { products: true } },
-          },
-          orderBy: { displayOrder: 'asc' },
-        }),
-      600, // 10 minutes TTL
-    );
+    return (await this.tree.tree()).map(withAlias);
   }
 
   async findBySlug(slug: string) {
-    const category = await this.cache.getOrSet(
-      `categories:slug:${slug}`,
-      () =>
-        this.prisma.category.findUnique({
-          where: { slug, status: 'ACTIVE' },
-          include: {
-            subCategories: {
-              where: { status: 'ACTIVE' },
-              orderBy: { displayOrder: 'asc' },
-            },
-            _count: { select: { products: true } },
-          },
-        }),
-      600,
-    );
-    if (!category) throw new NotFoundException('Category not found');
-    return category;
+    const node = find(await this.tree.tree(), slug);
+    if (!node) throw new NotFoundException('Category not found');
+    return { ...withAlias(node), path: await this.tree.path(node.id) };
   }
 
-  // Active sub-categories of a category (e.g. Fruits & Vegetables → Fresh Vegetables,
-  // Fresh Fruits), each with its number of active products.
+  // The direct children of a category, each with its number of active products.
   async findSubCategories(slug: string) {
-    const result = await this.cache.getOrSet(
-      `categories:subs:${slug}`,
-      async () => {
-        const category = await this.prisma.category.findUnique({
-          where: { slug, status: 'ACTIVE' },
-          select: {
-            id: true,
-            name: true,
-            nameBn: true,
-            slug: true,
-            image: true,
-            icon: true,
-          },
-        });
-        if (!category) return null;
-
-        const subCategories = await this.prisma.subCategory.findMany({
-          where: { parentCategoryId: category.id, status: 'ACTIVE' },
-          select: {
-            id: true,
-            name: true,
-            nameBn: true,
-            slug: true,
-            image: true,
-            icon: true,
-            description: true,
-            displayOrder: true,
-            _count: { select: { products: { where: { status: 'ACTIVE' } } } },
-          },
-          orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }],
-        });
-
-        return {
-          category,
-          subCategories: subCategories.map(({ _count, ...s }) => ({
-            ...s,
-            productCount: _count.products,
-          })),
-        };
-      },
-      600,
-    );
-    if (!result) throw new NotFoundException('Category not found');
-    return result;
+    const node = find(await this.tree.tree(), slug);
+    if (!node) throw new NotFoundException('Category not found');
+    const { id, name, nameBn, slug: s, image, icon } = node;
+    return {
+      category: { id, name, nameBn, slug: s, image, icon },
+      subCategories: node.children.map((c) => ({
+        id: c.id,
+        name: c.name,
+        nameBn: c.nameBn,
+        slug: c.slug,
+        image: c.image,
+        icon: c.icon,
+        description: c.description,
+        displayOrder: c.displayOrder,
+        productCount: c.productCount,
+      })),
+      path: await this.tree.path(node.id),
+    };
   }
 }

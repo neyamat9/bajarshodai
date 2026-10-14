@@ -9,6 +9,7 @@ import {
   IsIn,
   IsInt,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
@@ -17,6 +18,7 @@ import {
   MaxLength,
   Min,
   ValidateIf,
+  ValidateNested,
 } from 'class-validator';
 import { ProductStatus } from '@prisma/client';
 import { PartialType } from '@nestjs/swagger';
@@ -174,4 +176,40 @@ export class ImageUploadQueryDto {
   @IsNotEmpty()
   @MaxLength(200)
   alt?: string;
+}
+
+// One row of the daily price and stock sheet.
+export class DailySheetRowDto {
+  @ApiProperty()
+  @IsUUID()
+  id: string;
+
+  @ApiPropertyOptional({ description: 'New selling price per unit' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0.01)
+  sellingPrice?: number;
+
+  @ApiPropertyOptional({ description: 'Stock now (exact number, not a change)' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 3 })
+  @Min(0)
+  stock?: number;
+
+  @ApiPropertyOptional({ enum: ['ACTIVE', 'INACTIVE'] })
+  @IsOptional()
+  @IsIn(['ACTIVE', 'INACTIVE'])
+  status?: 'ACTIVE' | 'INACTIVE';
+}
+
+export class DailySheetDto {
+  @ApiProperty({ type: [DailySheetRowDto] })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(300)
+  @ValidateNested({ each: true })
+  @Type(() => DailySheetRowDto)
+  rows: DailySheetRowDto[];
 }

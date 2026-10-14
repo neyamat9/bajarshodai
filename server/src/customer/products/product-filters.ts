@@ -30,26 +30,48 @@ export function parseSpecs(specs: string[] = []): ParsedSpec[] {
   return [...byName.values()];
 }
 
-// Active products in the requested category / sub-category / search.
+// Products of a category or ANY category below it (the tree can be 5 levels deep):
+// the product sits in a category whose own slug, or whose parent's, or grand-parent's... matches.
+const MAX_DEPTH = 5;
+export function inCategories(slugs: string[]): Prisma.ProductWhereInput {
+  const slug = slugs.length > 1 ? { in: slugs } : slugs[0];
+  const any: Prisma.ProductWhereInput[] = [];
+  let rel: Prisma.CategoryWhereInput = { slug };
+  for (let depth = 0; depth < MAX_DEPTH; depth++) {
+    any.push({ category: rel });
+    rel = { parentCategory: rel };
+  }
+  return { OR: any };
+}
+
+const slugList = (v: string) =>
+  v
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean);
+
+// Active products in the requested category (and everything below it) / search.
+// `subCategory` is kept for the old links: it is simply a deeper category slug.
 export function buildScopeWhere(q: ProductScopeDto): Prisma.ProductWhereInput {
   const where: Prisma.ProductWhereInput = { status: 'ACTIVE' };
-  if (q.category) where.category = { slug: q.category };
-  if (q.subCategory) {
-    // one slug, or several separated by commas (the storefront's multi-select filter)
-    const slugs = q.subCategory
-      .split(',')
-      .map((x) => x.trim())
-      .filter(Boolean);
-    where.subCategory = { slug: slugs.length > 1 ? { in: slugs } : slugs[0] };
+  const and: Prisma.ProductWhereInput[] = [];
+  if (q.category) {
+    const slugs = slugList(q.category);
+    if (slugs.length) and.push(inCategories(slugs));
   }
+  if (q.subCategory) {
+    const slugs = slugList(q.subCategory);
+    if (slugs.length) and.push(inCategories(slugs));
+  }
+  if (and.length) where.AND = and;
   const search = q.search?.trim();
   if (search) {
     where.OR = [
       { name: { contains: search, mode: ci } },
+      { nameBn: { contains: search, mode: ci } },
       { shortDescription: { contains: search, mode: ci } },
       { brandName: { contains: search, mode: ci } },
       { categoryName: { contains: search, mode: ci } },
-      { subCategoryName: { contains: search, mode: ci } },
       { productCode: { equals: search, mode: ci } },
       { tags: { some: { tag: { equals: search, mode: ci } } } },
     ];

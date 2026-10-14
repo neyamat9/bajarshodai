@@ -16,7 +16,7 @@ import {
   ProductVariantInputDto,
 } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { AdminProductQueryDto } from './dto/product-admin.dto';
+import { AdminProductQueryDto, DailySheetDto } from './dto/product-admin.dto';
 import { computePricing, validatePricing } from './product-pricing';
 
 const num = (d: Prisma.Decimal | number | null | undefined) =>
@@ -134,10 +134,12 @@ export class ProductService {
     }
     if (q.categoryId) where.categoryId = q.categoryId;
     if (q.brandId) where.brandId = q.brandId;
-    const low = this.prisma.product.fields.lowStockThreshold;
     if (q.stock === 'out') where.stock = { lte: 0 };
-    if (q.stock === 'low') where.stock = { gt: 0, lte: low };
-    if (q.stock === 'in') where.stock = { gt: low };
+    if (q.stock === 'low' || q.stock === 'in') {
+      // each product is compared with its own low-stock level, which Prisma cannot do across number types
+      const ids = await this.stockIds(q.stock);
+      and.push({ id: { in: ids } });
+    }
     if (and.length) where.AND = and;
 
     const [rows, total] = await Promise.all([
@@ -180,7 +182,8 @@ export class ProductService {
     const data = rows.map(({ images, ...p }) => ({
       ...p,
       mainImage: images[0]?.url ?? null,
-      stockState: stockState(p.stock, p.lowStockThreshold),
+      stock: Number(p.stock),
+      stockState: stockState(Number(p.stock), p.lowStockThreshold),
     }));
     return {
       data,
@@ -200,8 +203,8 @@ export class ProductService {
         images: { orderBy: [{ order: 'asc' }, { createdAt: 'asc' }] },
         variants: { orderBy: { createdAt: 'asc' } },
         brand: { select: { id: true, name: true } },
-        category: { select: { id: true, name: true } },
-        subCategory: { select: { id: true, name: true } },
+        category: { select: { id: true, name: true, nameBn: true } },
+        unit: true,
         tags: { orderBy: { tag: 'asc' } },
         attributes: true,
         priceHistory: { orderBy: { recordedAt: 'desc' }, take: 30 },
@@ -216,7 +219,8 @@ export class ProductService {
       tags: product.tags.map((t) => t.tag),
       // the everyday price, whether or not a promotion is running right now
       normalPrice: num(product.priceBeforeDiscount ?? product.sellingPrice),
-      stockState: stockState(product.stock, product.lowStockThreshold),
+      stock: Number(product.stock),
+      stockState: stockState(Number(product.stock), product.lowStockThreshold),
     };
   }
 
@@ -242,11 +246,8 @@ export class ProductService {
     }
     const variantRows = await this.prepareVariants(variants);
 
-    const area = await this.resolveCatalog(
-      dto.categoryId,
-      dto.subCategoryId,
-      dto.brandId,
-    );
+    const area = await this.resolveCatalog(dto.categoryId, dto.brandId);
+    await this.resolveSale(dto);
     await this.assertNameFree(name);
     if (dto.productCode) await this.assertCodeFree(dto.productCode);
     const slug = dto.slug ?? (await this.freeSlug(slugify(name, 'product')));
@@ -266,8 +267,16 @@ export class ProductService {
             slug,
             productCode: dto.productCode || null,
             barcode: dto.barcode,
-            description: dto.description,
+            description: dto.description ?? '',
             shortDescription: dto.shortDescription,
+            nameBn: dto.nameBn?.trim() || null,
+            descriptionBn: dto.descriptionBn || null,
+            shortDescriptionBn: dto.shortDescriptionBn || null,
+            unitId: dto.unitId,
+            packSize: dto.packSize || null,
+            sellStep: dto.sellStep ?? null,
+            minQty: dto.minQty ?? null,
+            isWeighed: dto.isWeighed ?? false,
             status: dto.status ?? 'ACTIVE',
             buyingPrice: dto.buyingPrice,
             regularPrice: dto.regularPrice,
@@ -297,7 +306,6 @@ export class ProductService {
             metaKeywords: dto.metaKeywords,
             brandId: dto.brandId,
             categoryId: dto.categoryId,
-            subCategoryId: dto.subCategoryId,
             ...area,
             attributes: attributes.length ? { create: attributes } : undefined,
             tags: tags.length
@@ -439,40 +447,47 @@ export class ProductService {
       data.discountLabel = dto.discountLabel;
 
     // --- catalog links + denormalized names ---
-    const catChanged =
-      dto.categoryId !== undefined && dto.categoryId !== current.categoryId;
-    if (
-      dto.categoryId !== undefined ||
-      dto.subCategoryId !== undefined ||
-      dto.brandId !== undefined
-    ) {
+    if (dto.categoryId !== undefined || dto.brandId !== undefined) {
       const categoryId = dto.categoryId ?? current.categoryId;
-      const subCategoryId =
-        dto.subCategoryId !== undefined
-          ? dto.subCategoryId
-          : catChanged
-            ? undefined
-            : (current.subCategoryId ?? undefined);
       const brandId =
         dto.brandId !== undefined
           ? dto.brandId
           : (current.brandId ?? undefined);
-      const area = await this.resolveCatalog(
-        categoryId,
-        subCategoryId,
-        brandId,
-      );
+      const area = await this.resolveCatalog(categoryId, brandId);
       data.categoryId = categoryId;
-      data.subCategoryId = subCategoryId ?? null;
       data.brandId = brandId ?? null;
       Object.assign(data, area);
     }
 
     // --- plain fields ---
+    // how it is sold (unit, step, minimum)
+    if (
+      dto.unitId !== undefined ||
+      dto.sellStep !== undefined ||
+      dto.minQty !== undefined
+    ) {
+      await this.resolveSale({
+        unitId: dto.unitId ?? current.unitId ?? undefined,
+        sellStep:
+          dto.sellStep !== undefined ? dto.sellStep : num(current.sellStep),
+        minQty: dto.minQty !== undefined ? dto.minQty : num(current.minQty),
+      });
+    }
+    if (dto.nameBn !== undefined) data.nameBn = dto.nameBn.trim() || null;
+    if (dto.descriptionBn !== undefined)
+      data.descriptionBn = dto.descriptionBn || null;
+    if (dto.shortDescriptionBn !== undefined)
+      data.shortDescriptionBn = dto.shortDescriptionBn || null;
+    if (dto.packSize !== undefined) data.packSize = dto.packSize || null;
+    if (dto.unitId !== undefined) data.unitId = dto.unitId;
+    if (dto.sellStep !== undefined) data.sellStep = dto.sellStep;
+    if (dto.minQty !== undefined) data.minQty = dto.minQty;
+
     const copy = [
       'barcode',
       'description',
       'shortDescription',
+      'isWeighed',
       'status',
       'lowStockThreshold',
       'freeShipping',
@@ -675,9 +690,16 @@ export class ProductService {
             barcode: null,
             description: src.description,
             shortDescription: src.shortDescription,
+            nameBn: src.nameBn,
+            descriptionBn: src.descriptionBn,
+            shortDescriptionBn: src.shortDescriptionBn,
+            unitId: src.unitId,
+            packSize: src.packSize,
+            sellStep: src.sellStep,
+            minQty: src.minQty,
+            isWeighed: src.isWeighed,
             brandName: src.brandName,
             categoryName: src.categoryName,
-            subCategoryName: src.subCategoryName,
             // starts as a draft with no stock, so a copy is never sold by accident
             status: 'DRAFT',
             buyingPrice: src.buyingPrice,
@@ -705,7 +727,6 @@ export class ProductService {
             taxType: src.taxType,
             brandId: src.brandId,
             categoryId: src.categoryId,
-            subCategoryId: src.subCategoryId,
             tags: { create: src.tags.map((t) => ({ tag: t.tag })) },
             attributes: {
               create: src.attributes.map((a) => ({
@@ -780,6 +801,50 @@ export class ProductService {
     return this.findOne(newId);
   }
 
+  // ---------- daily price and stock sheet ----------
+
+  /** Fish and vegetable prices change every day: save many rows at once, each on its own. */
+  async dailySheet(dto: DailySheetDto, adminId: string) {
+    const results: {
+      id: string;
+      name?: string;
+      ok: boolean;
+      error?: string;
+    }[] = [];
+    for (const row of dto.rows) {
+      const product = await this.prisma.product.findUnique({
+        where: { id: row.id },
+        select: { name: true, _count: { select: { variants: true } } },
+      });
+      if (!product) {
+        results.push({ id: row.id, ok: false, error: 'Product not found' });
+        continue;
+      }
+      try {
+        const patch: UpdateProductDto = {};
+        if (row.sellingPrice !== undefined) patch.sellingPrice = row.sellingPrice;
+        if (row.status !== undefined) patch.status = row.status;
+        if (row.stock !== undefined && product._count.variants === 0) {
+          patch.stock = row.stock;
+        }
+        if (Object.keys(patch).length) await this.update(row.id, patch, adminId);
+        results.push({ id: row.id, name: product.name, ok: true });
+      } catch (e) {
+        results.push({
+          id: row.id,
+          name: product.name,
+          ok: false,
+          error: e instanceof Error ? e.message : 'Failed',
+        });
+      }
+    }
+    return {
+      saved: results.filter((r) => r.ok).length,
+      failed: results.filter((r) => !r.ok).length,
+      results,
+    };
+  }
+
   // ---------- shared helpers (also used by the variant / image services) ----------
 
   private pricingFrom(input: Parameters<typeof validatePricing>[0]) {
@@ -787,33 +852,14 @@ export class ProductService {
     return computePricing(input);
   }
 
-  // Checks the category / sub-category / brand exist and fit together, and
-  // returns the denormalized names stored on the product.
-  async resolveCatalog(
-    categoryId: string,
-    subCategoryId?: string,
-    brandId?: string,
-  ) {
+  // Checks the category and brand exist and returns the denormalized names
+  // stored on the product.
+  async resolveCatalog(categoryId: string, brandId?: string) {
     const category = await this.prisma.category.findUnique({
       where: { id: categoryId },
       select: { name: true },
     });
     if (!category) throw new BadRequestException('Category not found');
-
-    let subCategoryName: string | null = null;
-    if (subCategoryId) {
-      const sub = await this.prisma.subCategory.findUnique({
-        where: { id: subCategoryId },
-        select: { name: true, parentCategoryId: true },
-      });
-      if (!sub) throw new BadRequestException('Sub-category not found');
-      if (sub.parentCategoryId !== categoryId) {
-        throw new BadRequestException(
-          'The sub-category does not belong to this category',
-        );
-      }
-      subCategoryName = sub.name;
-    }
 
     let brandName: string | null = null;
     if (brandId) {
@@ -824,7 +870,55 @@ export class ProductService {
       if (!brand) throw new BadRequestException('Brand not found');
       brandName = brand.name;
     }
-    return { categoryName: category.name, subCategoryName, brandName };
+    return { categoryName: category.name, brandName };
+  }
+
+  /** Checks the unit, step and minimum of a product: a whole-number unit cannot be sold by halves. */
+  async resolveSale(input: {
+    unitId?: string;
+    sellStep?: number | null;
+    minQty?: number | null;
+  }) {
+    if (!input.unitId) {
+      if (input.sellStep != null || input.minQty != null) {
+        throw new BadRequestException(
+          'Choose a unit before setting a step or a minimum quantity',
+        );
+      }
+      return null;
+    }
+    const unit = await this.prisma.unit.findUnique({
+      where: { id: input.unitId },
+    });
+    if (!unit) throw new BadRequestException('Unit not found');
+    if (!unit.isActive) {
+      throw new BadRequestException(
+        `The unit "${unit.name}" is switched off. Choose another unit.`,
+      );
+    }
+    const step = input.sellStep ?? Number(unit.defaultStep);
+    const min = input.minQty ?? Number(unit.defaultMinQty);
+    if (
+      !unit.allowDecimal &&
+      (!Number.isInteger(step) || !Number.isInteger(min))
+    ) {
+      throw new BadRequestException(
+        `"${unit.name}" is sold in whole numbers, so the step and the minimum must be whole numbers`,
+      );
+    }
+    return { unit, step, min };
+  }
+
+  private async stockIds(kind: 'low' | 'in') {
+    const rows =
+      kind === 'low'
+        ? await this.prisma.$queryRaw<{ id: string }[]>(
+            Prisma.sql`SELECT id FROM "Product" WHERE stock > 0 AND stock <= "lowStockThreshold"`,
+          )
+        : await this.prisma.$queryRaw<{ id: string }[]>(
+            Prisma.sql`SELECT id FROM "Product" WHERE stock > "lowStockThreshold"`,
+          );
+    return rows.map((r) => r.id);
   }
 
   // Validates variant input and fills in names; checks SKUs are unique.

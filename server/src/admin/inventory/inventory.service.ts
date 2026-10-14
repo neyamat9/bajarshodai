@@ -9,6 +9,7 @@ import {
   InventoryListDto,
   StockLogQueryDto,
 } from './dto/inventory.dto';
+import { toNum, round3 } from '../../common/utils/qty';
 
 export const MAX_BULK_ROWS = 5000;
 
@@ -270,8 +271,8 @@ export class InventoryService {
       seen.add(sku.toLowerCase());
 
       const raw = row[qtyCol] ?? '';
-      if (!/^\d{1,7}$/.test(raw)) {
-        fail(`"${raw}" is not a whole number of 0 or more`);
+      if (!/^\d{1,7}(\.\d{1,3})?$/.test(raw)) {
+        fail(`"${raw}" is not a number of 0 or more (up to 3 decimals)`);
         continue;
       }
       const qty = Number(raw);
@@ -294,8 +295,8 @@ export class InventoryService {
         continue;
       }
 
-      const before = target.stock;
-      const after = mode === 'add' ? before + qty : qty;
+      const before = toNum(target.stock);
+      const after = mode === 'add' ? round3(before + qty) : qty;
       if (after === before) {
         results.push({ line, sku, status: 'unchanged', before, after });
         continue;
@@ -310,7 +311,7 @@ export class InventoryService {
           this.stock.change(tx, {
             productId: target.productId,
             variantId: target.variantId,
-            change: after - before,
+            change: round3(after - before),
             reason: mode === 'add' ? 'RESTOCK' : 'ADJUSTMENT',
             note: row['note'] || 'Bulk CSV update',
             adminId,

@@ -1,10 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   ArrayMaxSize,
   ArrayMinSize,
   ArrayUnique,
   IsArray,
   IsEnum,
+  IsOptional,
   IsUUID,
 } from 'class-validator';
 import { BannerPosition } from '@prisma/client';
@@ -23,12 +24,14 @@ export class ReorderDto {
   ids: string[];
 }
 
-export class ReorderSubCategoriesDto extends ReorderDto {
-  @ApiProperty({
-    description: 'The parent category whose sub-categories are being ordered',
+export class ReorderCategoriesDto extends ReorderDto {
+  @ApiPropertyOptional({
+    description:
+      'The parent category whose children are being ordered (leave out for the top level)',
   })
+  @IsOptional()
   @IsUUID()
-  categoryId: string;
+  categoryId?: string;
 }
 
 export class ReorderBannersDto extends ReorderDto {

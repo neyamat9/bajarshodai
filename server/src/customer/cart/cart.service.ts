@@ -11,10 +11,16 @@ import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AddCartDto } from './dto/add-cart.dto';
 import { CartOwner, cartOwnerWhere } from '../../common/cart/cart-owner';
+import {
+  assertQuantity,
+  floorToStep,
+  saleRuleOf,
+} from '../../common/cart/quantity-rules';
+import { fmtQty, round3, toNum } from '../../common/utils/qty';
 
 // Limits that keep a cart (especially an anonymous one) from being abused.
 const MAX_CART_LINES = 50;
-const MAX_QTY_PER_LINE = 20;
+const MAX_QTY_PER_LINE = 50;
 // Guest carts untouched for this long are deleted.
 const GUEST_CART_TTL_DAYS = 30;
 const CLEANUP_INTERVAL_MS = 6 * 60 * 60 * 1000;
@@ -33,6 +39,41 @@ export interface ReorderResult {
   status: 'added' | 'adjusted' | 'unchanged' | 'skipped';
   quantity: number;
   message?: string;
+}
+
+// A cart line as the shop shows it: quantities and stock as plain numbers, with the unit rule spelled out.
+type CartRow = Prisma.CartItemGetPayload<{ include: typeof cartItemInclude }>;
+export function shapeCartItem(item: CartRow) {
+  const { product, variant } = item;
+  const rule = saleRuleOf(product);
+  return {
+    ...item,
+    quantity: toNum(item.quantity),
+    product: {
+      ...product,
+      stock: toNum(product.stock),
+      sellingPrice: toNum(product.sellingPrice),
+      regularPrice: toNum(product.regularPrice),
+      sellStep: product.sellStep === null ? null : toNum(product.sellStep),
+      minQty: product.minQty === null ? null : toNum(product.minQty),
+      unit: product.unit
+        ? {
+            shortLabel: product.unit.shortLabel,
+            shortLabelBn: product.unit.shortLabelBn,
+            allowDecimal: product.unit.allowDecimal,
+            step: rule.step,
+            minQty: rule.min,
+          }
+        : null,
+    },
+    variant: variant
+      ? {
+          ...variant,
+          price: variant.price === null ? null : toNum(variant.price),
+          stock: toNum(variant.stock),
+        }
+      : null,
+  };
 }
 
 // What a cart line shows. Never the whole product row (it holds the cost price).
@@ -109,11 +150,11 @@ export class CartService implements OnModuleInit, OnModuleDestroy {
 
     const total = items.reduce((sum, item) => {
       const price = item.variant?.price ?? item.product.sellingPrice;
-      return sum + Number(price) * item.quantity;
+      return sum + Number(price) * toNum(item.quantity);
     }, 0);
 
     return {
-      items,
+      items: items.map(shapeCartItem),
       total: Number(total.toFixed(2)),
       ...(owner.guestToken ? { guestToken: owner.guestToken } : {}),
     };
@@ -126,11 +167,19 @@ export class CartService implements OnModuleInit, OnModuleDestroy {
 
     if (!product) throw new NotFoundException('Product not found');
 
-    if (product.stock < 1) {
+    const unit = product.unitId
+      ? await this.prisma.unit.findUnique({ where: { id: product.unitId } })
+      : null;
+    const rule = saleRuleOf({ ...product, unit });
+    const label = product.nameBn ?? product.name;
+    const quantity = round3(dto.quantity);
+    assertQuantity(quantity, rule, label);
+
+    if (toNum(product.stock) < rule.min) {
       throw new BadRequestException('Product is out of stock');
     }
 
-    let variantStock = product.stock;
+    let variantStock = toNum(product.stock);
     if (dto.variantId) {
       const variant = await this.prisma.productVariant.findUnique({
         where: { id: dto.variantId },
@@ -138,9 +187,9 @@ export class CartService implements OnModuleInit, OnModuleDestroy {
       if (!variant || variant.productId !== dto.productId) {
         throw new NotFoundException('Variant not found');
       }
-      variantStock = variant.stock;
+      variantStock = toNum(variant.stock);
     }
-    const maxQty = Math.min(variantStock, MAX_QTY_PER_LINE);
+    const maxQty = Math.min(floorToStep(variantStock, rule), MAX_QTY_PER_LINE);
 
     const variantId = dto.variantId || null;
     const ownerWhere = cartOwnerWhere(owner);
@@ -153,22 +202,24 @@ export class CartService implements OnModuleInit, OnModuleDestroy {
       });
 
       if (existing) {
-        const newQty = existing.quantity + dto.quantity;
+        const newQty = round3(toNum(existing.quantity) + quantity);
         if (newQty > maxQty) {
           throw new BadRequestException(
-            `Only ${maxQty} of this item can be added to the cart`,
+            `Only ${fmtQty(maxQty)} of this item can be added to the cart`,
           );
         }
-        return tx.cartItem.update({
-          where: { id: existing.id },
-          data: { quantity: newQty },
-          include: cartItemInclude,
-        });
+        return shapeCartItem(
+          await tx.cartItem.update({
+            where: { id: existing.id },
+            data: { quantity: newQty },
+            include: cartItemInclude,
+          }),
+        );
       }
 
-      if (dto.quantity > maxQty) {
+      if (quantity > maxQty) {
         throw new BadRequestException(
-          `Only ${maxQty} of this item can be added to the cart`,
+          `Only ${fmtQty(maxQty)} of this item can be added to the cart`,
         );
       }
 
@@ -179,16 +230,18 @@ export class CartService implements OnModuleInit, OnModuleDestroy {
         );
       }
 
-      return tx.cartItem.create({
-        data: {
-          userId: owner.userId ?? null,
-          guestToken: owner.guestToken ?? null,
-          productId: dto.productId,
-          variantId,
-          quantity: dto.quantity,
-        },
-        include: cartItemInclude,
-      });
+      return shapeCartItem(
+        await tx.cartItem.create({
+          data: {
+            userId: owner.userId ?? null,
+            guestToken: owner.guestToken ?? null,
+            productId: dto.productId,
+            variantId,
+            quantity,
+          },
+          include: cartItemInclude,
+        }),
+      );
     });
   }
 
@@ -200,21 +253,26 @@ export class CartService implements OnModuleInit, OnModuleDestroy {
 
     if (!item) throw new NotFoundException('Cart item not found');
 
+    const rule = saleRuleOf(item.product);
+    const next = round3(quantity);
+    assertQuantity(next, rule, item.product.nameBn ?? item.product.name);
     const maxStock = Math.min(
-      item.variant?.stock ?? item.product.stock,
+      floorToStep(toNum(item.variant?.stock ?? item.product.stock), rule),
       MAX_QTY_PER_LINE,
     );
-    if (quantity > maxStock) {
+    if (next > maxStock) {
       throw new BadRequestException(
-        `Only ${maxStock} of this item can be added to the cart`,
+        `Only ${fmtQty(maxStock)} of this item can be added to the cart`,
       );
     }
 
-    return this.prisma.cartItem.update({
-      where: { id: itemId },
-      data: { quantity },
-      include: cartItemInclude,
-    });
+    return shapeCartItem(
+      await this.prisma.cartItem.update({
+        where: { id: itemId },
+        data: { quantity: next },
+        include: cartItemInclude,
+      }),
+    );
   }
 
   async removeItem(owner: CartOwner, itemId: string) {
@@ -235,7 +293,7 @@ export class CartService implements OnModuleInit, OnModuleDestroy {
       where: cartOwnerWhere(owner),
       _sum: { quantity: true },
     });
-    return { count: result._sum.quantity ?? 0 };
+    return { count: toNum(result._sum.quantity) };
   }
 
   // Puts the items of an earlier order back into the customer's cart.
@@ -269,7 +327,11 @@ export class CartService implements OnModuleInit, OnModuleDestroy {
           continue;
         }
 
-        let stock = product.stock;
+        const unit = product.unitId
+          ? await tx.unit.findUnique({ where: { id: product.unitId } })
+          : null;
+        const rule = saleRuleOf({ ...product, unit });
+        let stock = toNum(product.stock);
         if (line.variantId) {
           const variant = await tx.productVariant.findUnique({
             where: { id: line.variantId },
@@ -278,10 +340,10 @@ export class CartService implements OnModuleInit, OnModuleDestroy {
             fail('This option is no longer available');
             continue;
           }
-          stock = variant.stock;
+          stock = toNum(variant.stock);
         }
-        const cap = Math.min(stock, MAX_QTY_PER_LINE);
-        if (cap < 1) {
+        const cap = Math.min(floorToStep(stock, rule), MAX_QTY_PER_LINE);
+        if (cap < rule.min) {
           fail('Out of stock');
           continue;
         }
@@ -293,13 +355,13 @@ export class CartService implements OnModuleInit, OnModuleDestroy {
             variantId: line.variantId,
           },
         });
-        const wanted = Math.max(existing?.quantity ?? 0, line.quantity);
+        const wanted = Math.max(toNum(existing?.quantity), line.quantity);
         const quantity = Math.min(wanted, cap);
         const adjusted = quantity < line.quantity;
-        const message = adjusted ? `Only ${cap} available` : undefined;
+        const message = adjusted ? `Only ${fmtQty(cap)} available` : undefined;
 
         if (existing) {
-          if (quantity === existing.quantity) {
+          if (quantity === toNum(existing.quantity)) {
             results.push({
               productId: line.productId,
               name: label,
@@ -360,8 +422,9 @@ export class CartService implements OnModuleInit, OnModuleDestroy {
       let moved = 0;
 
       for (const g of guestItems) {
+        const rule = saleRuleOf(g.product);
         const cap = Math.min(
-          g.variant?.stock ?? g.product.stock,
+          floorToStep(toNum(g.variant?.stock ?? g.product.stock), rule),
           MAX_QTY_PER_LINE,
         );
         const existing = await tx.cartItem.findFirst({
@@ -376,7 +439,12 @@ export class CartService implements OnModuleInit, OnModuleDestroy {
         if (existing) {
           await tx.cartItem.update({
             where: { id: existing.id },
-            data: { quantity: Math.min(existing.quantity + g.quantity, cap) },
+            data: {
+              quantity: Math.min(
+                round3(toNum(existing.quantity) + toNum(g.quantity)),
+                cap,
+              ),
+            },
           });
           await tx.cartItem.delete({ where: { id: g.id } });
         } else {
@@ -390,7 +458,7 @@ export class CartService implements OnModuleInit, OnModuleDestroy {
             data: {
               userId,
               guestToken: null,
-              quantity: Math.min(g.quantity, cap),
+              quantity: Math.min(toNum(g.quantity), cap),
             },
           });
         }

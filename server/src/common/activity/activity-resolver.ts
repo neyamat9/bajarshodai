@@ -75,11 +75,7 @@ export const ADMIN_ENTITIES: Record<string, EntityDef> = {
     label: pick('alt', 'url'),
   },
   category: { type: 'category', model: 'category', label: pick('name') },
-  'sub-category': {
-    type: 'sub-category',
-    model: 'subCategory',
-    label: pick('name'),
-  },
+  units: { type: 'unit', model: 'unit', label: pick('name') },
   brand: { type: 'brand', model: 'brand', label: pick('name') },
   coupons: { type: 'coupon', model: 'coupon', label: pick('code') },
   banners: { type: 'banner', model: 'banner', label: pick('title') },
@@ -160,7 +156,7 @@ export function entityTypeFor(info: RouteInfo): string | undefined {
 const ADMIN_CATEGORY: Record<string, string> = {
   products: 'catalog',
   category: 'catalog',
-  'sub-category': 'catalog',
+  units: 'catalog',
   brand: 'catalog',
   uploads: 'catalog',
   inventory: 'inventory',

@@ -26,6 +26,7 @@ import {
   recordReceivedPayment,
   round2,
 } from './order-payments';
+import { round3, fmtQty, toNum } from '../../common/utils/qty';
 
 type Tx = Prisma.TransactionClient;
 
@@ -270,6 +271,7 @@ export class OrderEditService {
         delta: number,
         name: string,
       ) => {
+        delta = round3(delta);
         if (delta === 0) return;
         try {
           await this.stock.change(tx, {
@@ -283,7 +285,7 @@ export class OrderEditService {
         } catch (e) {
           if (e instanceof InsufficientStockError) {
             throw new BadRequestException(
-              `"${name}": only ${e.available} in stock`,
+              `"${name}": only ${fmtQty(e.available)} in stock`,
             );
           }
           throw e;
@@ -291,8 +293,9 @@ export class OrderEditService {
         await tx.product.update({
           where: { id: productId },
           data: {
-            soldCount: { increment: delta },
-            totalSales: { increment: delta },
+            // counts are whole numbers
+            soldCount: { increment: Math.ceil(delta) },
+            totalSales: { increment: Math.ceil(delta) },
           },
         });
       };
@@ -302,7 +305,7 @@ export class OrderEditService {
         await adjust(
           item.productId,
           item.variantId,
-          (line?.quantity ?? 0) - item.quantity,
+          (line?.quantity ?? 0) - toNum(item.quantity),
           item.productName,
         );
       }
@@ -323,6 +326,13 @@ export class OrderEditService {
             quantity: line.quantity,
             price,
             total: round2(price * line.quantity),
+            // a weighed item: the packer's number is the final weight, the order keeps what was asked for
+            ...(item.orderedQty !== null
+              ? {
+                  finalQty: line.quantity,
+                  finalTotal: round2(price * line.quantity),
+                }
+              : {}),
           },
         });
       }
@@ -432,11 +442,11 @@ export class OrderEditService {
         },
       });
       const brief = (
-        rows: { productName: string; quantity: number; price: unknown }[],
+        rows: { productName: string; quantity: unknown; price: unknown }[],
       ) =>
         rows.map((i) => ({
           item: i.productName,
-          qty: i.quantity,
+          qty: toNum(i.quantity as number),
           price: Number(i.price),
         }));
       await writeAudit(tx, {

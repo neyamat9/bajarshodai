@@ -15,6 +15,7 @@ import {
   statusLabel,
   tr,
 } from '../i18n';
+import { toNum } from '../utils/qty';
 
 const invoiceInclude = {
   items: {
@@ -118,7 +119,7 @@ export class InvoiceService {
         name: i.productName,
         variant: i.variantName,
         sku: i.variantSku ?? i.product?.productCode ?? null,
-        quantity: i.quantity,
+        quantity: toNum(i.quantity),
         unitPrice: Number(i.price),
         total: Number(i.total),
       })),

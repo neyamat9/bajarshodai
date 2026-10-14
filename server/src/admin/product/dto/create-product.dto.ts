@@ -86,7 +86,7 @@ export class ProductVariantInputDto {
   @ApiPropertyOptional({ description: 'Starting stock (default 0)' })
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
+  @IsNumber({ maxDecimalPlaces: 3 })
   @Min(0)
   stock?: number;
 
@@ -178,10 +178,75 @@ export class CreateProductDto {
   @MaxLength(60)
   barcode?: string;
 
-  @ApiProperty({ description: 'Full description (HTML or text)' })
+  @ApiPropertyOptional({
+    example: 'রুই মাছ',
+    description: 'Bangla name (shown by default in the shop)',
+  })
+  @IsOptional()
+  @Transform(trim)
   @IsString()
-  @IsNotEmpty()
-  description: string;
+  @MaxLength(200)
+  nameBn?: string;
+
+  @ApiPropertyOptional({ description: 'Full description (HTML or text)' })
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  descriptionBn?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  shortDescriptionBn?: string;
+
+  @ApiPropertyOptional({
+    description: 'How it is sold: a unit from Catalog → Units (kg, piece, packet…)',
+  })
+  @IsOptional()
+  @IsUUID()
+  unitId?: string;
+
+  @ApiPropertyOptional({ example: '500 g', description: 'Size of one pack, shown on the card' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  packSize?: string;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    example: 0.5,
+    description: 'Step of the quantity buttons. Overrides the unit step (null = use the unit step).',
+  })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 3 })
+  @IsPositive()
+  sellStep?: number | null;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    example: 0.5,
+    description: 'Smallest quantity a customer can order. Overrides the unit minimum.',
+  })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 3 })
+  @IsPositive()
+  minQty?: number | null;
+
+  @ApiPropertyOptional({
+    description: 'The final weight may differ a little from the ordered quantity (packer weighs it)',
+  })
+  @IsOptional()
+  @IsBoolean()
+  isWeighed?: boolean;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -261,7 +326,7 @@ export class CreateProductDto {
   })
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
+  @IsNumber({ maxDecimalPlaces: 3 })
   @Min(0)
   stock?: number;
 
@@ -359,17 +424,12 @@ export class CreateProductDto {
   @IsOptional()
   brandId?: string;
 
-  @ApiProperty({ example: 'CATEGORY_UUID', description: 'Valid Category ID' })
+  @ApiProperty({
+    example: 'CATEGORY_UUID',
+    description: 'The deepest category the product belongs to (any level of the tree)',
+  })
   @IsUUID()
   categoryId: string;
-
-  @ApiPropertyOptional({
-    example: 'SUB_CATEGORY_UUID',
-    description: 'Optional Sub-Category ID (must belong to the category)',
-  })
-  @IsOptional()
-  @IsUUID()
-  subCategoryId?: string;
 
   @ApiPropertyOptional({
     type: [ProductAttributeDto],

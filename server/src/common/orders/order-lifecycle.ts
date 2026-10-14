@@ -1,6 +1,7 @@
 import { ConflictException } from '@nestjs/common';
 import { OrderStatus, Prisma } from '@prisma/client';
 import { StockService } from '../inventory/stock.service';
+import { toNum } from '../utils/qty';
 
 // StockService keeps no state, so a plain instance is fine here.
 const stockService = new StockService();
@@ -95,15 +96,15 @@ export async function cancelOrderAndRestore(
     await tx.product.update({
       where: { id: item.productId },
       data: {
-        soldCount: { decrement: item.quantity },
-        totalSales: { decrement: item.quantity },
+        soldCount: { decrement: Math.ceil(toNum(item.quantity)) },
+        totalSales: { decrement: Math.ceil(toNum(item.quantity)) },
       },
     });
     // Back to the variant it was taken from (or the product itself)
     await stockService.change(tx, {
       productId: item.productId,
       variantId: item.variantId,
-      change: item.quantity,
+      change: toNum(item.quantity),
       reason: 'RETURN',
       reference: `Order cancelled: ${order.orderNumber}`,
       lenient: true,

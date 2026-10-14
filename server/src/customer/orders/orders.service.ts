@@ -22,6 +22,8 @@ import { LocationsService } from '../../common/locations';
 import { CartService } from '../cart/cart.service';
 import { InsufficientStockError, StockService } from '../../common/inventory';
 import { normalizeBdPhone } from '../../common/utils/phone';
+import { toNum } from '../../common/utils/qty';
+import { round2 } from '../shipping/shipping.service';
 
 // Customers can cancel until the order has been handed to the courier.
 const CUSTOMER_CANCELLABLE: OrderStatus[] = [
@@ -180,8 +182,9 @@ export class OrdersService {
         const sellable = await tx.product.updateMany({
           where: { id: cartItem.productId, status: 'ACTIVE' },
           data: {
-            soldCount: { increment: cartItem.quantity },
-            totalSales: { increment: cartItem.quantity },
+            // counts are whole numbers: half a kilo still counts as one sale
+            soldCount: { increment: Math.ceil(toNum(cartItem.quantity)) },
+            totalSales: { increment: Math.ceil(toNum(cartItem.quantity)) },
           },
         });
         if (sellable.count === 0) {
@@ -195,7 +198,7 @@ export class OrdersService {
           await this.stock.change(tx, {
             productId: cartItem.productId,
             variantId: cartItem.variantId,
-            change: -cartItem.quantity,
+            change: -toNum(cartItem.quantity),
             reason: 'SALE',
             reference: `Order: ${orderNumber}`,
           });
@@ -272,7 +275,11 @@ export class OrdersService {
                 variantId: item.variantId || null,
                 quantity: item.quantity,
                 price,
-                total: price * item.quantity,
+                total: round2(price * toNum(item.quantity)),
+                // the unit text at order time: renaming a unit later never changes old orders
+                unitLabel: item.product.unit?.shortLabel ?? null,
+                unitLabelBn: item.product.unit?.shortLabelBn ?? null,
+                orderedQty: item.product.isWeighed ? item.quantity : null,
                 productName: item.product.name,
                 productNameBn: item.product.nameBn,
                 productSlug: item.product.slug,
@@ -376,7 +383,7 @@ export class OrdersService {
       order.items.map((i) => ({
         productId: i.productId,
         variantId: i.variantId,
-        quantity: i.quantity,
+        quantity: toNum(i.quantity),
         name: i.productName,
         nameBn: i.productNameBn ?? null,
         variantName: i.variantName,

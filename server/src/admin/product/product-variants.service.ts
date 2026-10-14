@@ -12,6 +12,7 @@ import { ProductVariantInputDto } from './dto/create-product.dto';
 import { UpdateVariantDto } from './dto/product-admin.dto';
 import { AuditService } from '../../common/audit';
 import { ProductService } from './product.service';
+import { toNum } from '../../common/utils/qty';
 
 @Injectable()
 export class ProductVariantsService {
@@ -49,13 +50,13 @@ export class ProductVariantsService {
         // (unless the admin entered a number), so nothing silently vanishes.
         const opening =
           dto.stock === undefined && product._count.variants === 0
-            ? product.stock
+            ? toNum(product.stock)
             : row.stock;
 
         const variant = await tx.productVariant.create({
           data: { ...row, stock: 0, productId },
         });
-        if (product._count.variants === 0 && product.stock > 0) {
+        if (product._count.variants === 0 && toNum(product.stock) > 0) {
           // product-level stock is replaced by the variant's from here on
           await tx.product.update({
             where: { id: productId },
@@ -178,11 +179,11 @@ export class ProductVariantsService {
 
     await this.prisma.$transaction(async (tx) => {
       await tx.cartItem.deleteMany({ where: { variantId } });
-      if (variant.stock > 0) {
+      if (toNum(variant.stock) > 0) {
         await tx.stockLog.create({
           data: {
             productId,
-            change: -variant.stock,
+            change: toNum(variant.stock) * -1,
             reason: 'ADJUSTMENT',
             note: `Variant ${variant.sku} deleted`,
             quantityBefore: variant.stock,

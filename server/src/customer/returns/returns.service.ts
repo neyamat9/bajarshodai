@@ -9,6 +9,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { SettingsService } from '../../common/settings';
 import { round2 } from '../shipping/shipping.service';
 import { CreateReturnDto } from './dto/create-return.dto';
+import { round3, toNum } from '../../common/utils/qty';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -65,7 +66,7 @@ export class ReturnsService {
     const items = order.items.map((item) => {
       const returnableQuantity = Math.max(
         0,
-        item.quantity - (alreadyRequested.get(item.id) ?? 0),
+        round3(toNum(item.quantity) - (alreadyRequested.get(item.id) ?? 0)),
       );
       return {
         orderItemId: item.id,
@@ -74,7 +75,7 @@ export class ReturnsService {
         productImage: item.productImage,
         variantName: item.variantName,
         price: Number(item.price),
-        orderedQuantity: item.quantity,
+        orderedQuantity: toNum(item.quantity),
         returnableQuantity,
       };
     });
@@ -188,7 +189,7 @@ export class ReturnsService {
       where: { returnRequest: { orderId, status: { not: 'REJECTED' } } },
       _sum: { quantity: true },
     });
-    return new Map(rows.map((r) => [r.orderItemId, r._sum.quantity ?? 0]));
+    return new Map(rows.map((r) => [r.orderItemId, toNum(r._sum.quantity)]));
   }
 }
 
