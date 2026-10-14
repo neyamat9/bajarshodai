@@ -46,6 +46,7 @@
 | Maps | **Both Google Maps and OpenStreetMap**, chosen in **Admin → Settings → Maps**. Switch at any time. Start on OSM if wanted, move to Google later. |
 | Payments | Cash on Delivery + manual bKash/Nagad (existing flow). |
 | Customer login | **Phone + password**, email optional, **guest checkout kept**. SMS OTP can come later. |
+| Units | **Admin-managed** (kg, piece, packet and any future unit) in Dashboard → Catalog → Units. A database table, not a fixed list. |
 | Slugs | **English ASCII slug only.** Bangla lives in separate `…Bn` fields. See §6. |
 | Database | Assumed **fresh**. We reset to one new Prisma baseline migration (the old migrations are stale). |
 | **Distance origin** | **Kalibari Bazar, by the Kalibari High School field and Sonali Bank Kalibari.** Every delivery distance, and the 20 km service limit, is measured from this one point. |
@@ -113,9 +114,9 @@ Reset to a single baseline migration. Seed new grocery data (§11).
 | Model | Change |
 |---|---|
 | `Category` | One self-referencing tree with unlimited depth (screenshots need 3 levels). Add `nameBn`, `descriptionBn`. Slug stays ASCII. SubCategory rows migrate into it. |
-| `Product` | Add `nameBn`, `shortDescriptionBn`, `descriptionBn`. Add `unit` (KG, GRAM, LITRE, ML, PIECE, DOZEN, PACKET, BUNDLE), `unitLabel` / `unitLabelBn`, `packSize` (e.g. "500 g"), `sellStep` (0.5 for fish and vegetables), `minQty`, `isWeighed` (final weight may differ). `stock` becomes Decimal. Brand stays optional, hidden in the UI. |
+| `Product` | Add `nameBn`, `shortDescriptionBn`, `descriptionBn`. Add `unitId` (a link to the admin-managed `Unit` table, not a fixed list), `packSize` (e.g. "500 g"), `sellStep` and `minQty` (optional, they override the unit's defaults, e.g. 0.5 for fish), `isWeighed` (final weight may differ). `stock` becomes Decimal. Brand stays optional, hidden in the UI. |
 | `ProductVariant` | Becomes "pack options" (250 g / 500 g / 1 kg), with `nameBn`. |
-| `CartItem`, `OrderItem` | `quantity` → `Decimal(10,3)`. `OrderItem` adds `unit`, `orderedQty`, `finalQty`, `finalTotal` (set when the packer weighs the item). |
+| `CartItem`, `OrderItem` | `quantity` → `Decimal(10,3)`. `OrderItem` adds `unitLabel` / `unitLabelBn` (a **snapshot** of the unit text at order time, so renaming a unit later never changes old orders or invoices), `orderedQty`, `finalQty`, `finalTotal` (set when the packer weighs the item). |
 | `Banner` | Add `titleBn` and bilingual text. |
 | `User` | Phone required and unique, email optional. Roles: `USER, STAFF, ADMIN, SUPER_ADMIN` (`MODERATOR` removed). Add `permissions String[]`, `canDeliver Boolean`, `staffTitle`, `isActive`. Keep `language`, default `bn`. |
 | `Address` | Add `placeName`, `placeNameBn`, `landmark`, `accuracyM`, `locationSource` (GPS / PIN / LINK), `locationCapturedAt`. |
@@ -125,10 +126,21 @@ Reset to a single baseline migration. Seed new grocery data (§11).
 
 | Model | Fields |
 |---|---|
+| `Unit` | **Admin-managed units of sale.** `code` (unique ASCII, e.g. `kg`), `name` / `nameBn` (Kilogram / কেজি), `shortLabel` / `shortLabelBn` (shown on cards, e.g. `kg` / `কেজি`), `allowDecimal` (true for kg and litre, false for piece and packet), `defaultStep` (0.5, 1 …), `defaultMinQty`, `isActive`, `displayOrder`. See the rules below this table. |
 | `CustomerLocation` | `userId?`, `deviceToken?`, `phone`, `lat`, `lng`, `accuracyM`, `placeName`, `source`, `capturedAt`, `consentAt`. Keeps recent history; the latest is the "saved location". |
 | `LocationRequest` | Share-link record: `token`, `phone?`, `name?`, `orderId?`, `status` (PENDING / SHARED / EXPIRED), `expiresAt`, shared `lat/lng`, `createdByStaffId`. |
 | `Delivery` | `orderId` (unique), `assigneeId`, `assignedById`, `status` (ASSIGNED, ACCEPTED, PICKED_UP, ON_THE_WAY, DELIVERED, FAILED, CANCELLED), `assignedAt`, `pickedUpAt`, `deliveredAt`, `failedReason`, `cashToCollect`, `cashCollected`, `cashHandedOverAt`, `proofUploadId?`, `distanceKm`, `customerKey`. |
 | `DeliveryEvent` | Append-only history of every delivery status change (who, when, note). |
+
+**Unit rules (admin can add units any time)**
+
+- Admin adds, edits, reorders and deactivates units in **Dashboard → Catalog → Units**. No developer or deploy is needed for a new unit such as বোতল (bottle), আঁটি (bundle) or হালি (set of 4).
+- A unit that products use **cannot be deleted**. It can only be **deactivated**, which hides it from new products but keeps old products and orders correct.
+- Editing a unit's label changes the storefront everywhere at once. Past orders and invoices keep the snapshot text.
+- `allowDecimal = false` makes the cart stepper whole numbers only (1, 2, 3). `allowDecimal = true` uses the step (for example 0.5 kg).
+- A product can override the unit's step and minimum (e.g. fish sold from 0.5 kg, rice from 1 kg).
+- No unit conversion (grams to kilograms). Each product is sold in one unit. If a product needs several sizes, use **pack options** (250 g / 500 g / 1 kg).
+- Every active unit is returned with the product data and cached with the home and settings data, so cards render without extra requests.
 
 **Counters.** `customerKey = userId ?? normalizedPhone`.
 
@@ -247,7 +259,7 @@ Volume discounts start above 100k calls. These estimates assume lazy-loaded maps
 
 **c. Smaller, simpler product card.** `components/product/ProductCard.tsx` (368 lines) is rewritten.
 
-- Layout: small square image, 2-line name, unit chip (`১ কেজি` / `500 g` / `প্যাকেট` / `পিস`), price with the old price struck through and a small `-%` badge, and the add button.
+- Layout: small square image, 2-line name, unit chip taken from the product's admin-managed unit (`১ কেজি` / `500 g` / `প্যাকেট` / `পিস` …), price with the old price struck through and a small `-%` badge, and the add button.
 - The add button becomes a `− qty +` stepper after the first add. Weighed items step by 0.5 kg.
 - Removed: compare, rating, "sold today", brand, rank tag, second-image hover swap.
 - Grid: 2 columns on mobile, 3 on tablet, 5–6 on desktop. Update `ProductGrid.tsx`, `SkeletonGrid.tsx`, `FeaturedProducts.tsx`, `BestSellingProducts.tsx`.
@@ -333,7 +345,8 @@ Volume discounts start above 100k calls. These estimates assume lazy-loaded maps
 
 **g. Catalog admin**
 
-- Product editor: Bangla fields, unit and step, pack options.
+- Product editor: Bangla fields, **unit picker (with a "+ Add new unit" shortcut that opens the unit form)**, optional step and minimum, pack options.
+- **New `/units` page** (Catalog menu): list, add, edit, reorder (drag), deactivate. Form fields: code, name (English and Bangla), short label (English and Bangla), "allow decimals" switch, default step, default minimum. Shows how many products use each unit. Needs `products.manage`.
 - **Bulk daily price and stock sheet.** Fish and vegetable prices change every day, so this saves a lot of time.
 - Category page becomes a nestable drag-and-drop tree (`@dnd-kit` is already installed). Brands moves out of the main menu.
 
@@ -358,14 +371,15 @@ Volume discounts start above 100k calls. These estimates assume lazy-loaded maps
 | `common/settings/settings.types.ts` | Add `delivery` and `maps` groups, update defaults |
 | `common/inventory/stock.service.ts`, cart, invoice, reports | Decimal quantity support |
 | `admin/category/`, `customer/categories/` | Tree API; remove `sub-category` modules |
-| `admin/product/` | Bangla fields, unit, step, bulk price/stock endpoint |
+| `admin/units/` (new) + `customer` read | Unit CRUD, reorder, deactivate (delete blocked while in use), activity-logged. Active units included in the customer product and settings data. |
+| `admin/product/` | Bangla fields, `unitId`, optional step and minimum, bulk price/stock endpoint. Validates that quantity rules fit the unit (`allowDecimal`, step). |
 | `common/activity/` | Explicit delivery, staff and location events |
 | `prisma/seed.ts` | Grocery category tree (Bangla and English) and sample products; first admin |
 | Cleanup | Remove CompareItem/PC-builder/spec code and unused models; document `REVALIDATE_SECRET` and `API_KEY` in `.env.example` |
 
 ## 11. Seed data (grocery)
 
-Category tree with Bangla names, for example: খাদ্য → ফল ও সবজি → তাজা সবজি / তাজা ফল; মাছ; মাংস; ডিম ও দুগ্ধজাত; চাল-ডাল-তেল-মসলা; পানীয়; শিশুদের পণ্য; ব্যক্তিগত পরিচর্যা; ঘরের সামগ্রী; ওষুধ ও স্বাস্থ্য (the new logo shows a medicine capsule). Plus about 30 demo products with units and steps, and a seeded SUPER_ADMIN.
+Category tree with Bangla names, for example: খাদ্য → ফল ও সবজি → তাজা সবজি / তাজা ফল; মাছ; মাংস; ডিম ও দুগ্ধজাত; চাল-ডাল-তেল-মসলা; পানীয়; শিশুদের পণ্য; ব্যক্তিগত পরিচর্যা; ঘরের সামগ্রী; ওষুধ ও স্বাস্থ্য (the new logo shows a medicine capsule). Plus a **starter list of units** (admin can change or add more any time): kg / কেজি, gram / গ্রাম, litre / লিটার, ml / মি.লি., piece / পিস, dozen / ডজন, hali (4 pcs) / হালি, packet / প্যাকেট, bundle / আঁটি, bottle / বোতল, box / বক্স, can / কৌটা. Then about 30 demo products using them with steps, and a seeded SUPER_ADMIN.
 
 ## 12. Suggestions (best additions)
 
@@ -407,14 +421,15 @@ Category tree with Bangla names, for example: খাদ্য → ফল ও স
 | 0b | Git and env (§16, §17): `git init -b main` at the root, add the remote `https://github.com/neyamat7/bazar-shodai.git`, root `.gitignore`/README/package.json, rewrite all three `.env.example` files, regenerate secrets, fix dev paths, first commit, push to `main`. |
 | 1 | Rebrand, green theme, remove compare and electronics-only code and unused models, new Prisma baseline and seed |
 | 2 | i18n foundation (storefront and server texts), Bangla font, central formatters, phone-first auth |
-| 3 | Category tree, units and decimal quantities, Bangla catalog fields, admin catalog pages; new sidebar, small category and product cards, animated floating cart |
+| 3 | Category tree, **admin-managed units** and decimal quantities, Bangla catalog fields, admin catalog and Units pages; new sidebar, small category and product cards, animated floating cart |
 | 4 | Maps abstraction and settings, location sharing, saved locations, `/share-location`, distance-based fee, checkout redesign |
 | 5 | Staff and permissions, delivery board, rider view, stats, explicit activity logs, cash handover |
 | 6 | Dashboard Bangla, reports, polish, tests (deployment is a later, separate job) |
 
 ## 14. Verification
 
-- **Unit tests** (server and frontend already have Jest): fee table (0.5, 2.0, 2.01, 3.0, 3.01, 19.5, 20, 20.1), rounding edge cases, radius check, provider fallback, decimal stock, permission guard (403 without permission), unique-customer counting.
+- **Unit tests** (server and frontend already have Jest): fee table (0.5, 2.0, 2.01, 3.0, 3.01, 19.5, 20, 20.1), rounding edge cases, radius check, provider fallback, decimal stock, permission guard (403 without permission), unique-customer counting, unit rules (delete blocked while in use, deactivate hides it from new products, `allowDecimal=false` rejects 1.5, label change leaves old order snapshots untouched).
+- **Units by hand:** in the dashboard add a new unit (e.g. বোতল), create a product with it, see it on the storefront card in both languages, order it, then rename the unit and confirm the old order still shows the old text.
 - **Run:** `server` → `npm run start:dev` (port 8000, Swagger at `/docs`), `frontend` → `npm run dev`, `dashboard` → `npm run dev`. Run `npm run validate` in `frontend` and `npm run build` in `dashboard` and `server`.
 - **End-to-end by hand:**
   1. Add items → floating cart total animates.
