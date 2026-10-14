@@ -13,6 +13,7 @@ import { SignInInput } from './dto/sign-in.input';
 import { JwtService } from '@nestjs/jwt';
 import { AuthPayload } from './types/auth-payload.type';
 import { ConfigService } from '@nestjs/config';
+import { normalizeBdPhone, parseLoginIdentifier } from '../common/utils/phone';
 
 @Injectable()
 export class AuthService {
@@ -26,25 +27,28 @@ export class AuthService {
    * Registers a new user.
    */
   async registerUser(createUserInput: CreateUserInput): Promise<User> {
-    const { password, name, phone } = createUserInput;
-    // Emails are stored lower-case so "A@x.com" and "a@x.com" are one account.
-    const email = createUserInput.email.trim().toLowerCase();
+    const { password, name } = createUserInput;
+    // The phone number is the account identity: one account per number.
+    const phone = normalizeBdPhone(createUserInput.phone);
+    // Emails are optional and stored lower-case, so "A@x.com" and "a@x.com" are one account.
+    const email = createUserInput.email?.trim().toLowerCase() || null;
+    const language = createUserInput.language === 'en' ? 'en' : 'bn';
 
-    const existingUserByEmail = await this.prisma.user.findFirst({
-      where: { email: { equals: email, mode: 'insensitive' } },
+    const existingUserByPhone = await this.prisma.user.findUnique({
+      where: { phone },
     });
-    if (existingUserByEmail) {
-      throw new ConflictException('Email is already registered');
+    if (existingUserByPhone) {
+      throw new ConflictException(
+        'This phone number already has an account. Please log in.',
+      );
     }
 
-    if (phone) {
-      const existingUserByPhone = await this.prisma.user.findUnique({
-        where: { phone },
+    if (email) {
+      const existingUserByEmail = await this.prisma.user.findFirst({
+        where: { email: { equals: email, mode: 'insensitive' } },
       });
-      if (existingUserByPhone) {
-        throw new ConflictException(
-          'Phone number is already associated with an account',
-        );
+      if (existingUserByEmail) {
+        throw new ConflictException('Email is already registered');
       }
     }
 
@@ -53,10 +57,11 @@ export class AuthService {
 
       const newUser = await this.prisma.user.create({
         data: {
+          phone,
           email,
           name,
-          phone,
           passwordHash,
+          language,
         },
       });
 
@@ -69,10 +74,15 @@ export class AuthService {
     }
   }
 
-  async validateLocalUser({ email, password }: SignInInput) {
-    const user = await this.prisma.user.findFirst({
-      where: { email: { equals: email.trim(), mode: 'insensitive' } },
-    });
+  // Log in with the phone number (normal) or the email (if the account has one).
+  async validateLocalUser({ identifier, password }: SignInInput) {
+    const who = parseLoginIdentifier(identifier);
+    const user =
+      who.type === 'email'
+        ? await this.prisma.user.findFirst({
+            where: { email: { equals: who.email, mode: 'insensitive' } },
+          })
+        : await this.prisma.user.findUnique({ where: { phone: who.phone } });
 
     if (!user) {
       throw new UnauthorizedException('Invalid Credentials');
@@ -186,6 +196,7 @@ export class AuthService {
       email: user.email,
       name: user.name,
       phone: user.phone,
+      language: user.language,
       role: user.role,
       avatarUrl: user.avatarUrl,
       emailVerified: user.emailVerified,

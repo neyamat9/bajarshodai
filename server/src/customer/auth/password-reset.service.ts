@@ -5,9 +5,8 @@ import * as argon2 from 'argon2';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../common/mail';
 import { SettingsService } from '../../common/settings';
+import { normalizeLang, tr } from '../../common/i18n';
 
-const GENERIC_MESSAGE =
-  'If an account exists for this email, a password reset link has been sent.';
 
 @Injectable()
 export class PasswordResetService {
@@ -22,8 +21,14 @@ export class PasswordResetService {
 
   // Always returns the same message so the endpoint cannot be used to find
   // out which emails are registered.
-  async requestReset(rawEmail: string, opts: ResetFlow = {}) {
+  async requestReset(
+    rawEmail: string,
+    opts: ResetFlow = {},
+    langHint?: string,
+  ) {
     const email = rawEmail.trim().toLowerCase();
+    const hinted = normalizeLang(langHint);
+    const generic = tr(hinted, 'reset.generic');
     const user = await this.prisma.user.findFirst({
       where: { email: { equals: email, mode: 'insensitive' } },
     });
@@ -35,8 +40,9 @@ export class PasswordResetService {
       user.status !== 'ACTIVE' ||
       isAdminRole(user.role) !== !!opts.admin
     ) {
-      return { success: true, message: GENERIC_MESSAGE };
+      return { success: true, message: generic };
     }
+    const lang = normalizeLang(user.language ?? langHint);
 
     // Only the newest link should work.
     await this.prisma.passwordResetToken.deleteMany({
@@ -67,27 +73,25 @@ export class PasswordResetService {
           ? 'frontend.adminResetPasswordPath'
           : 'frontend.resetPasswordPath',
       ) ?? '/reset-password';
-    const link = `${frontendUrl}${path}?token=${token}`;
+    const link = `${frontendUrl}${!opts.admin && lang === 'en' ? '/en' : ''}${path}?token=${token}`;
     const { storeName } = await this.settings.get('site');
 
     await this.mail.send({
       to: user.email,
-      subject: `Reset your ${storeName} password`,
+      subject: tr(lang, 'reset.subject', { store: storeName }),
       text:
-        `Hi ${user.name},\n\n` +
-        `We received a request to reset your ${storeName} password. ` +
-        `Open this link to choose a new one (valid for ${ttlMinutes} minutes):\n\n${link}\n\n` +
-        `If you didn't request this, you can ignore this email.`,
+        `${tr(lang, 'reset.hi', { name: user.name })}\n\n` +
+        `${tr(lang, 'reset.text', { store: storeName, min: ttlMinutes })}\n\n${link}\n\n` +
+        tr(lang, 'reset.ignore'),
       html:
-        `<p>Hi ${escapeHtml(user.name)},</p>` +
-        `<p>We received a request to reset your ${escapeHtml(storeName)} password. ` +
-        `Click the button below to choose a new one. The link is valid for ${ttlMinutes} minutes.</p>` +
-        `<p><a href="${link}" style="display:inline-block;padding:10px 18px;background:#111;color:#fff;text-decoration:none;border-radius:6px">Reset password</a></p>` +
-        `<p style="color:#666;font-size:13px">If you didn't request this, you can ignore this email.</p>`,
+        `<p>${escapeHtml(tr(lang, 'reset.hi', { name: user.name }))}</p>` +
+        `<p>${escapeHtml(tr(lang, 'reset.text', { store: storeName, min: ttlMinutes }))}</p>` +
+        `<p><a href="${link}" style="display:inline-block;padding:10px 18px;background:#0b6234;color:#fff;text-decoration:none;border-radius:6px">${escapeHtml(tr(lang, 'reset.button'))}</a></p>` +
+        `<p style="color:#666;font-size:13px">${escapeHtml(tr(lang, 'reset.ignore'))}</p>`,
     });
 
     this.logger.log(`Password reset requested for user ${user.id}`);
-    return { success: true, message: GENERIC_MESSAGE };
+    return { success: true, message: generic };
   }
 
   async verifyToken(token: string, opts: ResetFlow = {}) {

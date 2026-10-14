@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Mail, Phone, Trash2 } from "lucide-react";
+import { Copy, KeyRound, Mail, Phone, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { customersApi, type CustomerRow } from "@/api/users";
 import { assetUrl, errorMessage } from "@/api/client";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -15,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, Textarea } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAct } from "@/hooks/useAct";
 import { dateOnly, dateTime, initials, money, titleCase } from "@/lib/format";
 import { DetailPageSkeleton } from "@/components/shared/skeletons";
@@ -59,6 +61,9 @@ export default function CustomerDetail() {
   const reviews = useQuery({ queryKey: ["customer", id, "reviews"], queryFn: () => customersApi.reviews(id) });
   const coupons = useQuery({ queryKey: ["customer", id, "coupons"], queryFn: () => customersApi.coupons(id) });
   const [pending, setPending] = useState<CustomerRow["status"] | null>(null);
+  const [askReset, setAskReset] = useState(false);
+  const [tempPw, setTempPw] = useState<string | null>(null);
+  const reset = useAct(() => customersApi.resetPassword(id), { onSuccess: (r) => { setAskReset(false); setTempPw(r.temporaryPassword); } });
   const status = useAct((s: CustomerRow["status"]) => customersApi.setStatus(id, s), { success: "Account status updated", invalidate: [["customer", id], ["customers"]], onSuccess: () => setPending(null) });
 
   if (q.isLoading) return <DetailPageSkeleton />;
@@ -73,9 +78,14 @@ export default function CustomerDetail() {
         title={<span className="flex items-center gap-3"><Avatar className="size-10">{c.avatarUrl && <AvatarImage src={assetUrl(c.avatarUrl)} />}<AvatarFallback>{initials(c.name)}</AvatarFallback></Avatar>{c.name} <StatusBadge status={c.status} /></span>}
         description={`Joined ${dateOnly(c.createdAt)} · ${c.loginCount} logins${c.lastLoginAt ? ` · last seen ${dateTime(c.lastLoginAt)}` : ""}`}
         actions={
-          <Select value={c.status} onChange={(e) => setPending(e.target.value as CustomerRow["status"])} className="w-auto" aria-label="Account status">
-            <option value="ACTIVE">Active</option><option value="SUSPENDED">Suspended</option><option value="BANNED">Banned</option>
-          </Select>
+          <div className="flex flex-wrap items-center gap-2">
+            {c.role === "USER" && (
+              <Button size="sm" variant="outline" onClick={() => setAskReset(true)}><KeyRound /> Set temporary password</Button>
+            )}
+            <Select value={c.status} onChange={(e) => setPending(e.target.value as CustomerRow["status"])} className="w-auto" aria-label="Account status">
+              <option value="ACTIVE">Active</option><option value="SUSPENDED">Suspended</option><option value="BANNED">Banned</option>
+            </Select>
+          </div>
         }
       />
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -123,8 +133,8 @@ export default function CustomerDetail() {
         </div>
         <div className="space-y-4">
           <Section title="Contact">
-            <p className="flex items-center gap-2 text-[13px]"><Mail className="size-4 text-muted-foreground" />{c.email} {c.emailVerified && <Badge variant="success">Verified</Badge>}</p>
-            <p className="mt-2 flex items-center gap-2 text-[13px]"><Phone className="size-4 text-muted-foreground" />{c.phone ?? "—"} {c.phoneVerified && <Badge variant="success">Verified</Badge>}</p>
+            <p className="flex items-center gap-2 text-[13px]"><Phone className="size-4 text-muted-foreground" />{c.phone ?? "—"} {c.phoneVerified && <Badge variant="success">Verified</Badge>}</p>
+            <p className="mt-2 flex items-center gap-2 text-[13px]"><Mail className="size-4 text-muted-foreground" />{c.email ?? "No email"} {c.email && c.emailVerified && <Badge variant="success">Verified</Badge>}</p>
             <p className="mt-2 text-xs text-muted-foreground">{c.newsletter ? "Subscribed to the newsletter" : "Not on the newsletter"}</p>
           </Section>
           <Section title="Orders by status">
@@ -132,6 +142,27 @@ export default function CustomerDetail() {
           </Section>
         </div>
       </div>
+      <ConfirmDialog
+        open={askReset}
+        onOpenChange={setAskReset}
+        title="Set a temporary password?"
+        description="The customer is signed out everywhere and their old password stops working. You will see the new password once. Tell it to them by phone, and ask them to change it after signing in."
+        confirmLabel="Set temporary password"
+        loading={reset.isPending}
+        onConfirm={() => reset.mutate()}
+      />
+      <Dialog open={!!tempPw} onOpenChange={(o) => !o && setTempPw(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Temporary password</DialogTitle><DialogDescription>Shown only now. Give it to {c.name} (phone {c.phone}).</DialogDescription></DialogHeader>
+          <DialogBody>
+            <div className="flex items-center justify-between gap-3 rounded border border-border bg-muted px-4 py-3">
+              <span className="font-mono text-xl font-bold tracking-widest">{tempPw}</span>
+              <Button size="sm" variant="outline" onClick={() => { void navigator.clipboard.writeText(tempPw ?? ""); toast.success("Copied"); }}><Copy /> Copy</Button>
+            </div>
+          </DialogBody>
+          <DialogFooter><Button onClick={() => setTempPw(null)}>Done</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
       <ConfirmDialog
         open={!!pending}
         onOpenChange={(o) => !o && setPending(null)}

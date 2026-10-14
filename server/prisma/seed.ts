@@ -12,7 +12,7 @@ import { normalizeBdPhone, isBdMobile } from '../src/common/utils/phone';
 //
 // Optional env (see .env.example):
 //   SEED_DEMO_PRODUCTS=false     skip the ~35 demo products
-//   SEED_SUPERADMIN_EMAIL / _PASSWORD / _NAME / _PHONE   create the first admin
+//   SEED_SUPERADMIN_PHONE / _PASSWORD (+ _NAME, _EMAIL)   create the first admin
 
 let dbUrl = process.env.DATABASE_URL || '';
 dbUrl = dbUrl.replace(/^"|"$/g, '');
@@ -379,48 +379,47 @@ async function seedStoreName() {
 }
 
 async function seedSuperAdmin() {
-  const email = (process.env.SEED_SUPERADMIN_EMAIL || '').trim().toLowerCase();
+  const phoneRaw = (process.env.SEED_SUPERADMIN_PHONE || '').trim();
   const password = process.env.SEED_SUPERADMIN_PASSWORD || '';
   const name = (process.env.SEED_SUPERADMIN_NAME || 'Super Admin').trim();
-  const rawPhone = process.env.SEED_SUPERADMIN_PHONE || '';
+  const email = (process.env.SEED_SUPERADMIN_EMAIL || '').trim().toLowerCase() || null;
 
-  if (!email || !password) {
+  if (!phoneRaw || !password) {
     console.log(
-      '  - Super Admin not created: set SEED_SUPERADMIN_EMAIL and SEED_SUPERADMIN_PASSWORD in server/.env, then run the seed again.',
+      '  - Super Admin not created: set SEED_SUPERADMIN_PHONE and SEED_SUPERADMIN_PASSWORD in server/.env, then run the seed again.',
     );
     return;
   }
   if (password.length < 8) {
     throw new Error('SEED_SUPERADMIN_PASSWORD must be at least 8 characters');
   }
-  let phone: string | null = null;
-  if (rawPhone.trim()) {
-    phone = normalizeBdPhone(rawPhone);
-    if (!isBdMobile(phone)) {
-      throw new Error(
-        'SEED_SUPERADMIN_PHONE must be a Bangladeshi mobile number, e.g. 01712345678',
-      );
-    }
+  const phone = normalizeBdPhone(phoneRaw);
+  if (!isBdMobile(phone)) {
+    throw new Error(
+      'SEED_SUPERADMIN_PHONE must be a Bangladeshi mobile number, e.g. 01712345678',
+    );
   }
 
-  const existing = await prisma.user.findUnique({ where: { email } });
+  const existing = await prisma.user.findFirst({
+    where: { OR: [{ phone }, ...(email ? [{ email }] : [])] },
+  });
   if (existing) {
-    console.log(`  - Super Admin ${email} already exists, left unchanged`);
+    console.log(`  - An account with phone ${phone} already exists, left unchanged`);
     return;
   }
   await prisma.user.create({
     data: {
+      phone,
       email,
       name,
-      phone,
       role: 'SUPER_ADMIN',
       status: 'ACTIVE',
       passwordHash: await argon2.hash(password),
-      emailVerified: true,
+      emailVerified: !!email,
       language: 'bn',
     },
   });
-  console.log(`  ✓ Super Admin created: ${email}`);
+  console.log(`  ✓ Super Admin created: ${phone}`);
 }
 
 async function main() {

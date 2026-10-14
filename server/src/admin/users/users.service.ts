@@ -5,6 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma, Role, UserStatus } from '@prisma/client';
+import * as argon2 from 'argon2';
+import { randomInt } from 'crypto';
 import type { User } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { writeAudit } from '../../common/audit';
@@ -425,6 +427,51 @@ export class AdminUsersService {
       });
       return updated;
     });
+  }
+
+  // Customers who log in with a phone number may have no email, so they cannot
+  // use the emailed reset link. The shop sets a temporary password for them
+  // (they are told it by phone) and they change it after logging in. The new
+  // password is shown to the admin once and is never stored in the log.
+  async resetPassword(id: string, actor: User) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException('Customer not found');
+    if (ADMIN_ROLES.includes(user.role) && actor.role !== Role.SUPER_ADMIN) {
+      throw new ForbiddenException(
+        'Only a super admin can reset an admin password',
+      );
+    }
+    if (id === actor.id) {
+      throw new BadRequestException(
+        'Use "Change password" in your profile for your own account',
+      );
+    }
+    // easy to read out loud: no 0/O, 1/l/I
+    const alphabet = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let temporaryPassword = '';
+    for (let i = 0; i < 8; i++) {
+      temporaryPassword += alphabet[randomInt(alphabet.length)];
+    }
+    const passwordHash = await argon2.hash(temporaryPassword);
+    await this.prisma.$transaction(async (tx) => {
+      await tx.passwordHistory.create({
+        data: { userId: id, passwordHash: user.passwordHash },
+      });
+      await tx.user.update({
+        where: { id },
+        // signed out everywhere: the old sessions stop working
+        data: { passwordHash, refreshTokenHash: null },
+      });
+      await writeAudit(tx, {
+        adminId: actor.id,
+        action: 'USER_PASSWORD_RESET',
+        entity: 'User',
+        entityId: id,
+        oldValue: { phone: user.phone },
+        newValue: { passwordReset: true },
+      });
+    });
+    return { temporaryPassword };
   }
 
   async updateRole(id: string, role: Role, actor: User) {

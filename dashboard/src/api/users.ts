@@ -3,7 +3,7 @@ import { api, clean, type Paged } from "./client";
 export interface CustomerRow {
   id: string;
   name: string;
-  email: string;
+  email: string | null;
   phone: string | null;
   role: string;
   status: "ACTIVE" | "SUSPENDED" | "BANNED";
@@ -61,5 +61,6 @@ export const customersApi = {
   notes: (id: string) => api.get<CustomerNote[]>(`/admin/users/${id}/notes`).then((r) => r.data),
   addNote: (id: string, note: string) => api.post<CustomerNote>(`/admin/users/${id}/notes`, { note }).then((r) => r.data),
   removeNote: (id: string, noteId: string) => api.delete(`/admin/users/${id}/notes/${noteId}`).then((r) => r.data),
+  resetPassword: (id: string) => api.post<{ temporaryPassword: string }>(`/admin/users/${id}/reset-password`).then((r) => r.data),
   setStatus: (id: string, status: CustomerRow["status"]) => api.patch(`/admin/users/${id}/status`, { status }).then((r) => r.data),
 };

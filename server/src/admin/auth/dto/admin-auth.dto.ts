@@ -20,11 +20,11 @@ const lower = ({ value }: { value: unknown }): unknown =>
   typeof value === 'string' ? value.trim().toLowerCase() : value;
 
 export class AdminLoginDto {
-  @ApiProperty()
-  @Transform(lower)
-  @IsEmail()
+  @ApiProperty({ description: 'Phone number or email' })
+  @IsString()
+  @IsNotEmpty()
   @MaxLength(254)
-  email: string;
+  identifier: string;
 
   @ApiProperty()
   @IsString()
@@ -94,10 +94,11 @@ export class AdminResetPasswordDto {
 }
 
 export class SeedAdminDto {
-  @ApiProperty()
+  @ApiPropertyOptional()
   @Transform(lower)
+  @IsOptional()
   @IsEmail()
-  email!: string;
+  email?: string;
 
   @ApiProperty({ description: PASSWORD_MESSAGE })
   @IsString()
@@ -110,8 +111,7 @@ export class SeedAdminDto {
   @MaxLength(100)
   name!: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty({ example: '01712345678' })
   @IsBdMobile()
-  phone?: string;
+  phone!: string;
 }

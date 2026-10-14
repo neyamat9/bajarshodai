@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowRight, Check, Eye, EyeOff, KeyRound, Mail, TriangleAlert } from "lucide-react";
+import { ArrowRight, Check, Eye, EyeOff, KeyRound, UserRound, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/shared/Field";
@@ -12,7 +12,7 @@ import { useAuth } from "@/store/auth";
 import { AuthInput, AuthShell, authButton } from "./AuthShell";
 
 const schema = z.object({
-  email: z.string().min(1, "Enter your email").email("Enter a valid email"),
+  identifier: z.string().min(1, "Enter your phone number or email"),
   password: z.string().min(1, "Enter your password"),
   remember: z.boolean().optional(),
 });
@@ -34,7 +34,7 @@ export default function Login() {
   const submit = handleSubmit(async (v) => {
     setError(null);
     try {
-      await login(v.email, v.password, !!v.remember);
+      await login(v.identifier, v.password, !!v.remember);
       toast.success("Welcome back");
       navigate((loc.state as { from?: string } | null)?.from ?? "/", { replace: true });
     } catch (e) {
@@ -51,8 +51,8 @@ export default function Login() {
             <span>{error}</span>
           </div>
         )}
-        <Field error={errors.email?.message}>
-          <AuthInput id="email" type="email" autoComplete="username" autoFocus label="Email address" icon={<Mail />} aria-invalid={!!errors.email} {...register("email")} />
+        <Field error={errors.identifier?.message}>
+          <AuthInput id="identifier" type="text" inputMode="email" autoComplete="username" autoFocus label="Phone number or email" icon={<UserRound />} aria-invalid={!!errors.identifier} {...register("identifier")} />
         </Field>
         <Field error={errors.password?.message}>
           <AuthInput

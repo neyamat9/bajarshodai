@@ -5,6 +5,7 @@ import { randomBytes } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SettingsService } from '../../common/settings';
 import { MailService, escapeHtml, renderEmailLayout } from '../../common/mail';
+import { tr } from '../../common/i18n';
 
 const SUBSCRIBED_MESSAGE = 'Thanks for subscribing!';
 
@@ -102,15 +103,18 @@ export class NewsletterService {
         '',
       );
       const unsubscribe = `${base}/newsletter/unsubscribe?token=${token}`;
-      const subject = `Welcome to the ${site.storeName} newsletter`;
+      // subscribers have no account language, so the welcome is sent in Bangla
+      const lang = 'bn' as const;
+      const subject = tr(lang, 'news.subject', { store: site.storeName });
       await this.mail.send({
         to: email,
         subject,
-        text: `Thanks for subscribing to ${site.storeName}! You'll be the first to hear about fresh arrivals and offers.\n\nUnsubscribe: ${unsubscribe}`,
+        text: `${tr(lang, 'news.body', { store: site.storeName })}\n\n${tr(lang, 'news.unsubscribe')}: ${unsubscribe}`,
         html: renderEmailLayout(site, {
           title: subject,
-          bodyHtml: `<h2 style="margin:0 0 12px;font-size:20px">You're subscribed!</h2><p>Thanks for subscribing to ${escapeHtml(site.storeName)}. You'll be the first to hear about fresh arrivals, deals and offers.</p>`,
-          footerHtml: `<div><a href="${escapeHtml(unsubscribe)}" style="color:#666">Unsubscribe</a></div>`,
+          lang,
+          bodyHtml: `<h2 style="margin:0 0 12px;font-size:20px">${escapeHtml(tr(lang, 'news.heading'))}</h2><p>${escapeHtml(tr(lang, 'news.body', { store: site.storeName }))}</p>`,
+          footerHtml: `<div><a href="${escapeHtml(unsubscribe)}" style="color:#666">${escapeHtml(tr(lang, 'news.unsubscribe'))}</a></div>`,
         }),
       });
     } catch (error) {

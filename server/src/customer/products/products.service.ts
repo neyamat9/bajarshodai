@@ -17,6 +17,7 @@ import {
 const productInclude = {
   images: { orderBy: { order: 'asc' as const } },
   variants: true,
+  unit: true,
   brand: true,
   category: true,
   subCategory: true,
@@ -28,8 +29,24 @@ const productInclude = {
 export const cardSelect = {
   id: true,
   name: true,
+  nameBn: true,
   slug: true,
   shortDescription: true,
+  shortDescriptionBn: true,
+  packSize: true,
+  sellStep: true,
+  minQty: true,
+  isWeighed: true,
+  unit: {
+    select: {
+      code: true,
+      shortLabel: true,
+      shortLabelBn: true,
+      allowDecimal: true,
+      defaultStep: true,
+      defaultMinQty: true,
+    },
+  },
   sellingPrice: true,
   regularPrice: true,
   stock: true,
@@ -43,7 +60,7 @@ export const cardSelect = {
   freeShipping: true,
   createdAt: true,
   brand: { select: { name: true, slug: true } },
-  category: { select: { name: true, slug: true } },
+  category: { select: { name: true, nameBn: true, slug: true } },
   _count: { select: { variants: true } },
   images: {
     orderBy: [{ isMain: 'desc' as const }, { order: 'asc' as const }],
@@ -60,8 +77,23 @@ export function toCard(p: CardRow) {
   return {
     id: p.id,
     name: p.name,
+    nameBn: p.nameBn,
     slug: p.slug,
     shortDescription: p.shortDescription,
+    shortDescriptionBn: p.shortDescriptionBn,
+    packSize: p.packSize,
+    unit: p.unit
+      ? {
+          code: p.unit.code,
+          shortLabel: p.unit.shortLabel,
+          shortLabelBn: p.unit.shortLabelBn,
+          allowDecimal: p.unit.allowDecimal,
+          // a product can override the unit's step and minimum
+          step: Number(p.sellStep ?? p.unit.defaultStep),
+          minQty: Number(p.minQty ?? p.unit.defaultMinQty),
+        }
+      : null,
+    isWeighed: p.isWeighed,
     price,
     regularPrice: regular,
     discountPercent:

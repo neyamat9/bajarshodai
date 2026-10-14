@@ -255,6 +255,7 @@ export class OrdersService {
           status: 'PENDING',
           paymentStatus: 'PENDING',
           paymentMethod: dto.paymentMethod,
+          language: dto.language === 'en' ? 'en' : 'bn',
           bkashTransactionId: trx,
           bkashSenderNumber: sender,
           estimatedDelivery,

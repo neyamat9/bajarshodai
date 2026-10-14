@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SettingsService } from '../settings';
 import { MailService, escapeHtml, renderEmailLayout } from '../mail';
+import { tr } from '../i18n';
 import { NotificationsService } from '../notifications';
 
 const MAX_ATTEMPTS = 3;
@@ -131,19 +132,23 @@ export class BackInStockAlertService implements OnModuleInit, OnModuleDestroy {
       const name = variant
         ? `${sub.product.name} (${variant.name})`
         : sub.product.name;
+      // alerts are sent in Bangla (the default); the link opens the Bangla page
+      const lang = 'bn' as const;
       const link = `${base}/products/${sub.product.slug}`;
       const cancel = `${base}/back-in-stock/cancel?token=${sub.cancelToken}`;
+      const subject = tr(lang, 'bis.subject', { name });
       const sentOk = await this.mail
         .send({
           to: sub.email,
-          subject: `${name} is back in stock`,
-          text: `Good news! ${name} is back in stock at ${site.storeName}.\n\nBuy it: ${link}\n\nStop these alerts: ${cancel}`,
+          subject,
+          text: `${tr(lang, 'bis.body', { name, store: site.storeName })}\n\n${tr(lang, 'bis.buy')}: ${link}\n\n${tr(lang, 'bis.stop')}: ${cancel}`,
           html: renderEmailLayout(site, {
-            title: `${name} is back in stock`,
-            bodyHtml: `<h2 style="margin:0 0 12px;font-size:20px">Back in stock</h2>
-<p style="margin:0 0 12px"><strong>${escapeHtml(name)}</strong> is available again. Stock is limited, so order soon.</p>
-<p style="margin:20px 0"><a href="${escapeHtml(link)}" style="display:inline-block;padding:10px 18px;background:#111;color:#fff;text-decoration:none;border-radius:6px">View product</a></p>
-<p style="margin:0;font-size:12px;color:#888">You asked us to tell you. <a href="${escapeHtml(cancel)}">Stop these alerts</a></p>`,
+            title: subject,
+            lang,
+            bodyHtml: `<h2 style="margin:0 0 12px;font-size:20px">${escapeHtml(subject)}</h2>
+<p style="margin:0 0 12px">${escapeHtml(tr(lang, 'bis.body', { name, store: site.storeName }))}</p>
+<p style="margin:20px 0"><a href="${escapeHtml(link)}" style="display:inline-block;padding:10px 18px;background:#0b6234;color:#fff;text-decoration:none;border-radius:6px">${escapeHtml(tr(lang, 'bis.buy'))}</a></p>
+<p style="margin:0;font-size:12px;color:#888"><a href="${escapeHtml(cancel)}">${escapeHtml(tr(lang, 'bis.stop'))}</a></p>`,
           }),
         })
         .catch((e: unknown) => ({

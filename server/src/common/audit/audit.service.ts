@@ -25,6 +25,7 @@ export const AUDIT_ACTIONS = [
   'COUPON_DELETED',
   'USER_STATUS_CHANGED',
   'USER_ROLE_CHANGED',
+  'USER_PASSWORD_RESET',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
@@ -49,7 +50,11 @@ export const AUDIT_TYPES: Record<string, AuditAction[]> = {
     'PRODUCT_STATUS_CHANGED',
   ],
   coupons: ['COUPON_CREATED', 'COUPON_UPDATED', 'COUPON_DELETED'],
-  customers: ['USER_STATUS_CHANGED', 'USER_ROLE_CHANGED'],
+  customers: [
+    'USER_STATUS_CHANGED',
+    'USER_ROLE_CHANGED',
+    'USER_PASSWORD_RESET',
+  ],
 };
 
 export interface AuditInput {

@@ -138,6 +138,18 @@ export class AdminUsersController {
     return this.users.updateStatus(id, dto.status, admin);
   }
 
+  @Post(':id/reset-password')
+  @ApiOperation({
+    summary:
+      'Set a temporary password for a customer (shown once). Used for customers with no email, who cannot get the reset link.',
+  })
+  resetPassword(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() admin: User,
+  ) {
+    return this.users.resetPassword(id, admin);
+  }
+
   @Patch(':id/role')
   @ApiOperation({
     summary:

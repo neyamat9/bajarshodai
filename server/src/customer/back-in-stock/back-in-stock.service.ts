@@ -145,7 +145,10 @@ export class CustomerBackInStockService {
   async mine(user: User) {
     const rows = await this.prisma.backInStockSubscription.findMany({
       where: {
-        OR: [{ userId: user.id }, { email: user.email.toLowerCase() }],
+        OR: [
+          { userId: user.id },
+          ...(user.email ? [{ email: user.email.toLowerCase() }] : []),
+        ],
         notified: false,
       },
       orderBy: { createdAt: 'desc' },
@@ -178,7 +181,10 @@ export class CustomerBackInStockService {
     const r = await this.prisma.backInStockSubscription.deleteMany({
       where: {
         id,
-        OR: [{ userId: user.id }, { email: user.email.toLowerCase() }],
+        OR: [
+          { userId: user.id },
+          ...(user.email ? [{ email: user.email.toLowerCase() }] : []),
+        ],
       },
     });
     if (r.count === 0) throw new NotFoundException('Alert not found');

@@ -69,6 +69,12 @@ export class ShippingAddressDto {
 }
 
 export class PlaceOrderDto {
+  // The language the customer is using. Emails, notifications and the invoice follow it.
+  @ApiPropertyOptional({ enum: ['bn', 'en'], default: 'bn' })
+  @IsOptional()
+  @IsIn(['bn', 'en'])
+  language?: 'bn' | 'en';
+
   // Cash on Delivery or manual mobile banking (bKash / Nagad / Rocket) — no payment gateway.
   @ApiProperty({ enum: ['CASH_ON_DELIVERY', 'BKASH', 'NAGAD', 'ROCKET'] })
   @IsEnum(['CASH_ON_DELIVERY', 'BKASH', 'NAGAD', 'ROCKET'])

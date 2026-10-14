@@ -1,17 +1,22 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsEmail,
   IsNotEmpty,
   IsString,
+  MaxLength,
   MinLength,
   IsOptional,
   IsUUID,
 } from 'class-validator';
 
 export class LoginDto {
-  @ApiProperty()
-  @IsEmail()
-  email: string;
+  @ApiProperty({
+    example: '01712345678',
+    description: 'Phone number (or the email, if the account has one)',
+  })
+  @IsNotEmpty()
+  @IsString()
+  @MaxLength(254)
+  identifier: string;
 
   @ApiProperty()
   @IsNotEmpty()

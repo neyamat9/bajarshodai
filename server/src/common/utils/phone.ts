@@ -30,3 +30,16 @@ export function IsBdMobile() {
     }),
   );
 }
+
+// A login identifier typed by a person: either a phone number or an email.
+// Anything containing "@" is an email (stored lower-case); the rest is treated
+// as a Bangladeshi phone number and normalised to 01XXXXXXXXX.
+export type LoginIdentity =
+  | { type: 'email'; email: string }
+  | { type: 'phone'; phone: string };
+
+export function parseLoginIdentifier(input: string): LoginIdentity {
+  const raw = String(input ?? '').trim();
+  if (raw.includes('@')) return { type: 'email', email: raw.toLowerCase() };
+  return { type: 'phone', phone: normalizeBdPhone(raw) };
+}

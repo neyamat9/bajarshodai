@@ -5,11 +5,11 @@ import type { Transporter } from 'nodemailer';
 import { EmailSettings, SettingsService } from '../settings';
 
 export interface MailMessage {
-  to: string;
+  to?: string | null; // customers may have no email: those are skipped
   subject: string;
   html: string;
   text: string;
-  replyTo?: string;
+  replyTo?: string | null;
 }
 
 export interface MailResult {
@@ -52,7 +52,7 @@ export class MailService {
     private settings: SettingsService,
   ) {}
 
-  isValidEmail(email: string | null | undefined): boolean {
+  isValidEmail(email: string | null | undefined): email is string {
     return !!email && email.length <= 254 && EMAIL_RE.test(email);
   }
 

@@ -9,6 +9,8 @@ import {
   HttpCode,
   HttpStatus,
   Logger,
+  ConflictException,
+  Headers,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
@@ -112,8 +114,15 @@ export class AuthController {
   @ApiOperation({
     summary: 'Send a password reset link to the email (always returns success)',
   })
-  async forgotPassword(@Body() dto: ForgotPasswordDto) {
-    return this.passwordResetService.requestReset(dto.email);
+  async forgotPassword(
+    @Body() dto: ForgotPasswordDto,
+    @Headers('accept-language') acceptLanguage?: string,
+  ) {
+    return this.passwordResetService.requestReset(
+      dto.email,
+      {},
+      acceptLanguage,
+    );
   }
 
   @Public()
@@ -158,6 +167,7 @@ export class AuthController {
         email: true,
         name: true,
         phone: true,
+        language: true,
         avatarUrl: true,
         bio: true,
         occupation: true,
@@ -189,14 +199,39 @@ export class AuthController {
     @CurrentUser() user: User,
     @Body() dto: UpdateProfileDto,
   ) {
+    // A phone number or email can belong to one account only.
+    if (dto.phone && dto.phone !== user.phone) {
+      const taken = await this.prisma.user.findUnique({
+        where: { phone: dto.phone },
+      });
+      if (taken) {
+        throw new ConflictException(
+          'This phone number already has an account',
+        );
+      }
+    }
+    if (dto.email && dto.email.toLowerCase() !== user.email?.toLowerCase()) {
+      const taken = await this.prisma.user.findFirst({
+        where: { email: { equals: dto.email, mode: 'insensitive' } },
+      });
+      if (taken) throw new ConflictException('Email is already registered');
+    }
     return this.prisma.user.update({
       where: { id: user.id },
-      data: dto,
+      data: {
+        ...dto,
+        email: dto.email === undefined ? undefined : (dto.email?.toLowerCase() ?? null),
+        // a changed email must be confirmed again
+        ...(dto.email !== undefined && dto.email?.toLowerCase() !== user.email?.toLowerCase()
+          ? { emailVerified: false, emailVerifiedAt: null }
+          : {}),
+      },
       select: {
         id: true,
         email: true,
         name: true,
         phone: true,
+        language: true,
         avatarUrl: true,
         bio: true,
         occupation: true,

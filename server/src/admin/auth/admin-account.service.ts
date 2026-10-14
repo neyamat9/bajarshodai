@@ -13,6 +13,7 @@ import * as argon2 from 'argon2';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthService } from '../../auth/auth.service';
+import { parseLoginIdentifier } from '../../common/utils/phone';
 
 const ADMIN_ROLES: Role[] = [Role.ADMIN, Role.SUPER_ADMIN];
 const PASSWORD_HISTORY = 5;
@@ -42,13 +43,17 @@ export class AdminAccountService {
     return ADMIN_ROLES.includes(user.role);
   }
 
-  async login(email: string, password: string) {
-    const key = email.trim().toLowerCase();
+  async login(identifier: string, password: string) {
+    const who = parseLoginIdentifier(identifier);
+    const key = who.type === 'email' ? who.email : who.phone;
     this.assertNotLocked(key);
 
-    const user = await this.prisma.user.findFirst({
-      where: { email: { equals: key, mode: 'insensitive' } },
-    });
+    const user =
+      who.type === 'email'
+        ? await this.prisma.user.findFirst({
+            where: { email: { equals: who.email, mode: 'insensitive' } },
+          })
+        : await this.prisma.user.findUnique({ where: { phone: who.phone } });
 
     // Always verify a password so the response time does not reveal whether
     // the email is an admin account.

@@ -56,7 +56,14 @@ export class CategoriesService {
       async () => {
         const category = await this.prisma.category.findUnique({
           where: { slug, status: 'ACTIVE' },
-          select: { id: true, name: true, slug: true, image: true, icon: true },
+          select: {
+            id: true,
+            name: true,
+            nameBn: true,
+            slug: true,
+            image: true,
+            icon: true,
+          },
         });
         if (!category) return null;
 
@@ -65,6 +72,7 @@ export class CategoriesService {
           select: {
             id: true,
             name: true,
+            nameBn: true,
             slug: true,
             image: true,
             icon: true,

@@ -26,6 +26,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard, RolesGuard } from '../../common/guards';
 import { Roles } from '../../common/decorators';
 import { PasswordResetService } from '../../customer/auth/password-reset.service';
+import { normalizeBdPhone } from '../../common/utils/phone';
 import { AdminAccountService } from './admin-account.service';
 import {
   AdminChangePasswordDto,
@@ -52,9 +53,9 @@ export class AdminAuthController {
   @Post('login')
   @Throttle({ medium: { ttl: 60000, limit: 10 } })
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Admin login (email + password)' })
+  @ApiOperation({ summary: 'Admin login (phone or email + password)' })
   login(@Body() dto: AdminLoginDto) {
-    return this.account.login(dto.email, dto.password);
+    return this.account.login(dto.identifier, dto.password);
   }
 
   @Public()
@@ -178,19 +179,27 @@ export class AdminAuthController {
       );
     }
 
+    const phone = normalizeBdPhone(dto.phone);
     const existingUser = await this.prisma.user.findFirst({
-      where: { email: { equals: dto.email, mode: 'insensitive' } },
+      where: {
+        OR: [
+          { phone },
+          ...(dto.email
+            ? [{ email: { equals: dto.email, mode: 'insensitive' as const } }]
+            : []),
+        ],
+      },
     });
     if (existingUser) {
-      throw new ConflictException('Email is already registered');
+      throw new ConflictException('Phone or email is already registered');
     }
 
     const passwordHash = await argon2.hash(dto.password);
     const user = await this.prisma.user.create({
       data: {
-        email: dto.email,
+        email: dto.email ?? null,
         name: dto.name,
-        phone: dto.phone,
+        phone,
         passwordHash,
         role: Role.SUPER_ADMIN,
         emailVerified: true,

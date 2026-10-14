@@ -87,6 +87,7 @@ export class OrdersController {
     @Query('orderNumber') orderNumber: string,
     @Query('phone') phone: string,
     @Query('format') format: string | undefined,
+    @Query('lang') lang: string | undefined,
     @Res({ passthrough: true }) res: Response,
   ) {
     if (!orderNumber?.trim() || !phone?.trim()) {
@@ -104,6 +105,7 @@ export class OrdersController {
         ],
       },
       format,
+      lang,
     );
   }
 
@@ -117,9 +119,15 @@ export class OrdersController {
     @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,
     @Query('format') format: string | undefined,
+    @Query('lang') lang: string | undefined,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return this.invoiceService.respond(res, { id, userId: user.id }, format);
+    return this.invoiceService.respond(
+      res,
+      { id, userId: user.id },
+      format,
+      lang,
+    );
   }
 
   @Get(':id')

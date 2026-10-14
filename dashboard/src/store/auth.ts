@@ -3,15 +3,15 @@ import { api, tokens, type AdminUser, SESSION_EXPIRED_EVENT } from "@/api/client
 
 interface AuthState {
   user: AdminUser | null;
-  login: (email: string, password: string, remember?: boolean) => Promise<void>;
+  login: (identifier: string, password: string, remember?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   setUser: (u: AdminUser) => void;
 }
 
 export const useAuth = create<AuthState>((set) => ({
   user: tokens.access ? tokens.user : null,
-  async login(email, password, remember = false) {
-    const res = await api.post<{ accessToken: string; refreshToken: string; user: AdminUser }>("/admin/auth/login", { email, password });
+  async login(identifier, password, remember = false) {
+    const res = await api.post<{ accessToken: string; refreshToken: string; user: AdminUser }>("/admin/auth/login", { identifier, password });
     tokens.clear();
     tokens.set(res.data.accessToken, res.data.refreshToken, res.data.user, remember);
     set({ user: res.data.user });

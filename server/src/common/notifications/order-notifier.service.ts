@@ -17,84 +17,54 @@ import {
 } from '../mail';
 import { NotificationsService } from './notifications.service';
 import { AdminFeedService } from '../admin-feed/admin-feed.service';
+import {
+  Lang,
+  fmtMoney,
+  localizeDigits,
+  normalizeLang,
+  paymentLabel,
+  paymentStatusLabel,
+  tr,
+} from '../i18n';
 
 const orderInclude = {
   items: true,
   shippingAddress: true,
-  user: { select: { id: true, name: true, email: true } },
+  user: { select: { id: true, name: true, email: true, language: true } },
 } satisfies Prisma.OrderInclude;
 
 type FullOrder = Prisma.OrderGetPayload<{ include: typeof orderInclude }>;
 
-// What the customer sees for each status (in-app + email).
-const STATUS_COPY: Partial<
-  Record<OrderStatus, { type: NotificationType; title: string; body: string }>
-> = {
-  CONFIRMED: {
-    type: 'ORDER_CONFIRMED',
-    title: 'Order confirmed',
-    body: 'Your order has been confirmed and will be packed soon.',
-  },
-  PROCESSING: {
-    type: 'ORDER_UPDATED',
-    title: 'Order is being processed',
-    body: 'We are packing your order.',
-  },
-  SHIPPED: {
-    type: 'ORDER_SHIPPED',
-    title: 'Order shipped',
-    body: 'Your order has been handed to the courier.',
-  },
-  IN_TRANSIT: {
-    type: 'ORDER_SHIPPED',
-    title: 'Order in transit',
-    body: 'Your order is on the way.',
-  },
-  OUT_FOR_DELIVERY: {
-    type: 'ORDER_SHIPPED',
-    title: 'Out for delivery',
-    body: 'Your order will be delivered today. Please keep your phone reachable.',
-  },
-  DELIVERED: {
-    type: 'ORDER_DELIVERED',
-    title: 'Order delivered',
-    body: 'Your order has been delivered. Thank you for shopping with us!',
-  },
-  CANCELLED: {
-    type: 'ORDER_CANCELLED',
-    title: 'Order cancelled',
-    body: 'Your order has been cancelled.',
-  },
-  ON_HOLD: {
-    type: 'ORDER_UPDATED',
-    title: 'Order on hold',
-    body: 'Your order is on hold. We will contact you shortly.',
-  },
-  RETURNED: {
-    type: 'ORDER_UPDATED',
-    title: 'Order returned',
-    body: 'Your order has been marked as returned.',
-  },
-  REFUNDED: {
-    type: 'ORDER_UPDATED',
-    title: 'Order refunded',
-    body: 'Your refund has been processed.',
-  },
+// Which in-app notification type goes with each status. The words themselves
+// (title and body) live in common/i18n, in Bangla and English.
+const STATUS_TYPE: Partial<Record<OrderStatus, NotificationType>> = {
+  CONFIRMED: 'ORDER_CONFIRMED',
+  PROCESSING: 'ORDER_UPDATED',
+  SHIPPED: 'ORDER_SHIPPED',
+  IN_TRANSIT: 'ORDER_SHIPPED',
+  OUT_FOR_DELIVERY: 'ORDER_SHIPPED',
+  DELIVERED: 'ORDER_DELIVERED',
+  CANCELLED: 'ORDER_CANCELLED',
+  ON_HOLD: 'ORDER_UPDATED',
+  RETURNED: 'ORDER_UPDATED',
+  REFUNDED: 'ORDER_UPDATED',
 };
 
-const RETURN_COPY: Partial<Record<ReturnStatus, string>> = {
-  APPROVED:
-    'Your return request has been approved. We will arrange the pickup.',
-  REJECTED: 'Your return request was not approved.',
-  PICKED_UP: 'Your returned item has been picked up.',
-  RECEIVED: 'We have received your returned item.',
-  REFUNDED: 'Your refund has been processed.',
-  REPLACED: 'Your replacement has been arranged.',
-};
+const RETURN_STATUSES: ReturnStatus[] = [
+  'APPROVED',
+  'REJECTED',
+  'PICKED_UP',
+  'RECEIVED',
+  'REFUNDED',
+  'REPLACED',
+];
 
 // Sends order-related notifications: in-app (registered customers) and email
 // (customers and guests, per the admin email settings and the customer's own
 // preferences), plus the admin "new order" alert.
+//
+// Customer messages follow the language the customer ordered in (Order.language);
+// admin alerts stay in English.
 //
 // Every public method is safe to call without awaiting: failures are logged
 // and never propagate to the request that triggered them.
@@ -111,11 +81,16 @@ export class OrderNotifierService {
     private adminFeed: AdminFeedService,
   ) {}
 
+  private langOf(order: FullOrder): Lang {
+    return normalizeLang(order.language ?? order.user?.language);
+  }
+
   // skipAdminEmail: the shop created the order itself (phone order).
   orderPlaced(orderId: string, opts: { skipAdminEmail?: boolean } = {}) {
     return this.safely('orderPlaced', async () => {
       const order = await this.load(orderId);
       if (!order) return;
+      const lang = this.langOf(order);
       if (!opts.skipAdminEmail) {
         await this.adminFeed.notify({
           type: 'NEW_ORDER',
@@ -137,10 +112,13 @@ export class OrderNotifierService {
         }
       }
       const email = await this.settings.get('email');
-      const title = `Order ${order.orderNumber} received`;
+      const n = order.orderNumber;
+      const title = tr(lang, 'order.placed.title', { n });
       const body = isMobileBanking(order.paymentMethod)
-        ? `We received your order. Your ${PAYMENT_LABEL[order.paymentMethod]} payment will be verified shortly.`
-        : 'We received your order and will confirm it soon.';
+        ? tr(lang, 'order.placed.bodyMobile', {
+            method: paymentLabel(lang, order.paymentMethod),
+          })
+        : tr(lang, 'order.placed.body');
 
       if (order.userId) {
         await this.notifications.notifyInApp(order.userId, {
@@ -153,8 +131,8 @@ export class OrderNotifierService {
 
       if (email.notifyCustomerOrderPlaced) {
         await this.emailCustomer(order, 'ORDER_PLACED', {
-          subject: `Order confirmation — ${order.orderNumber}`,
-          heading: 'Thank you for your order!',
+          subject: tr(lang, 'order.placed.subject', { n }),
+          heading: tr(lang, 'order.placed.heading'),
           intro: body,
           includeItems: true,
         });
@@ -172,21 +150,23 @@ export class OrderNotifierService {
 
   orderStatusChanged(orderId: string, status: OrderStatus, note?: string) {
     return this.safely('orderStatusChanged', async () => {
-      const copy = STATUS_COPY[status];
-      if (!copy) return;
+      const type = STATUS_TYPE[status];
+      if (!type) return;
       const order = await this.load(orderId);
       if (!order) return;
+      const lang = this.langOf(order);
 
+      const copyTitle = tr(lang, `order.${status}.title`);
       const extra =
         status === 'SHIPPED' && order.trackingNumber
-          ? ` Tracking number: ${order.trackingNumber}.`
+          ? ` ${tr(lang, 'label.tracking')}: ${order.trackingNumber}.`
           : '';
-      const body = `${copy.body}${extra}${note ? ` Note: ${note}` : ''}`;
+      const body = `${tr(lang, `order.${status}.body`)}${extra}${note ? ` ${tr(lang, 'label.note')}: ${note}` : ''}`;
 
       if (order.userId) {
         await this.notifications.notifyInApp(order.userId, {
-          type: copy.type,
-          title: `${copy.title} — ${order.orderNumber}`,
+          type,
+          title: `${copyTitle} — ${order.orderNumber}`,
           body,
           data: { ...this.data(order), status },
         });
@@ -194,9 +174,9 @@ export class OrderNotifierService {
 
       const email = await this.settings.get('email');
       if (email.notifyCustomerOrderStatus) {
-        await this.emailCustomer(order, copy.type, {
-          subject: `${copy.title} — ${order.orderNumber}`,
-          heading: copy.title,
+        await this.emailCustomer(order, type, {
+          subject: `${copyTitle} — ${order.orderNumber}`,
+          heading: copyTitle,
           intro: body,
           includeItems: status === 'DELIVERED' || status === 'CANCELLED',
         });
@@ -212,16 +192,22 @@ export class OrderNotifierService {
     return this.safely('paymentUpdated', async () => {
       const order = await this.load(orderId);
       if (!order) return;
+      const lang = this.langOf(order);
       const type: NotificationType =
         paymentStatus === 'PAID' ? 'PAYMENT_RECEIVED' : 'PAYMENT_FAILED';
-      const title =
-        paymentStatus === 'PAID'
-          ? 'Payment received'
-          : 'Payment could not be verified';
+      const title = tr(
+        lang,
+        paymentStatus === 'PAID' ? 'payment.received.title' : 'payment.failed.title',
+      );
       const body =
         paymentStatus === 'PAID'
-          ? `We received your payment of ${formatMoney(order.total)}.`
-          : `We could not verify your bKash payment${note ? `: ${note}` : '.'} Please contact us.`;
+          ? tr(lang, 'payment.received.body', {
+              amount: fmtMoney(lang, order.total),
+            })
+          : tr(lang, 'payment.failed.body', {
+              method: paymentLabel(lang, order.paymentMethod),
+              note: note ? `: ${note}` : '',
+            });
 
       if (order.userId) {
         await this.notifications.notifyInApp(order.userId, {
@@ -249,8 +235,7 @@ export class OrderNotifierService {
     note?: string | null,
   ) {
     return this.safely('returnStatusChanged', async () => {
-      const text = RETURN_COPY[status];
-      if (!text) return;
+      if (!RETURN_STATUSES.includes(status)) return;
       const ret = await this.prisma.returnRequest.findUnique({
         where: { id: returnId },
         select: { id: true, userId: true, orderId: true },
@@ -258,8 +243,9 @@ export class OrderNotifierService {
       if (!ret) return;
       const order = await this.load(ret.orderId);
       if (!order) return;
-      const body = `${text}${note ? ` Note: ${note}` : ''}`;
-      const title = `Return update — ${order.orderNumber}`;
+      const lang = this.langOf(order);
+      const body = `${tr(lang, `return.${status}`)}${note ? ` ${tr(lang, 'label.note')}: ${note}` : ''}`;
+      const title = tr(lang, 'return.title', { n: order.orderNumber });
 
       await this.notifications.notifyInApp(ret.userId, {
         type: 'RETURN_UPDATED',
@@ -271,7 +257,7 @@ export class OrderNotifierService {
       if (email.notifyCustomerOrderStatus) {
         await this.emailCustomer(order, 'RETURN_UPDATED', {
           subject: title,
-          heading: 'Return update',
+          heading: tr(lang, 'return.heading'),
           intro: body,
           includeItems: false,
         });
@@ -292,7 +278,7 @@ export class OrderNotifierService {
     },
   ) {
     const to = order.user?.email ?? order.guestEmail;
-    if (!to) return;
+    if (!to) return; // customers without an email just get the in-app / on-screen update
     if (
       order.userId &&
       !(await this.notifications.isEnabled(order.userId, type, 'email'))
@@ -300,49 +286,50 @@ export class OrderNotifierService {
       return;
     }
 
+    const lang = this.langOf(order);
     const site = await this.settings.get('site');
+    const money = (n: unknown) => fmtMoney(lang, n, site.currencySymbol);
     const name =
       order.user?.name ??
       order.guestName ??
       order.shippingAddress?.fullName ??
       '';
     const link = this.orderLink(order);
-    const itemsHtml = opts.includeItems
-      ? this.itemsTable(order, site.currencySymbol)
-      : '';
-    const payment = this.paymentInstructions(order);
+    const itemsHtml = opts.includeItems ? this.itemsTable(order, lang, site.currencySymbol) : '';
+    const payment = this.paymentInstructions(order, lang);
+    const method = paymentLabel(lang, order.paymentMethod);
 
     const bodyHtml = `
 <h2 style="margin:0 0 12px;font-size:20px">${escapeHtml(opts.heading)}</h2>
-<p style="margin:0 0 12px">Hi ${escapeHtml(name)},</p>
+<p style="margin:0 0 12px">${escapeHtml(tr(lang, 'hi', { name }))}</p>
 <p style="margin:0 0 16px">${escapeHtml(opts.intro)}</p>
 <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 16px;font-size:14px">
-<tr><td style="padding:2px 12px 2px 0;color:#666">Order number</td><td><strong>${escapeHtml(order.orderNumber)}</strong></td></tr>
-<tr><td style="padding:2px 12px 2px 0;color:#666">Order total</td><td><strong>${formatMoney(order.total, site.currencySymbol)}</strong></td></tr>
-<tr><td style="padding:2px 12px 2px 0;color:#666">Payment</td><td>${PAYMENT_LABEL[order.paymentMethod] ?? order.paymentMethod} (${escapeHtml(order.paymentStatus.toLowerCase())})</td></tr>
+<tr><td style="padding:2px 12px 2px 0;color:#666">${escapeHtml(tr(lang, 'label.orderNumber'))}</td><td><strong>${escapeHtml(order.orderNumber)}</strong></td></tr>
+<tr><td style="padding:2px 12px 2px 0;color:#666">${escapeHtml(tr(lang, 'label.orderTotal'))}</td><td><strong>${money(order.total)}</strong></td></tr>
+<tr><td style="padding:2px 12px 2px 0;color:#666">${escapeHtml(tr(lang, 'label.payment'))}</td><td>${escapeHtml(method)} (${escapeHtml(paymentStatusLabel(lang, order.paymentStatus))})</td></tr>
 </table>
 ${payment.html}
 ${itemsHtml}
-<p style="margin:20px 0 0"><a href="${escapeHtml(link)}" style="display:inline-block;padding:10px 18px;background:#111;color:#fff;text-decoration:none;border-radius:6px">View your order</a></p>`;
+<p style="margin:20px 0 0"><a href="${escapeHtml(link)}" style="display:inline-block;padding:10px 18px;background:#0b6234;color:#fff;text-decoration:none;border-radius:6px">${escapeHtml(tr(lang, 'label.viewOrder'))}</a></p>`;
 
     const text = [
-      `Hi ${name},`,
+      tr(lang, 'hi', { name }),
       '',
       opts.intro,
       '',
-      `Order number: ${order.orderNumber}`,
-      `Order total: ${formatMoney(order.total, site.currencySymbol)}`,
+      `${tr(lang, 'label.orderNumber')}: ${order.orderNumber}`,
+      `${tr(lang, 'label.orderTotal')}: ${money(order.total)}`,
       payment.text,
       opts.includeItems
         ? order.items
             .map(
               (i) =>
-                `- ${i.productName}${i.variantName ? ` (${i.variantName})` : ''} x${i.quantity}: ${formatMoney(i.total, site.currencySymbol)}`,
+                `- ${i.productName}${i.variantName ? ` (${i.variantName})` : ''} x${localizeDigits(lang, String(i.quantity))}: ${money(i.total)}`,
             )
             .join('\n')
         : '',
       '',
-      `View your order: ${link}`,
+      `${tr(lang, 'label.viewOrder')}: ${link}`,
     ]
       .filter((l) => l !== undefined)
       .join('\n');
@@ -350,7 +337,7 @@ ${itemsHtml}
     await this.mail.send({
       to,
       subject: opts.subject,
-      html: renderEmailLayout(site, { title: opts.subject, bodyHtml }),
+      html: renderEmailLayout(site, { title: opts.subject, bodyHtml, lang }),
       text,
     });
   }
@@ -358,7 +345,7 @@ ${itemsHtml}
   private async emailAdminNewOrder(order: FullOrder, to: string) {
     const site = await this.settings.get('site');
     const customer = order.user
-      ? `${order.user.name} <${order.user.email}>`
+      ? `${order.user.name} <${order.user.email ?? order.shippingAddress?.phone ?? ''}>`
       : `${order.guestName ?? order.shippingAddress?.fullName ?? 'Guest'} (guest)`;
     const phone = order.shippingAddress?.phone ?? order.guestPhone ?? '';
     const subject = `New order ${order.orderNumber} — ${formatMoney(order.total, site.currencySymbol)}`;
@@ -369,7 +356,7 @@ ${itemsHtml}
 <p style="margin:0 0 4px">Phone: ${escapeHtml(phone)}</p>
 <p style="margin:0 0 4px">Payment: ${isMobileBanking(order.paymentMethod) ? `${PAYMENT_LABEL[order.paymentMethod]} (TrxID ${escapeHtml(order.bkashTransactionId ?? '-')}, from ${escapeHtml(order.bkashSenderNumber ?? '-')})` : 'Cash on Delivery'}</p>
 <p style="margin:0 0 12px">Delivery: ${escapeHtml(order.shippingAddress?.city ?? '')} (${escapeHtml(order.shippingZone ?? '')})</p>
-${this.itemsTable(order, site.currencySymbol)}`;
+${this.itemsTable(order, 'en', site.currencySymbol)}`;
     await this.mail.send({
       to,
       subject,
@@ -380,37 +367,41 @@ ${this.itemsTable(order, site.currencySymbol)}`;
     });
   }
 
-  private itemsTable(order: FullOrder, symbol: string) {
+  private itemsTable(order: FullOrder, lang: Lang, symbol: string) {
+    const money = (n: unknown) => fmtMoney(lang, n, symbol);
     const rows = order.items
       .map(
         (i) => `<tr>
 <td style="padding:8px 0;border-bottom:1px solid #eee">${escapeHtml(i.productName)}${i.variantName ? `<div style="color:#666;font-size:12px">${escapeHtml(i.variantName)}</div>` : ''}</td>
-<td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${i.quantity}</td>
-<td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right">${formatMoney(i.total, symbol)}</td></tr>`,
+<td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${localizeDigits(lang, String(i.quantity))}</td>
+<td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right">${money(i.total)}</td></tr>`,
       )
       .join('');
     const line = (label: string, value: string, bold = false) =>
       `<tr><td colspan="2" style="padding:4px 0;text-align:right;color:#666">${label}</td><td style="padding:4px 0;text-align:right">${bold ? `<strong>${value}</strong>` : value}</td></tr>`;
     return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;margin:8px 0">
-<tr><th style="text-align:left;padding:6px 0;border-bottom:2px solid #111">Item</th><th style="padding:6px 8px;border-bottom:2px solid #111">Qty</th><th style="text-align:right;padding:6px 0;border-bottom:2px solid #111">Total</th></tr>
+<tr><th style="text-align:left;padding:6px 0;border-bottom:2px solid #111">${escapeHtml(tr(lang, 'label.item'))}</th><th style="padding:6px 8px;border-bottom:2px solid #111">${escapeHtml(tr(lang, 'label.qty'))}</th><th style="text-align:right;padding:6px 0;border-bottom:2px solid #111">${escapeHtml(tr(lang, 'label.total'))}</th></tr>
 ${rows}
-${line('Subtotal', formatMoney(order.subtotal, symbol))}
-${Number(order.discountAmount) > 0 ? line(`Discount${order.couponCode ? ` (${escapeHtml(order.couponCode)})` : ''}`, `-${formatMoney(order.discountAmount, symbol)}`) : ''}
-${line('Delivery', Number(order.shippingCost) > 0 ? formatMoney(order.shippingCost, symbol) : 'Free')}
-${line('Total', formatMoney(order.total, symbol), true)}
+${line(escapeHtml(tr(lang, 'label.subtotal')), money(order.subtotal))}
+${Number(order.discountAmount) > 0 ? line(`${escapeHtml(tr(lang, 'label.discount'))}${order.couponCode ? ` (${escapeHtml(order.couponCode)})` : ''}`, `-${money(order.discountAmount)}`) : ''}
+${line(escapeHtml(tr(lang, 'label.delivery')), Number(order.shippingCost) > 0 ? money(order.shippingCost) : escapeHtml(tr(lang, 'label.free')))}
+${line(escapeHtml(tr(lang, 'label.total')), money(order.total), true)}
 </table>`;
   }
 
-  private paymentInstructions(order: FullOrder) {
+  private paymentInstructions(order: FullOrder, lang: Lang) {
     if (
       !isMobileBanking(order.paymentMethod) ||
       order.paymentStatus !== 'PENDING'
     ) {
       return { html: '', text: '' };
     }
-    const msg = `We will verify your ${PAYMENT_LABEL[order.paymentMethod]} payment (TrxID ${order.bkashTransactionId ?? '-'}) and confirm your order.`;
+    const msg = tr(lang, 'order.verify', {
+      method: paymentLabel(lang, order.paymentMethod),
+      trx: order.bkashTransactionId ?? '-',
+    });
     return {
-      html: `<p style="margin:0 0 16px;padding:10px 12px;background:#fdf2f8;border-radius:6px">${escapeHtml(msg)}</p>`,
+      html: `<p style="margin:0 0 16px;padding:10px 12px;background:#eef7f1;border-radius:6px">${escapeHtml(msg)}</p>`,
       text: msg,
     };
   }
@@ -420,9 +411,11 @@ ${line('Total', formatMoney(order.total, symbol), true)}
       /\/$/,
       '',
     );
-    if (order.userId) return `${base}/orders/${order.id}`;
+    // English pages live under /en; Bangla is the default with no prefix.
+    const prefix = this.langOf(order) === 'en' ? '/en' : '';
+    if (order.userId) return `${base}${prefix}/orders/${order.id}`;
     const phone = order.shippingAddress?.phone ?? order.guestPhone ?? '';
-    return `${base}/track-order?orderNumber=${encodeURIComponent(order.orderNumber)}&phone=${encodeURIComponent(phone)}`;
+    return `${base}${prefix}/track-order?orderNumber=${encodeURIComponent(order.orderNumber)}&phone=${encodeURIComponent(phone)}`;
   }
 
   private data(order: FullOrder) {
