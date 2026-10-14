@@ -6,7 +6,7 @@ import { Copy, MoreHorizontal, Pencil, PlusCircle, Trash2, X } from "lucide-reac
 import { productsApi, type ProductRow, type ProductStatus } from "@/api/products";
 import { errorMessage } from "@/api/client";
 import { QuickStatus, type QuickOption } from "@/components/shared/QuickStatus";
-import { brandsApi, categoriesApi } from "@/api/catalog";
+import { brandsApi, buildCategoryTree, categoriesApi, flattenCategoryTree } from "@/api/catalog";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { DataTable, type Column } from "@/components/shared/DataTable";
 import { FilterBar, FilterSelect, SearchInput } from "@/components/shared/FilterBar";
@@ -82,8 +82,8 @@ export default function ProductsList() {
         <div className="flex items-center gap-3">
           <Thumb src={p.mainImage} alt={p.name} className="size-11" />
           <div className="min-w-0 max-w-[280px]">
-            <a href={`/products/${p.id}/edit`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="block truncate font-medium hover:text-primary">{p.name}</a>
-            <p className="truncate text-[11px] text-muted-foreground">{[p.productCode, p.brandName, p.categoryName].filter(Boolean).join(" · ")}</p>
+            <a href={`/products/${p.id}/edit`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="block truncate font-medium hover:text-primary">{p.nameBn || p.name}</a>
+            <p className="truncate text-[11px] text-muted-foreground">{[p.nameBn ? p.name : null, p.productCode, p.categoryName, p.unit ? `per ${p.unit.shortLabel}` : null].filter(Boolean).join(" · ")}</p>
           </div>
         </div>
       ),
@@ -172,7 +172,7 @@ export default function ProductsList() {
           <FilterBar>
             <SearchInput value={f.search} onChange={(v) => setF({ search: v })} placeholder="Name, code, SKU, barcode…" />
             <FilterSelect value={f.status} onChange={(v) => setF({ status: v, visibility: "" })} all="All statuses" options={["ACTIVE", "DRAFT", "INACTIVE", "OUT_OF_STOCK", "DISCONTINUED"].map((s) => ({ value: s, label: titleCase(s) }))} />
-            <FilterSelect value={f.categoryId} onChange={(v) => setF({ categoryId: v })} all="All categories" options={(cats.data ?? []).map((c) => ({ value: c.id, label: c.name }))} />
+            <FilterSelect value={f.categoryId} onChange={(v) => setF({ categoryId: v })} all="All categories" options={flattenCategoryTree(buildCategoryTree(cats.data ?? [])).map((o) => ({ value: o.node.id, label: `${"— ".repeat(o.depth)}${o.node.name}` }))} />
             <FilterSelect value={f.brandId} onChange={(v) => setF({ brandId: v })} all="All brands" options={(brands.data ?? []).map((b) => ({ value: b.id, label: b.name }))} />
             <FilterSelect value={f.stock} onChange={(v) => setF({ stock: v })} all="Any stock" options={[{ value: "low", label: "Low stock" }, { value: "out", label: "Out of stock" }, { value: "in", label: "In stock" }]} />
             <FilterSelect value={f.sortBy} onChange={(v) => setF({ sortBy: v })} all={null} options={[{ value: "newest", label: "Newest" }, { value: "oldest", label: "Oldest" }, { value: "name", label: "Name A–Z" }, { value: "price-asc", label: "Price: low to high" }, { value: "price-desc", label: "Price: high to low" }, { value: "stock-asc", label: "Stock: low first" }, { value: "sold", label: "Best selling" }]} />

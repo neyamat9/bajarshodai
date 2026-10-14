@@ -68,6 +68,8 @@ export const router = createBrowserRouter([
           { path: "products/:id/edit", element: L(() => import("@/pages/products/ProductEditor"), <ProductEditorSkeleton />) },
           { path: "inventory", element: L(() => import("@/pages/inventory/Inventory"), <InventorySkeleton />) },
           { path: "categories", element: L(() => import("@/pages/catalog/Categories"), <CardListSkeleton title="Categories" text="Drag to change the order shown on the website." action="New category" />) },
+          { path: "units", element: L(() => import("@/pages/catalog/Units"), <CardListSkeleton title="Units" text="How products are sold: kg, piece, packet… Add any unit you need." action="New unit" />) },
+          { path: "daily-sheet", element: L(() => import("@/pages/products/DailySheet"), <ProductsSkeleton />) },
           { path: "brands", element: L(() => import("@/pages/catalog/Brands"), <CardListSkeleton title="Brands" text="Drag to change the order shown on the website." action="New brand" />) },
           { path: "banners", element: L(() => import("@/pages/catalog/Banners"), <CardListSkeleton title="Banners" text="Home page sliders and promotions. Drag inside a group to change the order." action="New banner" />) },
           { path: "media", element: L(() => import("@/pages/catalog/Media"), <GridPageSkeleton />) },

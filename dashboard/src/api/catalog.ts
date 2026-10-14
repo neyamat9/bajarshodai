@@ -1,32 +1,41 @@
 import { api, type Paged } from "./client";
 
 export type ActiveStatus = "ACTIVE" | "INACTIVE";
+/** One row of the category tree. The list comes flat: `parentCategoryId` says where it sits. */
 export interface Category {
   id: string;
   name: string;
+  nameBn: string | null;
   slug: string;
   image: string | null;
   icon: string | null;
   description: string | null;
+  descriptionBn: string | null;
   isHomepage: boolean;
   status: ActiveStatus;
   displayOrder: number;
   metaTitle: string | null;
   metaDescription: string | null;
-  subCategories: SubCategory[];
+  parentCategoryId: string | null;
+  _count: { products: number; childCategories: number };
 }
-export interface SubCategory {
-  id: string;
-  name: string;
-  slug: string;
-  image: string | null;
-  icon: string | null;
-  description: string | null;
-  isHomepage: boolean;
-  status: ActiveStatus;
-  displayOrder: number;
-  parentCategoryId: string;
-  parentCategory?: { id: string; name: string };
+export interface CategoryNode extends Category {
+  children: CategoryNode[];
+}
+/** Builds the tree from the flat list (siblings keep their display order). */
+export function buildCategoryTree(rows: Category[]): CategoryNode[] {
+  const nodes = new Map<string, CategoryNode>(rows.map((r) => [r.id, { ...r, children: [] }]));
+  const roots: CategoryNode[] = [];
+  for (const r of rows) {
+    const node = nodes.get(r.id)!;
+    const parent = r.parentCategoryId ? nodes.get(r.parentCategoryId) : undefined;
+    (parent ? parent.children : roots).push(node);
+  }
+  return roots;
+}
+/** The tree as a flat list with a depth, for a drop-down ("Fish › Freshwater fish › Rui"). */
+export function flattenCategoryTree(nodes: CategoryNode[], depth = 0, path: string[] = []): { node: CategoryNode; depth: number; path: string }[] {
+  return nodes.flatMap((n) => [{ node: n, depth, path: [...path, n.name].join(" › ") }, ...flattenCategoryTree(n.children, depth + 1, [...path, n.name])]);
 }
 export interface Brand {
   id: string;
@@ -44,8 +53,7 @@ export interface Brand {
   metaTitle: string | null;
   metaDescription: string | null;
 }
-export type CategoryInput = Partial<Pick<Category, "name" | "slug" | "image" | "icon" | "description" | "isHomepage" | "status" | "metaTitle" | "metaDescription">>;
-export type SubCategoryInput = Partial<Pick<SubCategory, "name" | "slug" | "image" | "icon" | "description" | "isHomepage" | "status" | "parentCategoryId">>;
+export type CategoryInput = Partial<Pick<Category, "name" | "nameBn" | "slug" | "image" | "icon" | "description" | "descriptionBn" | "isHomepage" | "status" | "metaTitle" | "metaDescription" | "parentCategoryId">>;
 export type BrandInput = Partial<Pick<Brand, "name" | "slug" | "logo" | "banner" | "description" | "website" | "country" | "foundedYear" | "isHomepage" | "status" | "metaTitle" | "metaDescription">>;
 
 export const categoriesApi = {
@@ -53,14 +61,31 @@ export const categoriesApi = {
   create: (b: CategoryInput) => api.post<Category>("/admin/category", b).then((r) => r.data),
   update: (id: string, b: CategoryInput) => api.patch<Category>(`/admin/category/${id}`, b).then((r) => r.data),
   remove: (id: string) => api.delete(`/admin/category/${id}`).then((r) => r.data),
-  reorder: (ids: string[]) => api.put("/admin/category/reorder", { ids }).then((r) => r.data),
+  /** `parentId`: the category whose children are being ordered (none = the top level) */
+  reorder: (ids: string[], parentId?: string) => api.put("/admin/category/reorder", { ids, ...(parentId ? { categoryId: parentId } : {}) }).then((r) => r.data),
 };
-export const subCategoriesApi = {
-  list: () => api.get<SubCategory[]>("/admin/sub-category").then((r) => r.data),
-  create: (b: SubCategoryInput) => api.post<SubCategory>("/admin/sub-category", b).then((r) => r.data),
-  update: (id: string, b: SubCategoryInput) => api.patch<SubCategory>(`/admin/sub-category/${id}`, b).then((r) => r.data),
-  remove: (id: string) => api.delete(`/admin/sub-category/${id}`).then((r) => r.data),
-  reorder: (ids: string[]) => api.put("/admin/sub-category/reorder", { ids }).then((r) => r.data),
+
+export interface Unit {
+  id: string;
+  code: string;
+  name: string;
+  nameBn: string;
+  shortLabel: string;
+  shortLabelBn: string;
+  allowDecimal: boolean;
+  defaultStep: number;
+  defaultMinQty: number;
+  isActive: boolean;
+  displayOrder: number;
+  productCount: number;
+}
+export type UnitInput = Partial<Pick<Unit, "name" | "nameBn" | "shortLabel" | "shortLabelBn" | "allowDecimal" | "defaultStep" | "defaultMinQty" | "isActive">> & { code?: string };
+export const unitsApi = {
+  list: () => api.get<Unit[]>("/admin/units").then((r) => r.data),
+  create: (b: UnitInput) => api.post<Unit>("/admin/units", b).then((r) => r.data),
+  update: (id: string, b: UnitInput) => api.patch<Unit>(`/admin/units/${id}`, b).then((r) => r.data),
+  remove: (id: string) => api.delete(`/admin/units/${id}`).then((r) => r.data),
+  reorder: (ids: string[]) => api.put("/admin/units/reorder", { ids }).then((r) => r.data),
 };
 export const brandsApi = {
   list: () => api.get<Brand[]>("/admin/brand").then((r) => r.data),

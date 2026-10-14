@@ -11,6 +11,7 @@ import { StockService } from '../../common/inventory';
 import { UploadsService } from '../../common/uploads';
 import { slugify } from '../../common/utils/slug';
 import { writeAudit } from '../../common/audit';
+import { descendantIds, loadTreeRows } from '../../common/categories/category-tree';
 import {
   CreateProductDto,
   ProductVariantInputDto,
@@ -132,7 +133,11 @@ export class ProductService {
       where.isDiscounted = true;
       if (!q.status) where.status = 'ACTIVE';
     }
-    if (q.categoryId) where.categoryId = q.categoryId;
+    if (q.categoryId) {
+      // a category and everything below it
+      const rows = await loadTreeRows(this.prisma);
+      where.categoryId = { in: descendantIds(rows, q.categoryId) };
+    }
     if (q.brandId) where.brandId = q.brandId;
     if (q.stock === 'out') where.stock = { lte: 0 };
     if (q.stock === 'low' || q.stock === 'in') {
@@ -148,6 +153,8 @@ export class ProductService {
         select: {
           id: true,
           name: true,
+          nameBn: true,
+          unit: { select: { shortLabel: true, shortLabelBn: true } },
           slug: true,
           productCode: true,
           status: true,

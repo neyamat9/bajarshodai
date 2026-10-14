@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ChevronDown, ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
-import { categoriesApi, slugify, subCategoriesApi, type Category, type SubCategory } from "@/api/catalog";
+import { buildCategoryTree, categoriesApi, flattenCategoryTree, slugify, type Category, type CategoryNode } from "@/api/catalog";
 import { errorMessage } from "@/api/client";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Card } from "@/components/ui/card";
@@ -20,59 +20,77 @@ import { Badge } from "@/components/ui/badge";
 import { useAct } from "@/hooks/useAct";
 import { CardListSkeleton } from "@/components/shared/skeletons";
 
-type Edit = { kind: "category"; item: Category | null } | { kind: "sub"; item: SubCategory | null; parentId?: string };
+const TEXT = "Categories can go several levels deep (Fish › Freshwater fish › Rui). Drag to change the order shown on the website.";
 
-function EditDialog({ edit, categories, onClose }: { edit: Edit; categories: Category[]; onClose: () => void }) {
+/** `item` = editing it; `parentId` = adding a new one under that category. */
+type Edit = { item: CategoryNode | null; parentId?: string };
+
+function EditDialog({ edit, tree, onClose }: { edit: Edit; tree: CategoryNode[]; onClose: () => void }) {
   const it = edit.item;
-  const isSub = edit.kind === "sub";
   const [f, setF] = useState({
-    name: it?.name ?? "", slug: it?.slug ?? "", description: it?.description ?? "", image: it?.image ?? null as string | null,
+    name: it?.name ?? "", nameBn: it?.nameBn ?? "", slug: it?.slug ?? "",
+    description: it?.description ?? "", descriptionBn: it?.descriptionBn ?? "", image: it?.image ?? (null as string | null),
     isHomepage: it?.isHomepage ?? false, status: it?.status ?? "ACTIVE",
-    parentCategoryId: (it as SubCategory | null)?.parentCategoryId ?? (edit.kind === "sub" ? edit.parentId ?? "" : ""),
-    metaTitle: (it as Category | null)?.metaTitle ?? "", metaDescription: (it as Category | null)?.metaDescription ?? "",
+    parentCategoryId: it ? (it.parentCategoryId ?? "") : (edit.parentId ?? ""),
+    metaTitle: it?.metaTitle ?? "", metaDescription: it?.metaDescription ?? "",
   });
   const [touched, setTouched] = useState(!!it);
   const [err, setErr] = useState<string | null>(null);
-  const save = useAct<void, unknown>(
+
+  // a category cannot move under itself or anything below it
+  const options = useMemo(() => {
+    const blocked = new Set<string>();
+    if (it) {
+      const walk = (n: CategoryNode) => { blocked.add(n.id); n.children.forEach(walk); };
+      walk(it);
+    }
+    return flattenCategoryTree(tree).filter((o) => !blocked.has(o.node.id));
+  }, [tree, it]);
+
+  const save = useAct(
     () => {
-      const base = { name: f.name.trim(), slug: f.slug.trim(), description: f.description.trim() || undefined, image: f.image ?? undefined, isHomepage: f.isHomepage, status: f.status };
-      if (isSub) {
-        const b = { ...base, parentCategoryId: f.parentCategoryId };
-        return it ? subCategoriesApi.update(it.id, b) : subCategoriesApi.create(b);
-      }
-      const b = { ...base, metaTitle: f.metaTitle || undefined, metaDescription: f.metaDescription || undefined };
+      const b = {
+        name: f.name.trim(), nameBn: f.nameBn.trim() || undefined, slug: f.slug.trim(),
+        description: f.description.trim() || undefined, descriptionBn: f.descriptionBn.trim() || undefined,
+        image: f.image ?? undefined, isHomepage: f.isHomepage, status: f.status,
+        // null = move to the top level
+        parentCategoryId: f.parentCategoryId || (it ? null : undefined),
+        metaTitle: f.metaTitle || undefined, metaDescription: f.metaDescription || undefined,
+      };
       return it ? categoriesApi.update(it.id, b) : categoriesApi.create(b);
     },
-    { success: "Saved", invalidate: [["categories"], ["sub-categories"]], onSuccess: onClose },
+    { success: "Saved", invalidate: [["categories"]], onSuccess: onClose },
   );
   const submit = () => {
-    if (!f.name.trim()) return setErr("Name is required");
-    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(f.slug)) return setErr("Slug: lowercase letters, numbers and dashes");
-    if (isSub && !f.parentCategoryId) return setErr("Choose the parent category");
+    if (!f.name.trim()) return setErr("Name (English) is required: it makes the web address");
+    if (!f.nameBn.trim()) return setErr("Add the Bangla name: the shop shows it by default");
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(f.slug)) return setErr("Slug: lowercase English letters, numbers and dashes");
     setErr(null);
     save.mutate();
   };
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent size="md">
-        <DialogHeader><DialogTitle>{it ? "Edit" : "New"} {isSub ? "sub-category" : "category"}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{it ? "Edit category" : f.parentCategoryId ? "New sub-category" : "New category"}</DialogTitle></DialogHeader>
         <DialogBody className="space-y-3">
           {err && <p className="rounded bg-red-50 px-3 py-2 text-xs font-medium text-destructive dark:bg-red-500/10">{err}</p>}
-          {isSub && (
-            <Field label="Parent category" required>
-              <Select value={f.parentCategoryId} onChange={(e) => setF({ ...f, parentCategoryId: e.target.value })}>
-                <option value="">Choose…</option>
-                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </Select>
-            </Field>
-          )}
+          <Field label="Sits under" hint="Leave on “Top level” for a main category">
+            <Select value={f.parentCategoryId} onChange={(e) => setF({ ...f, parentCategoryId: e.target.value })}>
+              <option value="">Top level</option>
+              {options.map((o) => <option key={o.node.id} value={o.node.id}>{`${"— ".repeat(o.depth)}${o.node.name}`}</option>)}
+            </Select>
+          </Field>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Name" required><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value, slug: touched ? f.slug : slugify(e.target.value) })} /></Field>
-            <Field label="URL slug" required><Input value={f.slug} onChange={(e) => { setTouched(true); setF({ ...f, slug: e.target.value }); }} /></Field>
+            <Field label="Name (Bangla)" required><Input value={f.nameBn} onChange={(e) => setF({ ...f, nameBn: e.target.value })} placeholder="মিঠা পানির মাছ" /></Field>
+            <Field label="Name (English)" required hint="Makes the web address"><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value, slug: touched ? f.slug : slugify(e.target.value) })} placeholder="Freshwater fish" /></Field>
           </div>
-          <Field label="Description"><Textarea rows={2} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></Field>
-          <ImageField label="Image" folder="categories" value={f.image} onChange={(image) => setF({ ...f, image })} />
-          {!isSub && (
+          <Field label="URL slug" required hint="The same in both languages"><Input value={f.slug} onChange={(e) => { setTouched(true); setF({ ...f, slug: e.target.value }); }} /></Field>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Description (Bangla)"><Textarea rows={2} value={f.descriptionBn} onChange={(e) => setF({ ...f, descriptionBn: e.target.value })} /></Field>
+            <Field label="Description (English)"><Textarea rows={2} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></Field>
+          </div>
+          <ImageField label="Image (shown on the home page tile)" folder="categories" value={f.image} onChange={(image) => setF({ ...f, image })} />
+          {!f.parentCategoryId && (
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Meta title"><Input value={f.metaTitle} onChange={(e) => setF({ ...f, metaTitle: e.target.value })} /></Field>
               <Field label="Meta description"><Input value={f.metaDescription} onChange={(e) => setF({ ...f, metaDescription: e.target.value })} /></Field>
@@ -94,77 +112,99 @@ function EditDialog({ edit, categories, onClose }: { edit: Edit; categories: Cat
   );
 }
 
+interface BranchProps {
+  nodes: CategoryNode[];
+  parentId?: string;
+  depth: number;
+  open: Record<string, boolean>;
+  onToggle: (id: string) => void;
+  onReorder: (ids: string[], parentId?: string) => void;
+  onEdit: (e: Edit) => void;
+  onDelete: (n: CategoryNode) => void;
+}
+
+/** One level of the tree: its categories can be dragged to a new order; each opens to show its own children. */
+function Branch({ nodes, parentId, depth, open, onToggle, onReorder, onEdit, onDelete }: BranchProps) {
+  return (
+    <SortableList items={nodes} onReorder={(ids) => onReorder(ids, parentId)}>
+      {(c) => (
+        <div>
+          <div className="flex items-center gap-3 py-2 pr-3">
+            <button className="cursor-pointer text-muted-foreground" onClick={() => onToggle(c.id)} aria-label="Show or hide what is inside">
+              {open[c.id] ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
+            </button>
+            <Thumb src={c.image} className={depth === 0 ? "size-10" : "size-8"} />
+            <div className="min-w-0 flex-1">
+              <p className="line-clamp-2 break-words text-[13px] font-semibold">
+                {c.nameBn ? `${c.nameBn} · ` : ""}{c.name} {c.isHomepage && <Badge variant="fresh" className="ml-1">Home</Badge>}
+              </p>
+              <p className="text-[11px] text-muted-foreground">/{c.slug} · {c._count.childCategories} sub-categor{c._count.childCategories === 1 ? "y" : "ies"} · {c._count.products} product{c._count.products === 1 ? "" : "s"} directly in it</p>
+            </div>
+            <span className={c.status === "ACTIVE" ? "max-sm:hidden" : ""}><StatusBadge status={c.status} /></span>
+            <Button size="icon-sm" variant="ghost" aria-label="Add a sub-category" title="Add a sub-category" onClick={() => onEdit({ item: null, parentId: c.id })}><Plus /></Button>
+            <Button size="icon-sm" variant="ghost" aria-label="Edit" onClick={() => onEdit({ item: c })}><Pencil /></Button>
+            <Button size="icon-sm" variant="ghost" aria-label="Delete" onClick={() => onDelete(c)}><Trash2 className="text-destructive" /></Button>
+          </div>
+          {open[c.id] && (
+            <div className="border-t border-border bg-muted/30 p-3 pl-8">
+              {c.children.length > 0 ? (
+                <Branch nodes={c.children} parentId={c.id} depth={depth + 1} open={open} onToggle={onToggle} onReorder={onReorder} onEdit={onEdit} onDelete={onDelete} />
+              ) : (
+                <p className="text-xs text-muted-foreground">No sub-categories yet.</p>
+              )}
+              <Button size="xs" variant="outline" className="mt-2" onClick={() => onEdit({ item: null, parentId: c.id })}><Plus /> Add sub-category</Button>
+            </div>
+          )}
+        </div>
+      )}
+    </SortableList>
+  );
+}
+
 export default function Categories() {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["categories"], queryFn: categoriesApi.list });
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [edit, setEdit] = useState<Edit | null>(null);
-  const [del, setDel] = useState<{ kind: "category" | "sub"; id: string; name: string } | null>(null);
+  const [del, setDel] = useState<CategoryNode | null>(null);
+  const tree = useMemo(() => buildCategoryTree(q.data ?? []), [q.data]);
 
-  const reorder = async (ids: string[], sub?: string) => {
+  const reorder = async (ids: string[], parentId?: string) => {
     const prev = qc.getQueryData<Category[]>(["categories"]);
     if (prev) {
-      qc.setQueryData<Category[]>(["categories"], sub
-        ? prev.map((c) => (c.id === sub ? { ...c, subCategories: ids.map((id) => c.subCategories.find((s) => s.id === id)!) } : c))
-        : ids.map((id) => prev.find((c) => c.id === id)!));
+      // show the new order at once: the positions of these siblings are re-numbered in the cache
+      const pos = new Map(ids.map((id, i) => [id, i]));
+      qc.setQueryData<Category[]>(["categories"], prev.map((c) => (pos.has(c.id) ? { ...c, displayOrder: pos.get(c.id)! } : c)).sort((a, b) => a.displayOrder - b.displayOrder));
     }
     try {
-      await (sub ? subCategoriesApi.reorder(ids) : categoriesApi.reorder(ids));
+      await categoriesApi.reorder(ids, parentId);
     } catch (e) {
       toast.error(errorMessage(e));
       qc.setQueryData(["categories"], prev);
     }
   };
-  const remove = useAct(() => (del!.kind === "sub" ? subCategoriesApi.remove(del!.id) : categoriesApi.remove(del!.id)), { success: "Deleted", invalidate: [["categories"]], onSuccess: () => setDel(null) });
+  const remove = useAct(() => categoriesApi.remove(del!.id), { success: "Deleted", invalidate: [["categories"]], onSuccess: () => setDel(null) });
 
-  if (q.isLoading) return <CardListSkeleton title="Categories" text="Drag to change the order shown on the website." action="New category" />;
+  if (q.isLoading) return <CardListSkeleton title="Categories" text={TEXT} action="New category" />;
   if (q.isError) return <ErrorState message={errorMessage(q.error)} onRetry={() => q.refetch()} />;
-  const cats = q.data ?? [];
 
   return (
     <div>
-      <PageHeader title="Categories" description="Drag to change the order shown on the website." actions={<Button variant="brand" size="sm" onClick={() => setEdit({ kind: "category", item: null })}><Plus /> New category</Button>} />
-      {cats.length === 0 ? <Card><EmptyState title="No categories yet" description="Create one to start adding products." /></Card> : (
-        <SortableList items={cats} onReorder={(ids) => void reorder(ids)}>
-          {(c) => (
-            <div>
-              <div className="flex items-center gap-3 py-2 pr-3">
-                <button className="cursor-pointer text-muted-foreground" onClick={() => setOpen({ ...open, [c.id]: !open[c.id] })} aria-label="Toggle sub-categories">
-                  {open[c.id] ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
-                </button>
-                <Thumb src={c.image} className="size-10" />
-                <div className="min-w-0 flex-1">
-                  <p className="line-clamp-2 break-words text-[13px] font-semibold">{c.name} {c.isHomepage && <Badge variant="fresh" className="ml-1">Home</Badge>}</p>
-                  <p className="text-[11px] text-muted-foreground">/{c.slug} · {c.subCategories.length} sub-categories</p>
-                </div>
-                <span className={c.status === "ACTIVE" ? "max-sm:hidden" : ""}><StatusBadge status={c.status} /></span>
-                <Button size="icon-sm" variant="ghost" aria-label="Edit" onClick={() => setEdit({ kind: "category", item: c })}><Pencil /></Button>
-                <Button size="icon-sm" variant="ghost" aria-label="Delete" onClick={() => setDel({ kind: "category", id: c.id, name: c.name })}><Trash2 className="text-destructive" /></Button>
-              </div>
-              {open[c.id] && (
-                <div className="border-t border-border bg-muted/30 p-3 pl-10">
-                  {c.subCategories.length > 0 && (
-                    <SortableList items={c.subCategories} onReorder={(ids) => void reorder(ids, c.id)}>
-                      {(s) => (
-                        <div className="flex items-center gap-3 py-1.5 pr-3">
-                          <Thumb src={s.image} className="size-8" />
-                          <div className="min-w-0 flex-1"><p className="line-clamp-2 break-words text-[13px] font-medium">{s.name}</p><p className="text-[11px] text-muted-foreground">/{s.slug}</p></div>
-                          <StatusBadge status={s.status} />
-                          <Button size="icon-sm" variant="ghost" aria-label="Edit" onClick={() => setEdit({ kind: "sub", item: s })}><Pencil /></Button>
-                          <Button size="icon-sm" variant="ghost" aria-label="Delete" onClick={() => setDel({ kind: "sub", id: s.id, name: s.name })}><Trash2 className="text-destructive" /></Button>
-                        </div>
-                      )}
-                    </SortableList>
-                  )}
-                  <Button size="xs" variant="outline" className="mt-2" onClick={() => setEdit({ kind: "sub", item: null, parentId: c.id })}><Plus /> Add sub-category</Button>
-                </div>
-              )}
-            </div>
-          )}
-        </SortableList>
+      <PageHeader title="Categories" description={TEXT} actions={<Button variant="brand" size="sm" onClick={() => setEdit({ item: null })}><Plus /> New category</Button>} />
+      {tree.length === 0 ? <Card><EmptyState title="No categories yet" description="Create one to start adding products." /></Card> : (
+        <Branch nodes={tree} depth={0} open={open} onToggle={(id) => setOpen((o) => ({ ...o, [id]: !o[id] }))} onReorder={(ids, parentId) => void reorder(ids, parentId)} onEdit={setEdit} onDelete={setDel} />
       )}
-      {edit && <EditDialog edit={edit} categories={cats} onClose={() => setEdit(null)} />}
-      <ConfirmDialog open={!!del} onOpenChange={(o) => !o && setDel(null)} title={`Delete "${del?.name}"?`} description="Categories that still have products cannot be deleted — move those products first." confirmLabel="Delete" destructive loading={remove.isPending} onConfirm={() => remove.mutate()} />
+      {edit && <EditDialog edit={edit} tree={tree} onClose={() => setEdit(null)} />}
+      <ConfirmDialog
+        open={!!del}
+        onOpenChange={(o) => !o && setDel(null)}
+        title={`Delete "${del?.name}"?`}
+        description="A category that still has sub-categories or products cannot be deleted: move those first, or set the category to inactive."
+        confirmLabel="Delete"
+        destructive
+        loading={remove.isPending}
+        onConfirm={() => remove.mutate()}
+      />
     </div>
   );
 }

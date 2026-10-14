@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Copy, Plus, Trash2 } from "lucide-react";
@@ -11,7 +11,7 @@ import { Field, Section } from "@/components/shared/Field";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { ErrorState } from "@/components/shared/EmptyState";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { brandsApi, categoriesApi, slugify } from "@/api/catalog";
+import { brandsApi, buildCategoryTree, categoriesApi, flattenCategoryTree, slugify, unitsApi } from "@/api/catalog";
 import { productsApi, type ProductDetail, type ProductInput, type ProductStatus } from "@/api/products";
 import { errorMessage } from "@/api/client";
 import { useAct } from "@/hooks/useAct";
@@ -22,9 +22,10 @@ import { PhotosEditor } from "./components/PhotosEditor";
 import { ProductEditorSkeleton } from "@/components/shared/pageSkeletons";
 
 interface Form {
-  name: string; slug: string; productCode: string; barcode: string; status: ProductStatus;
-  categoryId: string; subCategoryId: string; brandId: string;
-  shortDescription: string; description: string;
+  name: string; nameBn: string; slug: string; productCode: string; barcode: string; status: ProductStatus;
+  categoryId: string; brandId: string;
+  unitId: string; packSize: string; sellStep: string; minQty: string; isWeighed: boolean;
+  shortDescription: string; shortDescriptionBn: string; description: string; descriptionBn: string;
   buyingPrice: string; regularPrice: string; sellingPrice: string;
   discountPrice: string; discountStart: string; discountEnd: string; discountLabel: string;
   stock: string; lowStockThreshold: string; freeShipping: boolean;
@@ -36,17 +37,19 @@ interface Form {
 }
 
 const blank: Form = {
-  name: "", slug: "", productCode: "", barcode: "", status: "ACTIVE", categoryId: "", subCategoryId: "", brandId: "",
-  shortDescription: "", description: "", buyingPrice: "", regularPrice: "", sellingPrice: "",
+  name: "", nameBn: "", slug: "", productCode: "", barcode: "", status: "ACTIVE", categoryId: "", brandId: "",
+  unitId: "", packSize: "", sellStep: "", minQty: "", isWeighed: false,
+  shortDescription: "", shortDescriptionBn: "", description: "", descriptionBn: "", buyingPrice: "", regularPrice: "", sellingPrice: "",
   discountPrice: "", discountStart: "", discountEnd: "", discountLabel: "", stock: "0", lowStockThreshold: "5", freeShipping: false,
   weight: "", length: "", width: "", height: "", isFeatured: false, isNew: false, isHot: false, isBestSeller: false, isLimitedStock: false,
   metaTitle: "", metaDescription: "", metaKeywords: "", tags: "", attrs: [],
 };
 const n = (v?: string | number | null) => (v === null || v === undefined ? "" : String(Number(v)));
 const toForm = (p: ProductDetail): Form => ({
-  name: p.name, slug: p.slug, productCode: p.productCode ?? "", barcode: p.barcode ?? "", status: p.status,
-  categoryId: p.categoryId, subCategoryId: p.subCategoryId ?? "", brandId: p.brandId ?? "",
-  shortDescription: p.shortDescription ?? "", description: p.description,
+  name: p.name, nameBn: p.nameBn ?? "", slug: p.slug, productCode: p.productCode ?? "", barcode: p.barcode ?? "", status: p.status,
+  categoryId: p.categoryId, brandId: p.brandId ?? "",
+  unitId: p.unitId ?? "", packSize: p.packSize ?? "", sellStep: p.sellStep ? n(p.sellStep) : "", minQty: p.minQty ? n(p.minQty) : "", isWeighed: p.isWeighed,
+  shortDescription: p.shortDescription ?? "", shortDescriptionBn: p.shortDescriptionBn ?? "", description: p.description, descriptionBn: p.descriptionBn ?? "",
   buyingPrice: n(p.buyingPrice), regularPrice: n(p.regularPrice), sellingPrice: n(p.priceBeforeDiscount ?? p.sellingPrice),
   discountPrice: p.discountPrice ? n(p.discountPrice) : "", discountStart: toLocalInput(p.discountStart), discountEnd: toLocalInput(p.discountEnd), discountLabel: p.discountLabel ?? "",
   stock: String(p.stock), lowStockThreshold: String(p.lowStockThreshold), freeShipping: p.freeShipping,
@@ -78,6 +81,7 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
   const [delOpen, setDelOpen] = useState(false);
   const cats = useQuery({ queryKey: ["categories"], queryFn: categoriesApi.list });
   const brands = useQuery({ queryKey: ["brands"], queryFn: brandsApi.list });
+  const units = useQuery({ queryKey: ["units"], queryFn: unitsApi.list });
 
   // when variants are added / removed on the server, show the server's list
   const sig = p ? p.variants.map((v) => v.id).join(",") : "";
@@ -88,15 +92,26 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
   }
 
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((x) => ({ ...x, [k]: v }));
-  const subs = useMemo(() => cats.data?.find((c) => c.id === f.categoryId)?.subCategories ?? [], [cats.data, f.categoryId]);
+  // every category of the tree as "Fish › Freshwater fish › Rui": the product sits in the one you pick
+  const catOptions = useMemo(() => flattenCategoryTree(buildCategoryTree(cats.data ?? [])), [cats.data]);
+  // active units, plus the one this product already uses (even if it was switched off since)
+  const unitOptions = useMemo(() => (units.data ?? []).filter((u) => u.isActive || u.id === f.unitId), [units.data, f.unitId]);
+  const unit = units.data?.find((u) => u.id === f.unitId);
   const hasVariants = variants.length > 0;
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!f.name.trim()) e.name = "Name is required";
+    if (!f.name.trim()) e.name = "English name is required (it makes the web address)";
+    if (!f.nameBn.trim()) e.nameBn = "Add the Bangla name: the shop shows it by default";
+    if (f.unitId) {
+      const step = f.sellStep === "" ? unit?.defaultStep : Number(f.sellStep);
+      const min = f.minQty === "" ? unit?.defaultMinQty : Number(f.minQty);
+      if (unit && !unit.allowDecimal && ((step !== undefined && !Number.isInteger(step)) || (min !== undefined && !Number.isInteger(min)))) e.sale = `"${unit.name}" is sold in whole numbers: use a whole-number step and minimum`;
+      if ((f.sellStep !== "" && !(Number(f.sellStep) > 0)) || (f.minQty !== "" && !(Number(f.minQty) > 0))) e.sale = "Step and minimum must be above zero";
+    } else if (f.sellStep !== "" || f.minQty !== "") e.sale = "Choose a unit first";
     if (f.slug && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(f.slug)) e.slug = "Lowercase letters, numbers and single dashes";
     if (!f.categoryId) e.categoryId = "Choose a category";
-    if (!f.description.trim()) e.description = "Add a description";
+
     if (f.buyingPrice === "" || Number(f.buyingPrice) < 0) e.buyingPrice = "Enter the cost price";
     if (!(Number(f.regularPrice) > 0)) e.regularPrice = "Enter the regular (MRP) price";
     if (!(Number(f.sellingPrice) > 0)) e.sellingPrice = "Enter the selling price";
@@ -118,9 +133,12 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
   const build = (): ProductInput => {
     const clearOr = (v: string) => (v.trim() === "" ? null : v);
     return {
-      name: f.name.trim(), slug: f.slug || undefined, productCode: f.productCode.trim() || undefined, barcode: f.barcode.trim() || undefined,
+      name: f.name.trim(), nameBn: f.nameBn.trim(), slug: f.slug || undefined, productCode: f.productCode.trim() || undefined, barcode: f.barcode.trim() || undefined,
       description: f.description, shortDescription: f.shortDescription || undefined,
-      status: f.status, categoryId: f.categoryId, subCategoryId: f.subCategoryId || undefined, brandId: f.brandId || undefined,
+      descriptionBn: f.descriptionBn, shortDescriptionBn: f.shortDescriptionBn,
+      unitId: f.unitId || undefined, packSize: f.packSize.trim(), isWeighed: f.isWeighed,
+      ...(f.unitId ? { sellStep: f.sellStep === "" ? null : Number(f.sellStep), minQty: f.minQty === "" ? null : Number(f.minQty) } : {}),
+      status: f.status, categoryId: f.categoryId, brandId: f.brandId || undefined,
       buyingPrice: Number(f.buyingPrice), regularPrice: Number(f.regularPrice), sellingPrice: Number(f.sellingPrice),
       discountPrice: f.discountPrice === "" ? null : Number(f.discountPrice),
       discountStart: f.discountPrice === "" ? null : fromLocalInput(f.discountStart),
@@ -187,28 +205,27 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
         <TabsContent value="basics" className="space-y-4">
           <Section title="General">
             <div className="space-y-3">
-              <Field label="Product name" required error={errs.name}>
-                <Input value={f.name} maxLength={200} onChange={(e) => { set("name", e.target.value); if (!slugTouched) set("slug", slugify(e.target.value)); }} />
-              </Field>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="Product name (Bangla)" required error={errs.nameBn}>
+                  <Input value={f.nameBn} maxLength={200} onChange={(e) => set("nameBn", e.target.value)} placeholder="রুই মাছ" />
+                </Field>
+                <Field label="Product name (English)" required error={errs.name} hint="Makes the web address">
+                  <Input value={f.name} maxLength={200} onChange={(e) => { set("name", e.target.value); if (!slugTouched) set("slug", slugify(e.target.value)); }} placeholder="Rui fish" />
+                </Field>
+              </div>
               <div className="grid gap-3 sm:grid-cols-3">
                 <Field label="URL slug" error={errs.slug} hint="Auto-made from the name"><Input value={f.slug} onChange={(e) => { setSlugTouched(true); set("slug", e.target.value); }} /></Field>
                 <Field label="Product code / SKU"><Input value={f.productCode} onChange={(e) => set("productCode", e.target.value)} /></Field>
                 <Field label="Barcode"><Input value={f.barcode} onChange={(e) => set("barcode", e.target.value)} /></Field>
               </div>
-              <div className="grid gap-3 sm:grid-cols-4">
-                <Field label="Category" required error={errs.categoryId}>
-                  <Select value={f.categoryId} onChange={(e) => { set("categoryId", e.target.value); set("subCategoryId", ""); }}>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Field label="Category" required error={errs.categoryId} hint="Pick the most exact one">
+                  <Select value={f.categoryId} onChange={(e) => set("categoryId", e.target.value)}>
                     <option value="">Choose…</option>
-                    {cats.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    {catOptions.map((o) => <option key={o.node.id} value={o.node.id}>{o.path}</option>)}
                   </Select>
                 </Field>
-                <Field label="Sub-category">
-                  <Select value={f.subCategoryId} onChange={(e) => set("subCategoryId", e.target.value)} disabled={!subs.length}>
-                    <option value="">None</option>
-                    {subs.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                  </Select>
-                </Field>
-                <Field label="Brand">
+                <Field label="Brand (optional)">
                   <Select value={f.brandId} onChange={(e) => set("brandId", e.target.value)}>
                     <option value="">No brand</option>
                     {brands.data?.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -222,10 +239,31 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
               </div>
             </div>
           </Section>
+          <Section title="How it is sold" description="The unit shows on the product card (৳380 / kg). The + and − buttons move by the step.">
+            {errs.sale && <p className="mb-3 rounded bg-red-50 px-3 py-2 text-xs font-medium text-destructive dark:bg-red-500/10">{errs.sale}</p>}
+            <div className="grid gap-3 sm:grid-cols-4">
+              <Field label="Unit" hint={<Link to="/units" className="underline">Manage units</Link>}>
+                <Select value={f.unitId} onChange={(e) => set("unitId", e.target.value)}>
+                  <option value="">None (whole pieces)</option>
+                  {unitOptions.map((u) => <option key={u.id} value={u.id}>{u.name} · {u.nameBn}{u.isActive ? "" : " (off)"}</option>)}
+                </Select>
+              </Field>
+              <Field label="Pack size" hint="Optional, e.g. 500 g"><Input value={f.packSize} maxLength={40} onChange={(e) => set("packSize", e.target.value)} /></Field>
+              <Field label="Step" hint={unit ? `Empty = unit step (${unit.defaultStep})` : "Choose a unit first"}><Input type="number" min={0} step="0.001" value={f.sellStep} disabled={!f.unitId} onChange={(e) => set("sellStep", e.target.value)} placeholder={unit ? String(unit.defaultStep) : ""} /></Field>
+              <Field label="Smallest quantity" hint={unit ? `Empty = unit minimum (${unit.defaultMinQty})` : "Choose a unit first"}><Input type="number" min={0} step="0.001" value={f.minQty} disabled={!f.unitId} onChange={(e) => set("minQty", e.target.value)} placeholder={unit ? String(unit.defaultMinQty) : ""} /></Field>
+            </div>
+            <label className="mt-3 flex cursor-pointer items-center gap-2 text-[13px]"><Checkbox checked={f.isWeighed} onChange={(e) => set("isWeighed", e.target.checked)} />Weighed when packed: the final weight (and bill) can differ a little from what was ordered</label>
+          </Section>
           <Section title="Description">
             <div className="space-y-3">
-              <Field label="Short description" hint="One or two lines, shown near the price"><Textarea rows={2} maxLength={1000} value={f.shortDescription} onChange={(e) => set("shortDescription", e.target.value)} /></Field>
-              <Field label="Full description" required error={errs.description}><Textarea rows={8} value={f.description} onChange={(e) => set("description", e.target.value)} /></Field>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="Short description (Bangla)" hint="One or two lines, shown near the price"><Textarea rows={2} maxLength={1000} value={f.shortDescriptionBn} onChange={(e) => set("shortDescriptionBn", e.target.value)} /></Field>
+                <Field label="Short description (English)"><Textarea rows={2} maxLength={1000} value={f.shortDescription} onChange={(e) => set("shortDescription", e.target.value)} /></Field>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="Full description (Bangla)"><Textarea rows={6} value={f.descriptionBn} onChange={(e) => set("descriptionBn", e.target.value)} /></Field>
+                <Field label="Full description (English)" error={errs.description}><Textarea rows={6} value={f.description} onChange={(e) => set("description", e.target.value)} /></Field>
+              </div>
             </div>
           </Section>
           <Section title="Badges & shop sections" description="Where the product is highlighted on the website.">
@@ -268,7 +306,7 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
           <Section title="Stock">
             <div className="grid gap-3 sm:grid-cols-3">
               <Field label="Quantity in stock" hint={hasVariants ? "Total of the variants — change each variant's stock instead" : isNew ? "Opening stock" : "Use Inventory → Adjust to change stock with a record"}>
-                <Input type="number" min={0} value={hasVariants ? String(variants.reduce((s, v) => s + Number(v.stock || 0), 0)) : f.stock} onChange={(e) => set("stock", e.target.value)} disabled={hasVariants || !isNew} />
+                <Input type="number" min={0} step="0.001" value={hasVariants ? String(variants.reduce((s, v) => s + Number(v.stock || 0), 0)) : f.stock} onChange={(e) => set("stock", e.target.value)} disabled={hasVariants || !isNew} />
               </Field>
               <Field label="Low-stock alert at" hint="You get a bell alert when stock drops to this"><Input type="number" min={0} value={f.lowStockThreshold} onChange={(e) => set("lowStockThreshold", e.target.value)} /></Field>
             </div>

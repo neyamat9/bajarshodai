@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import {
   LayoutDashboard, ShoppingBag, PlusCircle, RotateCcw, Users, Boxes, PackagePlus, Warehouse, FolderTree, Handshake, Images,
   TicketPercent, GalleryHorizontal, BellRing, Star, MessageCircleQuestion, LifeBuoy, Mail, Newspaper, BarChart3,
-  Bell, Settings, History, ShieldCheck, UserCircle,
+  Bell, Settings, History, ShieldCheck, UserCircle, Ruler, CalendarClock,
 } from "lucide-react";
 import type { AttentionSummary } from "@/api/notifications";
 
@@ -36,8 +36,10 @@ export const menu: MenuSection[] = [
     items: [
       { label: "Products", to: "/products", icon: i(Boxes), end: true },
       { label: "Add product", to: "/products/new", icon: i(PackagePlus) },
+      { label: "Daily prices & stock", to: "/daily-sheet", icon: i(CalendarClock) },
       { label: "Inventory", to: "/inventory", icon: i(Warehouse), badge: (s) => s.lowStockItems + s.outOfStockItems },
       { label: "Categories", to: "/categories", icon: i(FolderTree) },
+      { label: "Units", to: "/units", icon: i(Ruler) },
       { label: "Brands", to: "/brands", icon: i(Handshake) },
       { label: "Media library", to: "/media", icon: i(Images) },
     ],

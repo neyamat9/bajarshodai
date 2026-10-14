@@ -5,6 +5,8 @@ export type ProductStatus = "ACTIVE" | "INACTIVE" | "OUT_OF_STOCK" | "DRAFT" | "
 export interface ProductRow {
   id: string;
   name: string;
+  nameBn: string | null;
+  unit: { shortLabel: string; shortLabelBn: string } | null;
   slug: string;
   productCode: string | null;
   status: ProductStatus;
@@ -71,7 +73,14 @@ export interface ProductDetail extends Omit<ProductRow, "mainImage" | "_count" |
   metaKeywords: string | null;
   brandId: string | null;
   categoryId: string;
-  subCategoryId: string | null;
+  nameBn: string | null;
+  shortDescriptionBn: string | null;
+  descriptionBn: string | null;
+  unitId: string | null;
+  packSize: string | null;
+  sellStep: string | null;
+  minQty: string | null;
+  isWeighed: boolean;
   images: ProductImage[];
   variants: ProductVariant[];
   attributes: { id: string; name: string; value: string }[];
@@ -156,7 +165,15 @@ export interface ProductInput {
   metaKeywords?: string;
   brandId?: string;
   categoryId?: string;
-  subCategoryId?: string;
+  nameBn?: string;
+  shortDescriptionBn?: string;
+  descriptionBn?: string;
+  unitId?: string;
+  packSize?: string;
+  /** null = use the unit's step / minimum */
+  sellStep?: number | null;
+  minQty?: number | null;
+  isWeighed?: boolean;
   attributes?: { name: string; value: string }[];
   tags?: string[];
   variants?: VariantInput[];
@@ -171,6 +188,8 @@ export const productsApi = {
   remove: (id: string) => api.delete<{ deleted: boolean; message: string }>(`/admin/products/${id}`).then((r) => r.data),
   duplicate: (id: string) => api.post<ProductDetail>(`/admin/products/${id}/duplicate`).then((r) => r.data),
   tags: () => api.get<{ tag: string; products: number }[]>("/admin/products/tags").then((r) => r.data),
+  dailySheet: (rows: { id: string; sellingPrice?: number; stock?: number; status?: "ACTIVE" | "INACTIVE" }[]) =>
+    api.put<{ saved: number; failed: number; results: { id: string; name?: string; ok: boolean; error?: string }[] }>("/admin/products/daily-sheet", { rows }).then((r) => r.data),
   // variants
   addVariant: (id: string, body: VariantInput) => api.post<ProductVariant>(`/admin/products/${id}/variants`, body).then((r) => r.data),
   updateVariant: (id: string, variantId: string, body: Partial<VariantInput>) => api.patch<ProductVariant>(`/admin/products/${id}/variants/${variantId}`, body).then((r) => r.data),
