@@ -13,9 +13,18 @@ export function mapCartItem(i: any, locale: Locale = clientLocale()): CartItem {
     price,
     variantId: i.variant?.id ?? undefined,
     variantLabel: i.variant?.name ?? undefined,
-    quantity: i.quantity,
+    quantity: Number(i.quantity),
     imageUrl: assetUrl(i.product.images?.[0]?.url),
     stock: i.variant ? Number(i.variant.stock) : Number(i.product.stock),
+    unit: i.product.unit
+      ? {
+          code: i.product.unit.code ?? '',
+          label: pick(locale, i.product.unit.shortLabel, i.product.unit.shortLabelBn),
+          allowDecimal: !!i.product.unit.allowDecimal,
+          step: Number(i.product.unit.step ?? 1),
+          minQty: Number(i.product.unit.minQty ?? 1),
+        }
+      : null,
   };
 }
 

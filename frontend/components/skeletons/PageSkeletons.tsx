@@ -94,7 +94,7 @@ export function ListingSkeleton() {
           </div>
           <div className="min-w-0 flex-1">
             <Block className="mb-5 h-12 w-full" />
-            <CardsSkeleton count={12} cols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" />
+            <CardsSkeleton count={12} cols="grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5" />
           </div>
         </div>
       </div>

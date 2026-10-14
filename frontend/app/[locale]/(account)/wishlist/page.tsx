@@ -23,8 +23,7 @@ function basicProduct(i: WishlistItem): Product {
     brandName: "",
     category: "",
     categoryName: "",
-    subCategory: "",
-    subCategoryName: "",
+    categoryPath: [],
     productCode: "",
     unit: null,
     packSize: "",
@@ -100,7 +99,7 @@ export default function WishlistPage() {
       {items.length === 0 ? (
         <EmptyState icon={Heart} title={t("emptyTitle")} text={t("emptyText")} action={{ href: "/products", label: t("discover") }} />
       ) : (
-        <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 min-[480px]:gap-3 sm:gap-4 lg:grid-cols-3 2xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
           {items.map((item) => {
             const p = full[item.slug];
             if (p === undefined) return <CardSkeleton key={item.productId} />;

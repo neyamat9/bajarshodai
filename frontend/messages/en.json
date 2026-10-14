@@ -94,7 +94,14 @@
     "categoriesCount": "{count} categories",
     "closeCategories": "Close categories",
     "expand": "Expand {name}",
-    "collapse": "Collapse {name}"
+    "collapse": "Collapse {name}",
+    "popular": "Popular",
+    "offers": "Offers",
+    "newArrivals": "New arrivals",
+    "help": "Help",
+    "contact": "Contact",
+    "home": "Home",
+    "breadcrumb": "You are here"
   },
   "Browse": {
     "allBrands": "All brands",
@@ -225,7 +232,11 @@
       "addedWish": "Added to wishlist",
       "wishAdd": "Add {name} to wishlist",
       "wishRemove": "Remove {name} from wishlist",
-      "chooseOptionFirst": "Choose an option first"
+      "chooseOptionFirst": "Choose an option first",
+      "onlyStock": "Only {count} in stock",
+      "qtyOf": "{name}: quantity in cart",
+      "decrease": "Decrease quantity",
+      "increase": "Increase quantity"
     },
     "summary": {
       "reviews": "{count, plural, one {# Review} other {# Reviews}}",
@@ -486,7 +497,10 @@
     "increase": "Increase quantity",
     "each": "{price} each",
     "remove": "Remove",
-    "updateFailed": "Could not update your cart"
+    "updateFailed": "Could not update your cart",
+    "floatItems": "{count, plural, one {# item} other {# items}}",
+    "floatAria": "Open cart: {items}, total {total}",
+    "perUnit": "{price} / {unit}"
   },
   "Checkout": {
     "title": "Checkout",

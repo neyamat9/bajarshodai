@@ -15,6 +15,7 @@ import type { FilterState } from "./FilterSidebar";
 import FilterSidebar from "./FilterSidebar";
 import ProductCard from "./ProductCard";
 import SortBar from "./SortBar";
+import { flattenSubs } from "@/lib/utils/categories";
 
 interface ProductGridProps {
   /** First page, fetched on the server */
@@ -77,7 +78,7 @@ export default function ProductGrid({
   // slugs of the sub-categories that belong to a category
   const subsOf = useCallback(
     (catSlug: string) => {
-      const owned = new Set(categories.find((c) => c.slug === catSlug)?.subCategories.map((x) => x.slug));
+      const owned = new Set(flattenSubs(categories.find((c) => c.slug === catSlug)?.subCategories ?? []).map((x) => x.slug));
       return filters.subCategories.filter((x) => owned.has(x));
     },
     [categories, filters.subCategories],
@@ -280,7 +281,7 @@ export default function ProductGrid({
           {products.length === 0 && !loading ? (
             <EmptyState hasFilters={hasActiveFilters} onClearFilters={handleClearAll} />
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 md:gap-4">
               {products.map((product, idx) => (
                 <ProductCard key={product.id} product={product} animationDelay={Math.min(idx * 40, 400)} />
               ))}

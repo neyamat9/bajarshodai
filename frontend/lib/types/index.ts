@@ -59,8 +59,8 @@ export interface Product {
   brandName: string;
   category: string;
   categoryName: string;
-  subCategory: string;
-  subCategoryName: string;
+  /** root → the product's own category (for the breadcrumb); only on the product page */
+  categoryPath: { slug: string; name: string }[];
   productCode: string;
   unit: ProductUnit | null;
   /** e.g. "500 g" */
@@ -87,11 +87,16 @@ export interface Product {
   freeShipping?: boolean;
 }
 
+/** A category below the top level. The tree can go several levels deep: `children` are the next level. */
 export interface SubCategory {
   id: string;
   slug: string;
   name: string;
+  /** the top-level category it belongs to */
   categorySlug: string;
+  /** active products in it and below it */
+  productCount: number;
+  children: SubCategory[];
 }
 
 export interface Category {
@@ -100,7 +105,10 @@ export interface Category {
   name: string;
   description: string;
   icon: string;
+  image?: string | null;
+  /** the children (next level of the tree); each can have children of its own */
   subCategories: SubCategory[];
+  /** active products in it and below it */
   productCount: number;
 }
 
@@ -145,9 +153,12 @@ export interface CartItem {
   price: number;
   variantId?: string;
   variantLabel?: string;
+  /** how much (0.5 kg is fine for a product sold in parts) */
   quantity: number;
   imageUrl: string;
   stock: number;
+  /** how the product is sold: the unit text and the step / minimum of the + and − buttons */
+  unit?: ProductUnit | null;
 }
 
 export interface Cart {

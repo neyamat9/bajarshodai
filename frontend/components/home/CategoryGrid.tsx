@@ -2,7 +2,7 @@ import { Link } from "@/i18n/navigation";
 import RevealGroup from "@/components/motion/RevealGroup";
 import type { Category } from "@/lib/types";
 import { BrowseTrigger } from "@/components/browse/BrowseModals";
-import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import SectionHeader from "./SectionHeader";
 import SectionMore, { sectionMoreClass } from "./SectionMore";
@@ -44,55 +44,33 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
           }
         />
 
-        <div className="grid grid-cols-2 gap-3 [perspective:1100px] md:gap-4 lg:grid-cols-4">
+        {/* small tiles: a picture, two lines of name */}
+        <div className="grid grid-cols-4 gap-x-2 gap-y-5 sm:grid-cols-5 md:gap-x-4 lg:grid-cols-8">
           {categories.map((cat) => {
-            // The dashboard can attach an image to a category; fall back to its icon.
-            const image = (cat as Category & { image?: string | null }).image;
+            // The dashboard can attach an image to a category; fall back to its icon, then to its first letter.
+            const image = cat.image;
             return (
               <Link
                 data-reveal="clip"
-                data-tilt
                 key={cat.slug}
                 href={`/category/${cat.slug}`}
                 prefetch
                 id={`category-${cat.slug}`}
-                className="group relative aspect-[5/4] overflow-hidden rounded border border-border bg-gradient-to-br from-primary to-brand-deep-light will-change-transform"
+                className="group flex flex-col items-center gap-2 text-center"
               >
-                {image ? (
-                  <div data-parallax className="absolute inset-x-0 -inset-y-[9%]">
-                    <div data-zoom className="relative h-full w-full">
-                      <Image
-                        src={image}
-                        alt={cat.name}
-                        fill
-                        sizes="(max-width: 1024px) 50vw, 25vw"
-                        className="object-cover transition-transform duration-700 group-hover:scale-110"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <svg
-                    className="absolute left-1/2 top-[40%] h-14 w-14 -translate-x-1/2 -translate-y-1/2 text-white/90 transition-transform duration-500 group-hover:scale-110"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={1.4}
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d={cat.icon} />
-                  </svg>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-brand-deep via-brand-deep/30 to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 h-1 origin-left scale-x-0 bg-brand-fresh transition-transform duration-500 group-hover:scale-x-100" />
-
-                <span className="absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded bg-brand-fresh text-on-fresh opacity-0 transition-opacity group-hover:opacity-100">
-                  <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+                <span className="relative flex aspect-square w-full max-w-[96px] items-center justify-center overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary to-brand-deep-light shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:border-brand-fresh group-hover:shadow-md">
+                  {image ? (
+                    <Image src={image} alt="" fill sizes="96px" className="object-cover transition-transform duration-500 group-hover:scale-110" />
+                  ) : cat.icon ? (
+                    <svg className="h-9 w-9 text-white/90" fill="none" stroke="currentColor" strokeWidth={1.4} viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d={cat.icon} />
+                    </svg>
+                  ) : (
+                    <span className="font-outfit text-3xl font-black text-white/90" aria-hidden="true">{Array.from(cat.name)[0]}</span>
+                  )}
                 </span>
-
-                <div className="absolute inset-x-0 bottom-0 p-3.5 md:p-4">
-                  <h3 className="line-clamp-2 break-words font-outfit text-sm font-bold leading-tight text-white min-[400px]:text-base md:text-lg">{cat.name}</h3>
-                  <p className="mt-0.5 text-xs font-medium text-white/80">{t("productsCount", { count: formatNumber(cat.productCount, locale, 0) })}</p>
-                </div>
+                <span className="line-clamp-2 w-full break-words text-[12px] font-semibold leading-tight text-foreground transition-colors group-hover:text-accent-text sm:text-[13px]">{cat.name}</span>
+                <span className="-mt-1.5 text-[11px] font-medium text-muted-foreground">{t("productsCount", { count: formatNumber(cat.productCount, locale, 0) })}</span>
               </Link>
             );
           })}

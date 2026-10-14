@@ -10,7 +10,8 @@ import { Heart, Info, Loader2, MessageSquare, Minus, Plus, ShoppingCart, Star } 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { formatMoney, formatNumber } from "@/lib/format";
+import { formatMoney, formatNumber, formatQuantity } from "@/lib/format";
+import { startQty, stepDown, stepUp } from "@/lib/quantity";
 import type { Locale } from "@/lib/locale";
 
 interface ProductSummaryProps {
@@ -37,7 +38,8 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
   const reviewCount = extra.reviewCount ?? 0;
 
   const [variant, setVariant] = useState<ProductVariant | null>(product.variants[0] ?? null);
-  const [quantity, setQuantity] = useState(1);
+  const unit = product.unit;
+  const [quantity, setQuantity] = useState(startQty(unit));
   const [busy, setBusy] = useState(false);
   const [panel, setPanel] = useState<"payment" | "disclaimer" | null>(null);
 
@@ -55,7 +57,7 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
 
   function pick(v: ProductVariant) {
     setVariant(v);
-    setQuantity(1);
+    setQuantity(startQty(unit));
     onVariantChange?.(v);
   }
 
@@ -72,8 +74,9 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
       quantity,
       imageUrl: image?.url ?? "/placeholder.svg",
       stock,
+      unit,
     });
-    if (res.ok) toast.success(t("card.added", { name: product.name }), { description: t("summary.addedDesc", { qty: formatNumber(quantity, locale, 0), price: money(price) }), duration: 2500 });
+    if (res.ok) toast.success(t("card.added", { name: product.name }), { description: t("summary.addedDesc", { qty: `${formatQuantity(quantity, locale)}${unit ? ` ${unit.label}` : ""}`, price: money(price) }), duration: 2500 });
     else toast.error(res.error ?? t("card.couldNotAdd"));
     setBusy(false);
   }
@@ -91,7 +94,7 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
 
   const colors = product.variants.filter((v) => v.type === "color");
   const others = product.variants.filter((v) => v.type !== "color");
-  const stockText = stock <= 0 ? t("summary.outOfStock") : stock < 5 ? t("summary.onlyLeft", { count: formatNumber(stock, locale, 0) }) : t("summary.inStock");
+  const stockText = stock <= 0 ? t("summary.outOfStock") : stock < 5 ? t("summary.onlyLeft", { count: `${formatQuantity(stock, locale)}${unit ? ` ${unit.label}` : ""}` }) : t("summary.inStock");
   const stockTone = stock <= 0 ? "text-destructive" : stock < 5 ? "text-accent-text" : "text-emerald-600 dark:text-emerald-400";
   const bullets = product.pinnedSpecs.slice(0, 5).map((s) => `${s.label}: ${s.value}`);
 
@@ -217,6 +220,7 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
           <p className="text-sm font-semibold text-foreground">{hasDiscount ? t("summary.discountPrice") : t("summary.price")}</p>
           <p className="mt-2 flex flex-wrap items-baseline gap-2">
             <span className="font-outfit text-2xl font-extrabold text-destructive">{money(price)}</span>
+            {unit && <span className="text-sm font-semibold text-muted-foreground">/ {unit.label}</span>}
             {hasDiscount && <span className="text-sm text-muted-foreground line-through">{money(oldPrice!)}</span>}
           </p>
           <button
@@ -246,18 +250,21 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
         <div className="flex items-center rounded border border-input bg-background">
           <button
             type="button"
-            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-            disabled={quantity <= 1}
+            onClick={() => setQuantity((q) => stepDown(q, unit) ?? q)}
+            disabled={stepDown(quantity, unit) === null}
             aria-label={t("summary.decrease")}
             className="flex h-11 w-11 items-center justify-center text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30"
           >
             <Minus className="h-4 w-4" />
           </button>
-          <span className="w-10 select-none border-x border-input text-center text-sm font-bold leading-[2.75rem] text-foreground">{formatNumber(quantity, locale, 0)}</span>
+          <span className="min-w-[4.5rem] select-none whitespace-nowrap border-x border-input px-2 text-center text-sm font-bold leading-[2.75rem] text-foreground">
+            {formatQuantity(quantity, locale)}
+            {unit && <span className="ml-1 text-xs font-medium text-muted-foreground">{unit.label}</span>}
+          </span>
           <button
             type="button"
-            onClick={() => setQuantity((q) => Math.min(99, stock, q + 1))}
-            disabled={quantity >= 99 || quantity >= stock}
+            onClick={() => setQuantity((q) => stepUp(q, unit, Math.min(99, stock)) ?? q)}
+            disabled={stepUp(quantity, unit, Math.min(99, stock)) === null}
             aria-label={t("summary.increase")}
             className="flex h-11 w-11 items-center justify-center text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30"
           >

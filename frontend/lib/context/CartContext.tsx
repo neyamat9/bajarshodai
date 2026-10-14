@@ -8,6 +8,7 @@ import { createContext, useCallback, useEffect, useMemo, useRef, useState } from
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
 import { formatQuantity } from "@/lib/format";
+import { round3 } from "@/lib/quantity";
 import type { Locale } from "@/lib/locale";
 
 const EMPTY: Cart = { items: [], updatedAt: "" };
@@ -99,7 +100,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setCart((c) => ({
         ...c,
         items: existing
-          ? c.items.map((i) => (i.id === existing.id ? { ...i, quantity: i.quantity + p.quantity } : i))
+          ? c.items.map((i) => (i.id === existing.id ? { ...i, quantity: round3(i.quantity + p.quantity) } : i))
           : [...c.items, { ...p, id: tempId }],
       }));
       void run(() => addCartItem(p.productId, p.quantity, p.variantId)).then(async (r) => {
@@ -118,7 +119,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setCart((c) => ({
           ...c,
           items: existing
-            ? c.items.map((i) => (i.id === existing.id ? { ...i, quantity: Math.max(1, i.quantity - p.quantity) } : i))
+            ? c.items.map((i) => (i.id === existing.id ? { ...i, quantity: Math.max(0.001, round3(i.quantity - p.quantity)) } : i))
             : c.items.filter((i) => i.id !== tempId),
         }));
       });
@@ -152,7 +153,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const updateQuantity = useCallback(
     async (id: string, quantity: number) => {
-      const q = Math.max(1, Math.min(quantity, 99));
+      // the buttons already follow the unit's step; the server checks the rule again
+      const q = Math.max(0.001, Math.min(round3(quantity), 99));
       setCart((c) => ({ ...c, items: c.items.map((i) => (i.id === id ? { ...i, quantity: q } : i)) }));
       const rid = await realId(id);
       if (!rid) return { ok: true } as CartResult;
@@ -166,8 +168,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     await run(() => clearCartApi());
   }, [run]);
 
-  const cartCount = useMemo(() => cart.items.reduce((s, i) => s + i.quantity, 0), [cart.items]);
-  const cartTotal = useMemo(() => cart.items.reduce((s, i) => s + i.price * i.quantity, 0), [cart.items]);
+  // "items" = different products in the cart (2.5 kg of fish is one item, not two and a half)
+  const cartCount = cart.items.length;
+  const cartTotal = useMemo(() => round3(cart.items.reduce((s, i) => s + i.price * i.quantity, 0)), [cart.items]);
 
   const value: CartContextValue = useMemo(
     () => ({

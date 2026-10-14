@@ -96,7 +96,7 @@ function RelatedProductCard({ product }: { product: Product }) {
 
   function handleAddToCart(e: React.MouseEvent) {
     e.preventDefault();
-    void quickAdd({ id: product.id, slug: product.slug, name: product.name, price: product.price, stock: product.stock, imageUrl: primaryImage?.url ?? "", hasVariants: product.hasVariants });
+    void quickAdd({ id: product.id, slug: product.slug, name: product.name, price: product.price, stock: product.stock, imageUrl: primaryImage?.url ?? "", hasVariants: product.hasVariants, unit: product.unit });
   }
 
   function handleToggleWishlist(e: React.MouseEvent) {

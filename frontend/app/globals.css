@@ -500,3 +500,8 @@ html body[data-scroll-locked] {
    Outside any @layer on purpose: unlayered rules beat Tailwind utilities (tracking-widest, uppercase…). */
 html[lang="bn"] .uppercase { text-transform: none; }
 html[lang="bn"] [class*="tracking-"] { letter-spacing: 0; }
+
+/* the phone cart bar sits at the bottom: lift the scroll-to-top button above it */
+@media (max-width: 767px) {
+  html[data-cart-bar] .scroll-top-btn { bottom: 5rem; }
+}

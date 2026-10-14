@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
 import { formatMoney, formatQuantity } from "@/lib/format";
+import { stepDown, stepUp } from "@/lib/quantity";
 import type { Locale } from "@/lib/locale";
 
 interface CartItemProps {
@@ -68,18 +69,21 @@ export default function CartItem({ item, variant = "compact" }: CartItemProps) {
     if (!r.ok) toast.error(r.error ?? t("qtyFailed"));
   }
 
+  // the buttons follow the unit: 0.5 kg steps for fish, whole pieces for soap
+  const lessQty = stepDown(item.quantity, item.unit);
+  const moreQty = stepUp(item.quantity, item.unit, Math.min(item.stock, 99));
+
   function handleDecrement() {
-    if (item.quantity <= 1) return;
-    void change(item.quantity - 1);
+    if (lessQty === null) return;
+    void change(lessQty);
   }
 
   function handleIncrement() {
-    if (item.quantity >= 99) return;
-    if (item.quantity >= item.stock) {
+    if (moreQty === null) {
       toast.info(t("onlyStock", { count: formatQuantity(item.stock, locale) }));
       return;
     }
-    void change(item.quantity + 1);
+    void change(moreQty);
   }
 
   const formattedPrice = formatMoney(item.price, locale);
@@ -127,16 +131,19 @@ export default function CartItem({ item, variant = "compact" }: CartItemProps) {
             <div className="flex items-center overflow-hidden rounded border border-input bg-card">
               <button
                 onClick={handleDecrement}
-                disabled={item.quantity <= 1}
+                disabled={lessQty === null}
                 aria-label={t("decrease")}
                 className="flex h-8 w-8 items-center justify-center text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-30"
               >
                 <Minus className="h-3.5 w-3.5" />
               </button>
-              <span className="w-8 select-none text-center text-sm font-bold text-foreground">{formatQuantity(item.quantity, locale)}</span>
+              <span className="min-w-12 select-none px-1 text-center text-sm font-bold leading-tight text-foreground">
+                {formatQuantity(item.quantity, locale)}
+                {item.unit?.label && <span className="block text-[10px] font-medium text-muted-foreground">{item.unit.label}</span>}
+              </span>
               <button
                 onClick={handleIncrement}
-                disabled={item.quantity >= 99}
+                disabled={moreQty === null}
                 aria-label={t("increase")}
                 className="flex h-8 w-8 items-center justify-center text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-30"
               >
@@ -147,7 +154,7 @@ export default function CartItem({ item, variant = "compact" }: CartItemProps) {
             {/* Price */}
             <div className="text-right leading-tight">
               <p className="font-outfit text-base font-extrabold text-primary dark:text-accent-text">{formattedTotal}</p>
-              {item.quantity > 1 && <p className="text-[11px] text-muted-foreground">{t("each", { price: formattedPrice })}</p>}
+              <p className="text-[11px] text-muted-foreground">{item.unit?.label ? t("perUnit", { price: formattedPrice, unit: item.unit.label }) : item.quantity > 1 ? t("each", { price: formattedPrice }) : null}</p>
             </div>
           </div>
         </div>
@@ -190,7 +197,7 @@ export default function CartItem({ item, variant = "compact" }: CartItemProps) {
       <div className="flex items-center gap-1 bg-secondary rounded overflow-hidden mt-3 sm:mt-0 w-28">
         <button
           onClick={handleDecrement}
-          disabled={item.quantity <= 1}
+          disabled={lessQty === null}
           aria-label={t("decrease")}
           className="w-9 h-9 flex items-center justify-center text-foreground/80 hover:text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-lg leading-none"
         >
@@ -198,10 +205,11 @@ export default function CartItem({ item, variant = "compact" }: CartItemProps) {
         </button>
         <span className="flex-1 text-center text-sm font-semibold text-foreground select-none">
           {formatQuantity(item.quantity, locale)}
+          {item.unit?.label && <span className="ml-1 text-[11px] font-medium text-muted-foreground">{item.unit.label}</span>}
         </span>
         <button
           onClick={handleIncrement}
-          disabled={item.quantity >= 99}
+          disabled={moreQty === null}
           aria-label={t("increase")}
           className="w-9 h-9 flex items-center justify-center text-foreground/80 hover:text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-lg leading-none"
         >

@@ -6,6 +6,7 @@ import type { Locale } from "@/lib/locale";
 import { useDebouncedSearch } from "@/lib/hooks/use-debounced-search";
 import type { Brand, Category } from "@/lib/types";
 import { Check, ChevronDown, RotateCcw, Search, SlidersHorizontal, X } from "lucide-react";
+import { flattenSubs } from "@/lib/utils/categories";
 import { Fragment, useEffect, useMemo, useState } from "react";
 
 export interface FilterState {
@@ -74,7 +75,7 @@ export default function FilterSidebar({
   // ticking a category reveals its sub-categories; unticking it also drops the sub-categories chosen under it
   function toggleCategory(cat: Category) {
     const on = filters.categories.includes(cat.slug);
-    const owned = new Set(cat.subCategories.map((x) => x.slug));
+    const owned = new Set(flattenSubs(cat.subCategories).map((x) => x.slug));
     onFiltersChange({
       ...filters,
       categories: on ? filters.categories.filter((x) => x !== cat.slug) : [...filters.categories, cat.slug],
@@ -181,15 +182,16 @@ export default function FilterSidebar({
         <ul className="no-scrollbar -mx-1 max-h-80 space-y-0.5 overflow-y-auto px-1" data-lenis-prevent>
           {categories.map((cat) => {
             const checked = filters.categories.includes(cat.slug);
-            const picked = cat.subCategories.filter((x) => filters.subCategories.includes(x.slug)).length;
+            const allSubs = flattenSubs(cat.subCategories);
+            const picked = allSubs.filter((x) => filters.subCategories.includes(x.slug)).length;
             return (
               <Fragment key={cat.slug}>
                 <Option id={`cat-${cat.slug}`} label={cat.name} count={cat.productCount} checked={checked} hint={picked > 0 ? t("filters.selected", { count: formatNumber(picked, locale, 0) }) : undefined} onChange={() => toggleCategory(cat)} />
-                {checked && cat.subCategories.length > 0 && (
+                {checked && allSubs.length > 0 && (
                   <li>
                     <ul className="ml-[17px] space-y-0.5 border-l border-border pl-2.5" aria-label={t("filters.subCategories", { name: cat.name })}>
-                      {cat.subCategories.map((sub) => (
-                        <Option key={sub.slug} small id={`sub-${sub.slug}`} label={sub.name} checked={filters.subCategories.includes(sub.slug)} onChange={() => toggleSub(cat, sub.slug)} />
+                      {allSubs.map((sub) => (
+                        <Option key={sub.slug} small id={`sub-${sub.slug}`} label={`${"– ".repeat(sub.depth)}${sub.name}`} checked={filters.subCategories.includes(sub.slug)} onChange={() => toggleSub(cat, sub.slug)} />
                       ))}
                     </ul>
                   </li>

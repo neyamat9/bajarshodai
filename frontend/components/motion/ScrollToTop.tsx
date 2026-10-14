@@ -53,7 +53,7 @@ export default function ScrollToTop() {
       type="button"
       onClick={toTop}
       aria-label={t("scrollTop")}
-      className="group fixed bottom-6 right-6 z-[1500] flex h-12 w-12 items-center justify-center rounded bg-card text-foreground shadow-xl transition-colors hover:bg-brand-fresh hover:text-on-fresh"
+      className="scroll-top-btn group fixed bottom-6 right-6 z-[1500] flex h-12 w-12 items-center justify-center rounded bg-card text-foreground shadow-xl transition-colors hover:bg-brand-fresh hover:text-on-fresh"
       style={{ visibility: "hidden" }}
     >
       <svg viewBox="0 0 48 48" className="absolute inset-0 -rotate-90" aria-hidden="true">

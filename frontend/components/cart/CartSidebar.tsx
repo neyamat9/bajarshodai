@@ -58,7 +58,8 @@ export default function CartSidebar() {
     if (applied) setInput("");
   }, [applied]);
 
-  const subtotal = summary?.subtotal ?? cartTotal;
+  // a summary fetched before the server had the new item says 0: until it catches up, trust the cart on screen
+  const subtotal = summary && summary.items.length > 0 ? summary.subtotal : cartTotal;
   const discount = applied ? summary?.discountAmount ?? applied.discount : 0;
   const freeShipLine = applied && applied.shippingDiscount > 0;
   const total = Math.max(0, subtotal - discount);

@@ -5,6 +5,9 @@ import { getSiteSettings } from "@/lib/services/site.service";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
+import { ChevronRight } from "lucide-react";
+import { Link } from "@/i18n/navigation";
+import { categoryHref } from "@/lib/utils/categories";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { Locale } from "@/lib/locale";
 
@@ -86,15 +89,31 @@ export default async function ProductPage({ params }: ProductPageProps) {
     settingsPromise,
   ]);
   const paymentMethods = settings.payment.methods as string[];
+  const tn = await getTranslations({ locale, namespace: "Nav" });
+  const top = product.categoryPath[0]?.slug;
 
   return (
-    <ProductDetailClient
-      product={product}
-      relatedProducts={relatedProducts}
-      reviews={reviewPage.reviews}
-      reviewStats={{ average: reviewPage.averageRating, total: reviewPage.total, breakdown: reviewPage.breakdown }}
-      questions={questions}
-      paymentMethods={paymentMethods}
-    />
+    <>
+      {/* Home › Fish › Freshwater fish › Rui, Katla & Mrigel */}
+      {top && (
+        <nav aria-label={tn("breadcrumb")} className="mx-auto flex max-w-[1440px] flex-wrap items-center gap-1 px-4 pt-4 text-xs font-medium text-muted-foreground md:px-8">
+          <Link href="/" className="hover:text-accent-text">{tn("home")}</Link>
+          {product.categoryPath.map((c) => (
+            <span key={c.slug} className="flex items-center gap-1">
+              <ChevronRight className="h-3 w-3 opacity-60" aria-hidden="true" />
+              <Link href={categoryHref(top, c.slug)} className="hover:text-accent-text">{c.name}</Link>
+            </span>
+          ))}
+        </nav>
+      )}
+      <ProductDetailClient
+        product={product}
+        relatedProducts={relatedProducts}
+        reviews={reviewPage.reviews}
+        reviewStats={{ average: reviewPage.averageRating, total: reviewPage.total, breakdown: reviewPage.breakdown }}
+        questions={questions}
+        paymentMethods={paymentMethods}
+      />
+    </>
   );
 }

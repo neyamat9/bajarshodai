@@ -1,4 +1,5 @@
 import CartSidebar from "@/components/cart/CartSidebar";
+import FloatingCart from "@/components/cart/FloatingCart";
 import { AuthModalProvider } from "@/components/auth/AuthModal";
 import FreshnessWatcher from "@/components/layout/FreshnessWatcher";
 import ScrollToTop from "@/components/motion/ScrollToTop";
@@ -91,6 +92,7 @@ export default async function LocaleLayout({
                     {children}
                     {/* Global overlays — rendered once, visibility driven by context */}
                     <CartSidebar />
+                    <FloatingCart />
                   </AuthModalProvider>
                 </WishlistProvider>
               </CartProvider>

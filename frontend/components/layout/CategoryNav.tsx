@@ -8,6 +8,7 @@ import { useCart } from "@/lib/hooks/use-cart";
 import { ChevronDown, LayoutGrid, ShoppingCart } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { categoryHref } from "@/lib/utils/categories";
 
 interface CategoryNavProps {
   categories: Category[];
@@ -129,7 +130,7 @@ export default function CategoryNav({ categories, compact = false }: CategoryNav
                       {cat.subCategories.map((sub) => (
                         <Link
                           key={sub.slug}
-                          href={`/products?category=${cat.slug}&sub=${sub.slug}`}
+                          href={categoryHref(cat.slug, sub.slug)}
                           className="flex items-center rounded px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                         >
                           {sub.name}

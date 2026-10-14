@@ -27,9 +27,9 @@ export default function BestSellingProducts({ products }: BestSellingProductsPro
           hrefLabel={t("seeBest")}
         />
 
-        <div className="grid grid-cols-1 gap-4 [perspective:1100px] min-[480px]:grid-cols-2 min-[480px]:gap-3 md:gap-5 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 [perspective:1100px] sm:grid-cols-3 md:gap-4 lg:grid-cols-5 xl:grid-cols-6">
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} showSold entrance={false} />
+            <ProductCard key={product.id} product={product} entrance={false} />
           ))}
         </div>
 

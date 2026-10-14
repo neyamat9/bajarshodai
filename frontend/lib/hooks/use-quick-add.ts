@@ -4,9 +4,8 @@ import { useRouter } from "@/i18n/navigation";
 import { useCartActions } from "@/lib/hooks/use-cart";
 import { useCallback } from "react";
 import { toast } from "sonner";
-import { useLocale, useTranslations } from "next-intl";
-import { formatMoney } from "@/lib/format";
-import type { Locale } from "@/lib/locale";
+import { useTranslations } from "next-intl";
+import type { ProductUnit } from "@/lib/types";
 
 // One-click "add to cart" from cards and lists. Products with options
 // (colour, storage…) send the customer to the product page to choose.
@@ -14,10 +13,9 @@ export function useQuickAdd() {
   const { addToCart } = useCartActions();
   const router = useRouter();
   const t = useTranslations("Product.card");
-  const locale = useLocale() as Locale;
 
   return useCallback(
-    async (p: { id: string; slug: string; name: string; price: number; stock: number; imageUrl: string; hasVariants?: boolean }, quantity = 1) => {
+    async (p: { id: string; slug: string; name: string; price: number; stock: number; imageUrl: string; hasVariants?: boolean; unit?: ProductUnit | null }, quantity = p.unit?.minQty ?? 1) => {
       if (p.hasVariants) {
         toast.info(t("chooseOptionFirst"), { description: p.name });
         router.push(`/products/${p.slug}`);
@@ -27,9 +25,10 @@ export function useQuickAdd() {
         toast.error(t("outOfStockNamed", { name: p.name }));
         return false;
       }
-      const res = await addToCart({ productId: p.id, slug: p.slug, name: p.name, price: p.price, quantity, imageUrl: p.imageUrl, stock: p.stock });
+      const res = await addToCart({ productId: p.id, slug: p.slug, name: p.name, price: p.price, quantity, imageUrl: p.imageUrl, stock: p.stock, unit: p.unit ?? null });
+      // no "added" message: the card turns into a quantity stepper and the floating cart counts up
       if (res.ok) {
-        toast.success(t("added", { name: p.name }), { description: formatMoney(p.price, locale), duration: 2500 });
+        // nothing more to do
       } else if (/variant|option/i.test(res.error ?? "")) {
         toast.info(t("chooseOptionFirst"), { description: p.name });
         router.push(`/products/${p.slug}`);
@@ -38,6 +37,6 @@ export function useQuickAdd() {
       }
       return res.ok;
     },
-    [addToCart, router, t, locale],
+    [addToCart, router, t],
   );
 }

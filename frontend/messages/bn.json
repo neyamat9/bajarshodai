@@ -94,7 +94,14 @@
     "categoriesCount": "{count}টি ক্যাটাগরি",
     "closeCategories": "ক্যাটাগরি বন্ধ করুন",
     "expand": "{name} খুলুন",
-    "collapse": "{name} বন্ধ করুন"
+    "collapse": "{name} বন্ধ করুন",
+    "popular": "জনপ্রিয়",
+    "offers": "অফার",
+    "newArrivals": "নতুন পণ্য",
+    "help": "সাহায্য",
+    "contact": "যোগাযোগ",
+    "home": "হোম",
+    "breadcrumb": "পথ"
   },
   "Browse": {
     "allBrands": "সব ব্র্যান্ড",
@@ -225,7 +232,11 @@
       "addedWish": "পছন্দের তালিকায় যোগ হয়েছে",
       "wishAdd": "{name} পছন্দের তালিকায় যোগ করুন",
       "wishRemove": "{name} পছন্দের তালিকা থেকে সরান",
-      "chooseOptionFirst": "আগে একটি অপশন বেছে নিন"
+      "chooseOptionFirst": "আগে একটি অপশন বেছে নিন",
+      "onlyStock": "স্টকে আছে মাত্র {count}",
+      "qtyOf": "{name}: কার্টে পরিমাণ",
+      "decrease": "পরিমাণ কমান",
+      "increase": "পরিমাণ বাড়ান"
     },
     "summary": {
       "reviews": "{count}টি রিভিউ",
@@ -486,7 +497,10 @@
     "increase": "পরিমাণ বাড়ান",
     "each": "প্রতিটি {price}",
     "remove": "সরান",
-    "updateFailed": "কার্ট আপডেট করা যায়নি"
+    "updateFailed": "কার্ট আপডেট করা যায়নি",
+    "floatItems": "{count}টি পণ্য",
+    "floatAria": "কার্ট খুলুন: {items}, মোট {total}",
+    "perUnit": "{price} / {unit}"
   },
   "Checkout": {
     "title": "চেকআউট",

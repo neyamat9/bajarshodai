@@ -14,6 +14,7 @@ import type {
   Review,
   ShippingAddress,
   SpecGroup,
+  SubCategory,
   User,
 } from '../types/index';
 import { assetUrl, PLACEHOLDER_IMAGE } from './client';
@@ -123,8 +124,7 @@ export function mapProduct(p: Raw, locale: Locale = clientLocale()): Product {
     brandName: p.brand?.name ?? p.brandName ?? '',
     category: p.category?.slug ?? '',
     categoryName: pick(locale, p.category?.name ?? p.categoryName, p.category?.nameBn),
-    subCategory: p.subCategory?.slug ?? '',
-    subCategoryName: pick(locale, p.subCategory?.name ?? p.subCategoryName, p.subCategory?.nameBn),
+    categoryPath: (p.categoryPath ?? []).map((c: Raw) => ({ slug: c.slug, name: pick(locale, c.name, c.nameBn) })),
     productCode: p.productCode ?? '',
     unit: mapUnit(p, locale),
     packSize: p.packSize ?? '',
@@ -157,6 +157,17 @@ export function mapProduct(p: Raw, locale: Locale = clientLocale()): Product {
 }
 
 // ── catalog ──────────────────────────────────────────────
+function mapSubCategory(s: Raw, topSlug: string, locale: Locale): SubCategory {
+  return {
+    id: s.id,
+    slug: s.slug,
+    name: pick(locale, s.name, s.nameBn),
+    categorySlug: topSlug,
+    productCount: num(s.productCount ?? s._count?.products),
+    children: (s.children ?? s.subCategories ?? []).map((x: Raw) => mapSubCategory(x, topSlug, locale)),
+  };
+}
+
 export function mapCategory(c: Raw, locale: Locale = clientLocale()): Category {
   return {
     id: c.id,
@@ -164,9 +175,9 @@ export function mapCategory(c: Raw, locale: Locale = clientLocale()): Category {
     name: pick(locale, c.name, c.nameBn),
     description: pick(locale, c.description, c.descriptionBn),
     icon: c.icon ?? '',
-    subCategories: (c.subCategories ?? []).map((s: Raw) => ({ id: s.id, slug: s.slug, name: pick(locale, s.name, s.nameBn), categorySlug: c.slug })),
-    productCount: num(c._count?.products),
-    ...({ image: c.image ? assetUrl(c.image) : null } as object),
+    subCategories: (c.children ?? c.subCategories ?? []).map((s: Raw) => mapSubCategory(s, c.slug, locale)),
+    productCount: num(c.productCount ?? c._count?.products),
+    image: c.image ? assetUrl(c.image) : null,
   };
 }
 
