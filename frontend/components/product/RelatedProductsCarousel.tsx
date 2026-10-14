@@ -117,7 +117,7 @@ function RelatedProductCard({ product }: { product: Product }) {
   }
 
   return (
-    <article className="group flex-shrink-0 w-56 bg-muted border border-border rounded p-4 flex flex-col hover:border-brand-orange/20 hover:bg-muted card-hover transition-all duration-300 overflow-hidden">
+    <article className="group flex-shrink-0 w-56 bg-muted border border-border rounded p-4 flex flex-col hover:border-brand-fresh/20 hover:bg-muted card-hover transition-all duration-300 overflow-hidden">
       {/* Wishlist */}
       <button
         type="button"
@@ -153,7 +153,7 @@ function RelatedProductCard({ product }: { product: Product }) {
       {/* Image */}
       <Link href={`/products/${product.slug}`} tabIndex={-1} aria-hidden="true">
         <div className="relative h-36 flex items-center justify-center mb-4 overflow-hidden rounded bg-muted">
-          <div className="absolute inset-0 bg-brand-orange/5 blur-2xl rounded opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="absolute inset-0 bg-brand-fresh/5 blur-2xl rounded opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           {primaryImage ? (
             <Image
               src={primaryImage.url}
@@ -199,7 +199,7 @@ function RelatedProductCard({ product }: { product: Product }) {
             type="button"
             onClick={handleAddToCart}
             aria-label={`Add ${product.name} to cart`}
-            className="w-8 h-8 rounded bg-muted border border-border flex items-center justify-center hover:bg-brand-orange hover:border-brand-orange transition-all group/btn active:scale-95"
+            className="w-8 h-8 rounded bg-muted border border-border flex items-center justify-center hover:bg-brand-fresh hover:border-brand-fresh transition-all group/btn active:scale-95"
           >
             <svg
               className="w-3.5 h-3.5 text-muted-foreground/70 group-hover/btn:text-foreground transition-colors"

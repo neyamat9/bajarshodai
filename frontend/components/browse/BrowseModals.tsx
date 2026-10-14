@@ -121,7 +121,7 @@ function BrowseModal({ kind, onClose, brands }: { kind: "brands" | null; onClose
   return createPortal(
     <div className="fixed inset-0 z-[2100] flex items-end justify-center sm:items-center sm:p-6" style={{ visibility: "hidden" }} ref={backdrop} data-lenis-prevent>
       {/* dim + blur */}
-      <div className="absolute inset-0 bg-brand-navy/70 backdrop-blur-md" onClick={onClose} aria-hidden="true" />
+      <div className="absolute inset-0 bg-brand-deep/70 backdrop-blur-md" onClick={onClose} aria-hidden="true" />
 
       <div
         ref={panel}
@@ -131,12 +131,12 @@ function BrowseModal({ kind, onClose, brands }: { kind: "brands" | null; onClose
         className="relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t border border-border bg-background shadow-2xl sm:max-h-[86dvh] sm:max-w-5xl sm:rounded"
       >
         {/* Header */}
-        <div className="relative shrink-0 overflow-hidden bg-brand-navy px-5 py-5 text-white sm:px-8 sm:py-6">
-          <span className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rotate-12 bg-brand-orange/25" aria-hidden="true" />
-          <span className="pointer-events-none absolute right-24 top-10 hidden h-4 w-4 bg-brand-orange sm:block" aria-hidden="true" />
+        <div className="relative shrink-0 overflow-hidden bg-brand-deep px-5 py-5 text-white sm:px-8 sm:py-6">
+          <span className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rotate-12 bg-brand-fresh/25" aria-hidden="true" />
+          <span className="pointer-events-none absolute right-24 top-10 hidden h-4 w-4 bg-brand-fresh sm:block" aria-hidden="true" />
           <div className="relative flex items-start justify-between gap-4">
             <div className="flex items-center gap-3.5">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded bg-brand-orange text-on-orange">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded bg-brand-fresh text-on-fresh">
                 <Tags className="h-5 w-5" aria-hidden="true" />
               </span>
               <div className="leading-tight">
@@ -165,7 +165,7 @@ function BrowseModal({ kind, onClose, brands }: { kind: "brands" | null; onClose
               type="search"
               placeholder="Search brands…"
               aria-label="Search brands"
-              className="h-11 w-full rounded border border-white/20 bg-white/10 pl-10 pr-3 text-sm text-white placeholder:text-white/55 focus:border-brand-orange focus:outline-none focus:ring-2 focus:ring-brand-orange/30"
+              className="h-11 w-full rounded border border-white/20 bg-white/10 pl-10 pr-3 text-sm text-white placeholder:text-white/55 focus:border-brand-fresh focus:outline-none focus:ring-2 focus:ring-brand-fresh/30"
             />
           </div>
         </div>
@@ -181,7 +181,7 @@ function BrowseModal({ kind, onClose, brands }: { kind: "brands" | null; onClose
                   <Link
                     href={`/products?brand=${b.slug}`}
                     onClick={pick}
-                    className="group relative flex h-full flex-col items-center gap-3 rounded border border-border bg-card p-4 text-center transition-colors hover:border-brand-orange"
+                    className="group relative flex h-full flex-col items-center gap-3 rounded border border-border bg-card p-4 text-center transition-colors hover:border-brand-fresh"
                   >
                     <span className="flex h-16 w-full items-center justify-center rounded bg-white p-2 dark:bg-white">
                       {b.logoUrl ? (

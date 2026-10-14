@@ -21,7 +21,7 @@ type Errors = Partial<Record<keyof CheckoutAddress, string>>;
 const input = (bad: boolean) =>
   [
     "w-full px-4 py-3 rounded bg-muted border text-foreground placeholder:text-muted-foreground/70 text-sm transition-all duration-200 outline-none focus:bg-secondary",
-    bad ? "border-red-500/60 focus:border-red-500" : "border-border focus:border-brand-orange focus:shadow-[0_0_0_3px_rgba(249,155,16,0.15)]",
+    bad ? "border-red-500/60 focus:border-red-500" : "border-border focus:border-brand-fresh focus:shadow-[0_0_0_3px_rgba(69,162,44,0.15)]",
   ].join(" ");
 
 function Field({ id, label, required, error, children }: { id: string; label: string; required?: boolean; error?: string; children: React.ReactNode }) {
@@ -131,7 +131,7 @@ export default function ShippingForm({ initialData, saved, onDistrictChange, onS
       {saved.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {saved.map((a) => (
-            <button key={a.id} type="button" onClick={() => fillFrom(a)} aria-pressed={f.address === a.line1 && f.district === (a.district ?? "")} className={`rounded border-2 px-3 py-2 text-left text-xs text-foreground/80 transition-colors hover:border-brand-orange/60 ${f.address === a.line1 && f.district === (a.district ?? "") ? "border-brand-orange bg-brand-orange/10" : "border-border bg-card"}`}>
+            <button key={a.id} type="button" onClick={() => fillFrom(a)} aria-pressed={f.address === a.line1 && f.district === (a.district ?? "")} className={`rounded border-2 px-3 py-2 text-left text-xs text-foreground/80 transition-colors hover:border-brand-fresh/60 ${f.address === a.line1 && f.district === (a.district ?? "") ? "border-brand-fresh bg-brand-fresh/10" : "border-border bg-card"}`}>
               <b className="block text-foreground">{a.label || a.fullName}</b>
               {a.line1}, {a.district}
             </button>
@@ -180,7 +180,7 @@ export default function ShippingForm({ initialData, saved, onDistrictChange, onS
         </Field>
       </div>
 
-      <button type="submit" className="w-full py-4 rounded bg-brand-orange text-foreground font-black text-base hover:bg-brand-orange/90 active:scale-[0.97] transition-all shadow-[0_8px_24px_rgba(249,155,16,0.3)]">
+      <button type="submit" className="w-full py-4 rounded bg-brand-fresh text-foreground font-black text-base hover:bg-brand-fresh/90 active:scale-[0.97] transition-all shadow-[0_8px_24px_rgba(69,162,44,0.3)]">
         Continue to payment →
       </button>
     </form>

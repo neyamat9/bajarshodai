@@ -113,7 +113,7 @@ function Form() {
                 .map((i) => {
                   const n = qty[i.orderItemId] ?? 0;
                   return (
-                    <li key={i.orderItemId} className={`rounded border-2 p-4 transition-colors ${n > 0 ? "border-brand-orange/60 bg-brand-orange/5" : "border-border bg-background"}`}>
+                    <li key={i.orderItemId} className={`rounded border-2 p-4 transition-colors ${n > 0 ? "border-brand-fresh/60 bg-brand-fresh/5" : "border-border bg-background"}`}>
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="min-w-0">
                           <p className="text-sm font-bold text-foreground">

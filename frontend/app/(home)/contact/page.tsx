@@ -7,7 +7,7 @@ import { getSiteSettings, type SiteSettings } from "@/lib/services/site.service"
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-const input = "w-full rounded border border-border bg-muted px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-brand-orange";
+const input = "w-full rounded border border-border bg-muted px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-brand-fresh";
 
 export default function ContactPage() {
   const { user } = useAuth();
@@ -69,13 +69,13 @@ export default function ContactPage() {
               {/* honeypot: real visitors never see or fill this */}
               <div aria-hidden="true" className="absolute -left-[9999px]"><label>Website<input tabIndex={-1} autoComplete="off" value={f.website} onChange={(e) => setF({ ...f, website: e.target.value })} /></label></div>
               {error && <p role="alert" className="text-sm font-bold text-red-400">{error}</p>}
-              <button type="submit" disabled={busy} className="rounded bg-brand-orange px-8 py-3 text-xs font-black uppercase tracking-widest text-foreground hover:bg-brand-orange/90 disabled:opacity-60">{busy ? "Sending…" : "Send message"}</button>
+              <button type="submit" disabled={busy} className="rounded bg-brand-fresh px-8 py-3 text-xs font-black uppercase tracking-widest text-foreground hover:bg-brand-fresh/90 disabled:opacity-60">{busy ? "Sending…" : "Send message"}</button>
             </form>
           )}
         </div>
 
         <aside className="space-y-3 rounded border border-border bg-muted p-6 text-sm text-foreground/80 h-fit">
-          <h2 className="font-outfit text-lg font-black text-foreground">{s?.storeName ?? "GadgetBachai"}</h2>
+          <h2 className="font-outfit text-lg font-black text-foreground">{s?.storeName ?? "Bazar Shodai"}</h2>
           {s?.hotline && <p>Hotline<br /><a className="font-bold text-accent-text" href={`tel:${s.hotline.replace(/[^\d+]/g, "")}`}>{s.hotline}</a></p>}
           {s?.whatsapp && <p>WhatsApp<br /><b className="text-foreground">{s.whatsapp}</b></p>}
           {s?.contactEmail && <p>Email<br /><a className="font-bold text-accent-text" href={`mailto:${s.contactEmail}`}>{s.contactEmail}</a></p>}

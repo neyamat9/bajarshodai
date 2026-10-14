@@ -29,7 +29,7 @@ function PlacedBanner({ order }: { order: Order }) {
   const mobile = MOBILE_METHODS.includes(order.paymentMethod);
   return (
     <div role="status" className="animate-fade-slide-up relative overflow-hidden rounded border border-emerald-500/40 bg-emerald-500/10 p-5 sm:p-6">
-      <span className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rotate-12 bg-brand-orange/20" aria-hidden="true" />
+      <span className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rotate-12 bg-brand-fresh/20" aria-hidden="true" />
       <div className="relative flex items-start gap-4">
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
           <CheckCircle2 className="h-7 w-7" aria-hidden="true" />
@@ -278,7 +278,7 @@ function Detail() {
           <div className={`${card} p-5`}>
             <h2 className="mb-3 font-outfit text-base font-black text-foreground">Payment</h2>
             <div className="flex items-center gap-3">
-              <span className={`flex h-10 w-10 items-center justify-center rounded ${cod ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-brand-orange/15 text-accent-text"}`}>
+              <span className={`flex h-10 w-10 items-center justify-center rounded ${cod ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-brand-fresh/15 text-accent-text"}`}>
                 {cod ? <Banknote className="h-5 w-5" aria-hidden="true" /> : <Smartphone className="h-5 w-5" aria-hidden="true" />}
               </span>
               <div className="min-w-0">

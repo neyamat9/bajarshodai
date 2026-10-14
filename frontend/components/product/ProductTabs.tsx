@@ -55,14 +55,14 @@ function StarRating({
   );
 }
 
-// ── Specification tab: grey group header rows, then key / value rows ─────────
+// ── Details tab: grey group header rows, then key / value rows ─────────
 function SpecsTab({ product }: { product: Product }) {
   if (!product.specs || product.specs.length === 0) {
-    return <p className="text-sm text-muted-foreground">No specifications available.</p>;
+    return <p className="text-sm text-muted-foreground">No extra details available.</p>;
   }
   return (
     <div>
-      <h2 className="mb-4 font-outfit text-lg font-extrabold uppercase tracking-tight text-foreground">Specifications</h2>
+      <h2 className="mb-4 font-outfit text-lg font-extrabold uppercase tracking-tight text-foreground">Product details</h2>
       <div className="overflow-hidden rounded border border-border">
         {product.specs.map((group) => (
           <div key={group.groupName}>
@@ -91,7 +91,7 @@ function DescriptionTab({ product }: { product: Product }) {
         <ul className="mt-5 grid gap-2 sm:grid-cols-2">
           {product.pinnedSpecs.map((spec) => (
             <li key={spec.label} className="flex items-center gap-3 rounded border border-border bg-background px-3.5 py-2.5 text-sm">
-              <span className="h-1.5 w-1.5 shrink-0 bg-brand-orange" aria-hidden="true" />
+              <span className="h-1.5 w-1.5 shrink-0 bg-brand-fresh" aria-hidden="true" />
               <span className="text-muted-foreground">{spec.label}:</span>
               <span className="font-semibold text-foreground">{spec.value}</span>
             </li>
@@ -300,7 +300,7 @@ function ReviewsTab({
               value={formTitle}
               onChange={(e) => setFormTitle(e.target.value)}
               placeholder="Sum it up in a few words"
-              className="w-full h-10 bg-muted border border-border rounded px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-orange/40 transition-colors"
+              className="w-full h-10 bg-muted border border-border rounded px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-fresh/40 transition-colors"
             />
           </div>
 
@@ -315,7 +315,7 @@ function ReviewsTab({
               onChange={(e) => setFormComment(e.target.value)}
               placeholder="Share your experience with this product..."
               rows={4}
-              className="w-full bg-muted border border-border rounded px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-orange/40 transition-colors resize-none"
+              className="w-full bg-muted border border-border rounded px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-fresh/40 transition-colors resize-none"
             />
             {formErrors.comment && (
               <p className="text-red-400 text-xs mt-1">{formErrors.comment}</p>
@@ -471,7 +471,7 @@ function QATab({
             value={questionText}
             onChange={(e) => setQuestionText(e.target.value)}
             placeholder="What would you like to know about this product?"
-            className="h-10 w-full min-w-0 sm:flex-1 bg-muted border border-border rounded px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-orange/40 transition-colors"
+            className="h-10 w-full min-w-0 sm:flex-1 bg-muted border border-border rounded px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-fresh/40 transition-colors"
             aria-label="Your question"
           />
           <button
@@ -499,7 +499,7 @@ function QATab({
               className="bg-muted border border-border rounded p-5"
             >
               <div className="flex items-start gap-3 mb-3">
-                <span className="w-6 h-6 flex-shrink-0 flex items-center justify-center rounded bg-brand-orange/20 text-accent-text text-[10px] font-black">
+                <span className="w-6 h-6 flex-shrink-0 flex items-center justify-center rounded bg-brand-fresh/20 text-accent-text text-[10px] font-black">
                   Q
                 </span>
                 <div>
@@ -543,45 +543,13 @@ function QATab({
   );
 }
 
-// ── In the Box Tab ───────────────────────────────────────────────────────────
-function InTheBoxTab({ product }: { product: Product }) {
-  if (!product.inTheBox || product.inTheBox.length === 0) {
-    return (
-      <p className="text-muted-foreground/70 text-sm">
-        Package contents not available.
-      </p>
-    );
-  }
-  return (
-    <div>
-      <h2 className="text-foreground font-black text-lg uppercase tracking-tight font-outfit mb-4">
-        What&apos;s in the Box
-      </h2>
-      <ul className="space-y-3">
-        {product.inTheBox.map((item, idx) => (
-          <li
-            key={idx}
-            className="flex items-center gap-3 text-sm text-foreground/80 bg-muted border border-border rounded px-4 py-3"
-          >
-            <span className="w-6 h-6 flex-shrink-0 flex items-center justify-center rounded bg-brand-orange/10 text-accent-text text-[10px] font-black">
-              {idx + 1}
-            </span>
-            {item}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
 // ── Main Export ──────────────────────────────────────────────────────────────
 export default function ProductTabs({ product, reviews, reviewStats, questions }: ProductTabsProps) {
   const sections = [
-    { id: "specification", label: "Specification", show: product.specs.length > 0 },
+    { id: "specification", label: "Details", show: product.specs.length > 0 },
     { id: "description", label: "Description", show: true },
     { id: "reviews", label: `Reviews(${reviewStats.total || reviews.length})`, show: true },
     { id: "qa", label: questions.length > 0 ? `Q&A(${questions.length})` : "Q&A", show: true },
-    { id: "in-the-box", label: "In the Box", show: product.inTheBox.length > 0 },
   ].filter((x) => x.show);
 
   const [active, setActive] = useState(sections[0]?.id ?? "");
@@ -661,11 +629,11 @@ export default function ProductTabs({ product, reviews, reviewStats, questions }
               role="tab"
               aria-selected={on}
               onClick={() => jump(t.id)}
-              className={`relative shrink-0 px-3 py-3.5 text-[13px] font-semibold transition-colors sm:px-5 sm:py-4 sm:text-sm ${on ? "text-primary dark:text-brand-blue" : "text-muted-foreground hover:text-foreground"}`}
+              className={`relative shrink-0 px-3 py-3.5 text-[13px] font-semibold transition-colors sm:px-5 sm:py-4 sm:text-sm ${on ? "text-primary dark:text-brand-fresh" : "text-muted-foreground hover:text-foreground"}`}
             >
               {t.label}
               <span
-                className={`absolute inset-x-3 bottom-0 h-0.5 origin-left bg-brand-orange transition-transform duration-300 ${on ? "scale-x-100" : "scale-x-0"}`}
+                className={`absolute inset-x-3 bottom-0 h-0.5 origin-left bg-brand-fresh transition-transform duration-300 ${on ? "scale-x-100" : "scale-x-0"}`}
                 aria-hidden="true"
               />
             </button>
@@ -688,11 +656,6 @@ export default function ProductTabs({ product, reviews, reviewStats, questions }
       <section id="qa" className={block}>
         <QATab product={product} initialQuestions={questions} />
       </section>
-      {product.inTheBox.length > 0 && (
-        <section id="in-the-box" className={block}>
-          <InTheBoxTab product={product} />
-        </section>
-      )}
     </div>
   );
 }

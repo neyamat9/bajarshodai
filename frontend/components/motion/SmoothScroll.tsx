@@ -8,7 +8,7 @@ import { scrollTopNow } from "./scroll-top";
 
 /**
  * Buttery smooth scrolling (Lenis) driven by GSAP's ticker so ScrollTrigger
- * stays perfectly in sync, plus a thin brand-orange scroll-progress bar.
+ * stays perfectly in sync, plus a thin brand-fresh scroll-progress bar.
  */
 /**
  * Every new page opens at the top — whether it was reached by a link, a button, a redirect or a search.
@@ -99,7 +99,7 @@ export default function SmoothScroll() {
         <ScrollToTopOnNavigate />
       </Suspense>
     <div className="pointer-events-none fixed inset-x-0 top-0 z-[2000] h-[3px]" aria-hidden="true">
-      <div ref={bar} className="h-full origin-left scale-x-0 bg-brand-orange" />
+      <div ref={bar} className="h-full origin-left scale-x-0 bg-brand-fresh" />
     </div>
     </>
   );

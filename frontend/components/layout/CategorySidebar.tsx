@@ -68,7 +68,7 @@ export default function CategorySidebar({ open, onClose, categories }: CategoryS
         aria-hidden="true"
         data-lenis-prevent
         onClick={onClose}
-        className={`fixed inset-0 z-[2100] bg-brand-navy/60 backdrop-blur-sm transition-opacity duration-300 ${
+        className={`fixed inset-0 z-[2100] bg-brand-deep/60 backdrop-blur-sm transition-opacity duration-300 ${
           open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
         }`}
       />
@@ -86,9 +86,9 @@ export default function CategorySidebar({ open, onClose, categories }: CategoryS
         }`}
       >
         {/* Header */}
-        <div className="flex shrink-0 items-center justify-between bg-brand-navy px-5 py-4 text-white">
+        <div className="flex shrink-0 items-center justify-between bg-brand-deep px-5 py-4 text-white">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded bg-brand-orange text-on-orange">
+            <span className="flex h-10 w-10 items-center justify-center rounded bg-brand-fresh text-on-fresh">
               <LayoutGrid className="h-5 w-5" aria-hidden="true" />
             </span>
             <div className="leading-tight">
@@ -148,7 +148,7 @@ export default function CategorySidebar({ open, onClose, categories }: CategoryS
                                 tabIndex={isOpen ? 0 : -1}
                                 className="flex items-center gap-2 px-4 py-2 pl-6 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                               >
-                                <span className="h-1.5 w-1.5 shrink-0 bg-brand-orange" aria-hidden="true" />
+                                <span className="h-1.5 w-1.5 shrink-0 bg-brand-fresh" aria-hidden="true" />
                                 {sub.name}
                               </Link>
                             </li>

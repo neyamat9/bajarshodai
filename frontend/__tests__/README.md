@@ -1,4 +1,4 @@
-# GadgetBachai storefront tests
+# Bazar Shodai storefront tests
 
 `mappers.test.ts` checks that backend responses are turned into the shapes the pages use
 (prices, variants, order statuses). Run with `npm test`.

@@ -97,7 +97,7 @@ export default function CartItem({ item, variant = "compact" }: CartItemProps) {
   if (variant === "compact") {
     return (
       <div
-        className={`group flex gap-3.5 rounded border border-border bg-background p-3 shadow-sm transition-all hover:border-brand-orange/60 hover:shadow-md ${animationClasses}`}
+        className={`group flex gap-3.5 rounded border border-border bg-background p-3 shadow-sm transition-all hover:border-brand-fresh/60 hover:shadow-md ${animationClasses}`}
         aria-label={`Cart item: ${item.name}`}
       >
         {/* Product image */}

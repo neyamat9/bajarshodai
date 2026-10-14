@@ -31,7 +31,7 @@ export default function BackInStockForm({ productId, variantId }: { productId: s
     return <p className="rounded border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-bold text-emerald-300">You&apos;re on the list. We&apos;ll email you when it is back.</p>;
   }
   return (
-    <form onSubmit={submit} className="rounded border border-brand-orange/30 bg-brand-orange/5 p-4">
+    <form onSubmit={submit} className="rounded border border-brand-fresh/30 bg-brand-fresh/5 p-4">
       <p className="mb-3 text-sm font-bold text-foreground">Sold out — get an email when it returns</p>
       <div className="flex flex-col gap-2 sm:flex-row">
         {!user && (
@@ -41,10 +41,10 @@ export default function BackInStockForm({ productId, variantId }: { productId: s
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="h-11 flex-1 rounded border border-border bg-muted px-4 text-sm text-foreground placeholder:text-muted-foreground/70 focus:border-brand-orange focus:outline-none"
+            className="h-11 flex-1 rounded border border-border bg-muted px-4 text-sm text-foreground placeholder:text-muted-foreground/70 focus:border-brand-fresh focus:outline-none"
           />
         )}
-        <button type="submit" disabled={busy} className="h-11 rounded bg-brand-orange px-6 text-sm font-black uppercase tracking-wide text-foreground hover:bg-brand-orange/90 disabled:opacity-60">
+        <button type="submit" disabled={busy} className="h-11 rounded bg-brand-fresh px-6 text-sm font-black uppercase tracking-wide text-foreground hover:bg-brand-fresh/90 disabled:opacity-60">
           {busy ? "Saving…" : "Notify me"}
         </button>
       </div>

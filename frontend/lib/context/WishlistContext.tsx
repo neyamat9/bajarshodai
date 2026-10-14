@@ -6,7 +6,7 @@ import { addToWishlist, fetchWishlist, removeFromWishlist } from "@/lib/services
 import type { WishlistContextValue, WishlistItem } from "@/lib/types";
 import { createContext, useCallback, useEffect, useMemo, useState } from "react";
 
-const GUEST_KEY = "gb_wishlist_guest";
+const GUEST_KEY = "bs_wishlist_guest";
 
 export const WishlistContext = createContext<WishlistContextValue | null>(null);
 

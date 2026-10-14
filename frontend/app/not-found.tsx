@@ -9,7 +9,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "404 — Page Not Found",
-  description: "The page you're looking for doesn't exist. Navigate back to GadgetBachai.",
+  description: "The page you're looking for doesn't exist. Navigate back to Bazar Shodai.",
 };
 
 export default async function NotFound() {
@@ -27,7 +27,7 @@ export default async function NotFound() {
             className="absolute inset-0 opacity-[0.03] pointer-events-none"
             style={{
               backgroundImage:
-                "linear-gradient(var(--brand-orange) 1px, transparent 1px), linear-gradient(90deg, var(--brand-orange) 1px, transparent 1px)",
+                "linear-gradient(var(--brand-fresh) 1px, transparent 1px), linear-gradient(90deg, var(--brand-fresh) 1px, transparent 1px)",
               backgroundSize: "60px 60px",
             }}
             aria-hidden="true"
@@ -35,11 +35,11 @@ export default async function NotFound() {
 
           {/* Ambient glow blobs */}
           <div
-            className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-brand-orange/5 blur-[120px] rounded pointer-events-none animate-glow-pulse"
+            className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-brand-fresh/5 blur-[120px] rounded pointer-events-none animate-glow-pulse"
             aria-hidden="true"
           />
           <div
-            className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-blue-500/5 blur-[100px] rounded pointer-events-none"
+            className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-brand-fresh/5 blur-[100px] rounded pointer-events-none"
             aria-hidden="true"
           />
 
@@ -95,7 +95,7 @@ export default async function NotFound() {
               {/* Primary — Home */}
               <Link
                 href="/"
-                className="group relative flex items-center gap-3 bg-gradient-to-br from-brand-orange to-brand-orange text-foreground font-bold px-8 py-4 rounded shadow-[0_8px_30px_rgba(249,155,16,0.35)] hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(249,155,16,0.45)] transition-all"
+                className="group relative flex items-center gap-3 bg-gradient-to-br from-brand-fresh to-brand-fresh text-foreground font-bold px-8 py-4 rounded shadow-[0_8px_30px_rgba(69,162,44,0.35)] hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(69,162,44,0.45)] transition-all"
               >
                 <svg
                   className="w-5 h-5"
@@ -117,7 +117,7 @@ export default async function NotFound() {
               {/* Secondary — Products */}
               <Link
                 href="/products"
-                className="group flex items-center gap-3 bg-muted border border-border text-foreground font-bold px-8 py-4 rounded hover:bg-secondary hover:border-brand-orange/40 hover:-translate-y-1 transition-all"
+                className="group flex items-center gap-3 bg-muted border border-border text-foreground font-bold px-8 py-4 rounded hover:bg-secondary hover:border-brand-fresh/40 hover:-translate-y-1 transition-all"
               >
                 <svg
                   className="w-5 h-5 text-muted-foreground group-hover:text-accent-text transition-colors"
@@ -144,7 +144,7 @@ export default async function NotFound() {
               aria-hidden="true"
             >
               <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent to-secondary" />
-              <div className="w-1.5 h-1.5 bg-brand-orange rounded shadow-[0_0_8px_var(--brand-orange)]" />
+              <div className="w-1.5 h-1.5 bg-brand-fresh rounded shadow-[0_0_8px_var(--brand-fresh)]" />
               <div className="flex-1 h-[1px] bg-gradient-to-l from-transparent to-secondary" />
             </div>
 

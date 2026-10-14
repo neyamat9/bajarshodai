@@ -8,7 +8,7 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 const headingClass = "mb-5 font-outfit text-lg font-semibold text-white";
-const linkClass = "inline-block text-sm text-white/70 transition-all hover:translate-x-1 hover:text-brand-orange";
+const linkClass = "inline-block text-sm text-white/70 transition-all hover:translate-x-1 hover:text-brand-fresh";
 const colClass = "lg:border-l lg:border-white/10 lg:pl-7";
 
 export default function SiteFooter({ settings, categories }: { settings: SiteSettings; categories: Category[] }) {
@@ -22,9 +22,9 @@ export default function SiteFooter({ settings, categories }: { settings: SiteSet
   ];
 
   return (
-    <footer className="relative bg-brand-navy text-white dark:border-t dark:border-border dark:bg-card">
+    <footer className="relative bg-brand-deep text-white dark:border-t dark:border-border dark:bg-card">
       <RevealGroup>
-        {/* subscribe bar: centred exactly on the footer's top edge (no gap above the navy) */}
+        {/* subscribe bar: centred exactly on the footer's top edge (no gap above the green) */}
         <div className="relative z-10 h-0">
           <div className="absolute inset-x-0 top-0 mx-auto max-w-xl -translate-y-1/2 px-4">
             <div data-reveal="up">
@@ -40,10 +40,10 @@ export default function SiteFooter({ settings, categories }: { settings: SiteSet
             <div data-reveal="up" className="flex flex-col gap-5 sm:col-span-2 lg:col-span-4 lg:pr-8">
               <BrandLogo size="lg" tone="onDark" />
               <p className="max-w-xs text-sm leading-relaxed text-white/65">
-                Chargers, power banks, earbuds, smartwatches and every gadget accessory you need — genuine, fairly priced and
-                delivered across Bangladesh.
+                Fresh fish, vegetables, fruits and every daily need — fairly priced and delivered to your door in Shahrasti,
+                Chandpur.
               </p>
-              <Link href="/contact" className="group inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-brand-orange">
+              <Link href="/contact" className="group inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-brand-fresh">
                 Contact us
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
               </Link>
@@ -85,16 +85,16 @@ export default function SiteFooter({ settings, categories }: { settings: SiteSet
           <div
             className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 text-xs text-white/55 sm:flex-row sm:pr-16"
           >
-            <p>&copy; {new Date().getFullYear()} GadgetBachai. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Bazar Shodai. All rights reserved.</p>
             <ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
               <li>
-                <Link href="/contact" className="text-white/70 transition-colors hover:text-brand-orange">
+                <Link href="/contact" className="text-white/70 transition-colors hover:text-brand-fresh">
                   Contact
                 </Link>
               </li>
               {settings.returns.returnsEnabled && (
                 <li>
-                  <Link href="/returns-policy" className="text-white/70 transition-colors hover:text-brand-orange">
+                  <Link href="/returns-policy" className="text-white/70 transition-colors hover:text-brand-fresh">
                     Returns
                   </Link>
                 </li>

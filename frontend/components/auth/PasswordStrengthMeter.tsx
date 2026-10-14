@@ -5,7 +5,7 @@
  *
  * Animated fill bar (0→100%) with color transitions:
  *   - Weak   (score 1/4): red    (#EF4444)
- *   - Fair   (score 2/4): orange (#F99B10)
+ *   - Fair   (score 2/4): orange (#F57C00)
  *   - Good   (score 3/4): yellow (#EAB308)
  *   - Strong (score 4/4): green  (#22C55E)
  *
@@ -45,7 +45,7 @@ function getStrength(password: string): StrengthResult {
 
   const levels: Record<1 | 2 | 3 | 4, Omit<StrengthResult, "score">> = {
     1: { label: "Weak",   color: "#EF4444", bgColor: "rgba(239,68,68,0.15)",   width: "25%" },
-    2: { label: "Fair",   color: "var(--brand-orange)", bgColor: "rgba(249,115,22,0.15)",  width: "50%" },
+    2: { label: "Fair",   color: "var(--carrot)", bgColor: "rgba(245,124,0,0.15)",  width: "50%" },
     3: { label: "Good",   color: "#CA8A04", bgColor: "rgba(234,179,8,0.15)",   width: "75%" },
     4: { label: "Strong", color: "#22C55E", bgColor: "rgba(34,197,94,0.15)",   width: "100%" },
   };

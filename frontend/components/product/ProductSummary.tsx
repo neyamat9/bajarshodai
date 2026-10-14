@@ -2,11 +2,10 @@
 
 import BackInStockForm from "@/components/product/BackInStockForm";
 import { useCart } from "@/lib/hooks/use-cart";
-import { useCompare } from "@/lib/hooks/use-compare";
 import { useWishlist } from "@/lib/hooks/use-wishlist";
 import { playClick } from "@/lib/sound";
 import type { Product, ProductVariant } from "@/lib/types";
-import { ArrowRightLeft, Heart, Info, Landmark, Loader2, MessageSquare, Minus, Plus, ShoppingCart, Star } from "lucide-react";
+import { Heart, Info, Loader2, MessageSquare, Minus, Plus, ShoppingCart, Star } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -27,9 +26,8 @@ const chip = "inline-flex items-center gap-1 rounded border border-border bg-bac
 export default function ProductSummary({ product, atcRef, onVariantChange, paymentMethods = ["Cash on Delivery"] }: ProductSummaryProps) {
   const { addToCart } = useCart();
   const { addToVault, removeFromVault, isInVault } = useWishlist();
-  const { addToCompare, removeFromCompare, isInCompare, compareList } = useCompare();
 
-  const extra = product as Product & { avgRating?: number; reviewCount?: number; warranty?: string };
+  const extra = product as Product & { avgRating?: number; reviewCount?: number };
   const rating = extra.avgRating ?? 0;
   const reviewCount = extra.reviewCount ?? 0;
 
@@ -44,7 +42,6 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
   const hasDiscount = !!oldPrice && oldPrice > price;
   const image = product.images.find((i) => i.isPrimary) ?? product.images[0];
   const inVault = isInVault(product.id);
-  const inCompare = isInCompare(product.id);
 
   useEffect(() => {
     onVariantChange?.(variant);
@@ -86,19 +83,12 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
     }
   }
 
-  function toggleCompare() {
-    if (inCompare) return removeFromCompare(product.id);
-    if (compareList.length >= 3) return void toast.warning("Maximum 3 products can be compared at once");
-    addToCompare(product);
-    toast.success(`${product.name} added to compare`, { duration: 2000 });
-  }
 
   const colors = product.variants.filter((v) => v.type === "color");
   const others = product.variants.filter((v) => v.type !== "color");
   const stockText = stock <= 0 ? "Out of Stock" : stock < 5 ? `Only ${stock} left` : "In Stock";
   const stockTone = stock <= 0 ? "text-destructive" : stock < 5 ? "text-accent-text" : "text-emerald-600 dark:text-emerald-400";
   const bullets = product.pinnedSpecs.slice(0, 5).map((s) => `${s.label}: ${s.value}`);
-  const emi12 = Math.ceil(price / 12);
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
@@ -108,7 +98,7 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
       <div className="flex flex-wrap items-center gap-2.5 text-sm">
         <span className="flex" aria-hidden="true">
           {[1, 2, 3, 4, 5].map((n) => (
-            <Star key={n} className={`h-[18px] w-[18px] ${n <= Math.round(rating) ? "fill-brand-orange text-brand-orange" : "fill-transparent text-muted-foreground/40"}`} />
+            <Star key={n} className={`h-[18px] w-[18px] ${n <= Math.round(rating) ? "fill-brand-fresh text-brand-fresh" : "fill-transparent text-muted-foreground/40"}`} />
           ))}
         </span>
         <span className="font-medium text-muted-foreground">
@@ -123,7 +113,7 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
         <button
           type="button"
           onClick={() => setPanel(panel === "disclaimer" ? null : "disclaimer")}
-          className="inline-flex items-center gap-1.5 rounded border border-primary/25 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary/15 dark:border-brand-blue/40 dark:text-brand-blue"
+          className="inline-flex items-center gap-1.5 rounded border border-primary/25 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary/15 dark:border-brand-fresh/40 dark:text-brand-fresh"
         >
           <Info className="h-3.5 w-3.5" aria-hidden="true" />
           Disclaimer
@@ -138,8 +128,8 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
       </div>
       {panel === "disclaimer" && (
         <p className="rounded border border-border bg-background px-3 py-2 text-xs leading-relaxed text-muted-foreground">
-          Product photos are for illustration. Colours, packaging and minor specifications may vary slightly by batch. Every item is 100% genuine and
-          carries the brand&apos;s warranty.
+          Product photos are for illustration. Packaging and appearance may vary slightly by batch. Fresh items such as fish, meat and vegetables are
+          weighed when packed, so the final weight and price can differ a little from what you ordered.
         </p>
       )}
 
@@ -165,16 +155,11 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
             )}
           </span>
         )}
-        {extra.warranty && (
-          <span className={chip}>
-            Warranty : <b className="text-foreground">{extra.warranty.replace(/ brand warranty$/i, "")}</b>
-          </span>
-        )}
       </div>
 
       {/* key features */}
       {(bullets.length > 0 || product.shortDescription) && (
-        <ul className="list-disc space-y-1.5 pl-5 text-sm text-muted-foreground marker:text-brand-orange">
+        <ul className="list-disc space-y-1.5 pl-5 text-sm text-muted-foreground marker:text-brand-fresh">
           {bullets.length > 0 ? bullets.map((b) => <li key={b}>{b}</li>) : <li>{product.shortDescription}</li>}
         </ul>
       )}
@@ -194,7 +179,7 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
                 aria-label={`Select ${v.label}`}
                 aria-pressed={variant?.id === v.id}
                 title={v.label}
-                className={`h-9 w-9 rounded border-2 transition-all ${variant?.id === v.id ? "border-brand-orange ring-2 ring-brand-orange/30" : "border-border hover:border-input"}`}
+                className={`h-9 w-9 rounded border-2 transition-all ${variant?.id === v.id ? "border-brand-fresh ring-2 ring-brand-fresh/30" : "border-border hover:border-input"}`}
                 style={{ backgroundColor: v.colorHex ?? "#888" }}
               />
             ))}
@@ -212,7 +197,7 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
                 onClick={() => pick(v)}
                 aria-pressed={variant?.id === v.id}
                 className={`rounded border px-3.5 py-2 text-sm font-semibold transition-colors ${
-                  variant?.id === v.id ? "border-brand-orange bg-primary text-primary-foreground" : "border-border bg-background text-foreground hover:border-brand-orange"
+                  variant?.id === v.id ? "border-brand-fresh bg-primary text-primary-foreground" : "border-border bg-background text-foreground hover:border-brand-fresh"
                 }`}
               >
                 {v.label}
@@ -222,8 +207,8 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
         </div>
       )}
 
-      {/* price + EMI */}
-      <div className="grid gap-3 sm:grid-cols-2">
+      {/* price */}
+      <div className="grid gap-3">
         <div className="rounded border border-border bg-background p-4">
           <p className="text-sm font-semibold text-foreground">{hasDiscount ? "Discount Price" : "Price"}</p>
           <p className="mt-2 flex flex-wrap items-baseline gap-2">
@@ -234,7 +219,7 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
             type="button"
             onClick={() => setPanel(panel === "payment" ? null : "payment")}
             aria-expanded={panel === "payment"}
-            className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline dark:text-brand-blue"
+            className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline dark:text-brand-fresh"
           >
             <Plus className={`h-3.5 w-3.5 transition-transform ${panel === "payment" ? "rotate-45" : ""}`} aria-hidden="true" />
             Available Payment Method
@@ -243,25 +228,12 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
             <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
               {paymentMethods.map((m) => (
                 <li key={m} className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 bg-brand-orange" aria-hidden="true" />
+                  <span className="h-1.5 w-1.5 bg-brand-fresh" aria-hidden="true" />
                   {m}
                 </li>
               ))}
             </ul>
           )}
-        </div>
-
-        {/* EMI is switched off for now — shown greyed out, to be enabled later */}
-        <div className="relative cursor-not-allowed select-none rounded border border-dashed border-border bg-background/60 p-4 opacity-60" aria-disabled="true">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-semibold text-muted-foreground">EMI Start From*</p>
-            <span className="rounded bg-secondary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Coming soon</span>
-          </div>
-          <p className="mt-2 font-outfit text-2xl font-extrabold text-muted-foreground">{money(emi12)}</p>
-          <span className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
-            <Landmark className="h-3.5 w-3.5" aria-hidden="true" />
-            View Banks EMI Plans
-          </span>
         </div>
       </div>
 
@@ -306,22 +278,11 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
           onClick={toggleWish}
           aria-pressed={inVault}
           className={`flex h-11 items-center gap-2 rounded border px-4 text-sm font-semibold transition-colors ${
-            inVault ? "border-destructive/40 bg-destructive/10 text-destructive" : "border-border bg-secondary text-foreground hover:border-brand-orange"
+            inVault ? "border-destructive/40 bg-destructive/10 text-destructive" : "border-border bg-secondary text-foreground hover:border-brand-fresh"
           }`}
         >
           <Heart className="h-4 w-4" fill={inVault ? "currentColor" : "none"} />
           Wishlist
-        </button>
-        <button
-          type="button"
-          onClick={toggleCompare}
-          aria-pressed={inCompare}
-          className={`flex h-11 items-center gap-2 rounded border px-4 text-sm font-semibold transition-colors ${
-            inCompare ? "border-brand-orange bg-brand-orange/15 text-accent-text" : "border-border bg-secondary text-foreground hover:border-brand-orange"
-          }`}
-        >
-          <ArrowRightLeft className="h-4 w-4" />
-          Compare
         </button>
       </div>
 

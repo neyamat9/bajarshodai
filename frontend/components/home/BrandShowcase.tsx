@@ -104,7 +104,7 @@ function Arrow({ dir, disabled, onClick, label }: { dir: "prev" | "next"; disabl
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className={`absolute top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded border border-border bg-card text-foreground shadow-lg transition-all hover:border-brand-orange hover:bg-brand-orange hover:text-on-orange active:scale-90 disabled:pointer-events-none disabled:opacity-0 ${
+      className={`absolute top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded border border-border bg-card text-foreground shadow-lg transition-all hover:border-brand-fresh hover:bg-brand-fresh hover:text-on-fresh active:scale-90 disabled:pointer-events-none disabled:opacity-0 ${
         dir === "prev" ? "-left-2 md:-left-4" : "-right-2 md:-right-4"
       }`}
     >
@@ -181,14 +181,14 @@ export default function BrandShowcase({ brands, productsByBrand }: BrandShowcase
           <SectionHeader
             title={
               <span id="brands-heading">
-                Shop by <span className="text-brand-orange">brand</span>
+                Shop by <span className="text-brand-fresh">brand</span>
               </span>
             }
             description="Pick a brand you trust and browse everything we stock from them."
             action={
               <BrowseTrigger
                 kind="brands"
-                className="group inline-flex w-fit shrink-0 items-center gap-2 rounded border border-border bg-card px-5 py-3 text-sm font-bold text-foreground transition-colors hover:border-brand-orange hover:text-accent-text"
+                className="group inline-flex w-fit shrink-0 items-center gap-2 rounded border border-border bg-card px-5 py-3 text-sm font-bold text-foreground transition-colors hover:border-brand-fresh hover:text-accent-text"
               >
                 All brands
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
@@ -197,7 +197,7 @@ export default function BrandShowcase({ brands, productsByBrand }: BrandShowcase
           />
         </RevealGroup>
 
-        <div className="rounded border border-border border-t-4 border-t-brand-orange bg-card p-3 sm:p-5">
+        <div className="rounded border border-border border-t-4 border-t-brand-fresh bg-card p-3 sm:p-5">
           {/* ── brand slider ── */}
           <RevealGroup>
             <div className="relative">
@@ -222,10 +222,10 @@ export default function BrandShowcase({ brands, productsByBrand }: BrandShowcase
                       className="group w-[104px] shrink-0 snap-start text-center sm:w-[132px]"
                     >
                       <span
-                        className={`flex h-[72px] items-center justify-center rounded border-2 bg-[#fcfaf5] px-3 transition-all duration-300 sm:h-[88px] ${
+                        className={`flex h-[72px] items-center justify-center rounded border-2 bg-[#fcfefb] px-3 transition-all duration-300 sm:h-[88px] ${
                           on
-                            ? "border-brand-orange shadow-[0_10px_24px_-12px_rgba(249,155,16,0.9)]"
-                            : "border-border group-hover:border-brand-orange/60"
+                            ? "border-brand-fresh shadow-[0_10px_24px_-12px_rgba(69,162,44,0.9)]"
+                            : "border-border group-hover:border-brand-fresh/60"
                         }`}
                       >
                         {b.logoUrl && !broken[b.slug] ? (
@@ -242,7 +242,7 @@ export default function BrandShowcase({ brands, productsByBrand }: BrandShowcase
                       >
                         {b.name}
                       </span>
-                      <span className={`mx-auto mt-1 block h-0.5 rounded bg-brand-orange transition-all duration-300 ${on ? "w-8" : "w-0"}`} aria-hidden="true" />
+                      <span className={`mx-auto mt-1 block h-0.5 rounded bg-brand-fresh transition-all duration-300 ${on ? "w-8" : "w-0"}`} aria-hidden="true" />
                     </button>
                   );
                 })}
@@ -261,7 +261,7 @@ export default function BrandShowcase({ brands, productsByBrand }: BrandShowcase
               </h3>
               <Link
                 href={`/products?brand=${current.slug}`}
-                className="group inline-flex shrink-0 items-center gap-2 rounded bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition-colors hover:bg-brand-orange hover:text-on-orange"
+                className="group inline-flex shrink-0 items-center gap-2 rounded bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition-colors hover:bg-brand-fresh hover:text-on-fresh"
               >
                 See all
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />

@@ -3,18 +3,20 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  /* Brand tokens — sampled from the GadgetBachai logo */
-  --color-brand-blue: var(--brand-blue);
-  --color-brand-orange: var(--brand-orange);
-  --color-brand-navy: var(--brand-navy);
+  /* Brand tokens, sampled from the Bazar Shodai logo:
+     deep green (বাজার) and fresh green (সদাই) */
+  --color-brand-deep: var(--brand-deep);
+  --color-brand-deep-light: var(--brand-deep-light);
+  --color-brand-fresh: var(--brand-fresh);
+  --color-brand-fresh-dark: var(--brand-fresh-dark);
   --color-accent-text: var(--accent-text);
-  --color-on-orange: var(--on-orange);
+  --color-on-fresh: var(--on-fresh);
   --color-surface: var(--surface);
-  --color-brand-accent: var(--brand-orange);
-  --color-brand-orange-dark: #e0840a;
-  --color-brand-navy-light: #1f5ca3;
-  --color-brand-dark: var(--brand-navy);
   --color-brand-cream: var(--secondary);
+  /* Supporting colours from the logo artwork (tomato, carrot, fish) */
+  --color-tomato: var(--tomato);
+  --color-carrot: var(--carrot);
+  --color-fish: var(--fish);
   --font-inter: "Inter", sans-serif;
   --font-outfit: "Outfit", sans-serif;
   --color-background: var(--background);
@@ -60,89 +62,97 @@
   --radius-4xl: 4px;
 }
 
-/* ── Light theme (default) — logo blue + logo orange on soft cream (never pure white) ── */
+/* ── Light theme (default): deep + fresh green from the logo on a soft green-tinted white ── */
 :root {
   --radius: 4px;
-  --brand-blue: #053972;
-  --brand-orange: #f99b10;
-  --brand-navy: #053972;
-  --accent-text: #b45f00;
-  --on-orange: #0a2a5e;
-  --surface: #efece3;
+  --brand-deep: #0b6234;        /* বাজার: headers, headings, primary buttons */
+  --brand-deep-light: #1a7d46;
+  --brand-fresh: #45a22c;       /* সদাই: add-to-cart, highlights, active states */
+  --brand-fresh-dark: #368a21;
+  --accent-text: #2a7a1a;       /* green text on light surfaces (4.5:1+) */
+  --on-fresh: #05260f;          /* text on brand-fresh backgrounds (4.5:1+) */
+  --surface: #eaf1e5;
+  --tomato: #e0261b;
+  --carrot: #f57c00;
+  --fish: #1e88b5;
 
-  --background: #f5f2ea;
-  --foreground: #0a2a5e;
-  --card: #fcfaf5;
-  --card-foreground: #0a2a5e;
-  --popover: #fcfaf5;
-  --popover-foreground: #0a2a5e;
-  --primary: #053972;
-  --primary-foreground: #fcfaf5;
-  --secondary: #ece8dd;
-  --secondary-foreground: #0a2a5e;
-  --muted: #efece3;
-  --muted-foreground: #526b94;
-  --accent: #fbecc9;
-  --accent-foreground: #0a2a5e;
+  --background: #f4f8f1;
+  --foreground: #12301f;
+  --card: #fcfefb;
+  --card-foreground: #12301f;
+  --popover: #fcfefb;
+  --popover-foreground: #12301f;
+  --primary: #0b6234;
+  --primary-foreground: #f7fbf4;
+  --secondary: #e7f0e1;
+  --secondary-foreground: #12301f;
+  --muted: #edf3e8;
+  --muted-foreground: #587263;
+  --accent: #def0d3;
+  --accent-foreground: #12301f;
   --destructive: #d92d20;
-  --border: #ddd8c9;
-  --input: #cfc9b8;
-  --ring: #f99b10;
-  --chart-1: #053972;
-  --chart-2: #f7a21b;
-  --chart-3: #3b82f6;
-  --chart-4: #fbbf24;
-  --chart-5: #1e5bb8;
-  --sidebar: #fcfaf5;
-  --sidebar-foreground: #0a2a5e;
-  --sidebar-primary: #053972;
-  --sidebar-primary-foreground: #fcfaf5;
-  --sidebar-accent: #ece8dd;
-  --sidebar-accent-foreground: #0a2a5e;
-  --sidebar-border: #ddd8c9;
-  --sidebar-ring: #f7a21b;
+  --border: #d3e0cb;
+  --input: #c3d4b9;
+  --ring: #45a22c;
+  --chart-1: #0b6234;
+  --chart-2: #45a22c;
+  --chart-3: #1e88b5;
+  --chart-4: #f57c00;
+  --chart-5: #8bc34a;
+  --sidebar: #fcfefb;
+  --sidebar-foreground: #12301f;
+  --sidebar-primary: #0b6234;
+  --sidebar-primary-foreground: #f7fbf4;
+  --sidebar-accent: #e7f0e1;
+  --sidebar-accent-foreground: #12301f;
+  --sidebar-border: #d3e0cb;
+  --sidebar-ring: #45a22c;
 }
 
-/* ── Dark theme — deep logo-navy surfaces, orange highlights ── */
+/* ── Dark theme: deep forest surfaces, bright green highlights ── */
 .dark {
-  --brand-blue: #4c8dff;
-  --brand-orange: #ffb02e;
-  --brand-navy: #081633;
-  --accent-text: #ffb02e;
-  --on-orange: #0a2a5e;
-  --surface: #0f2247;
+  --brand-deep: #0a2e18;
+  --brand-deep-light: #14502c;
+  --brand-fresh: #6fcf4e;
+  --brand-fresh-dark: #58b83a;
+  --accent-text: #86d96a;
+  --on-fresh: #05260f;
+  --surface: #12311f;
+  --tomato: #f0594e;
+  --carrot: #ff9a3d;
+  --fish: #4db3dd;
 
-  --background: #07142e;
-  --foreground: #eaf1ff;
-  --card: #0e2048;
-  --card-foreground: #eaf1ff;
-  --popover: #0e2048;
-  --popover-foreground: #eaf1ff;
-  --primary: #2f6bdb;
+  --background: #09160e;
+  --foreground: #e8f5e1;
+  --card: #0f2417;
+  --card-foreground: #e8f5e1;
+  --popover: #0f2417;
+  --popover-foreground: #e8f5e1;
+  --primary: #2a7f1c;
   --primary-foreground: #ffffff;
-  --secondary: #152b5a;
-  --secondary-foreground: #eaf1ff;
-  --muted: #11264f;
-  --muted-foreground: #9db2d8;
-  --accent: #1b3366;
-  --accent-foreground: #eaf1ff;
+  --secondary: #153221;
+  --secondary-foreground: #e8f5e1;
+  --muted: #112a1b;
+  --muted-foreground: #9dbba6;
+  --accent: #1c3f29;
+  --accent-foreground: #e8f5e1;
   --destructive: #f97066;
-  --border: #1f3769;
-  --input: #274278;
-  --ring: #ffb02e;
-  --chart-1: #4c8dff;
-  --chart-2: #ffb02e;
-  --chart-3: #7aa9ff;
-  --chart-4: #ffcf70;
-  --chart-5: #2f6bdb;
-  --sidebar: #0e2048;
-  --sidebar-foreground: #eaf1ff;
-  --sidebar-primary: #2f6bdb;
+  --border: #1f4129;
+  --input: #285233;
+  --ring: #6fcf4e;
+  --chart-1: #4fb82f;
+  --chart-2: #6fcf4e;
+  --chart-3: #4db3dd;
+  --chart-4: #ff9a3d;
+  --chart-5: #a5d96a;
+  --sidebar: #0f2417;
+  --sidebar-foreground: #e8f5e1;
+  --sidebar-primary: #2a7f1c;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #152b5a;
-  --sidebar-accent-foreground: #eaf1ff;
-  --sidebar-border: #1f3769;
-  --sidebar-ring: #ffb02e;
+  --sidebar-accent: #153221;
+  --sidebar-accent-foreground: #e8f5e1;
+  --sidebar-border: #1f4129;
+  --sidebar-ring: #6fcf4e;
 }
 
 @layer base {
@@ -188,7 +198,7 @@
   background: var(--secondary);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--brand-orange);
+  background: var(--brand-fresh);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
@@ -197,7 +207,7 @@
 /* Firefox scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--brand-orange) var(--secondary);
+  scrollbar-color: var(--brand-fresh) var(--secondary);
 }
 
 /* ── Scroll-reveal initial state (GSAP animates it in once in view) ── */
@@ -228,7 +238,7 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── RaizBD Custom @keyframes ─────────────────────── */
+/* ── Custom @keyframes ─────────────────────── */
 @media (prefers-reduced-motion: no-preference) {
 
   @keyframes fadeSlideUp {
@@ -337,7 +347,7 @@
     animation: fadeInDown 0.6s ease-out forwards;
   }
 
-  /* RaizBD animation utilities */
+  /* Animation utilities */
   .animate-fade-slide-up {
     animation: fadeSlideUp 400ms ease-out both;
   }
@@ -351,7 +361,7 @@
     background: linear-gradient(
       90deg,
       transparent 0%,
-      color-mix(in oklab, var(--brand-orange) 18%, transparent) 50%,
+      color-mix(in oklab, var(--brand-fresh) 18%, transparent) 50%,
       transparent 100%
     );
     background-size: 200% 100%;
@@ -405,30 +415,30 @@
     animation: expandCircle 400ms ease-out both;
   }
 
-  /* ── Range input thumb (orange) ─────────────────── */
-  .range-thumb-orange::-webkit-slider-thumb {
+  /* ── Range input thumb (green) ─────────────────── */
+  .range-thumb-fresh::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
     width: 18px;
     height: 18px;
     border-radius: 4px;
-    background: var(--brand-orange);
+    background: var(--brand-fresh);
     border: 2px solid var(--background);
     cursor: pointer;
-    box-shadow: 0 0 0 2px color-mix(in oklab, var(--brand-orange) 30%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--brand-fresh) 30%, transparent);
     transition: box-shadow 150ms ease;
   }
-  .range-thumb-orange::-webkit-slider-thumb:hover {
-    box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand-orange) 25%, transparent);
+  .range-thumb-fresh::-webkit-slider-thumb:hover {
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand-fresh) 25%, transparent);
   }
-  .range-thumb-orange::-moz-range-thumb {
+  .range-thumb-fresh::-moz-range-thumb {
     width: 18px;
     height: 18px;
     border-radius: 4px;
-    background: var(--brand-orange);
+    background: var(--brand-fresh);
     border: 2px solid var(--background);
     cursor: pointer;
-    box-shadow: 0 0 0 2px color-mix(in oklab, var(--brand-orange) 30%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--brand-fresh) 30%, transparent);
   }
 
   /* ── Interactive States ─────────────────────────── */
@@ -447,7 +457,7 @@
 
   .card-hover:hover {
     transform: translateY(-4px);
-    box-shadow: 0 16px 36px color-mix(in oklab, var(--brand-navy) 16%, transparent), 0 0 0 1px color-mix(in oklab, var(--brand-orange) 40%, transparent);
+    box-shadow: 0 16px 36px color-mix(in oklab, var(--brand-deep) 16%, transparent), 0 0 0 1px color-mix(in oklab, var(--brand-fresh) 40%, transparent);
   }
 
 }

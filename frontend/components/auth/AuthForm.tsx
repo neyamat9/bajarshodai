@@ -131,7 +131,7 @@ export default function AuthForm({ mode, expired = false, initialEmail = "", onE
 
       if (result.success) {
         setSubmitStatus("success");
-        if (mode === "signup") toast.success("Welcome to GadgetBachai! Your account is ready.", { duration: 3000 });
+        if (mode === "signup") toast.success("Welcome to Bazar Shodai! Your account is ready.", { duration: 3000 });
         else toast.success("Welcome back!", { duration: 2500 });
 
         // let the robot celebrate for a moment, then the modal moves on
@@ -164,21 +164,21 @@ export default function AuthForm({ mode, expired = false, initialEmail = "", onE
         <h1 className="font-outfit text-3xl font-black tracking-tight text-primary dark:text-foreground">
           {mode === "login" ? (
             <>
-              Welcome <span className="text-brand-orange">back</span>
+              Welcome <span className="text-brand-fresh">back</span>
             </>
           ) : (
             <>
-              Create your <span className="text-brand-orange">account</span>
+              Create your <span className="text-brand-fresh">account</span>
             </>
           )}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {mode === "login" ? "Sign in to see your orders, wishlist and faster checkout" : "Join GadgetBachai to track orders, save a wishlist and check out faster"}
+          {mode === "login" ? "Sign in to see your orders, wishlist and faster checkout" : "Join Bazar Shodai to track orders, save a wishlist and check out faster"}
         </p>
       </div>
 
       {expired && mode === "login" && (
-        <p role="status" className="mb-5 rounded border border-brand-orange/40 bg-brand-orange/10 px-4 py-3 text-sm font-medium text-accent-text">
+        <p role="status" className="mb-5 rounded border border-brand-fresh/40 bg-brand-fresh/10 px-4 py-3 text-sm font-medium text-accent-text">
           Your session ended. Please sign in again.
         </p>
       )}
@@ -227,7 +227,7 @@ export default function AuthForm({ mode, expired = false, initialEmail = "", onE
 
         {mode === "login" && (
           <div className="text-right">
-            <button type="button" onClick={() => onSwitchMode("forgot")} className="text-sm font-semibold text-primary transition-colors hover:text-accent-text dark:text-brand-blue">
+            <button type="button" onClick={() => onSwitchMode("forgot")} className="text-sm font-semibold text-primary transition-colors hover:text-accent-text dark:text-brand-fresh">
               Forgot password?
             </button>
           </div>
@@ -239,7 +239,7 @@ export default function AuthForm({ mode, expired = false, initialEmail = "", onE
           className={`group relative mt-1 flex h-13 w-full items-center justify-center gap-2 overflow-hidden rounded py-3.5 text-base font-bold text-white transition-all duration-300 disabled:cursor-not-allowed ${
             isSuccess
               ? "bg-emerald-600 shadow-[0_10px_28px_-8px_rgba(5,150,105,0.7)]"
-              : "bg-linear-to-r from-primary to-[#1d6ac9] shadow-[0_12px_28px_-10px_rgba(5,57,114,0.8)] hover:-translate-y-0.5 hover:shadow-[0_16px_34px_-10px_rgba(249,155,16,0.6)]"
+              : "bg-linear-to-r from-primary to-brand-deep-light shadow-[0_12px_28px_-10px_rgba(11,98,52,0.8)] hover:-translate-y-0.5 hover:shadow-[0_16px_34px_-10px_rgba(69,162,44,0.6)]"
           }`}
         >
           {!off && <span className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 -skew-x-12 bg-white/20 transition-transform duration-700 group-hover:translate-x-[420%]" aria-hidden="true" />}
@@ -247,7 +247,7 @@ export default function AuthForm({ mode, expired = false, initialEmail = "", onE
             {isLoading && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}
             {isSuccess && <Check className="h-5 w-5" strokeWidth={3} aria-hidden="true" />}
             {isLoading ? "Please wait…" : isSuccess ? (mode === "login" ? "Signed in!" : "Account created!") : mode === "login" ? "Sign in" : "Create account"}
-            {!off && <ArrowRight className="h-5 w-5 text-brand-orange transition-transform group-hover:translate-x-1" aria-hidden="true" />}
+            {!off && <ArrowRight className="h-5 w-5 text-brand-fresh transition-transform group-hover:translate-x-1" aria-hidden="true" />}
           </span>
         </button>
       </form>

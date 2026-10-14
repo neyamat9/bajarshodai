@@ -83,7 +83,7 @@ export default function StickyATCBar({
       aria-hidden={!visible}
     >
       {/* Backdrop blur bar */}
-      <div className="bg-card/95 backdrop-blur-xl border-t border-border shadow-[0_-20px_60px_rgba(10,42,94,0.3)]">
+      <div className="bg-card/95 backdrop-blur-xl border-t border-border shadow-[0_-20px_60px_rgba(11,98,52,0.3)]">
         <div className="max-w-[1440px] mx-auto px-4 md:px-8 py-3 flex items-center gap-4">
           {/* Product thumbnail */}
           {primaryImage && (
@@ -122,7 +122,7 @@ export default function StickyATCBar({
             onClick={handleAddToCart}
             disabled={loading || product.stock === 0}
             aria-label={`Add ${product.name} to cart`}
-            className="flex-shrink-0 h-10 px-6 flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-tight text-sm rounded transition-all shadow-[0_4px_16px_rgba(249,155,16,0.3)] disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97]"
+            className="flex-shrink-0 h-10 px-6 flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-tight text-sm rounded transition-all shadow-[0_4px_16px_rgba(69,162,44,0.3)] disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97]"
           >
             {loading ? (
               <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">

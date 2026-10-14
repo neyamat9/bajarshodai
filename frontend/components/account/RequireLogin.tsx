@@ -9,7 +9,7 @@ import { useEffect } from "react";
 function Spinner() {
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
-      <div className="h-10 w-10 animate-spin rounded-full border-2 border-border border-t-brand-orange" />
+      <div className="h-10 w-10 animate-spin rounded-full border-2 border-border border-t-brand-fresh" />
     </div>
   );
 }
@@ -34,7 +34,7 @@ export default function RequireLogin({ children, fallback }: { children: React.R
     return (
       <div className="flex min-h-[60vh] items-center justify-center px-4 py-12">
         <div className="w-full max-w-sm rounded border border-border bg-card p-8 text-center">
-          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded bg-primary/10 text-primary dark:text-brand-blue">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded bg-primary/10 text-primary dark:text-brand-fresh">
             <UserRound className="h-7 w-7" aria-hidden="true" />
           </span>
           <h1 className="mt-4 font-outfit text-2xl font-black text-foreground">Sign in to continue</h1>
@@ -42,7 +42,7 @@ export default function RequireLogin({ children, fallback }: { children: React.R
           <button
             type="button"
             onClick={() => openAuth("login", { then: "stay" })}
-            className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded bg-brand-orange text-sm font-bold text-on-orange transition-colors hover:bg-brand-orange/90"
+            className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded bg-brand-fresh text-sm font-bold text-on-fresh transition-colors hover:bg-brand-fresh/90"
           >
             <LogIn className="h-4 w-4" aria-hidden="true" />
             Sign in
@@ -67,7 +67,7 @@ export function PageShell({ eyebrow, title, accent, back, children }: { eyebrow:
         <h1 className="font-outfit text-4xl font-black leading-none tracking-tight text-foreground sm:text-5xl">
           {title} {accent && <span className="text-accent-text">{accent}</span>}
         </h1>
-        <div className="mb-8 mt-6 h-px bg-gradient-to-r from-brand-orange/30 via-secondary to-transparent" />
+        <div className="mb-8 mt-6 h-px bg-gradient-to-r from-brand-fresh/30 via-secondary to-transparent" />
         {children}
       </div>
     </section>
@@ -75,6 +75,6 @@ export function PageShell({ eyebrow, title, accent, back, children }: { eyebrow:
 }
 
 export const inputCls =
-  "w-full rounded border border-border bg-muted px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-brand-orange/50";
+  "w-full rounded border border-border bg-muted px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-brand-fresh/50";
 export const primaryBtn =
-  "rounded bg-brand-orange px-6 py-3 text-xs font-black uppercase tracking-widest text-foreground transition hover:bg-brand-orange/90 active:scale-95 disabled:opacity-50";
+  "rounded bg-brand-fresh px-6 py-3 text-xs font-black uppercase tracking-widest text-foreground transition hover:bg-brand-fresh/90 active:scale-95 disabled:opacity-50";

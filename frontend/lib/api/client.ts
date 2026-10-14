@@ -1,4 +1,4 @@
-// Talks to the GadgetBachai backend. Works in the browser (tokens, guest cart id)
+// Talks to the Bazar Shodai backend. Works in the browser (tokens, guest cart id)
 // and on the server (public data only, no tokens).
 
 export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api').replace(/\/$/, '');
@@ -26,8 +26,8 @@ export function assetUrl(url?: string | null): string {
 }
 
 // ── token storage ────────────────────────────────────────
-const K = { access: 'gb_access', refresh: 'gb_refresh', uid: 'gb_uid', guest: 'gb_guest' } as const;
-export const AUTH_CHANGED_EVENT = 'gb:auth-changed';
+const K = { access: 'bs_access', refresh: 'bs_refresh', uid: 'bs_uid', guest: 'bs_guest' } as const;
+export const AUTH_CHANGED_EVENT = 'bs:auth-changed';
 /** localStorage keys that make up a login — other tabs watch these (the `storage` event) to stay in sync */
 export const AUTH_STORAGE_KEYS: readonly string[] = [K.access, K.refresh, K.uid];
 /** Dispatched with `detail.reason = 'expired'` when the server ended the session (refresh token rejected) */

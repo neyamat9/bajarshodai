@@ -26,7 +26,7 @@ export default function CartPage() {
             </span>
           )}
         </h1>
-        <div className="mt-2 h-1 w-16 bg-brand-orange rounded" />
+        <div className="mt-2 h-1 w-16 bg-brand-fresh rounded" />
       </div>
 
       {loading ? (
@@ -41,7 +41,7 @@ export default function CartPage() {
               height="40"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="var(--brand-orange)"
+              stroke="var(--brand-fresh)"
               strokeWidth="1.5"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -195,7 +195,7 @@ export default function CartPage() {
                 type="button"
                 onClick={checkout.go}
                 disabled={checkout.state === "loading" || checkout.checking}
-                className="w-full py-4 rounded bg-primary text-white font-bold text-base hover:bg-primary/90 active:scale-[0.97] transition-all shadow-[0_8px_24px_rgba(249,155,16,0.3)] hover:shadow-[0_12px_32px_rgba(249,155,16,0.4)] disabled:cursor-wait disabled:opacity-80"
+                className="w-full py-4 rounded bg-primary text-white font-bold text-base hover:bg-primary/90 active:scale-[0.97] transition-all shadow-[0_8px_24px_rgba(69,162,44,0.3)] hover:shadow-[0_12px_32px_rgba(69,162,44,0.4)] disabled:cursor-wait disabled:opacity-80"
               >
                 {checkout.checking ? "Checking your addresses…" : checkout.state === "signed-out" ? "Log in to checkout" : "Proceed to Checkout"}
               </button>

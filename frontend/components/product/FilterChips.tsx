@@ -52,14 +52,14 @@ function Chip({
 }) {
   return (
     <span
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-orange/10 border border-brand-orange/30 rounded text-[11px] font-bold text-accent-text animate-scale-in"
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-fresh/10 border border-brand-fresh/30 rounded text-[11px] font-bold text-accent-text animate-scale-in"
     >
       {filter.label}
       <button
         type="button"
         onClick={() => onRemove(filter.key)}
         aria-label={`Remove filter: ${filter.label}`}
-        className="w-4 h-4 flex items-center justify-center rounded hover:bg-brand-orange/20 transition-colors flex-shrink-0"
+        className="w-4 h-4 flex items-center justify-center rounded hover:bg-brand-fresh/20 transition-colors flex-shrink-0"
       >
         <svg
           className="w-2.5 h-2.5"

@@ -79,7 +79,7 @@ export default function AccountShell({ children }: { children: React.ReactNode }
                 href={it.href}
                 aria-current={on ? "page" : undefined}
                 className={`inline-flex shrink-0 items-center gap-2 rounded border px-3.5 py-2 text-sm font-semibold transition-colors ${
-                  on ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:border-brand-orange"
+                  on ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:border-brand-fresh"
                 }`}
               >
                 <it.icon className="h-4 w-4" aria-hidden="true" />
@@ -93,14 +93,14 @@ export default function AccountShell({ children }: { children: React.ReactNode }
         <aside className="hidden lg:block">
           <div className="sticky transition-[top] duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)]" style={{ top: "var(--sticky-top, 8rem)" }}>
             <div className={`${card} overflow-hidden`}>
-              <div className="relative bg-linear-to-br from-primary to-[#1d6ac9] px-5 pb-12 pt-6 text-white">
-                <span className="pointer-events-none absolute -right-5 -top-5 h-20 w-20 rotate-12 bg-brand-orange/30" aria-hidden="true" />
-                <span className="pointer-events-none absolute right-12 top-14 h-3 w-3 bg-brand-orange" aria-hidden="true" />
+              <div className="relative bg-linear-to-br from-primary to-brand-deep-light px-5 pb-12 pt-6 text-white">
+                <span className="pointer-events-none absolute -right-5 -top-5 h-20 w-20 rotate-12 bg-brand-fresh/30" aria-hidden="true" />
+                <span className="pointer-events-none absolute right-12 top-14 h-3 w-3 bg-brand-fresh" aria-hidden="true" />
                 <p className="relative text-xs font-semibold text-white/70">Signed in as</p>
                 <p className="relative mt-0.5 h-5 truncate text-sm font-bold">{user?.email}</p>
               </div>
               <div className="relative z-10 -mt-9 px-5 pb-5">
-                <span className="flex h-18 w-18 items-center justify-center overflow-hidden rounded border-4 border-card bg-brand-orange font-outfit text-2xl font-black text-on-orange shadow-md">
+                <span className="flex h-18 w-18 items-center justify-center overflow-hidden rounded border-4 border-card bg-brand-fresh font-outfit text-2xl font-black text-on-fresh shadow-md">
                   {user?.avatarUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
@@ -134,7 +134,7 @@ export default function AccountShell({ children }: { children: React.ReactNode }
                     >
                       <it.icon className={`h-[18px] w-[18px] ${on ? "" : "text-muted-foreground group-hover:text-accent-text"}`} aria-hidden="true" />
                       <span className="flex-1">{it.label}</span>
-                      {!!it.badge && <span className={`rounded px-1.5 py-0.5 text-[11px] font-black ${on ? "bg-white/20" : "bg-brand-orange text-on-orange"}`}>{it.badge}</span>}
+                      {!!it.badge && <span className={`rounded px-1.5 py-0.5 text-[11px] font-black ${on ? "bg-white/20" : "bg-brand-fresh text-on-fresh"}`}>{it.badge}</span>}
                     </Link>
                   );
                 })}

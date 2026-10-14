@@ -8,13 +8,13 @@ import Link from "next/link";
 
 export const card = "rounded border border-border bg-card";
 export const inputBase =
-  "h-11 w-full rounded border-2 border-input bg-background px-3.5 text-sm font-medium text-foreground outline-none transition-all placeholder:font-normal placeholder:text-muted-foreground/80 hover:border-primary/40 focus:border-brand-orange focus:ring-4 focus:ring-brand-orange/20 disabled:opacity-60";
+  "h-11 w-full rounded border-2 border-input bg-background px-3.5 text-sm font-medium text-foreground outline-none transition-all placeholder:font-normal placeholder:text-muted-foreground/80 hover:border-primary/40 focus:border-brand-fresh focus:ring-4 focus:ring-brand-fresh/20 disabled:opacity-60";
 export const btnPrimary =
-  "inline-flex h-11 items-center justify-center gap-2 rounded bg-linear-to-r from-primary to-[#1d6ac9] px-5 text-sm font-bold text-white shadow-[0_10px_24px_-12px_rgba(5,57,114,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-12px_rgba(249,155,16,0.6)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0";
+  "inline-flex h-11 items-center justify-center gap-2 rounded bg-linear-to-r from-primary to-brand-deep-light px-5 text-sm font-bold text-white shadow-[0_10px_24px_-12px_rgba(11,98,52,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-12px_rgba(69,162,44,0.6)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0";
 export const btnOrange =
-  "inline-flex h-11 items-center justify-center gap-2 rounded bg-brand-orange px-5 text-sm font-bold text-on-orange transition-colors hover:bg-brand-orange/90 disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex h-11 items-center justify-center gap-2 rounded bg-brand-fresh px-5 text-sm font-bold text-on-fresh transition-colors hover:bg-brand-fresh/90 disabled:cursor-not-allowed disabled:opacity-60";
 export const btnGhost =
-  "inline-flex h-11 items-center justify-center gap-2 rounded border border-border bg-card px-5 text-sm font-bold text-foreground transition-colors hover:border-brand-orange hover:text-accent-text disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex h-11 items-center justify-center gap-2 rounded border border-border bg-card px-5 text-sm font-bold text-foreground transition-colors hover:border-brand-fresh hover:text-accent-text disabled:cursor-not-allowed disabled:opacity-60";
 
 export const formatBDT = (n: number) => `৳${n.toLocaleString("en-BD")}`;
 export const formatDate = (iso: string) => new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
@@ -31,7 +31,7 @@ export function PageHeading({ title, accent, subtitle, actions }: { title: strin
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
         <h1 className="font-outfit text-3xl font-black leading-tight tracking-tight text-primary dark:text-foreground sm:text-4xl">
-          {title} {accent && <span className="text-brand-orange">{accent}</span>}
+          {title} {accent && <span className="text-brand-fresh">{accent}</span>}
         </h1>
         {subtitle && <p className="mt-1.5 text-sm text-muted-foreground">{subtitle}</p>}
       </div>
@@ -43,7 +43,7 @@ export function PageHeading({ title, accent, subtitle, actions }: { title: strin
 export function EmptyState({ icon: Icon, title, text, action }: { icon: LucideIcon; title: string; text: string; action?: { href: string; label: string } }) {
   return (
     <div className={`${card} flex flex-col items-center px-6 py-16 text-center`}>
-      <span className="flex h-16 w-16 items-center justify-center rounded bg-primary/10 text-primary dark:text-brand-blue">
+      <span className="flex h-16 w-16 items-center justify-center rounded bg-primary/10 text-primary dark:text-brand-fresh">
         <Icon className="h-8 w-8" aria-hidden="true" />
       </span>
       <h2 className="mt-5 font-outfit text-xl font-black text-foreground">{title}</h2>
@@ -81,7 +81,7 @@ export function stepIndex(o: Pick<Order, "status" | "rawStatus">): number {
 
 /**
  * Order progress as five round steps joined by a line (Placed → Confirmed → Packing → On the way → Delivered).
- * Finished steps are filled orange with their icon, the current one pulses, the rest wait greyed out.
+ * Finished steps are filled green with their icon, the current one pulses, the rest wait greyed out.
  * A cancelled order shows one red note instead.
  */
 export function StepProgress({ order, timestamps = false }: { order: StepOrder; timestamps?: boolean }) {
@@ -111,13 +111,13 @@ export function StepProgress({ order, timestamps = false }: { order: StepOrder; 
         const Icon = s.icon;
         return (
           <li key={s.key} className="relative flex flex-1 flex-col items-center text-center" aria-current={current ? "step" : undefined}>
-            {i > 0 && <span className={`absolute right-1/2 top-[17px] h-1 w-full rounded transition-colors ${i <= active ? "bg-brand-orange" : "bg-secondary"}`} aria-hidden="true" />}
+            {i > 0 && <span className={`absolute right-1/2 top-[17px] h-1 w-full rounded transition-colors ${i <= active ? "bg-brand-fresh" : "bg-secondary"}`} aria-hidden="true" />}
             <span
               className={`relative z-10 flex h-9 w-9 items-center justify-center rounded-full border-2 transition-colors ${
-                done ? "border-brand-orange bg-brand-orange text-on-orange" : current ? "border-brand-orange bg-card text-accent-text ring-4 ring-brand-orange/25" : "border-border bg-card text-muted-foreground"
+                done ? "border-brand-fresh bg-brand-fresh text-on-fresh" : current ? "border-brand-fresh bg-card text-accent-text ring-4 ring-brand-fresh/25" : "border-border bg-card text-muted-foreground"
               }`}
             >
-              {current && <span className="absolute inset-0 animate-ping rounded-full bg-brand-orange/20" aria-hidden="true" />}
+              {current && <span className="absolute inset-0 animate-ping rounded-full bg-brand-fresh/20" aria-hidden="true" />}
               <Icon className="relative h-4 w-4" aria-hidden="true" />
             </span>
             <span className={`mt-1.5 text-[11px] font-semibold leading-tight sm:text-xs ${done || current ? "text-foreground" : "text-muted-foreground"}`}>{s.label}</span>

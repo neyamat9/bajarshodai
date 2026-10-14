@@ -17,7 +17,7 @@ function Heading() {
   return (
     <div className="mb-8">
       <B className="h-9 w-44 md:h-10" />
-      <div className="mt-2 h-1 w-16 rounded bg-brand-orange/40" />
+      <div className="mt-2 h-1 w-16 rounded bg-brand-fresh/40" />
     </div>
   );
 }

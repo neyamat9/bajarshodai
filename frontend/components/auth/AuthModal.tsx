@@ -297,7 +297,7 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
       {shown &&
         createPortal(
           <div ref={backdrop} className="fixed inset-0 z-[2200] flex items-stretch justify-center sm:items-center sm:p-6" data-lenis-prevent>
-            <div className="absolute inset-0 bg-brand-navy/70 backdrop-blur-md" onClick={closeAuth} aria-hidden="true" />
+            <div className="absolute inset-0 bg-brand-deep/70 backdrop-blur-md" onClick={closeAuth} aria-hidden="true" />
 
             <div
               ref={panel}
@@ -305,17 +305,17 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
               aria-modal="true"
               aria-label={TITLES[mode]}
               tabIndex={-1}
-              className="relative flex h-dvh w-full flex-col overflow-hidden bg-linear-to-br from-[#e3efff] via-[#fbf6ea] to-[#ffe4b8] outline-none dark:from-[#05122b] dark:via-[#0a2350] dark:to-[#123a78] sm:h-auto sm:max-h-[92dvh] sm:max-w-[500px] sm:rounded sm:border sm:border-border sm:shadow-2xl"
+              className="relative flex h-dvh w-full flex-col overflow-hidden bg-linear-to-br from-[#e1f3d8] via-[#f4f8f1] to-[#d6ebc9] outline-none dark:from-[#06120b] dark:via-[#0b2316] dark:to-[#14402a] sm:h-auto sm:max-h-[92dvh] sm:max-w-[500px] sm:rounded sm:border sm:border-border sm:shadow-2xl"
             >
-              <div className="pointer-events-none absolute -left-20 -top-20 h-64 w-64 rounded-full bg-sky-400/30 blur-3xl dark:bg-sky-500/20" aria-hidden="true" />
-              <div className="pointer-events-none absolute -bottom-24 -right-16 h-72 w-72 rounded-full bg-brand-orange/35 blur-3xl dark:bg-brand-orange/15" aria-hidden="true" />
+              <div className="pointer-events-none absolute -left-20 -top-20 h-64 w-64 rounded-full bg-brand-fresh/30 blur-3xl dark:bg-brand-fresh/20" aria-hidden="true" />
+              <div className="pointer-events-none absolute -bottom-24 -right-16 h-72 w-72 rounded-full bg-brand-fresh/35 blur-3xl dark:bg-brand-fresh/15" aria-hidden="true" />
 
               <button
                 type="button"
                 onClick={closeAuth}
                 aria-label="Close"
                 aria-disabled={busy}
-                className={`${busy ? "opacity-40" : ""} absolute right-3 top-3 z-30 flex h-10 w-10 items-center justify-center rounded border border-border bg-card/90 text-foreground shadow-sm backdrop-blur transition-colors hover:border-brand-orange hover:text-accent-text`}
+                className={`${busy ? "opacity-40" : ""} absolute right-3 top-3 z-30 flex h-10 w-10 items-center justify-center rounded border border-border bg-card/90 text-foreground shadow-sm backdrop-blur transition-colors hover:border-brand-fresh hover:text-accent-text`}
               >
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>

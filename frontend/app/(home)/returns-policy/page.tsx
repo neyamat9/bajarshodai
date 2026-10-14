@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const revalidate = 3600;
-export const metadata: Metadata = { title: "Return policy — GadgetBachai" };
+export const metadata: Metadata = { title: "Return policy — Bazar Shodai" };
 
 export default async function ReturnsPolicyPage() {
   const { returns } = await getSiteSettings();

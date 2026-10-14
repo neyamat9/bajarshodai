@@ -71,7 +71,7 @@ export default function OrderSummaryPanel({ summary, loading, couponCode, onAppl
         ) : (
           <form onSubmit={apply} className="flex gap-2">
             <label htmlFor="coupon" className="sr-only">Coupon code</label>
-            <input id="coupon" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="Coupon code" className="h-10 min-w-0 flex-1 rounded border border-border bg-muted px-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:border-brand-orange focus:outline-none" />
+            <input id="coupon" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="Coupon code" className="h-10 min-w-0 flex-1 rounded border border-border bg-muted px-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:border-brand-fresh focus:outline-none" />
             <button type="submit" disabled={busy || !code.trim()} className="h-10 rounded bg-secondary px-4 text-xs font-black uppercase tracking-wide text-foreground hover:bg-secondary disabled:opacity-50">
               {busy ? "…" : "Apply"}
             </button>

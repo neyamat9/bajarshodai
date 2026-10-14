@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const onStorage = (e: StorageEvent) => {
       if (e.key !== null && !AUTH_STORAGE_KEYS.includes(e.key)) return;
       if (!tokens.access) setUser(null);
-      else if (!userRef.current || (e.key === "gb_uid" && e.newValue !== userRef.current.id)) void restore();
+      else if (!userRef.current || (e.key === "bs_uid" && e.newValue !== userRef.current.id)) void restore();
     };
     // coming back from the browser's back/forward cache, or a dropped connection: re-check
     const recheck = () => {

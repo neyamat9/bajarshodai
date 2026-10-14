@@ -30,7 +30,7 @@ function List() {
         <ul className="space-y-3">
           {tickets.map((t) => (
             <li key={t.id}>
-              <Link href={`/account/support/${t.id}`} className="flex items-center justify-between gap-4 rounded border border-border bg-muted p-5 hover:border-brand-orange/20">
+              <Link href={`/account/support/${t.id}`} className="flex items-center justify-between gap-4 rounded border border-border bg-muted p-5 hover:border-brand-fresh/20">
                 <div className="min-w-0">
                   <p className="font-mono text-xs text-muted-foreground/70">{t.ticketNumber}</p>
                   <p className="truncate font-bold text-foreground">{t.subject}</p>

@@ -16,22 +16,22 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
     <section className="relative overflow-hidden bg-secondary pb-16 pt-[60px] sm:pt-[58px] md:pb-20 md:pt-[71px]" aria-labelledby="categories-heading">
       {/* decorative pixels that drift while scrolling */}
       <RevealGroup className="relative mx-auto max-w-[1440px] px-4 md:px-8">
-        <span data-drift="1" className="pointer-events-none absolute -right-2 top-4 hidden h-6 w-6 bg-brand-orange/70 md:block" aria-hidden="true" />
-        <span data-drift="1.8" className="pointer-events-none absolute right-24 top-24 hidden h-3 w-3 bg-brand-orange/40 md:block" aria-hidden="true" />
+        <span data-drift="1" className="pointer-events-none absolute -right-2 top-4 hidden h-6 w-6 bg-brand-fresh/70 md:block" aria-hidden="true" />
+        <span data-drift="1.8" className="pointer-events-none absolute right-24 top-24 hidden h-3 w-3 bg-brand-fresh/40 md:block" aria-hidden="true" />
         <span data-drift="0.6" className="pointer-events-none absolute right-48 top-2 hidden h-4 w-4 bg-primary/30 md:block" aria-hidden="true" />
 
         <SectionHeader
           once
           title={
             <span id="categories-heading">
-              Everything your gadgets <span className="text-brand-orange">crave</span>
+              Everything your kitchen <span className="text-brand-fresh">needs</span>
             </span>
           }
-          description="Chargers to speakers, cases to controllers — pick a category and find the perfect match for your device."
+          description="From fresh fish and vegetables to rice, oil and spices — pick a category and fill your basket."
           action={
             <BrowseTrigger
               kind="categories"
-              className="group inline-flex w-fit shrink-0 items-center gap-2 rounded border border-border bg-card px-5 py-3 text-sm font-bold text-foreground transition-colors hover:border-brand-orange hover:text-accent-text"
+              className="group inline-flex w-fit shrink-0 items-center gap-2 rounded border border-border bg-card px-5 py-3 text-sm font-bold text-foreground transition-colors hover:border-brand-fresh hover:text-accent-text"
             >
               All categories
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
@@ -51,7 +51,7 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
                 href={`/category/${cat.slug}`}
                 prefetch
                 id={`category-${cat.slug}`}
-                className="group relative aspect-[5/4] overflow-hidden rounded border border-border bg-gradient-to-br from-primary to-brand-navy-light will-change-transform"
+                className="group relative aspect-[5/4] overflow-hidden rounded border border-border bg-gradient-to-br from-primary to-brand-deep-light will-change-transform"
               >
                 {image ? (
                   <div data-parallax className="absolute inset-x-0 -inset-y-[9%]">
@@ -77,10 +77,10 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
                     <path strokeLinecap="round" strokeLinejoin="round" d={cat.icon} />
                   </svg>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-brand-navy via-brand-navy/30 to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 h-1 origin-left scale-x-0 bg-brand-orange transition-transform duration-500 group-hover:scale-x-100" />
+                <div className="absolute inset-0 bg-gradient-to-t from-brand-deep via-brand-deep/30 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 h-1 origin-left scale-x-0 bg-brand-fresh transition-transform duration-500 group-hover:scale-x-100" />
 
-                <span className="absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded bg-brand-orange text-on-orange opacity-0 transition-opacity group-hover:opacity-100">
+                <span className="absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded bg-brand-fresh text-on-fresh opacity-0 transition-opacity group-hover:opacity-100">
                   <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
                 </span>
 

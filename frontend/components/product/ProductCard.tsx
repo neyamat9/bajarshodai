@@ -5,11 +5,10 @@ import { useQuickAdd } from "@/lib/hooks/use-quick-add";
 import { getProductBySlug } from "@/lib/services/products.service";
 import { playClick } from "@/lib/sound";
 import { useInView } from "@/lib/hooks/use-in-view";
-import { useCompare } from "@/lib/hooks/use-compare";
 import { useWishlist } from "@/lib/hooks/use-wishlist";
 import { useRouter } from "next/navigation";
 import type { Product, ProductVariant } from "@/lib/types";
-import { Flame, GitCompareArrows, Heart, Loader2, ShoppingCart, Star, X } from "lucide-react";
+import { Flame, Heart, Loader2, ShoppingCart, Star, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRef, useState } from "react";
@@ -33,8 +32,8 @@ function formatBDT(price: number): string {
 
 const BADGE_STYLES: Record<string, string> = {
   NEW: "bg-primary text-primary-foreground",
-  HOT: "bg-brand-orange text-on-orange",
-  "BEST SELLER": "bg-brand-orange text-on-orange",
+  HOT: "bg-brand-fresh text-on-fresh",
+  "BEST SELLER": "bg-brand-fresh text-on-fresh",
   "LIMITED STOCK": "bg-destructive text-white",
 };
 
@@ -50,8 +49,6 @@ export default function ProductCard({
   // option picker for products with colours / sizes (so the customer never leaves the card)
   const [picker, setPicker] = useState<{ loading: boolean; variants: ProductVariant[] } | null>(null);
   const { addToVault, removeFromVault, isInVault } = useWishlist();
-  const { addToCompare, removeFromCompare, isInCompare, compareList } = useCompare();
-  const inCompare = isInCompare(product.id);
   const router = useRouter();
   // start loading the product page as soon as the pointer is over the card, so the click opens it at once
   const prefetched = useRef(false);
@@ -61,12 +58,6 @@ export default function ProductCard({
     router.prefetch(`/products/${product.slug}`);
   }
 
-  function toggleCompare() {
-    if (inCompare) return removeFromCompare(product.id);
-    if (compareList.length >= 3) return void toast.warning("Maximum 3 products can be compared at once");
-    addToCompare(product);
-    toast.success(`${product.name} added to compare`, { duration: 2000 });
-  }
   const { ref, inView } = useInView({ threshold: 0.08 });
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -153,7 +144,7 @@ export default function ProductCard({
       onPointerEnter={warm}
       onTouchStart={warm}
       onFocus={warm}
-      className="group relative flex h-full flex-col overflow-hidden rounded border border-border bg-card transition-[border-color,box-shadow] duration-300 hover:border-brand-orange hover:shadow-[0_16px_36px_-12px_rgba(10,42,94,0.28)]"
+      className="group relative flex h-full flex-col overflow-hidden rounded border border-border bg-card transition-[border-color,box-shadow] duration-300 hover:border-brand-fresh hover:shadow-[0_16px_36px_-12px_rgba(11,98,52,0.28)]"
       style={
         entrance
           ? {
@@ -195,7 +186,7 @@ export default function ProductCard({
         {/* Out of stock: a diagonal "STOCK OUT" band across the photo */}
         {outOfStock && (
           <div className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center overflow-hidden" aria-hidden="true">
-            <div className="absolute inset-0 bg-brand-navy/25" />
+            <div className="absolute inset-0 bg-brand-deep/25" />
             <span className="w-[160%] -rotate-[24deg] border-y-2 border-card/80 bg-destructive py-2 text-center font-outfit text-lg font-black uppercase tracking-[0.35em] text-white shadow-lg">
               Stock out
             </span>
@@ -238,15 +229,6 @@ export default function ProductCard({
             aria-hidden="true"
           />
         </button>
-        <button
-          type="button"
-          onClick={toggleCompare}
-          aria-pressed={inCompare}
-          aria-label={inCompare ? `Remove ${product.name} from compare` : `Add ${product.name} to compare`}
-          className={`absolute right-3 top-12 z-10 flex h-8 w-8 items-center justify-center rounded shadow-sm backdrop-blur transition-colors ${inCompare ? "bg-brand-orange text-on-orange" : "bg-card/90 text-muted-foreground hover:text-accent-text"}`}
-        >
-          <GitCompareArrows className="h-4 w-4" aria-hidden="true" />
-        </button>
       </div>
 
       {/* ── Info ────────────────────────────────────── */}
@@ -267,7 +249,7 @@ export default function ProductCard({
             {[1, 2, 3, 4, 5].map((n) => (
               <Star
                 key={n}
-                className={`h-3 w-3 sm:h-3.5 sm:w-3.5 ${n <= Math.round(rating) ? "fill-brand-orange text-brand-orange" : "fill-transparent text-muted-foreground/40"}`}
+                className={`h-3 w-3 sm:h-3.5 sm:w-3.5 ${n <= Math.round(rating) ? "fill-brand-fresh text-brand-fresh" : "fill-transparent text-muted-foreground/40"}`}
               />
             ))}
           </span>
@@ -314,7 +296,7 @@ export default function ProductCard({
             disabled={outOfStock}
             aria-label={outOfStock ? `${product.name} is out of stock` : `Add ${product.name} to cart`}
             title={outOfStock ? "Out of stock" : "Add to cart"}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-primary text-primary-foreground transition-all sm:h-10 sm:w-10 hover:bg-brand-orange hover:text-on-orange active:scale-90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:opacity-60 disabled:hover:bg-muted disabled:hover:text-muted-foreground"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-primary text-primary-foreground transition-all sm:h-10 sm:w-10 hover:bg-brand-fresh hover:text-on-fresh active:scale-90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:opacity-60 disabled:hover:bg-muted disabled:hover:text-muted-foreground"
           >
             <ShoppingCart className="h-[18px] w-[18px]" aria-hidden="true" />
           </button>
@@ -323,7 +305,7 @@ export default function ProductCard({
       {/* Option picker — slides up over the card */}
       {picker && (
         <div
-          className="absolute inset-x-0 bottom-0 z-30 animate-fade-slide-up border-t border-border bg-card/98 p-3 shadow-[0_-16px_30px_-12px_rgba(5,57,114,0.35)] backdrop-blur sm:p-4"
+          className="absolute inset-x-0 bottom-0 z-30 animate-fade-slide-up border-t border-border bg-card/98 p-3 shadow-[0_-16px_30px_-12px_rgba(11,98,52,0.35)] backdrop-blur sm:p-4"
           role="dialog"
           aria-label={`Choose an option for ${product.name}`}
           onKeyDown={(e) => e.key === "Escape" && setPicker(null)}
@@ -351,7 +333,7 @@ export default function ProductCard({
                     type="button"
                     disabled={v.stock <= 0}
                     onClick={() => void addVariant(v)}
-                    className="flex items-center gap-2 rounded border border-input bg-background px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:border-brand-orange hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40 disabled:line-through disabled:hover:border-input disabled:hover:bg-background"
+                    className="flex items-center gap-2 rounded border border-input bg-background px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:border-brand-fresh hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40 disabled:line-through disabled:hover:border-input disabled:hover:bg-background"
                   >
                     {v.colorHex && <span className="h-3.5 w-3.5 rounded border border-border" style={{ backgroundColor: v.colorHex }} aria-hidden="true" />}
                     {v.label}

@@ -28,7 +28,7 @@ export async function generateMetadata({
 
   if (!product) {
     return {
-      title: "Product Not Found — GadgetBachai",
+      title: "Product Not Found — Bazar Shodai",
     };
   }
 
@@ -36,10 +36,10 @@ export async function generateMetadata({
     product.images.find((img) => img.isPrimary) ?? product.images[0];
 
   return {
-    title: `${product.name} — GadgetBachai`,
+    title: `${product.name} — Bazar Shodai`,
     description: product.shortDescription || product.description.replace(/<[^>]*>/g, "").slice(0, 160),
     openGraph: {
-      title: `${product.name} — GadgetBachai`,
+      title: `${product.name} — Bazar Shodai`,
       description: product.shortDescription || product.description.replace(/<[^>]*>/g, "").slice(0, 160),
       images: primaryImage
         ? [
@@ -55,7 +55,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: `${product.name} — GadgetBachai`,
+      title: `${product.name} — Bazar Shodai`,
       description: product.shortDescription || product.description.replace(/<[^>]*>/g, "").slice(0, 160),
       images: primaryImage ? [primaryImage.url] : [],
     },

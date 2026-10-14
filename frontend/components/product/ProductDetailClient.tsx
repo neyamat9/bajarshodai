@@ -59,7 +59,7 @@ export default function ProductDetailClient({ product: initial, relatedProducts,
     setVariant(v);
   }
 
-  const extra = product as Product & { reviewCount?: number; warranty?: string };
+  const extra = product as Product & { reviewCount?: number };
   const save = product.originalPrice && product.originalPrice > product.price ? product.originalPrice - product.price : 0;
   const stockLabel = product.stock > 0 ? "In Stock" : "Out of Stock";
   const year = new Date().getFullYear();
@@ -104,8 +104,7 @@ export default function ProductDetailClient({ product: initial, relatedProducts,
                   <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                     The {product.brandName ? `${product.brandName} ` : ""}
                     {product.name} price in BD is <b className="text-foreground">{money(product.price)}</b>.{" "}
-                    {extra.warranty ? `It comes with ${extra.warranty.replace(/ brand warranty$/i, "")} warranty. ` : ""}
-                    Based on {extra.reviewCount ?? 0} {extra.reviewCount === 1 ? "review" : "reviews"}, GadgetBachai offers this {product.categoryName.toLowerCase()} product at{" "}
+                    Based on {extra.reviewCount ?? 0} {extra.reviewCount === 1 ? "review" : "reviews"}, Bazar Shodai offers this {product.categoryName.toLowerCase()} product at{" "}
                     {money(product.price)}
                     {save > 0 ? ` and its regular price is ${money(product.originalPrice!)}` : ""}, which is {stockLabel} now. Every item is 100% genuine, with delivery
                     across Bangladesh and cash on delivery available.

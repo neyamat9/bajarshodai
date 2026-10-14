@@ -53,7 +53,7 @@ function Thread() {
       <ul className="mb-8 space-y-3">
         {(t.messages ?? []).map((m) => (
           <li key={m.id} className={`flex ${m.isStaff ? "" : "justify-end"}`}>
-            <div className={`max-w-[85%] rounded px-4 py-3 text-sm ${m.isStaff ? "bg-muted text-foreground/80" : "bg-brand-orange/15 text-foreground"}`}>
+            <div className={`max-w-[85%] rounded px-4 py-3 text-sm ${m.isStaff ? "bg-muted text-foreground/80" : "bg-brand-fresh/15 text-foreground"}`}>
               <p className="mb-1 text-[11px] text-muted-foreground/70">{m.isStaff ? "Support team" : "You"} · {new Date(m.createdAt).toLocaleString("en-BD")}</p>
               <p className="whitespace-pre-wrap">{m.message}</p>
             </div>

@@ -3,7 +3,7 @@ import Link from "next/link";
 
 /** Look shared by the "View all …" buttons that close every home section. */
 export const sectionMoreClass =
-  "group inline-flex w-full items-center justify-center gap-2 rounded border border-border bg-card px-6 py-3.5 text-sm font-bold text-foreground transition-colors hover:border-brand-orange hover:text-accent-text sm:w-fit";
+  "group inline-flex w-full items-center justify-center gap-2 rounded border border-border bg-card px-6 py-3.5 text-sm font-bold text-foreground transition-colors hover:border-brand-fresh hover:text-accent-text sm:w-fit";
 
 /**
  * The button under a home section's content. Small screens only (from md up the same button lives in the section header).

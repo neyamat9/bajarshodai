@@ -55,7 +55,7 @@ export function HomeSkeleton() {
       <section className="bg-secondary/60 py-16 md:py-20">
         <div className="mx-auto max-w-[1440px] px-4 md:px-8">
           <Block className="mb-3 h-10 w-80 max-w-full" />
-          <Block className="mb-10 h-1 w-20 !bg-brand-orange/50" />
+          <Block className="mb-10 h-1 w-20 !bg-brand-fresh/50" />
           <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
               <Block key={i} className="aspect-[5/4] !bg-card" />

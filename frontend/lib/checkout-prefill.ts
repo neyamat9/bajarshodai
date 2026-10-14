@@ -18,7 +18,7 @@ export function clearCheckoutPrefill() {
 if (typeof window !== "undefined") {
   window.addEventListener(AUTH_CHANGED_EVENT, clearCheckoutPrefill);
   window.addEventListener("storage", (e) => {
-    if (e.key === null || e.key === "gb_uid" || e.key === "gb_access") clearCheckoutPrefill();
+    if (e.key === null || e.key === "bs_uid" || e.key === "bs_access") clearCheckoutPrefill();
   });
 }
 

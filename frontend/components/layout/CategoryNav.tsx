@@ -15,7 +15,7 @@ interface CategoryNavProps {
 }
 
 const linkClass =
-  "relative inline-flex items-center gap-1 whitespace-nowrap px-3 py-3.5 text-[13px] font-semibold text-muted-foreground transition-colors hover:text-foreground after:absolute after:bottom-1.5 after:left-3 after:right-3 after:h-[2px] after:origin-left after:scale-x-0 after:bg-brand-orange after:transition-transform hover:after:scale-x-100";
+  "relative inline-flex items-center gap-1 whitespace-nowrap px-3 py-3.5 text-[13px] font-semibold text-muted-foreground transition-colors hover:text-foreground after:absolute after:bottom-1.5 after:left-3 after:right-3 after:h-[2px] after:origin-left after:scale-x-0 after:bg-brand-fresh after:transition-transform hover:after:scale-x-100";
 
 function MiniCart() {
   const { cartCount, openCart } = useCart();
@@ -41,11 +41,11 @@ function MiniCart() {
       type="button"
       onClick={openCart}
       aria-label={`Open cart, ${cartCount} items`}
-      className="relative ml-3 flex h-10 w-10 shrink-0 items-center justify-center rounded bg-primary text-primary-foreground shadow-md transition-colors hover:bg-brand-orange hover:text-on-orange"
+      className="relative ml-3 flex h-10 w-10 shrink-0 items-center justify-center rounded bg-primary text-primary-foreground shadow-md transition-colors hover:bg-brand-fresh hover:text-on-fresh"
     >
       <ShoppingCart className="h-[18px] w-[18px]" aria-hidden="true" />
       {cartCount > 0 && (
-        <span className="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded bg-brand-orange px-1 text-[10px] font-bold text-on-orange">
+        <span className="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded bg-brand-fresh px-1 text-[10px] font-bold text-on-fresh">
           {cartCount > 9 ? "9+" : cartCount}
         </span>
       )}
@@ -149,7 +149,7 @@ export default function CategoryNav({ categories, compact = false }: CategoryNav
           <div className="flex items-center py-1.5">
             <Link
               href="/products"
-              className="hidden items-center whitespace-nowrap rounded border border-brand-orange/40 bg-brand-orange/10 px-3 py-1.5 text-xs font-bold text-accent-text transition-colors hover:bg-brand-orange hover:text-on-orange 2xl:flex"
+              className="hidden items-center whitespace-nowrap rounded border border-brand-fresh/40 bg-brand-fresh/10 px-3 py-1.5 text-xs font-bold text-accent-text transition-colors hover:bg-brand-fresh hover:text-on-fresh 2xl:flex"
             >
               Today&apos;s deals
             </Link>

@@ -26,12 +26,12 @@ export async function generateMetadata({
   const brand = await getBrandBySlug(slug);
 
   if (!brand) {
-    return { title: "Brand Not Found — GadgetBachai" };
+    return { title: "Brand Not Found — Bazar Shodai" };
   }
 
   return {
-    title: `${brand.name} — GadgetBachai`,
-    description: `Shop ${brand.name} products at GadgetBachai. ${brand.description}`,
+    title: `${brand.name} — Bazar Shodai`,
+    description: `Shop ${brand.name} products at Bazar Shodai. ${brand.description}`,
   };
 }
 
@@ -59,7 +59,7 @@ export default async function BrandPage({ params }: BrandPageProps) {
           {/* Glassmorphism banner */}
           <div className="relative rounded overflow-hidden border border-border bg-muted backdrop-blur-sm p-8 mb-6">
             {/* Decorative accent line */}
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-brand-orange/60 to-transparent" />
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-brand-fresh/60 to-transparent" />
 
             <div className="flex flex-col md:flex-row md:items-end gap-4">
               <div className="flex-1">

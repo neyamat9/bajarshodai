@@ -12,15 +12,15 @@ export default function BestSellingProducts({ products }: BestSellingProductsPro
   return (
     <section className="overflow-x-clip bg-secondary pb-16 pt-[60px] sm:pt-[58px] md:pb-20 md:pt-[71px]" aria-labelledby="best-selling-heading">
       <RevealGroup className="relative mx-auto max-w-[1440px] px-4 md:px-8">
-        <span data-drift="1.4" className="pointer-events-none absolute right-0 top-2 hidden h-5 w-5 bg-brand-orange/60 md:block" aria-hidden="true" />
+        <span data-drift="1.4" className="pointer-events-none absolute right-0 top-2 hidden h-5 w-5 bg-brand-fresh/60 md:block" aria-hidden="true" />
         <span data-drift="0.7" className="pointer-events-none absolute right-16 top-20 hidden h-3 w-3 bg-primary/30 md:block" aria-hidden="true" />
         <SectionHeader
           title={
             <span id="best-selling-heading">
-              Crowd <span className="text-brand-orange">favourites</span>, better prices
+              Crowd <span className="text-brand-fresh">favourites</span>, better prices
             </span>
           }
-          description="The gadgets flying off our shelves right now. Grab yours before they sell out."
+          description="The items our customers keep coming back for. Grab yours while they are fresh."
           href="/products"
           hrefLabel="See all bestsellers"
         />

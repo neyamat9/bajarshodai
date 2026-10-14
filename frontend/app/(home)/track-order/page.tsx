@@ -9,7 +9,7 @@ import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const fmt = (n: string | number) => `৳${Number(n).toLocaleString("en-BD")}`;
-const input = "w-full rounded border border-border bg-muted px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-brand-orange";
+const input = "w-full rounded border border-border bg-muted px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-brand-fresh";
 
 function Tracker() {
   const params = useSearchParams();
@@ -65,7 +65,7 @@ function Tracker() {
             <label htmlFor="p" className="sr-only">Phone</label>
             <input id="p" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone, e.g. 01712345678" className={input} />
           </div>
-          <button type="submit" disabled={busy} className="rounded bg-brand-orange px-6 py-3 text-xs font-black uppercase tracking-widest text-foreground hover:bg-brand-orange/90 disabled:opacity-60">{busy ? "Looking…" : "Track"}</button>
+          <button type="submit" disabled={busy} className="rounded bg-brand-fresh px-6 py-3 text-xs font-black uppercase tracking-widest text-foreground hover:bg-brand-fresh/90 disabled:opacity-60">{busy ? "Looking…" : "Track"}</button>
         </form>
 
         {error && <p role="alert" className="mt-6 rounded border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>}
@@ -83,7 +83,7 @@ function Tracker() {
             <ol className="space-y-3 border-l border-border pl-5">
               {order.timeline.map((t, i) => (
                 <li key={i} className="relative text-sm">
-                  <span className="absolute -left-[25px] top-1.5 size-2.5 rounded bg-brand-orange" />
+                  <span className="absolute -left-[25px] top-1.5 size-2.5 rounded bg-brand-fresh" />
                   <b>{t.status.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase())}</b>
                   {t.note && <span className="text-muted-foreground"> — {t.note}</span>}
                   <p className="text-xs text-muted-foreground/70">{new Date(t.at).toLocaleString("en-BD")}</p>

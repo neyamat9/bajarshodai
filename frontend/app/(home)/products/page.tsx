@@ -10,8 +10,8 @@ import { Suspense } from "react";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "All Products — GadgetBachai",
-  description: "Browse everything at GadgetBachai: phones, accessories and smart gadgets with prices in BDT and delivery across Bangladesh.",
+  title: "All Products — Bazar Shodai",
+  description: "Browse everything at Bazar Shodai: fresh fish, vegetables, fruits and daily groceries with prices in BDT and home delivery in Shahrasti.",
 };
 
 const SORTS: SortOption[] = ["popular", "newest", "price-asc", "price-desc", "rating", "name"];

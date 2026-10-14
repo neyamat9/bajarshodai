@@ -175,7 +175,7 @@ export default function SiteHeader() {
     }
   }
 
-  /** Highlight the matched portion of text with orange color */
+  /** Highlight the matched portion of text with the brand green */
   function highlightMatch(text: string, query: string) {
     if (!query.trim()) return <span>{text}</span>;
     const idx = text.toLowerCase().indexOf(query.toLowerCase());
@@ -192,9 +192,9 @@ export default function SiteHeader() {
   }
 
   const actionBtn =
-    "relative flex h-11 w-11 items-center justify-center rounded border border-border bg-card text-foreground transition-colors hover:border-brand-orange hover:text-accent-text";
+    "relative flex h-11 w-11 items-center justify-center rounded border border-border bg-card text-foreground transition-colors hover:border-brand-fresh hover:text-accent-text";
   const badge =
-    "absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded bg-brand-orange px-1 text-[10px] font-bold text-on-orange";
+    "absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded bg-brand-fresh px-1 text-[10px] font-bold text-on-fresh";
 
   return (
     <header className="relative z-[1010] border-b border-border bg-card/95 backdrop-blur-xl">
@@ -230,7 +230,7 @@ export default function SiteHeader() {
                     setTyped(false);
                   }}
                   onKeyDown={handleKeyDown}
-                  placeholder="Search chargers, earbuds, smartwatches…"
+                  placeholder="Search fish, vegetables, fruits…"
                   autoComplete="off"
                   aria-label="Search products"
                   aria-autocomplete="list"
@@ -238,7 +238,7 @@ export default function SiteHeader() {
                   aria-activedescendant={
                     activeSuggestion < 0 ? undefined : activeSuggestion < suggestionCount ? `suggestion-${activeSuggestion}` : `history-${activeSuggestion - suggestionCount}`
                   }
-                  className="h-11 w-full rounded border border-input bg-secondary/60 pl-11 pr-14 text-sm font-medium text-foreground transition-all placeholder:text-muted-foreground focus:border-brand-orange focus:bg-card focus:outline-none focus:ring-4 focus:ring-brand-orange/15 md:h-12"
+                  className="h-11 w-full rounded border border-input bg-secondary/60 pl-11 pr-14 text-sm font-medium text-foreground transition-all placeholder:text-muted-foreground focus:border-brand-fresh focus:bg-card focus:outline-none focus:ring-4 focus:ring-brand-fresh/15 md:h-12"
                 />
                 <button
                   type="submit"
@@ -272,7 +272,7 @@ export default function SiteHeader() {
                         onMouseEnter={() => setActiveSuggestion(idx)}
                         className={`flex w-full items-center gap-3 border-l-2 px-4 py-3 text-left transition-colors ${
                           activeSuggestion === idx
-                            ? "border-brand-orange bg-accent"
+                            ? "border-brand-fresh bg-accent"
                             : "border-transparent hover:bg-secondary/60"
                         } ${idx !== 0 ? "border-t border-t-border" : ""}`}
                       >
@@ -329,7 +329,7 @@ export default function SiteHeader() {
                       </button>
                     </div>
                     {historyRows.map((h, idx) => (
-                      <div key={h.id} className={`flex items-center border-l-2 ${historyActive === idx ? "border-brand-orange bg-accent" : "border-transparent hover:bg-secondary/60"}`} onMouseEnter={() => setActiveSuggestion(suggestionCount + idx)}>
+                      <div key={h.id} className={`flex items-center border-l-2 ${historyActive === idx ? "border-brand-fresh bg-accent" : "border-transparent hover:bg-secondary/60"}`} onMouseEnter={() => setActiveSuggestion(suggestionCount + idx)}>
                         <button
                           id={`history-${idx}`}
                           role="option"

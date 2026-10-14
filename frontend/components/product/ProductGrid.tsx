@@ -290,13 +290,13 @@ export default function ProductGrid({
               <button
                 type="button"
                 onClick={loadMore}
-                className="rounded border border-brand-orange/40 bg-brand-orange/10 px-8 py-3 text-xs font-black uppercase tracking-widest text-accent-text transition hover:bg-brand-orange hover:text-on-orange"
+                className="rounded border border-brand-fresh/40 bg-brand-fresh/10 px-8 py-3 text-xs font-black uppercase tracking-widest text-accent-text transition hover:bg-brand-fresh hover:text-on-fresh"
               >
                 Couldn&apos;t load more — try again
               </button>
             ) : (
               <div className="flex items-center gap-3 text-sm font-medium text-muted-foreground" role="status" aria-live="polite">
-                <span className="h-5 w-5 animate-spin rounded-full border-2 border-brand-orange border-t-transparent" aria-hidden="true" />
+                <span className="h-5 w-5 animate-spin rounded-full border-2 border-brand-fresh border-t-transparent" aria-hidden="true" />
                 Loading more products…
               </div>
             )}

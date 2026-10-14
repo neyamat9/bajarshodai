@@ -10,7 +10,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Home",
   description:
-    "GadgetBachai – Smart choice, better price. Shop phones, accessories and smart gadgets with delivery across Bangladesh.",
+    "Bazar Shodai – fresh fish, vegetables, fruits and everyday groceries, delivered to your door in Shahrasti, Chandpur.",
 };
 
 // Shared server cache: the shop pages are rebuilt at most every 5 minutes (and at once when the admin changes something, see /api/revalidate).

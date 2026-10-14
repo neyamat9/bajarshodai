@@ -60,19 +60,6 @@ const ICONS: [RegExp, PinnedSpec['icon']][] = [
 ];
 const iconFor = (name: string): PinnedSpec['icon'] => ICONS.find(([re]) => re.test(name))?.[1] ?? 'speed';
 
-function parseBox(v: unknown): string[] {
-  if (Array.isArray(v)) return v.map(String);
-  if (typeof v === 'string' && v.trim()) {
-    try {
-      const j = JSON.parse(v);
-      if (Array.isArray(j)) return j.map(String);
-    } catch {
-      return v.split('\n').map((s) => s.trim()).filter(Boolean);
-    }
-  }
-  return [];
-}
-
 // Descriptions may carry simple HTML; show them as text
 const plain = (v: unknown) =>
   String(v ?? '')
@@ -104,10 +91,8 @@ export function mapProduct(p: Raw): Product {
   if (images.length === 0) images = [{ id: 'img-0', url: PLACEHOLDER_IMAGE, alt: p.name, isPrimary: true }];
 
   const attributes: Raw[] = p.attributes ?? [];
-  const specs: SpecGroup[] = (p.specifications ?? [])
-    .filter((s: Raw) => s.items?.length)
-    .map((s: Raw) => ({ groupName: s.title, items: s.items.map((i: Raw) => ({ key: i.key, value: i.value })) }));
-  if (attributes.length) specs.unshift({ groupName: 'Key Features', items: attributes.map((a) => ({ key: a.name, value: a.value })) });
+  const specs: SpecGroup[] = [];
+  if (attributes.length) specs.push({ groupName: 'Details', items: attributes.map((a) => ({ key: a.name, value: a.value })) });
 
   const badges: ProductBadge[] = [];
   if (p.isNew) badges.push('NEW');
@@ -141,7 +126,6 @@ export function mapProduct(p: Raw): Product {
     soldLast24h: num(p.soldLast24h),
     purchasePoints: num(p.purchasePoint),
     priceHistory: [...(p.priceHistory ?? [])].reverse().map((h: Raw) => ({ date: h.recordedAt, price: num(h.price) })),
-    inTheBox: parseBox(p.inTheBox),
     isFeatured: !!p.isFeatured,
     createdAt: p.createdAt ?? new Date().toISOString(),
     // extras the API gives us
@@ -149,7 +133,6 @@ export function mapProduct(p: Raw): Product {
       hasVariants: isCard ? !!p.hasVariants : (p.variants ?? []).length > 0,
       avgRating: num(p.avgRating),
       reviewCount: num(p.reviewCount),
-      warranty: p.warrantyInfo ?? '',
       freeShipping: !!p.freeShipping,
       tags: (p.tags ?? []).map((t: Raw) => t.tag),
       metaTitle: p.metaTitle ?? undefined,
@@ -207,7 +190,7 @@ export function mapQuestion(q: Raw, productId?: string): Question {
     askerName: q.user?.name ?? 'Customer',
     questionText: q.question,
     answerText: q.answer ?? undefined,
-    answererName: q.answer ? 'GadgetBachai Team' : undefined,
+    answererName: q.answer ? 'Bazar Shodai Team' : undefined,
     date: q.createdAt,
   };
 }

@@ -15,9 +15,9 @@ export function AuthPanel({ children, compact = false }: { children: React.React
         </div>
         <div
           data-auth-card
-          className="relative z-10 rounded border border-border bg-card/95 p-6 shadow-[0_30px_70px_-25px_rgba(5,57,114,0.45)] backdrop-blur sm:p-8"
+          className="relative z-10 rounded border border-border bg-card/95 p-6 shadow-[0_30px_70px_-25px_rgba(11,98,52,0.45)] backdrop-blur sm:p-8"
         >
-          <span className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-primary via-brand-orange to-sky-400" aria-hidden="true" />
+          <span className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-primary via-brand-fresh to-brand-fresh-dark" aria-hidden="true" />
           {children}
         </div>
       </div>

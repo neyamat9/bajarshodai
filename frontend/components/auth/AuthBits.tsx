@@ -20,7 +20,7 @@ export function AuthSubmit({ busy, disabled, children, busyText }: { busy: boole
     <button
       type="submit"
       disabled={busy || disabled}
-      className="group relative flex h-13 w-full items-center justify-center gap-2 overflow-hidden rounded bg-linear-to-r from-primary to-[#1d6ac9] py-3.5 text-base font-bold text-white shadow-[0_12px_28px_-10px_rgba(5,57,114,0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_34px_-10px_rgba(249,155,16,0.6)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+      className="group relative flex h-13 w-full items-center justify-center gap-2 overflow-hidden rounded bg-linear-to-r from-primary to-brand-deep-light py-3.5 text-base font-bold text-white shadow-[0_12px_28px_-10px_rgba(11,98,52,0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_34px_-10px_rgba(69,162,44,0.6)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
     >
       <span className="relative flex items-center gap-2">
         {busy && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}

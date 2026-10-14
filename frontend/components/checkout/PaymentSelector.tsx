@@ -87,7 +87,7 @@ export default function PaymentSelector({ methods, accounts, total, selected, on
               role="radio"
               aria-checked={on}
               onClick={() => onSelect(m)}
-              className={`flex w-full items-center gap-4 rounded border-2 p-4 text-left transition-all ${on ? "border-brand-orange bg-brand-orange/10" : "border-border bg-card hover:border-primary/40"}`}
+              className={`flex w-full items-center gap-4 rounded border-2 p-4 text-left transition-all ${on ? "border-brand-fresh bg-brand-fresh/10" : "border-border bg-card hover:border-primary/40"}`}
             >
               <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded ${mobile ? `${brand.tint} ${brand.text}` : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"}`}>
                 {mobile ? <Smartphone className="h-6 w-6" aria-hidden="true" /> : <Banknote className="h-6 w-6" aria-hidden="true" />}
@@ -99,7 +99,7 @@ export default function PaymentSelector({ methods, accounts, total, selected, on
                 </span>
                 <span className="mt-0.5 block text-xs text-muted-foreground">{mobile ? `Send money with ${brand.name}, then enter the transaction ID` : "Pay in cash when your order arrives at your door"}</span>
               </span>
-              <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${on ? "border-brand-orange bg-brand-orange text-on-orange" : "border-border"}`} aria-hidden="true">
+              <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${on ? "border-brand-fresh bg-brand-fresh text-on-fresh" : "border-border"}`} aria-hidden="true">
                 {on && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
               </span>
             </button>
@@ -117,7 +117,7 @@ export default function PaymentSelector({ methods, accounts, total, selected, on
                 <div className="mt-2 flex flex-wrap items-center gap-3 rounded border border-border bg-card px-4 py-3">
                   <span className="font-mono text-xl font-black tracking-wide text-foreground">{account.number}</span>
                   <span className={`rounded px-2 py-0.5 text-[11px] font-bold ${BRAND[selected].tint} ${BRAND[selected].text}`}>{ACCOUNT_TYPE[account.accountType] ?? account.accountType}</span>
-                  <button type="button" onClick={() => copy(account.number)} className="ml-auto inline-flex h-9 items-center gap-1.5 rounded border border-border px-3 text-xs font-bold text-foreground transition-colors hover:border-brand-orange hover:text-accent-text">
+                  <button type="button" onClick={() => copy(account.number)} className="ml-auto inline-flex h-9 items-center gap-1.5 rounded border border-border px-3 text-xs font-bold text-foreground transition-colors hover:border-brand-fresh hover:text-accent-text">
                     {copied ? <Check className="h-4 w-4 text-emerald-600" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
                     {copied ? "Copied" : "Copy number"}
                   </button>
@@ -167,7 +167,7 @@ export default function PaymentSelector({ methods, accounts, total, selected, on
         </button>
         <button type="button" onClick={next} disabled={!selected || (isMobile && !account)} className={`${btnPrimary} flex-[2] ${!canContinue && selected ? "opacity-90" : ""}`}>
           Review order
-          <ArrowRight className="h-4 w-4 text-brand-orange" aria-hidden="true" />
+          <ArrowRight className="h-4 w-4 text-brand-fresh" aria-hidden="true" />
         </button>
       </div>
     </div>

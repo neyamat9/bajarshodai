@@ -24,12 +24,12 @@ export async function generateMetadata({
   const category = categories.find((c) => c.slug === slug);
 
   if (!category) {
-    return { title: "Category Not Found — GadgetBachai" };
+    return { title: "Category Not Found — Bazar Shodai" };
   }
 
   return {
-    title: `${category.name} — GadgetBachai`,
-    description: `Shop ${category.name} at GadgetBachai. ${category.description}`,
+    title: `${category.name} — Bazar Shodai`,
+    description: `Shop ${category.name} at Bazar Shodai. ${category.description}`,
   };
 }
 
@@ -74,7 +74,7 @@ async function CategoryContent({ slug, sub }: { slug: string; sub?: string }) {
           <div className="flex flex-wrap gap-2 mb-5">
             <Link
               href={`/category/${slug}`}
-              className={`px-3 py-1.5 border rounded text-[11px] font-bold transition-all ${!subSlug ? "bg-brand-orange border-brand-orange text-foreground" : "bg-muted border-border text-muted-foreground hover:border-brand-orange hover:bg-accent hover:text-foreground dark:hover:bg-secondary dark:hover:text-white"}`}
+              className={`px-3 py-1.5 border rounded text-[11px] font-bold transition-all ${!subSlug ? "bg-brand-fresh border-brand-fresh text-foreground" : "bg-muted border-border text-muted-foreground hover:border-brand-fresh hover:bg-accent hover:text-foreground dark:hover:bg-secondary dark:hover:text-white"}`}
             >
               All
             </Link>
@@ -82,7 +82,7 @@ async function CategoryContent({ slug, sub }: { slug: string; sub?: string }) {
               <Link
                 key={s.slug}
                 href={`/category/${slug}?sub=${s.slug}`}
-                className={`px-3 py-1.5 border rounded text-[11px] font-bold transition-all ${subSlug === s.slug ? "bg-brand-orange border-brand-orange text-foreground" : "bg-muted border-border text-muted-foreground hover:border-brand-orange hover:bg-accent hover:text-foreground dark:hover:bg-secondary dark:hover:text-white"}`}
+                className={`px-3 py-1.5 border rounded text-[11px] font-bold transition-all ${subSlug === s.slug ? "bg-brand-fresh border-brand-fresh text-foreground" : "bg-muted border-border text-muted-foreground hover:border-brand-fresh hover:bg-accent hover:text-foreground dark:hover:bg-secondary dark:hover:text-white"}`}
               >
                 {s.name}
               </Link>

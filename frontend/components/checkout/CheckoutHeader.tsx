@@ -10,7 +10,7 @@ import Link from "next/link";
  */
 export default function CheckoutHeader() {
   return (
-    <header className="bg-card border-b border-border py-4 sticky top-0 z-[1001] shadow-[0_10px_30px_rgba(10,42,94,0.18)]">
+    <header className="bg-card border-b border-border py-4 sticky top-0 z-[1001] shadow-[0_10px_30px_rgba(11,98,52,0.18)]">
       <div className="max-w-[1440px] mx-auto px-4 md:px-8 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <BrandLogo size="md" />

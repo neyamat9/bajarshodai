@@ -36,7 +36,6 @@ function basicProduct(i: WishlistItem): Product {
     soldLast24h: 0,
     purchasePoints: 0,
     priceHistory: [],
-    inTheBox: [],
     isFeatured: false,
     createdAt: i.addedAt,
   };

@@ -37,7 +37,7 @@ export default function SortBar({ resultCount, sortBy, onSortChange, onOpenFilte
           >
             <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
             Filters
-            {activeCount > 0 && <span className="rounded bg-brand-orange px-1.5 py-0.5 text-[10px] leading-none text-on-orange">{activeCount}</span>}
+            {activeCount > 0 && <span className="rounded bg-brand-fresh px-1.5 py-0.5 text-[10px] leading-none text-on-fresh">{activeCount}</span>}
           </button>
         )}
         <p className="truncate text-sm font-medium text-muted-foreground">
@@ -50,7 +50,7 @@ export default function SortBar({ resultCount, sortBy, onSortChange, onOpenFilte
           <button
             type="button"
             aria-label={`Sort products: ${current.label}`}
-            className="group flex shrink-0 items-center gap-2 rounded border border-border bg-background px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:border-brand-orange focus-visible:border-brand-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/30 data-[state=open]:border-brand-orange"
+            className="group flex shrink-0 items-center gap-2 rounded border border-border bg-background px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:border-brand-fresh focus-visible:border-brand-fresh focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-fresh/30 data-[state=open]:border-brand-fresh"
           >
             <ArrowDownUp className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
             <span className="hidden text-muted-foreground sm:inline">Sort by:</span>
@@ -68,7 +68,7 @@ export default function SortBar({ resultCount, sortBy, onSortChange, onOpenFilte
               >
                 <span className="flex w-full items-center justify-between gap-3">
                   {opt.label}
-                  {opt.value === sortBy && <Check className="h-4 w-4 text-brand-orange" strokeWidth={3} aria-hidden="true" />}
+                  {opt.value === sortBy && <Check className="h-4 w-4 text-brand-fresh" strokeWidth={3} aria-hidden="true" />}
                 </span>
               </DropdownMenuRadioItem>
             ))}

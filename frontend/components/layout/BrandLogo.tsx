@@ -1,7 +1,8 @@
 import Link from "next/link";
 
-// GadgetBachai lockup: the logo mark sits on a white tile (the artwork has a
-// white background, so it works in light and dark), with a theme-aware wordmark.
+// Bazar Shodai lockup: the wide logo (cart mark + বাজার সদাই). The artwork has a
+// white background, so in light mode it is multiplied into the page colour and in
+// dark mode (or on surfaces that stay dark) it sits on a small white tile.
 export default function BrandLogo({
   size = "md",
   tagline = false,
@@ -15,40 +16,40 @@ export default function BrandLogo({
   tone?: "default" | "onDark";
 }) {
   const dims = {
-    sm: { tile: "size-9 p-1", text: "text-lg", tag: "text-[8px]" },
-    md: { tile: "size-10 p-1 sm:size-11", text: "text-xl sm:text-2xl md:text-[26px]", tag: "text-[9px]" },
-    lg: { tile: "size-12 p-1.5 sm:size-14", text: "text-2xl sm:text-3xl", tag: "text-[10px]" },
-    xl: { tile: "size-16 p-2 sm:size-20", text: "text-4xl sm:text-5xl", tag: "text-xs" },
+    sm: { img: "h-9", tag: "text-[8px]" },
+    md: { img: "h-10 sm:h-12", tag: "text-[9px]" },
+    lg: { img: "h-12 sm:h-14", tag: "text-[10px]" },
+    xl: { img: "h-16 sm:h-20", tag: "text-xs" },
   }[size];
   const onDark = tone === "onDark";
 
   const body = (
-    <span className="group flex items-center gap-2.5 sm:gap-3">
-      <span className={`${dims.tile} flex shrink-0 items-center justify-center rounded border border-border ${onDark ? "bg-white" : "bg-card dark:bg-white"}`}>
-        {/* the artwork has a white background: multiply lets it melt into the cream tile in light mode */}
+    <span className="group flex flex-col items-start">
+      <span className={`flex items-center rounded ${onDark ? "bg-white px-2 py-1" : "dark:bg-white dark:px-2 dark:py-1"}`}>
+        {/* the artwork is 2800x840: multiply melts its white background into the page in light mode */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo-mark.png" alt="" className={`size-full object-contain ${onDark ? "" : "mix-blend-multiply dark:mix-blend-normal"}`} />
+        <img
+          src="/logo-wide.webp"
+          alt="Bazar Shodai"
+          width={1400}
+          height={420}
+          className={`${dims.img} w-auto object-contain ${onDark ? "" : "mix-blend-multiply dark:mix-blend-normal"}`}
+        />
       </span>
-      <span className="flex flex-col leading-none">
-        <span className={`${dims.text} font-black tracking-tight font-outfit`}>
-          <span className={onDark ? "text-white" : "text-primary dark:text-foreground"}>Gadget</span>
-          <span className="text-brand-orange">Bachai</span>
+      {tagline && (
+        <span
+          className={`${dims.tag} mt-1 font-bold uppercase tracking-[0.2em] transition-colors group-hover:text-accent-text ${
+            onDark ? "text-white/60" : "text-muted-foreground"
+          }`}
+        >
+          Fresh daily needs, at your door
         </span>
-        {tagline && (
-          <span
-            className={`${dims.tag} mt-1.5 font-bold uppercase tracking-[0.24em] transition-colors group-hover:text-accent-text ${
-              onDark ? "text-white/60" : "text-muted-foreground"
-            }`}
-          >
-            Smart choice, better price
-          </span>
-        )}
-      </span>
+      )}
     </span>
   );
 
   return asLink ? (
-    <Link href="/" aria-label="GadgetBachai home" className="inline-flex">
+    <Link href="/" aria-label="Bazar Shodai home" className="inline-flex">
       {body}
     </Link>
   ) : (

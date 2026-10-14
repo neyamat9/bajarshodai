@@ -4,9 +4,8 @@ import { useAuthModal } from "@/components/auth/AuthModal";
 import { startNavigation } from "@/components/layout/NavigationGate";
 import { gsap } from "@/components/motion/gsap";
 import { useAuth } from "@/lib/hooks/use-auth";
-import { useCompare } from "@/lib/hooks/use-compare";
 import { useWishlist } from "@/lib/hooks/use-wishlist";
-import { GitCompareArrows, Heart, LifeBuoy, LogOut, type LucideIcon, Moon, Package, PackageSearch, RotateCcw, Sun, UserRound, X } from "lucide-react";
+import { Heart, LifeBuoy, LogOut, type LucideIcon, Moon, Package, PackageSearch, RotateCcw, Sun, UserRound, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -42,7 +41,6 @@ export default function MobileMenu({ open, onClose }: { open: boolean; onClose: 
   const { user, isLoading, logout } = useAuth();
   const { openAuth } = useAuthModal();
   const { vaultCount } = useWishlist();
-  const { compareList } = useCompare();
   const { resolvedTheme, setTheme } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
@@ -91,7 +89,6 @@ export default function MobileMenu({ open, onClose }: { open: boolean; onClose: 
   const items: Item[] = [
     { href: "/orders", label: "My orders", icon: Package },
     { href: "/wishlist", label: "Wishlist", icon: Heart, badge: vaultCount },
-    { href: "/compare", label: "Compare", icon: GitCompareArrows, badge: compareList.length },
     { href: "/track-order", label: "Track an order", icon: PackageSearch },
     { href: "/returns-policy", label: "Return policy", icon: RotateCcw },
     { href: "/contact", label: "Contact us", icon: LifeBuoy },
@@ -114,7 +111,7 @@ export default function MobileMenu({ open, onClose }: { open: boolean; onClose: 
         aria-hidden="true"
         data-lenis-prevent
         onClick={onClose}
-        className={`fixed inset-0 z-[2100] bg-brand-navy/60 backdrop-blur-sm transition-opacity duration-300 ${open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"}`}
+        className={`fixed inset-0 z-[2100] bg-brand-deep/60 backdrop-blur-sm transition-opacity duration-300 ${open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"}`}
       />
       <aside
         ref={panel}
@@ -126,7 +123,7 @@ export default function MobileMenu({ open, onClose }: { open: boolean; onClose: 
         aria-hidden={!open}
         className={`fixed right-0 top-0 z-[2110] flex h-full w-full max-w-[340px] flex-col border-l border-border bg-background outline-none transition-transform duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${open ? "translate-x-0 shadow-2xl" : "translate-x-full"}`}
       >
-        <div className="flex shrink-0 items-center justify-between bg-brand-navy px-5 py-4 text-white">
+        <div className="flex shrink-0 items-center justify-between bg-brand-deep px-5 py-4 text-white">
           <h2 className="font-outfit text-lg font-extrabold">Menu</h2>
           <button type="button" onClick={onClose} aria-label="Close menu" className="flex h-9 w-9 items-center justify-center rounded border border-white/25 transition-colors hover:bg-white/15">
             <X className="h-4 w-4" aria-hidden="true" />
@@ -144,7 +141,7 @@ export default function MobileMenu({ open, onClose }: { open: boolean; onClose: 
             ) : user ? (
               <>
                 <div className="flex items-center gap-3">
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded bg-brand-orange font-outfit text-lg font-black text-on-orange">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded bg-brand-fresh font-outfit text-lg font-black text-on-fresh">
                     {user.avatarUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
@@ -183,7 +180,7 @@ export default function MobileMenu({ open, onClose }: { open: boolean; onClose: 
                       onClose();
                       openAuth("signup");
                     }}
-                    className="h-11 rounded border border-border bg-background text-sm font-bold text-foreground transition-colors hover:border-brand-orange hover:text-accent-text"
+                    className="h-11 rounded border border-border bg-background text-sm font-bold text-foreground transition-colors hover:border-brand-fresh hover:text-accent-text"
                   >
                     Sign up
                   </button>
@@ -195,10 +192,10 @@ export default function MobileMenu({ open, onClose }: { open: boolean; onClose: 
           {/* pages */}
           <nav aria-label="Menu" className="mt-3 space-y-1.5">
             {items.map((it) => (
-              <Link key={it.href} href={it.href} onClick={() => go(it.href)} data-menu-row className="flex items-center gap-3 rounded border border-border bg-card px-3.5 py-3 text-sm font-semibold text-foreground transition-colors hover:border-brand-orange hover:text-accent-text">
+              <Link key={it.href} href={it.href} onClick={() => go(it.href)} data-menu-row className="flex items-center gap-3 rounded border border-border bg-card px-3.5 py-3 text-sm font-semibold text-foreground transition-colors hover:border-brand-fresh hover:text-accent-text">
                 <it.icon className="h-[18px] w-[18px] text-muted-foreground" aria-hidden="true" />
                 <span className="flex-1">{it.label}</span>
-                {!!it.badge && <span className="rounded bg-brand-orange px-1.5 py-0.5 text-[11px] font-black text-on-orange">{it.badge}</span>}
+                {!!it.badge && <span className="rounded bg-brand-fresh px-1.5 py-0.5 text-[11px] font-black text-on-fresh">{it.badge}</span>}
               </Link>
             ))}
           </nav>
@@ -215,7 +212,7 @@ export default function MobileMenu({ open, onClose }: { open: boolean; onClose: 
               aria-checked={dark}
               aria-label="Dark mode"
               onClick={() => setTheme(dark ? "light" : "dark")}
-              className={`relative h-7 w-12 rounded-full border transition-colors ${dark ? "border-brand-orange bg-brand-orange" : "border-border bg-secondary"}`}
+              className={`relative h-7 w-12 rounded-full border transition-colors ${dark ? "border-brand-fresh bg-brand-fresh" : "border-border bg-secondary"}`}
             >
               <span className={`absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow transition-all ${dark ? "left-[1.35rem]" : "left-0.5"}`} />
             </button>

@@ -76,7 +76,7 @@ export default function CartSidebar() {
         data-lenis-prevent
         onClick={closeCart}
         className={[
-          "fixed inset-0 z-[2100] bg-brand-navy/60 backdrop-blur-sm transition-opacity duration-500",
+          "fixed inset-0 z-[2100] bg-brand-deep/60 backdrop-blur-sm transition-opacity duration-500",
           isOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
         ].join(" ")}
       />
@@ -97,9 +97,9 @@ export default function CartSidebar() {
         ].join(" ")}
       >
         {/* Header */}
-        <div className="relative flex flex-shrink-0 items-center justify-between overflow-hidden bg-brand-navy px-5 py-5 text-primary-foreground dark:bg-card">
+        <div className="relative flex flex-shrink-0 items-center justify-between overflow-hidden bg-brand-deep px-5 py-5 text-primary-foreground dark:bg-card">
           <div className="relative flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded bg-brand-orange text-on-orange">
+            <span className="flex h-11 w-11 items-center justify-center rounded bg-brand-fresh text-on-fresh">
               <ShoppingBag className="h-5 w-5" aria-hidden="true" />
             </span>
             <div className="leading-tight">
@@ -123,14 +123,14 @@ export default function CartSidebar() {
           <div className="flex flex-1 flex-col items-center justify-center gap-6 px-8 text-center">
             <div className="relative">
               <div className="flex h-24 w-24 items-center justify-center rounded bg-secondary">
-                <ShoppingBag className="h-10 w-10 text-brand-orange" strokeWidth={1.5} aria-hidden="true" />
+                <ShoppingBag className="h-10 w-10 text-brand-fresh" strokeWidth={1.5} aria-hidden="true" />
               </div>
-              <span className="absolute -right-2 -top-2 h-4 w-4 bg-brand-orange" aria-hidden="true" />
+              <span className="absolute -right-2 -top-2 h-4 w-4 bg-brand-fresh" aria-hidden="true" />
               <span className="absolute -bottom-2 -left-2 h-3 w-3 bg-primary/40" aria-hidden="true" />
             </div>
             <div>
               <p className="font-outfit text-xl font-bold text-foreground">Your cart is empty</p>
-              <p className="mt-1.5 text-sm text-muted-foreground">Fast chargers, earbuds and smartwatches are waiting for you.</p>
+              <p className="mt-1.5 text-sm text-muted-foreground">Fresh fish, vegetables and daily needs are waiting for you.</p>
             </div>
             <Link
               href="/products"
@@ -157,7 +157,7 @@ export default function CartSidebar() {
                   )}
                 </div>
                 <div className="h-1.5 overflow-hidden rounded bg-secondary" role="progressbar" aria-valuenow={Math.round(progress)} aria-valuemin={0} aria-valuemax={100}>
-                  <div className="h-full rounded bg-brand-orange transition-[width] duration-700 ease-out" style={{ width: `${progress}%` }} />
+                  <div className="h-full rounded bg-brand-fresh transition-[width] duration-700 ease-out" style={{ width: `${progress}%` }} />
                 </div>
               </div>
             ) : null}
@@ -170,7 +170,7 @@ export default function CartSidebar() {
             </div>
 
             {/* ── Footer ── */}
-            <div className="flex-shrink-0 space-y-4 border-t border-border bg-card px-5 pb-5 pt-4 shadow-[0_-12px_30px_-18px_rgba(5,57,114,0.35)]">
+            <div className="flex-shrink-0 space-y-4 border-t border-border bg-card px-5 pb-5 pt-4 shadow-[0_-12px_30px_-18px_rgba(11,98,52,0.35)]">
               {/* Coupon */}
               {applied ? (
                 <div className="flex items-center gap-3 rounded border border-emerald-600/40 bg-emerald-600/10 px-3 py-2.5" role="status">
@@ -217,13 +217,13 @@ export default function CartSidebar() {
                       aria-describedby={coupon.error ? "drawer-coupon-msg" : undefined}
                       disabled={coupon.busy}
                       className={`h-11 min-w-0 flex-1 rounded border bg-background px-3 font-mono text-sm font-semibold uppercase tracking-wider text-foreground placeholder:font-sans placeholder:normal-case placeholder:tracking-normal placeholder:text-muted-foreground focus:outline-none focus:ring-4 disabled:opacity-60 ${
-                        coupon.error ? "border-destructive focus:ring-destructive/15" : "border-input focus:border-brand-orange focus:ring-brand-orange/15"
+                        coupon.error ? "border-destructive focus:ring-destructive/15" : "border-input focus:border-brand-fresh focus:ring-brand-fresh/15"
                       }`}
                     />
                     <button
                       type="submit"
                       disabled={coupon.busy || input.length === 0}
-                      className="inline-flex h-11 min-w-[88px] items-center justify-center gap-2 rounded bg-primary px-4 text-sm font-bold text-primary-foreground transition-all hover:bg-brand-orange hover:text-on-orange active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-primary disabled:hover:text-primary-foreground"
+                      className="inline-flex h-11 min-w-[88px] items-center justify-center gap-2 rounded bg-primary px-4 text-sm font-bold text-primary-foreground transition-all hover:bg-brand-fresh hover:text-on-fresh active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-primary disabled:hover:text-primary-foreground"
                     >
                       {coupon.busy ? <Loader2 className="h-4 w-4 animate-spin" aria-label="Checking" /> : "Apply"}
                     </button>
@@ -271,7 +271,7 @@ export default function CartSidebar() {
                 type="button"
                 onClick={checkout.go}
                 disabled={checkout.state === "loading" || checkout.checking}
-                className="group flex w-full items-center justify-center gap-2 rounded bg-brand-orange py-3.5 text-sm font-extrabold text-on-orange shadow-[0_10px_24px_-10px_rgba(249,155,16,0.9)] transition-all hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0 disabled:cursor-wait disabled:opacity-80 disabled:hover:translate-y-0"
+                className="group flex w-full items-center justify-center gap-2 rounded bg-brand-fresh py-3.5 text-sm font-extrabold text-on-fresh shadow-[0_10px_24px_-10px_rgba(69,162,44,0.9)] transition-all hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0 disabled:cursor-wait disabled:opacity-80 disabled:hover:translate-y-0"
               >
                 {checkout.state === "loading" || checkout.checking ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Lock className="h-4 w-4" aria-hidden="true" />}
                 {checkout.checking ? "Checking your addresses…" : checkout.state === "signed-out" ? "Log in to checkout" : "Proceed to checkout"}

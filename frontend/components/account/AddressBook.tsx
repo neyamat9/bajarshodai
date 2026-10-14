@@ -55,7 +55,7 @@ function AddressForm({ initial, onDone, onCancel }: { initial?: SavedAddress; on
 
   const lbl = "mb-1.5 block text-xs font-bold text-muted-foreground";
   return (
-    <form onSubmit={save} noValidate className="animate-fade-slide-up space-y-4 rounded border-2 border-brand-orange/40 bg-background p-4 sm:p-5">
+    <form onSubmit={save} noValidate className="animate-fade-slide-up space-y-4 rounded border-2 border-brand-fresh/40 bg-background p-4 sm:p-5">
       <p className="font-outfit text-base font-black text-foreground">{initial ? "Edit address" : "New address"}</p>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
@@ -115,7 +115,7 @@ function AddressForm({ initial, onDone, onCancel }: { initial?: SavedAddress; on
         </div>
       </div>
       <label className="flex cursor-pointer items-center gap-2.5 text-sm font-medium text-foreground">
-        <input type="checkbox" checked={!!f.isDefault} onChange={(e) => setF({ ...f, isDefault: e.target.checked })} className="h-4 w-4 accent-(--brand-orange)" />
+        <input type="checkbox" checked={!!f.isDefault} onChange={(e) => setF({ ...f, isDefault: e.target.checked })} className="h-4 w-4 accent-(--brand-fresh)" />
         Use as my default address
       </label>
       {error && (
@@ -204,16 +204,16 @@ export default function AddressBook() {
           {list.map((a) => {
             const Icon = iconFor(a.label);
             return (
-              <li key={a.id} className={`relative flex flex-col rounded border-2 p-4 transition-colors ${a.isDefault ? "border-brand-orange/60 bg-brand-orange/5" : "border-border bg-background"}`}>
+              <li key={a.id} className={`relative flex flex-col rounded border-2 p-4 transition-colors ${a.isDefault ? "border-brand-fresh/60 bg-brand-fresh/5" : "border-border bg-background"}`}>
                 <div className="flex items-start gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-primary/10 text-primary dark:text-brand-blue">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-primary/10 text-primary dark:text-brand-fresh">
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="flex flex-wrap items-center gap-2 font-bold text-foreground">
                       {a.label || a.fullName}
                       {a.isDefault && (
-                        <span className="inline-flex items-center gap-1 rounded bg-brand-orange px-1.5 py-0.5 text-[10px] font-black text-on-orange">
+                        <span className="inline-flex items-center gap-1 rounded bg-brand-fresh px-1.5 py-0.5 text-[10px] font-black text-on-fresh">
                           <Star className="h-3 w-3" aria-hidden="true" />
                           Default
                         </span>

@@ -41,7 +41,7 @@ export default function NewsletterForm({ variant = "default" }: { variant?: "def
         <button
           type="submit"
           disabled={busy}
-          className="flex h-11 shrink-0 items-center gap-2 rounded bg-brand-orange px-5 text-xs font-extrabold uppercase tracking-wider text-on-orange transition-all hover:brightness-105 active:scale-95 disabled:opacity-60"
+          className="flex h-11 shrink-0 items-center gap-2 rounded bg-brand-fresh px-5 text-xs font-extrabold uppercase tracking-wider text-on-fresh transition-all hover:brightness-105 active:scale-95 disabled:opacity-60"
         >
           <span>Subscribe</span>
           <Send className="h-4 w-4" aria-hidden="true" />
@@ -60,13 +60,13 @@ export default function NewsletterForm({ variant = "default" }: { variant?: "def
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="Your email for offers & updates"
-        className="h-12 w-full rounded border border-white/20 bg-white/10 pl-4 pr-14 text-sm text-white placeholder:text-white/50 focus:border-brand-orange focus:outline-none"
+        className="h-12 w-full rounded border border-white/20 bg-white/10 pl-4 pr-14 text-sm text-white placeholder:text-white/50 focus:border-brand-fresh focus:outline-none"
       />
       <button
         type="submit"
         disabled={busy}
         aria-label="Subscribe"
-        className="absolute right-1.5 top-1/2 flex h-9 w-10 -translate-y-1/2 items-center justify-center rounded bg-brand-orange text-on-orange transition-opacity hover:opacity-90 disabled:opacity-60"
+        className="absolute right-1.5 top-1/2 flex h-9 w-10 -translate-y-1/2 items-center justify-center rounded bg-brand-fresh text-on-fresh transition-opacity hover:opacity-90 disabled:opacity-60"
       >
         <Send className="h-4 w-4" />
       </button>

@@ -130,7 +130,7 @@ function Checkout() {
     <div className="max-w-[1200px] mx-auto px-4 md:px-8 py-8 md:py-12">
       <div className="mb-8">
         <h1 className="text-3xl md:text-4xl font-black text-foreground font-outfit tracking-tight">Checkout</h1>
-        <div className="mt-2 h-1 w-16 bg-brand-orange rounded" />
+        <div className="mt-2 h-1 w-16 bg-brand-fresh rounded" />
       </div>
 
       <div className="mb-8 md:mb-10">

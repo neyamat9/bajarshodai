@@ -23,7 +23,7 @@ export default function SectionHeader({ title, description, href, hrefLabel, onc
         >
           {title}
         </h2>
-        <span data-bar {...(once ? { "data-once": "" } : {})} className="mt-4 block h-1 w-20 bg-brand-orange" aria-hidden="true" />
+        <span data-bar {...(once ? { "data-once": "" } : {})} className="mt-4 block h-1 w-20 bg-brand-fresh" aria-hidden="true" />
         {description && (
           <p data-reveal="up" {...(once ? { "data-once": "" } : {})} className="mt-4 text-base leading-relaxed text-muted-foreground">
             {description}
@@ -39,7 +39,7 @@ export default function SectionHeader({ title, description, href, hrefLabel, onc
           data-reveal="up"
           {...(once ? { "data-once": "" } : {})}
           href={href}
-          className="group inline-flex w-fit shrink-0 max-md:hidden items-center gap-2 rounded border border-border bg-card px-5 py-3 text-sm font-bold text-foreground transition-colors hover:border-brand-orange hover:text-accent-text"
+          className="group inline-flex w-fit shrink-0 max-md:hidden items-center gap-2 rounded border border-border bg-card px-5 py-3 text-sm font-bold text-foreground transition-colors hover:border-brand-fresh hover:text-accent-text"
         >
           {hrefLabel ?? "View all"}
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />

@@ -4,7 +4,7 @@ import type { Product } from "@/lib/types";
 import { useCallback } from "react";
 import { useLocalStorage } from "./use-local-storage";
 
-const STORAGE_KEY = "raizbd_recently_viewed";
+const STORAGE_KEY = "bs_recently_viewed";
 const MAX_ITEMS = 4;
 
 export interface RecentlyViewedItem {
@@ -31,7 +31,7 @@ export interface UseRecentlyViewedResult {
 }
 
 /**
- * Manages the `raizbd_recently_viewed` localStorage key.
+ * Manages the `bs_recently_viewed` localStorage key.
  * - Max 4 items
  * - Deduplicates by product id (most recent visit wins position 0)
  * - Persists across page reloads

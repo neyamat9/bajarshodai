@@ -47,7 +47,7 @@ export default function AuthField({ id, label, value, onChange, icon: Icon, type
       <div className="group relative">
         <span
           className={`pointer-events-none absolute left-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded transition-colors duration-200 ${
-            error ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary group-focus-within:bg-brand-orange group-focus-within:text-on-orange dark:text-brand-blue"
+            error ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary group-focus-within:bg-brand-fresh group-focus-within:text-on-fresh dark:text-brand-fresh"
           }`}
           aria-hidden="true"
         >
@@ -78,7 +78,7 @@ export default function AuthField({ id, label, value, onChange, icon: Icon, type
           onClick={(e) => follow(e.currentTarget)}
           className={`h-12 w-full rounded border-2 bg-background pl-12 text-sm font-medium text-foreground outline-none transition-all duration-200 placeholder:font-normal placeholder:text-muted-foreground/80 disabled:opacity-60 ${
             password ? "pr-12" : "pr-4"
-          } ${error ? "border-destructive/60 focus:border-destructive focus:ring-4 focus:ring-destructive/15" : "border-input hover:border-primary/40 focus:border-brand-orange focus:ring-4 focus:ring-brand-orange/20"}`}
+          } ${error ? "border-destructive/60 focus:border-destructive focus:ring-4 focus:ring-destructive/15" : "border-input hover:border-primary/40 focus:border-brand-fresh focus:ring-4 focus:ring-brand-fresh/20"}`}
         />
 
         {password && (

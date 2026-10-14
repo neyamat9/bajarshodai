@@ -32,7 +32,7 @@ export interface ShippingOption {
 }
 
 const FALLBACK: SiteSettings = {
-  site: { storeName: 'GadgetBachai', tagline: 'Smart choice, better price', logoUrl: null, contactEmail: null, hotline: null, whatsapp: null, address: null, businessHours: null, socialLinks: {} },
+  site: { storeName: 'Bazar Shodai', tagline: 'Fresh daily needs, delivered to your door', logoUrl: null, contactEmail: null, hotline: null, whatsapp: null, address: null, businessHours: null, socialLinks: {} },
   payment: { methods: ['CASH_ON_DELIVERY'], bkash: null, nagad: null, rocket: null },
   shipping: { mode: 'ZONE', freeShippingThreshold: null, insideDhakaCities: ['Dhaka'], options: [] },
   returns: { returnsEnabled: true, returnWindowDays: 7, policyText: null },

@@ -4,8 +4,8 @@
  * StepIndicator — 3-step checkout progress bar
  *
  * Steps: Shipping (1) → Payment (2) → Review (3)
- * - Completed steps: orange fill + checkmark icon
- * - Active step: orange ring with pulsing animation
+ * - Completed steps: green fill + checkmark icon
+ * - Active step: green ring with pulsing animation
  * - Upcoming steps: muted/dimmed
  */
 
@@ -43,7 +43,7 @@ export default function StepIndicator({ currentStep }: StepIndicatorProps) {
                   {/* Pulsing ring for active step */}
                   {isActive && (
                     <span
-                      className="absolute inset-0 rounded border-2 border-brand-orange animate-ping opacity-40"
+                      className="absolute inset-0 rounded border-2 border-brand-fresh animate-ping opacity-40"
                       aria-hidden="true"
                     />
                   )}
@@ -52,9 +52,9 @@ export default function StepIndicator({ currentStep }: StepIndicatorProps) {
                     className={[
                       "relative w-10 h-10 rounded flex items-center justify-center font-bold text-sm transition-all duration-300 z-10",
                       isCompleted
-                        ? "bg-primary text-white shadow-[0_0_16px_rgba(249,155,16,0.4)]"
+                        ? "bg-primary text-white shadow-[0_0_16px_rgba(69,162,44,0.4)]"
                         : isActive
-                        ? "bg-brand-orange/15 border-2 border-brand-orange text-accent-text shadow-[0_0_20px_rgba(249,155,16,0.25)]"
+                        ? "bg-brand-fresh/15 border-2 border-brand-fresh text-accent-text shadow-[0_0_20px_rgba(69,162,44,0.25)]"
                         : "bg-muted border-2 border-border text-muted-foreground/70",
                     ].join(" ")}
                     aria-current={isActive ? "step" : undefined}
@@ -104,7 +104,7 @@ export default function StepIndicator({ currentStep }: StepIndicatorProps) {
                   className={[
                     "h-[2px] w-16 sm:w-24 md:w-32 mx-2 mb-5 rounded transition-all duration-500",
                     isCompleted
-                      ? "bg-brand-orange shadow-[0_0_8px_rgba(249,155,16,0.4)]"
+                      ? "bg-brand-fresh shadow-[0_0_8px_rgba(69,162,44,0.4)]"
                       : "bg-secondary",
                   ].join(" ")}
                   aria-hidden="true"

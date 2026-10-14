@@ -65,20 +65,20 @@ function Overview() {
   return (
     <div className="space-y-6">
       {/* welcome */}
-      <div className="relative overflow-hidden rounded bg-linear-to-br from-primary via-[#0b4d9c] to-[#1d6ac9] px-6 py-7 text-white sm:px-8 sm:py-9">
-        <span className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rotate-12 bg-brand-orange/25" aria-hidden="true" />
-        <span className="pointer-events-none absolute right-28 top-12 hidden h-4 w-4 bg-brand-orange sm:block" aria-hidden="true" />
-        <span className="pointer-events-none absolute bottom-5 right-10 hidden h-6 w-6 rotate-12 bg-sky-300/60 sm:block" aria-hidden="true" />
+      <div className="relative overflow-hidden rounded bg-linear-to-br from-primary via-brand-deep-light to-brand-deep-light px-6 py-7 text-white sm:px-8 sm:py-9">
+        <span className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rotate-12 bg-brand-fresh/25" aria-hidden="true" />
+        <span className="pointer-events-none absolute right-28 top-12 hidden h-4 w-4 bg-brand-fresh sm:block" aria-hidden="true" />
+        <span className="pointer-events-none absolute bottom-5 right-10 hidden h-6 w-6 rotate-12 bg-brand-fresh/40 sm:block" aria-hidden="true" />
         <p className="relative text-sm font-semibold text-white/75">Welcome back</p>
         <h1 className="relative mt-1 font-outfit text-3xl font-black tracking-tight sm:text-4xl">
-          Hi, {first}! <span className="text-brand-orange">Good to see you.</span>
+          Hi, {first}! <span className="text-brand-fresh">Good to see you.</span>
         </h1>
         <p className="relative mt-2 max-w-md text-sm text-white/80">
           {orders === null
             ? "Loading your account…"
             : active.length > 0
               ? `You have ${active.length} order${active.length > 1 ? "s" : ""} on the way.`
-              : "Everything is delivered. Ready for your next gadget?"}
+              : "Everything is delivered. Ready for your next order?"}
         </p>
         <div className="relative mt-5 flex flex-wrap gap-3">
           <Link href="/products" className={btnOrange}>
@@ -97,8 +97,8 @@ function Overview() {
           Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[4.6rem]" />)
         ) : (
           <>
-            <Stat icon={Package} label="Total orders" value={orders.length} tone="bg-primary/10 text-primary dark:text-brand-blue" />
-            <Stat icon={Truck} label="In progress" value={active.length} tone="bg-brand-orange/15 text-accent-text" />
+            <Stat icon={Package} label="Total orders" value={orders.length} tone="bg-primary/10 text-primary dark:text-brand-fresh" />
+            <Stat icon={Truck} label="In progress" value={active.length} tone="bg-brand-fresh/15 text-accent-text" />
             <Stat icon={Heart} label="Wishlist" value={vaultCount} tone="bg-rose-500/10 text-rose-600 dark:text-rose-300" />
             <Stat icon={Wallet} label="Total spent" value={formatBDT(spent)} tone="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" />
           </>
@@ -185,8 +185,8 @@ function Overview() {
           { href: "/wishlist", icon: Heart, title: "Wishlist", text: "Saved for later" },
           { href: "/account/returns", icon: RotateCcw, title: "Returns", text: "Track a return" },
         ].map((t) => (
-          <Link key={t.href} href={t.href} className={`${card} group p-4 transition-colors hover:border-brand-orange`}>
-            <span className="flex h-10 w-10 items-center justify-center rounded bg-primary/10 text-primary transition-colors group-hover:bg-brand-orange group-hover:text-on-orange dark:text-brand-blue">
+          <Link key={t.href} href={t.href} className={`${card} group p-4 transition-colors hover:border-brand-fresh`}>
+            <span className="flex h-10 w-10 items-center justify-center rounded bg-primary/10 text-primary transition-colors group-hover:bg-brand-fresh group-hover:text-on-fresh dark:text-brand-fresh">
               <t.icon className="h-5 w-5" aria-hidden="true" />
             </span>
             <p className="mt-3 text-sm font-bold text-foreground">{t.title}</p>

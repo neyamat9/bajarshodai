@@ -126,11 +126,11 @@ export default function ImageGallery({ product }: ImageGalleryProps) {
         </div>
 
         {/* Ambient glow */}
-        <div className="absolute inset-0 bg-brand-orange/5 blur-3xl rounded opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+        <div className="absolute inset-0 bg-brand-fresh/5 blur-3xl rounded opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
         {/* Zoom hint */}
         <div className="sr-only">
-          <div className="bg-brand-navy/60 backdrop-blur-sm text-muted-foreground text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded border border-border">
+          <div className="bg-brand-deep/60 backdrop-blur-sm text-muted-foreground text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded border border-border">
             Click to zoom
           </div>
         </div>
@@ -149,8 +149,8 @@ export default function ImageGallery({ product }: ImageGalleryProps) {
           }
           className={`absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center rounded border transition-all ${
             inVault
-              ? "bg-brand-orange/20 border-brand-orange/40 text-accent-text"
-              : "bg-brand-navy/40 border-border text-muted-foreground/70 hover:text-accent-text hover:border-brand-orange/30 hover:bg-brand-orange/10"
+              ? "bg-brand-fresh/20 border-brand-fresh/40 text-accent-text"
+              : "bg-brand-deep/40 border-border text-muted-foreground/70 hover:text-accent-text hover:border-brand-fresh/30 hover:bg-brand-fresh/10"
           }`}
         >
           <svg
@@ -190,7 +190,7 @@ export default function ImageGallery({ product }: ImageGalleryProps) {
               aria-label={`View image ${idx + 1}: ${img.alt}`}
               className={`relative flex-shrink-0 w-16 h-16 rounded overflow-hidden border-2 transition-all duration-200 ${
                 idx === activeIndex
-                  ? "border-brand-orange opacity-100"
+                  ? "border-brand-fresh opacity-100"
                   : "border-border opacity-50 hover:opacity-80 hover:border-border"
               }`}
             >
@@ -223,8 +223,8 @@ export default function ImageGallery({ product }: ImageGalleryProps) {
 // Solid colours (same as the product cards): the badges sit on top of photos, so see-through tints are hard to read.
 const BADGE_STYLES: Record<string, string> = {
   NEW: "bg-emerald-600 text-white border-emerald-700",
-  HOT: "bg-brand-orange text-on-orange border-brand-orange",
-  "BEST SELLER": "bg-brand-orange text-on-orange border-brand-orange",
+  HOT: "bg-brand-fresh text-on-fresh border-brand-fresh",
+  "BEST SELLER": "bg-brand-fresh text-on-fresh border-brand-fresh",
   "LIMITED STOCK": "bg-destructive text-white border-destructive",
 };
 
@@ -268,7 +268,7 @@ function Lightbox({
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-[2000] bg-brand-navy/95 backdrop-blur-xl flex items-center justify-center animate-scale-in"
+      className="fixed inset-0 z-[2000] bg-brand-deep/95 backdrop-blur-xl flex items-center justify-center animate-scale-in"
       onClick={(e) => {
         if (e.target === overlayRef.current) onClose();
       }}
@@ -344,7 +344,7 @@ function Lightbox({
               aria-label={`View image ${idx + 1}`}
               className={`w-12 h-12 rounded overflow-hidden border-2 transition-all ${
                 idx === currentIndex
-                  ? "border-brand-orange opacity-100"
+                  ? "border-brand-fresh opacity-100"
                   : "border-border opacity-40 hover:opacity-70"
               }`}
             >

@@ -18,7 +18,6 @@ interface HeroSectionProps {
   categories?: Category[];
 }
 
-const shot = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=1600&h=1000&q=80`;
 const money = (n: number) => `৳${n.toLocaleString("en-BD")}`;
 
 /* ─────────────── dashboard-managed banners (when the owner has set some up) ─────────────── */
@@ -37,7 +36,7 @@ function BannerSlide({ b, priority }: { b: Banner; priority?: boolean }) {
       />
       {(b.title || b.subtitle) && (
         <div
-          className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-brand-navy/80 to-transparent p-6 md:p-10"
+          className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-brand-deep/80 to-transparent p-6 md:p-10"
           style={b.textColor ? { color: b.textColor } : undefined}
         >
           {b.title && <h2 className="font-outfit text-2xl font-black tracking-tight text-white md:text-4xl">{b.title}</h2>}
@@ -84,7 +83,7 @@ function Slider({ banners }: { banners: Banner[] }) {
             type="button"
             aria-label="Previous banner"
             onClick={prev}
-            className="absolute left-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded bg-card/90 text-foreground shadow transition-colors hover:bg-brand-orange hover:text-on-orange"
+            className="absolute left-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded bg-card/90 text-foreground shadow transition-colors hover:bg-brand-fresh hover:text-on-fresh"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
@@ -92,7 +91,7 @@ function Slider({ banners }: { banners: Banner[] }) {
             type="button"
             aria-label="Next banner"
             onClick={next}
-            className="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded bg-card/90 text-foreground shadow transition-colors hover:bg-brand-orange hover:text-on-orange"
+            className="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded bg-card/90 text-foreground shadow transition-colors hover:bg-brand-fresh hover:text-on-fresh"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -103,7 +102,7 @@ function Slider({ banners }: { banners: Banner[] }) {
                 type="button"
                 aria-label={`Show banner ${idx + 1}`}
                 onClick={() => setI(idx)}
-                className={`h-2 rounded transition-all ${idx === i ? "w-8 bg-brand-orange" : "w-2 bg-card/70 hover:bg-card"}`}
+                className={`h-2 rounded transition-all ${idx === i ? "w-8 bg-brand-fresh" : "w-2 bg-card/70 hover:bg-card"}`}
               />
             ))}
           </div>
@@ -262,7 +261,7 @@ function CardStack({ cards }: { cards: StackCard[] }) {
       data-hero-frame
       className="relative aspect-[4/3.6] w-full select-none min-[420px]:aspect-[4/3] sm:aspect-[16/10] lg:aspect-auto lg:h-full"
       aria-roledescription="carousel"
-      aria-label="Featured gadgets — scroll the mouse wheel over the banner to browse"
+      aria-label="Featured products — scroll the mouse wheel over the banner to browse"
     >
       {cards.map((c, i) => (
         <Link
@@ -270,7 +269,7 @@ function CardStack({ cards }: { cards: StackCard[] }) {
           href={c.href}
           data-stack-card
           draggable={false}
-          className="group absolute inset-0 block overflow-hidden rounded border border-border bg-brand-navy will-change-transform"
+          className="group absolute inset-0 block overflow-hidden rounded border border-border bg-brand-deep will-change-transform"
         >
           <Image
             src={c.src}
@@ -281,14 +280,14 @@ function CardStack({ cards }: { cards: StackCard[] }) {
             className="object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-105"
             draggable={false}
           />
-          {/* brand-navy wash so the copy always reads */}
-          <div className="absolute inset-0 bg-gradient-to-r from-brand-navy/95 via-brand-navy/60 to-brand-navy/10 sm:from-brand-navy/90 sm:via-brand-navy/45 sm:to-transparent" />
+          {/* brand-deep wash so the copy always reads */}
+          <div className="absolute inset-0 bg-gradient-to-r from-brand-deep/95 via-brand-deep/60 to-brand-deep/10 sm:from-brand-deep/90 sm:via-brand-deep/45 sm:to-transparent" />
           <div className="absolute inset-y-0 left-0 flex w-full max-w-[34rem] flex-col justify-center gap-2 overflow-hidden p-4 pb-9 min-[420px]:gap-3 min-[420px]:p-6 sm:p-9 lg:p-12">
             <h2 className="line-clamp-3 break-words font-outfit text-xl font-black leading-[1.1] tracking-tight text-white min-[420px]:text-3xl min-[420px]:leading-[1.05] sm:line-clamp-4 sm:text-4xl lg:text-5xl">
               {c.title}
             </h2>
             <p className="line-clamp-2 max-w-sm text-xs font-medium text-white/85 min-[420px]:text-sm sm:text-base">{c.sub}</p>
-            <span className="mt-1 inline-flex w-fit items-center gap-2 rounded bg-brand-orange px-4 py-2.5 text-xs font-extrabold min-[420px]:mt-2 min-[420px]:px-5 min-[420px]:py-3 min-[420px]:text-sm text-on-orange shadow-[0_10px_24px_-10px_rgba(249,155,16,0.9)] transition-transform group-hover:translate-x-1">
+            <span className="mt-1 inline-flex w-fit items-center gap-2 rounded bg-brand-fresh px-4 py-2.5 text-xs font-extrabold min-[420px]:mt-2 min-[420px]:px-5 min-[420px]:py-3 min-[420px]:text-sm text-on-fresh shadow-[0_10px_24px_-10px_rgba(69,162,44,0.9)] transition-transform group-hover:translate-x-1">
               {c.cta}
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </span>
@@ -306,7 +305,7 @@ function CardStack({ cards }: { cards: StackCard[] }) {
             aria-selected={i === active}
             aria-label={`Show banner ${i + 1}`}
             onClick={() => api.current?.goTo(i)}
-            className={`h-1.5 rounded transition-all duration-500 ${i === active ? "w-8 bg-brand-orange" : "w-3 bg-white/60 hover:bg-white"}`}
+            className={`h-1.5 rounded transition-all duration-500 ${i === active ? "w-8 bg-brand-fresh" : "w-3 bg-white/60 hover:bg-white"}`}
           />
         ))}
       </div>
@@ -317,22 +316,23 @@ function CardStack({ cards }: { cards: StackCard[] }) {
 /* ─────────────── right-hand tiles ─────────────── */
 
 const TILE_COPY: Record<string, [string, string]> = {
-  "audio-equipment": ["Sound that moves you", "Earbuds, headphones & speakers"],
-  wearables: ["Wear the future", "Smartwatches & fitness bands"],
-  accessories: ["Power up everything", "Chargers, cables & power banks"],
-  peripherals: ["Upgrade your desk", "Keyboards & wireless mice"],
+  fish: ["Fresh from the river", "Rui, hilsa, prawn & more"],
+  "fruits-and-vegetables": ["Farm-fresh vegetables", "Vegetables, fruits & greens"],
+  meat: ["Fresh every morning", "Chicken, beef & mutton"],
+  "eggs-and-dairy": ["Eggs & dairy", "Eggs, milk & yogurt"],
+  "rice-pulses-and-oil": ["Kitchen staples", "Rice, pulses & cooking oil"],
 };
 
-function CategoryTile({ cat, tone }: { cat: Category; tone: "navy" | "orange" }) {
+function CategoryTile({ cat, tone }: { cat: Category; tone: "deep" | "fresh" }) {
   const [title, sub] = TILE_COPY[cat.slug] ?? [cat.name, `${cat.productCount} products`];
   const image = (cat as Category & { image?: string | null }).image;
-  const navy = tone === "navy";
+  const deep = tone === "deep";
   return (
     <Link
       href={`/category/${cat.slug}`}
       data-hero-item
       className={`group relative flex min-h-[180px] overflow-hidden rounded border min-[480px]:min-h-[170px] sm:min-h-[200px] lg:min-h-0 ${
-        navy ? "border-brand-navy bg-gradient-to-br from-brand-navy to-primary text-white" : "border-brand-orange bg-brand-orange text-on-orange"
+        deep ? "border-brand-deep bg-gradient-to-br from-brand-deep to-primary text-white" : "border-brand-fresh bg-brand-fresh text-on-fresh"
       }`}
     >
       {/* photo fades into the tile colour */}
@@ -350,15 +350,15 @@ function CategoryTile({ cat, tone }: { cat: Category; tone: "navy" | "orange" })
           />
         </div>
       )}
-      <span className={`absolute -left-8 -top-8 h-24 w-24 rotate-12 ${navy ? "bg-brand-orange/25" : "bg-white/25"}`} aria-hidden="true" />
+      <span className={`absolute -left-8 -top-8 h-24 w-24 rotate-12 ${deep ? "bg-brand-fresh/25" : "bg-white/25"}`} aria-hidden="true" />
       <div className="relative z-10 flex max-w-[62%] flex-col justify-between p-3.5 sm:p-6">
         <div>
           <h3 className="break-words font-outfit text-xl font-black leading-tight min-[480px]:text-base min-[560px]:text-lg sm:text-2xl">{title}</h3>
-          <p className={`mt-1.5 text-xs font-medium min-[480px]:hidden sm:block sm:text-sm ${navy ? "text-white/75" : "text-on-orange/80"}`}>{sub}</p>
+          <p className={`mt-1.5 text-xs font-medium min-[480px]:hidden sm:block sm:text-sm ${deep ? "text-white/75" : "text-on-fresh/80"}`}>{sub}</p>
         </div>
         <span
           className={`mt-3 inline-flex w-fit items-center gap-1.5 whitespace-nowrap rounded px-2.5 py-2 text-xs font-extrabold transition-all sm:mt-4 sm:px-3 group-hover:gap-2.5 sm:text-sm ${
-            navy ? "bg-brand-orange text-on-orange" : "bg-brand-navy text-white"
+            deep ? "bg-brand-fresh text-on-fresh" : "bg-brand-deep text-white"
           }`}
         >
           Shop now
@@ -375,12 +375,12 @@ function Showcase({ spotlight, categories }: { spotlight: Product[]; categories:
   const cards: StackCard[] = [
     {
       key: "intro",
-      src: shot("photo-1683738100989-907877fcce67"),
-      alt: "Gadget accessories laid out on a desk",
+      src: "/hero-welcome.webp",
+      alt: "Bazar Shodai: fresh groceries delivered to your door",
       href: "/products",
-      title: "Smart gadgets. Better prices.",
-      sub: "Chargers, earbuds, smartwatches and every accessory you need — 100% genuine.",
-      cta: "Shop all gadgets",
+      title: "Fresh groceries, delivered fast.",
+      sub: "Fish, vegetables, fruits and everyday needs from Kalibari Bazar to your door in Shahrasti.",
+      cta: "Shop now",
     },
     ...spotlight.slice(0, 4).flatMap((p): StackCard[] => {
       const img = p.images[0]?.url;
@@ -401,18 +401,18 @@ function Showcase({ spotlight, categories }: { spotlight: Product[]; categories:
   ];
   if (cards.length < 3) {
     cards.push({
-      key: "fallback-charge",
-      src: shot("photo-1587749091230-fb8a034d695c"),
-      alt: "Wireless charger",
+      key: "fallback-fresh",
+      src: "/hero-welcome.webp",
+      alt: "Fresh fish, vegetables and fruits",
       href: "/products",
-      title: "Charge faster, carry less",
-      sub: "GaN chargers, power banks and cables.",
-      cta: "Explore chargers",
+      title: "Today's fresh picks",
+      sub: "Fish, vegetables and fruits, fresh every morning.",
+      cta: "Shop fresh",
     });
   }
 
   const pick = (slug: string) => categories.find((c) => c.slug === slug);
-  const tiles = [pick("audio-equipment"), pick("wearables")].filter(Boolean) as Category[];
+  const tiles = [pick("fish"), pick("fruits-and-vegetables")].filter(Boolean) as Category[];
   for (const c of categories) if (tiles.length < 2 && !tiles.includes(c)) tiles.push(c);
 
   return (
@@ -421,7 +421,7 @@ function Showcase({ spotlight, categories }: { spotlight: Product[]; categories:
       {tiles.length > 0 && (
         <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 lg:grid-cols-1 lg:grid-rows-2">
           {tiles.slice(0, 2).map((c, i) => (
-            <CategoryTile key={c.slug} cat={c} tone={i === 0 ? "navy" : "orange"} />
+            <CategoryTile key={c.slug} cat={c} tone={i === 0 ? "deep" : "fresh"} />
           ))}
         </div>
       )}
@@ -466,7 +466,7 @@ export default function HeroSection({ main, side, spotlight = [], categories = [
       <div
         className="pointer-events-none absolute inset-0 opacity-60"
         style={{
-          backgroundImage: "radial-gradient(color-mix(in oklab, var(--brand-blue) 22%, transparent) 1px, transparent 1px)",
+          backgroundImage: "radial-gradient(color-mix(in oklab, var(--brand-deep) 22%, transparent) 1px, transparent 1px)",
           backgroundSize: "28px 28px",
           maskImage: "linear-gradient(to bottom, #fff, transparent 85%)",
         }}

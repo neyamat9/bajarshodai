@@ -21,14 +21,14 @@ export async function generateMetadata({
 
   if (!query) {
     return {
-      title: "Search — GadgetBachai",
-      description: "Search the GadgetBachai product catalog.",
+      title: "Search — Bazar Shodai",
+      description: "Search the Bazar Shodai product catalog.",
     };
   }
 
   return {
-    title: `Results for "${query}" — GadgetBachai`,
-    description: `Search results for "${query}" on GadgetBachai. `,
+    title: `Results for "${query}" — Bazar Shodai`,
+    description: `Search results for "${query}" on Bazar Shodai. `,
     robots: { index: false },
   };
 }
@@ -151,7 +151,7 @@ function NoQueryState({ suggestions }: { suggestions: string[] }) {
             <Link
               key={term}
               href={`/search?q=${encodeURIComponent(term)}`}
-              className="px-4 py-2 bg-muted border border-border rounded text-xs font-bold text-muted-foreground hover:text-foreground hover:border-brand-orange/40 hover:bg-brand-orange/10 transition-all"
+              className="px-4 py-2 bg-muted border border-border rounded text-xs font-bold text-muted-foreground hover:text-foreground hover:border-brand-fresh/40 hover:bg-brand-fresh/10 transition-all"
             >
               {term}
             </Link>
@@ -220,7 +220,7 @@ function NoResultsState({ query, suggestions }: { query: string; suggestions: st
             <Link
               key={term}
               href={`/search?q=${encodeURIComponent(term)}`}
-              className="px-4 py-2 bg-muted border border-border rounded text-xs font-bold text-muted-foreground hover:text-foreground hover:border-brand-orange/40 hover:bg-brand-orange/10 transition-all"
+              className="px-4 py-2 bg-muted border border-border rounded text-xs font-bold text-muted-foreground hover:text-foreground hover:border-brand-fresh/40 hover:bg-brand-fresh/10 transition-all"
             >
               {term}
             </Link>

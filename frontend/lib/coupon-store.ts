@@ -2,8 +2,8 @@
 // tabs so the checkout starts with it. It is only a *code*: every discount shown
 // is worked out and re-validated by the server against the live cart.
 
-const KEY = "gb_coupon";
-export const COUPON_EVENT = "gb:coupon-changed";
+const KEY = "bs_coupon";
+export const COUPON_EVENT = "bs:coupon-changed";
 
 /** Letters, digits, dash and underscore; 2–40 chars. */
 export const COUPON_PATTERN = /^[A-Z0-9][A-Z0-9_-]{1,39}$/;

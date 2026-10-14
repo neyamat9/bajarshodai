@@ -56,9 +56,9 @@ export default function SocialIcons({ settings, variant = "icons" }: { settings:
               href={href(key)}
               target="_blank"
               rel="noopener noreferrer"
-              className="group inline-flex items-center gap-2.5 text-sm text-white/70 transition-all hover:translate-x-1 hover:text-brand-orange"
+              className="group inline-flex items-center gap-2.5 text-sm text-white/70 transition-all hover:translate-x-1 hover:text-brand-fresh"
             >
-              <Icon className="h-4 w-4 shrink-0 text-white/50 transition-colors group-hover:text-brand-orange" />
+              <Icon className="h-4 w-4 shrink-0 text-white/50 transition-colors group-hover:text-brand-fresh" />
               {label}
             </a>
           </li>

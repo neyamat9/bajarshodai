@@ -101,7 +101,7 @@ export default function OrderReview({ summary, address, paymentMethod, bkashTran
 
       <div>
         <label htmlFor="note" className="mb-1.5 block text-sm font-medium text-foreground/80">Note for delivery (optional)</label>
-        <textarea id="note" rows={2} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. call before arriving" className="w-full rounded border border-border bg-muted px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:border-brand-orange focus:outline-none" />
+        <textarea id="note" rows={2} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. call before arriving" className="w-full rounded border border-border bg-muted px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:border-brand-fresh focus:outline-none" />
       </div>
 
       {summary.issues.length > 0 && (
@@ -115,7 +115,7 @@ export default function OrderReview({ summary, address, paymentMethod, bkashTran
         <button type="button" onClick={onBack} disabled={placing} className="flex-1 py-3.5 rounded border border-border text-foreground/80 font-semibold text-sm hover:border-input hover:text-foreground disabled:opacity-30">
           ← Back
         </button>
-        <button type="button" onClick={place} disabled={placing || !summary.canPlaceOrder} className="flex-[2] py-3.5 rounded bg-brand-orange text-foreground font-black text-sm hover:bg-brand-orange/90 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-[0_8px_24px_rgba(249,155,16,0.3)]">
+        <button type="button" onClick={place} disabled={placing || !summary.canPlaceOrder} className="flex-[2] py-3.5 rounded bg-brand-fresh text-foreground font-black text-sm hover:bg-brand-fresh/90 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-[0_8px_24px_rgba(69,162,44,0.3)]">
           {placing ? "Placing order…" : `Place order · ৳${fmt(summary.total)}`}
         </button>
       </div>

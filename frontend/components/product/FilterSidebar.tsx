@@ -102,7 +102,7 @@ export default function FilterSidebar({
           </span>
           Filters
           {activeCount > 0 && (
-            <span className="rounded bg-brand-orange px-1.5 py-0.5 text-[11px] font-bold leading-none text-on-orange" aria-label={`${activeCount} active filters`}>
+            <span className="rounded bg-brand-fresh px-1.5 py-0.5 text-[11px] font-bold leading-none text-on-fresh" aria-label={`${activeCount} active filters`}>
               {activeCount}
             </span>
           )}
@@ -134,10 +134,10 @@ export default function FilterSidebar({
           role="switch"
           aria-checked={filters.inStockOnly}
           onClick={() => onFiltersChange({ ...filters, inStockOnly: !filters.inStockOnly })}
-          className="group flex w-full items-center justify-between gap-3 rounded border border-border bg-background px-3.5 py-3 text-left transition-colors hover:border-brand-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50"
+          className="group flex w-full items-center justify-between gap-3 rounded border border-border bg-background px-3.5 py-3 text-left transition-colors hover:border-brand-fresh focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-fresh/50"
         >
           <span className="text-sm font-medium text-foreground">In stock only</span>
-          <span className={`relative h-6 w-11 shrink-0 rounded transition-colors duration-200 ${filters.inStockOnly ? "bg-brand-orange" : "bg-secondary"}`}>
+          <span className={`relative h-6 w-11 shrink-0 rounded transition-colors duration-200 ${filters.inStockOnly ? "bg-brand-fresh" : "bg-secondary"}`}>
             <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded bg-card shadow transition-transform duration-200 ${filters.inStockOnly ? "translate-x-5" : ""}`} />
           </span>
         </button>
@@ -204,7 +204,7 @@ export default function FilterSidebar({
               type="search"
               placeholder="Search brands…"
               aria-label="Search brands"
-              className="h-9 w-full rounded border border-border bg-background pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-orange focus:outline-none focus:ring-2 focus:ring-brand-orange/20"
+              className="h-9 w-full rounded border border-border bg-background pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-fresh focus:outline-none focus:ring-2 focus:ring-brand-fresh/20"
             />
           </div>
         )}
@@ -235,7 +235,7 @@ export default function FilterSidebar({
 
       {/* ── Mobile bottom drawer ─────────────────────── */}
       <div
-        className={`fixed inset-0 z-[2100] bg-brand-navy/60 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${mobileOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"}`}
+        className={`fixed inset-0 z-[2100] bg-brand-deep/60 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${mobileOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"}`}
         onClick={onMobileClose}
         aria-hidden="true"
       />
@@ -275,7 +275,7 @@ function Section({ title, count = 0, children }: { title: string; count?: number
       <button type="button" onClick={() => setOpen((v) => !v)} className="group flex w-full items-center justify-between px-5 py-4" aria-expanded={open}>
         <span className="flex items-center gap-2 text-sm font-bold text-foreground">
           {title}
-          {count > 0 && <span className="rounded bg-brand-orange/20 px-1.5 py-0.5 text-[10px] font-bold leading-none text-accent-text">{count}</span>}
+          {count > 0 && <span className="rounded bg-brand-fresh/20 px-1.5 py-0.5 text-[10px] font-bold leading-none text-accent-text">{count}</span>}
         </span>
         <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-300 group-hover:text-foreground ${open ? "rotate-180" : ""}`} aria-hidden="true" />
       </button>
@@ -297,8 +297,8 @@ function Option({ id, label, checked, onChange, count, logo, small, hint }: { id
       >
         <input type="checkbox" id={id} checked={checked} onChange={onChange} className="peer sr-only" />
         <span
-          className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded border transition-all peer-focus-visible:ring-2 peer-focus-visible:ring-brand-orange/50 ${
-            checked ? "border-brand-orange bg-brand-orange text-on-orange" : "border-input bg-background group-hover:border-brand-orange"
+          className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded border transition-all peer-focus-visible:ring-2 peer-focus-visible:ring-brand-fresh/50 ${
+            checked ? "border-brand-fresh bg-brand-fresh text-on-fresh" : "border-input bg-background group-hover:border-brand-fresh"
           }`}
           aria-hidden="true"
         >
@@ -313,7 +313,7 @@ function Option({ id, label, checked, onChange, count, logo, small, hint }: { id
         <span className={`min-w-0 flex-1 truncate ${small ? "text-[13px]" : "text-sm"} ${checked ? "font-semibold text-foreground" : "font-medium text-muted-foreground group-hover:text-foreground"}`}>{label}</span>
         {hint && <span className="shrink-0 text-[10px] font-semibold text-accent-text">{hint}</span>}
         {count !== undefined && (
-          <span className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold ${checked ? "bg-brand-orange/25 text-accent-text" : "bg-secondary text-muted-foreground"}`}>{count}</span>
+          <span className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold ${checked ? "bg-brand-fresh/25 text-accent-text" : "bg-secondary text-muted-foreground"}`}>{count}</span>
         )}
       </label>
     </li>
@@ -348,7 +348,7 @@ function DualRangeSlider({
   return (
     <div className="relative flex h-6 items-center">
       <div className="absolute left-0 right-0 h-1.5 rounded bg-secondary" />
-      <div className="absolute h-1.5 rounded bg-brand-orange" style={{ left: `${leftPct}%`, right: `${100 - rightPct}%` }} />
+      <div className="absolute h-1.5 rounded bg-brand-fresh" style={{ left: `${leftPct}%`, right: `${100 - rightPct}%` }} />
 
       <input
         type="range"
@@ -360,7 +360,7 @@ function DualRangeSlider({
         onMouseUp={onCommit}
         onTouchEnd={onCommit}
         onKeyUp={onCommit}
-        className="range-thumb-orange pointer-events-none absolute h-1.5 w-full cursor-pointer appearance-none bg-transparent [&::-moz-range-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:pointer-events-auto"
+        className="range-thumb-fresh pointer-events-none absolute h-1.5 w-full cursor-pointer appearance-none bg-transparent [&::-moz-range-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:pointer-events-auto"
         aria-label="Minimum price"
         style={{ zIndex: valueMin > max - 1000 ? 5 : 3 }}
       />
@@ -374,7 +374,7 @@ function DualRangeSlider({
         onMouseUp={onCommit}
         onTouchEnd={onCommit}
         onKeyUp={onCommit}
-        className="range-thumb-orange pointer-events-none absolute h-1.5 w-full cursor-pointer appearance-none bg-transparent [&::-moz-range-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:pointer-events-auto"
+        className="range-thumb-fresh pointer-events-none absolute h-1.5 w-full cursor-pointer appearance-none bg-transparent [&::-moz-range-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:pointer-events-auto"
         aria-label="Maximum price"
         style={{ zIndex: 4 }}
       />

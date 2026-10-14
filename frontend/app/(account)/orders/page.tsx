@@ -45,7 +45,7 @@ function OrderRow({ order }: { order: Order }) {
   }
 
   return (
-    <article className={`${card} group relative overflow-hidden transition-all hover:-translate-y-0.5 hover:border-brand-orange/60 hover:shadow-md`}>
+    <article className={`${card} group relative overflow-hidden transition-all hover:-translate-y-0.5 hover:border-brand-fresh/60 hover:shadow-md`}>
       {/* the whole card is one big link to the order; the buttons below sit above it */}
       <Link href={`/orders/${order.id}`} aria-label={`Open order ${order.orderNumber}`} className="absolute inset-0 z-0" />
       <div className="pointer-events-none relative flex flex-wrap items-center justify-between gap-3 border-b border-border bg-secondary/50 px-4 py-3 sm:px-5">
@@ -83,7 +83,7 @@ function OrderRow({ order }: { order: Order }) {
           {order.status === "Delivered" ? "Delivered" : isOffTrack(order.status) ? order.status : <>Estimated delivery <b className="text-foreground">{formatDate(order.estimatedDelivery)}</b></>}
         </p>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={buyAgain} disabled={busy} className="pointer-events-auto inline-flex h-9 items-center gap-1.5 rounded border border-border px-3 text-xs font-bold text-foreground transition-colors hover:border-brand-orange hover:text-accent-text disabled:opacity-60">
+          <button type="button" onClick={buyAgain} disabled={busy} className="pointer-events-auto inline-flex h-9 items-center gap-1.5 rounded border border-border px-3 text-xs font-bold text-foreground transition-colors hover:border-brand-fresh hover:text-accent-text disabled:opacity-60">
             <RotateCw className={`h-3.5 w-3.5 ${busy ? "animate-spin" : ""}`} aria-hidden="true" />
             Buy again
           </button>
@@ -150,7 +150,7 @@ function Orders() {
                   onClick={() => setFilter(f.id)}
                   aria-pressed={filter === f.id}
                   className={`inline-flex shrink-0 items-center gap-2 rounded border px-3.5 py-2 text-sm font-semibold transition-colors ${
-                    filter === f.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:border-brand-orange"
+                    filter === f.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:border-brand-fresh"
                   }`}
                 >
                   {f.label}
@@ -166,7 +166,7 @@ function Orders() {
                 type="search"
                 placeholder="Order number or product…"
                 aria-label="Search your orders"
-                className="h-11 w-full rounded border-2 border-input bg-background pl-10 pr-9 text-sm outline-none transition-all placeholder:text-muted-foreground/80 focus:border-brand-orange focus:ring-4 focus:ring-brand-orange/20"
+                className="h-11 w-full rounded border-2 border-input bg-background pl-10 pr-9 text-sm outline-none transition-all placeholder:text-muted-foreground/80 focus:border-brand-fresh focus:ring-4 focus:ring-brand-fresh/20"
               />
               {input && (
                 <button type="button" onClick={clear} aria-label="Clear search" className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded text-muted-foreground hover:bg-secondary">

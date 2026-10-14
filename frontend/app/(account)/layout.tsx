@@ -12,10 +12,10 @@ export const revalidate = 300; // only the shop chrome is rendered here; the acc
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | GadgetBachai",
-    default: "Account | GadgetBachai",
+    template: "%s | Bazar Shodai",
+    default: "Account | Bazar Shodai",
   },
-  description: "Manage your GadgetBachai account, orders, and wishlist.",
+  description: "Manage your Bazar Shodai account, orders, and wishlist.",
 };
 
 export default async function AccountLayout({

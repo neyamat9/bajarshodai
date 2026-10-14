@@ -1,13 +1,11 @@
 import CartSidebar from "@/components/cart/CartSidebar";
 import { AuthModalProvider } from "@/components/auth/AuthModal";
-import CompareBar from "@/components/compare/CompareBar";
 import FreshnessWatcher from "@/components/layout/FreshnessWatcher";
 import ScrollToTop from "@/components/motion/ScrollToTop";
 import SmoothScroll from "@/components/motion/SmoothScroll";
 import ThemeProvider from "@/components/theme/ThemeProvider";
 import { AuthProvider } from "@/lib/context/AuthContext";
 import { CartProvider } from "@/lib/context/CartContext";
-import { CompareProvider } from "@/lib/context/CompareContext";
 import { WishlistProvider } from "@/lib/context/WishlistContext";
 import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
@@ -27,20 +25,26 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   title: {
-    default: "GadgetBachai – Smart Choice, Better Price",
-    template: "%s | GadgetBachai",
+    default: "Bazar Shodai (বাজার সদাই) – Fresh daily needs, delivered",
+    template: "%s | Bazar Shodai",
   },
   description:
-    "GadgetBachai – Smart choice, better price. Shop chargers, power banks, earbuds, smartwatches, phone cases and every gadget accessory you need.",
+    "Bazar Shodai (বাজার সদাই) – order fresh fish, vegetables, fruits and daily groceries online. Home delivery in Shahrasti, Chandpur.",
   keywords: [
-    "gadget accessories Bangladesh",
-    "power bank BD",
-    "earbuds Bangladesh",
-    "smartwatch BD",
-    "phone accessories Bangladesh",
-    "GadgetBachai",
+    "online grocery Shahrasti",
+    "fresh fish delivery Chandpur",
+    "vegetables home delivery Bangladesh",
+    "Bazar Shodai",
+    "বাজার সদাই",
   ],
+  openGraph: {
+    siteName: "Bazar Shodai",
+    type: "website",
+    locale: "bn_BD",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Bazar Shodai" }],
+  },
 };
 
 export default function RootLayout({
@@ -63,14 +67,11 @@ export default function RootLayout({
           <AuthProvider>
             <CartProvider>
               <WishlistProvider>
-                <CompareProvider>
-                  <AuthModalProvider>
-                    {children}
-                    {/* Global overlays — rendered once, visibility driven by context */}
-                    <CartSidebar />
-                    <CompareBar />
-                  </AuthModalProvider>
-                </CompareProvider>
+                <AuthModalProvider>
+                  {children}
+                  {/* Global overlays — rendered once, visibility driven by context */}
+                  <CartSidebar />
+                </AuthModalProvider>
               </WishlistProvider>
             </CartProvider>
           </AuthProvider>
