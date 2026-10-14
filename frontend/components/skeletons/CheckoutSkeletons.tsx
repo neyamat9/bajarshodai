@@ -1,8 +1,9 @@
 "use client";
 
+import LoadingText from "@/components/skeletons/LoadingText";
+import { usePathname } from "@/i18n/navigation";
 import CheckoutHeader from "@/components/checkout/CheckoutHeader";
 import { GenericSkeleton } from "@/components/skeletons/PageSkeletons";
-import { usePathname } from "next/navigation";
 
 /**
  * Loading placeholders that copy the cart and checkout pages block for block (same container, same heading,
@@ -85,7 +86,7 @@ function SummaryColumn() {
 /** The checkout page's own content (what sits under the header). */
 export function CheckoutBodySkeleton() {
   return (
-    <div className="mx-auto max-w-[1200px] px-4 py-8 md:px-8 md:py-12" aria-busy="true" aria-label="Loading checkout">
+    <div className="mx-auto max-w-[1200px] px-4 py-8 md:px-8 md:py-12" aria-busy="true"><LoadingText />
       <Heading />
       <Steps />
       <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[1fr_380px]">
@@ -122,7 +123,7 @@ export function CheckoutBodySkeleton() {
 /** The cart's two columns (item list + summary). The cart page draws its own heading, so it uses just this. */
 export function CartListSkeleton() {
   return (
-    <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[1fr_380px]" aria-busy="true" aria-label="Loading your cart">
+    <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[1fr_380px]" aria-busy="true"><LoadingText />
       <div className="space-y-4">
         {[0, 1, 2].map((i) => (
           <div key={i} className={`${panel} flex gap-4 p-4`}>

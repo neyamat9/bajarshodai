@@ -2,6 +2,9 @@
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ArrowDownUp, Check, ChevronDown, SlidersHorizontal } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { formatNumber } from "@/lib/format";
+import type { Locale } from "@/lib/locale";
 
 type SortOption = "popular" | "newest" | "price-asc" | "price-desc" | "rating" | "name";
 
@@ -14,15 +17,12 @@ interface SortBarProps {
   activeCount?: number;
 }
 
-const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-  { value: "popular", label: "Most Popular" },
-  { value: "newest", label: "Newest" },
-  { value: "price-asc", label: "Price: Low → High" },
-  { value: "price-desc", label: "Price: High → Low" },
-  { value: "rating", label: "Top Rated" },
-];
+const SORT_VALUES: SortOption[] = ["popular", "newest", "price-asc", "price-desc", "rating"];
 
 export default function SortBar({ resultCount, sortBy, onSortChange, onOpenFilters, activeCount = 0 }: SortBarProps) {
+  const t = useTranslations("Product");
+  const locale = useLocale() as Locale;
+  const SORT_OPTIONS = SORT_VALUES.map((value) => ({ value, label: t(`sort.${value}`) }));
   const current = SORT_OPTIONS.find((o) => o.value === sortBy) ?? SORT_OPTIONS[0];
 
   return (
@@ -33,15 +33,15 @@ export default function SortBar({ resultCount, sortBy, onSortChange, onOpenFilte
             type="button"
             onClick={onOpenFilters}
             className="flex shrink-0 items-center gap-2 rounded bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground transition-colors hover:bg-primary/90 lg:hidden"
-            aria-label="Open filters"
+            aria-label={t("filters.open")}
           >
             <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-            Filters
-            {activeCount > 0 && <span className="rounded bg-brand-fresh px-1.5 py-0.5 text-[10px] leading-none text-on-fresh">{activeCount}</span>}
+            {t("filters.title")}
+            {activeCount > 0 && <span className="rounded bg-brand-fresh px-1.5 py-0.5 text-[10px] leading-none text-on-fresh">{formatNumber(activeCount, locale, 0)}</span>}
           </button>
         )}
         <p className="truncate text-sm font-medium text-muted-foreground">
-          <span className="font-bold text-foreground">{resultCount.toLocaleString()}</span> {resultCount === 1 ? "product" : "products"} found
+          {t("listing.found", { count: formatNumber(resultCount, locale, 0) })}
         </p>
       </div>
 
@@ -49,11 +49,11 @@ export default function SortBar({ resultCount, sortBy, onSortChange, onOpenFilte
         <DropdownMenuTrigger asChild>
           <button
             type="button"
-            aria-label={`Sort products: ${current.label}`}
+            aria-label={t("sort.aria", { label: current.label })}
             className="group flex shrink-0 items-center gap-2 rounded border border-border bg-background px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:border-brand-fresh focus-visible:border-brand-fresh focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-fresh/30 data-[state=open]:border-brand-fresh"
           >
             <ArrowDownUp className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-            <span className="hidden text-muted-foreground sm:inline">Sort by:</span>
+            <span className="hidden text-muted-foreground sm:inline">{t("sort.by")}</span>
             <span>{current.label}</span>
             <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" aria-hidden="true" />
           </button>

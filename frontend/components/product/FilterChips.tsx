@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 export interface ActiveFilter {
   /** Unique key for this filter chip (e.g. "brand:asus", "category:laptops", "price", "inStock") */
   key: string;
@@ -18,13 +20,14 @@ interface FilterChipsProps {
  * Each chip animates in with scaleIn and out with a CSS transition.
  */
 export default function FilterChips({ filters, onRemove, onClearAll }: FilterChipsProps) {
+  const t = useTranslations("Product");
   if (filters.length === 0) return null;
 
   return (
     <div
       className="flex flex-wrap items-center gap-2"
       role="group"
-      aria-label="Active filters"
+      aria-label={t("filters.active")}
     >
       {filters.map((filter) => (
         <Chip key={filter.key} filter={filter} onRemove={onRemove} />
@@ -36,7 +39,7 @@ export default function FilterChips({ filters, onRemove, onClearAll }: FilterChi
           onClick={onClearAll}
           className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 hover:text-accent-text transition-colors px-2 py-1"
         >
-          Clear all
+          {t("filters.clearAll")}
         </button>
       )}
     </div>
@@ -50,6 +53,7 @@ function Chip({
   filter: ActiveFilter;
   onRemove: (key: string) => void;
 }) {
+  const t = useTranslations("Product");
   return (
     <span
       className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-fresh/10 border border-brand-fresh/30 rounded text-[11px] font-bold text-accent-text animate-scale-in"
@@ -58,7 +62,7 @@ function Chip({
       <button
         type="button"
         onClick={() => onRemove(filter.key)}
-        aria-label={`Remove filter: ${filter.label}`}
+        aria-label={t("filters.removeFilter", { label: filter.label })}
         className="w-4 h-4 flex items-center justify-center rounded hover:bg-brand-fresh/20 transition-colors flex-shrink-0"
       >
         <svg

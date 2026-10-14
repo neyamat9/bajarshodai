@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { errorMessage } from "@/lib/api/client";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { notifyWhenBackInStock } from "@/lib/services/support.service";
@@ -8,6 +9,7 @@ import { toast } from "sonner";
 
 // Shown when an item is sold out: we email the customer when it returns.
 export default function BackInStockForm({ productId, variantId }: { productId: string; variantId?: string }) {
+  const t = useTranslations("Product");
   const { user } = useAuth();
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
@@ -19,7 +21,7 @@ export default function BackInStockForm({ productId, variantId }: { productId: s
     try {
       await notifyWhenBackInStock({ productId, variantId, ...(user ? {} : { email: email.trim() }) });
       setDone(true);
-      toast.success("We'll email you as soon as it is back in stock.");
+      toast.success(t("bis.saved"));
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
@@ -40,12 +42,12 @@ export default function BackInStockForm({ productId, variantId }: { productId: s
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
+            placeholder={t("bis.placeholder")}
             className="h-11 flex-1 rounded border border-border bg-muted px-4 text-sm text-foreground placeholder:text-muted-foreground/70 focus:border-brand-fresh focus:outline-none"
           />
         )}
         <button type="submit" disabled={busy} className="h-11 rounded bg-brand-fresh px-6 text-sm font-black uppercase tracking-wide text-foreground hover:bg-brand-fresh/90 disabled:opacity-60">
-          {busy ? "Saving…" : "Notify me"}
+          {busy ? t("bis.saving") : t("bis.notify")}
         </button>
       </div>
     </form>

@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 
 interface EmptyStateProps {
   onClearFilters?: () => void;
@@ -8,6 +9,7 @@ interface EmptyStateProps {
 }
 
 export default function EmptyState({ onClearFilters, hasFilters = true }: EmptyStateProps) {
+  const t = useTranslations("Product");
   return (
     <div className="flex flex-col items-center justify-center py-24 px-8 text-center">
       {/* Icon */}
@@ -30,14 +32,14 @@ export default function EmptyState({ onClearFilters, hasFilters = true }: EmptyS
 
       {/* Heading */}
       <h3 className="text-foreground text-2xl font-black uppercase tracking-tighter font-outfit mb-3">
-        No Products Found
+        {t("empty.title")}
       </h3>
 
       {/* Subtext */}
       <p className="text-muted-foreground/70 text-sm font-medium max-w-xs mb-8 leading-relaxed">
         {hasFilters
-          ? "No products match your current filters. Try adjusting or clearing them."
-          : "There are no products in this category yet. Check back soon."}
+          ? t("empty.noMatch")
+          : t("empty.noneInCategory")}
       </p>
 
       {/* Actions */}
@@ -48,14 +50,14 @@ export default function EmptyState({ onClearFilters, hasFilters = true }: EmptyS
             onClick={onClearFilters}
             className="px-6 py-3 bg-primary text-white text-xs font-black uppercase tracking-widest rounded hover:bg-primary/90 transition-colors active:scale-95"
           >
-            Clear All Filters
+            {t("empty.clearFilters")}
           </button>
         )}
         <Link
           href="/products"
           className="px-6 py-3 bg-muted border border-border text-foreground text-xs font-black uppercase tracking-widest rounded hover:bg-secondary transition-colors"
         >
-          Browse All Products
+          {t("empty.browseAll")}
         </Link>
       </div>
     </div>

@@ -17,6 +17,7 @@ import type {
   User,
 } from '../types/index';
 import { assetUrl, PLACEHOLDER_IMAGE } from './client';
+import { clientLocale, pick, type Locale } from '../locale';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Raw = Record<string, any>;
@@ -71,9 +72,20 @@ const plain = (v: unknown) =>
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 
+// The unit a product is sold in, with the label in the page language. Works for both response shapes:
+// the slim card (unit already holds step/minQty) and the full product (unit row + the product's own overrides).
+function mapUnit(p: Raw, locale: Locale): Product['unit'] {
+  const u = p.unit;
+  if (!u) return null;
+  const step = num(p.sellStep ?? u.step ?? u.defaultStep, 1);
+  const minQty = num(p.minQty ?? u.minQty ?? u.defaultMinQty, step);
+  return { code: u.code, label: pick(locale, u.shortLabel, u.shortLabelBn), allowDecimal: !!u.allowDecimal, step, minQty };
+}
+
 // Full product (detail page, product lists) — also accepts the slim "card" shape.
-export function mapProduct(p: Raw): Product {
+export function mapProduct(p: Raw, locale: Locale = clientLocale()): Product {
   const isCard = p.sellingPrice === undefined;
+  const name = pick(locale, p.name, p.nameBn);
   const price = isCard ? num(p.price) : num(p.sellingPrice);
   const regular = num(p.regularPrice);
   const originalPrice = regular > price ? regular : undefined;
@@ -82,17 +94,17 @@ export function mapProduct(p: Raw): Product {
   let images = (p.images ?? []).map((im: Raw, i: number) => ({
     id: im.id ?? `img-${i}`,
     url: assetUrl(im.url),
-    alt: im.alt || p.name,
+    alt: im.alt || name,
     isPrimary: im.isMain ?? i === 0,
   }));
   if (isCard) {
-    images = [p.image, p.hoverImage].filter(Boolean).map((u: string, i: number) => ({ id: `img-${i}`, url: assetUrl(u), alt: p.name, isPrimary: i === 0 }));
+    images = [p.image, p.hoverImage].filter(Boolean).map((u: string, i: number) => ({ id: `img-${i}`, url: assetUrl(u), alt: name, isPrimary: i === 0 }));
   }
-  if (images.length === 0) images = [{ id: 'img-0', url: PLACEHOLDER_IMAGE, alt: p.name, isPrimary: true }];
+  if (images.length === 0) images = [{ id: 'img-0', url: PLACEHOLDER_IMAGE, alt: name, isPrimary: true }];
 
   const attributes: Raw[] = p.attributes ?? [];
   const specs: SpecGroup[] = [];
-  if (attributes.length) specs.push({ groupName: 'Details', items: attributes.map((a) => ({ key: a.name, value: a.value })) });
+  if (attributes.length) specs.push({ groupName: locale === 'bn' ? 'বিবরণ' : 'Details', items: attributes.map((a) => ({ key: a.name, value: a.value })) });
 
   const badges: ProductBadge[] = [];
   if (p.isNew) badges.push('NEW');
@@ -104,16 +116,19 @@ export function mapProduct(p: Raw): Product {
   return {
     id: p.id,
     slug: p.slug,
-    name: p.name,
-    shortDescription: p.shortDescription ?? '',
-    description: plain(p.description),
+    name,
+    shortDescription: pick(locale, p.shortDescription, p.shortDescriptionBn),
+    description: plain(pick(locale, p.description, p.descriptionBn)),
     brand: p.brand?.slug ?? '',
     brandName: p.brand?.name ?? p.brandName ?? '',
     category: p.category?.slug ?? '',
-    categoryName: p.category?.name ?? p.categoryName ?? '',
+    categoryName: pick(locale, p.category?.name ?? p.categoryName, p.category?.nameBn),
     subCategory: p.subCategory?.slug ?? '',
-    subCategoryName: p.subCategory?.name ?? p.subCategoryName ?? '',
+    subCategoryName: pick(locale, p.subCategory?.name ?? p.subCategoryName, p.subCategory?.nameBn),
     productCode: p.productCode ?? '',
+    unit: mapUnit(p, locale),
+    packSize: p.packSize ?? '',
+    isWeighed: !!p.isWeighed,
     price,
     originalPrice,
     discount,
@@ -142,14 +157,14 @@ export function mapProduct(p: Raw): Product {
 }
 
 // ── catalog ──────────────────────────────────────────────
-export function mapCategory(c: Raw): Category {
+export function mapCategory(c: Raw, locale: Locale = clientLocale()): Category {
   return {
     id: c.id,
     slug: c.slug,
-    name: c.name,
-    description: c.description ?? '',
+    name: pick(locale, c.name, c.nameBn),
+    description: pick(locale, c.description, c.descriptionBn),
     icon: c.icon ?? '',
-    subCategories: (c.subCategories ?? []).map((s: Raw) => ({ id: s.id, slug: s.slug, name: s.name, categorySlug: c.slug })),
+    subCategories: (c.subCategories ?? []).map((s: Raw) => ({ id: s.id, slug: s.slug, name: pick(locale, s.name, s.nameBn), categorySlug: c.slug })),
     productCount: num(c._count?.products),
     ...({ image: c.image ? assetUrl(c.image) : null } as object),
   };
@@ -219,11 +234,11 @@ export function mapAddress(a: Raw | null | undefined): ShippingAddress {
   };
 }
 
-export function mapOrder(o: Raw): Order {
+export function mapOrder(o: Raw, locale: Locale = clientLocale()): Order {
   const items: OrderItem[] = (o.items ?? []).map((i: Raw) => ({
     productId: i.productId,
     slug: i.productSlug,
-    name: i.productName,
+    name: pick(locale, i.productName, i.productNameBn ?? i.nameBn),
     price: num(i.price),
     quantity: num(i.quantity),
     imageUrl: assetUrl(i.productImage),
@@ -272,8 +287,9 @@ export function mapUser(u: Raw): User {
   return {
     id: u.id,
     name: u.name,
-    email: u.email,
+    email: u.email ?? '',
     phone: u.phone ?? '',
+    language: u.language === 'en' ? 'en' : 'bn',
     avatarUrl: u.avatarUrl ? assetUrl(u.avatarUrl) : '',
     orderIds: [],
     createdAt: u.createdAt ?? '',

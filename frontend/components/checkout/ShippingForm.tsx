@@ -6,6 +6,7 @@ import type { SavedAddress } from "@/lib/services/addresses.service";
 import { getDistricts, getDivisions, getUpazilas, type Place } from "@/lib/services/checkout.service";
 import type { CheckoutAddress } from "@/lib/types";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface ShippingFormProps {
   initialData?: Partial<CheckoutAddress>;
@@ -43,6 +44,7 @@ function Field({ id, label, required, error, children }: { id: string; label: st
 
 /** Step 1 — who and where. Division → district → area come from the server. */
 export default function ShippingForm({ initialData, saved, onDistrictChange, onSubmit }: ShippingFormProps) {
+  const t = useTranslations("Checkout");
   const { user } = useAuth();
   const [f, setF] = useState<CheckoutAddress>({
     fullName: initialData?.fullName ?? user?.name ?? "",
@@ -100,13 +102,13 @@ export default function ShippingForm({ initialData, saved, onDistrictChange, onS
 
   function validate(): Errors {
     const e: Errors = {};
-    if (f.fullName.trim().length < 2) e.fullName = "Enter your full name";
-    if (!/^(\+?88)?01[3-9]\d{8}$/.test(f.phone.replace(/[\s-]/g, ""))) e.phone = "Enter a valid mobile number, e.g. 01712345678";
-    if (!user && f.email.trim() && !/^\S+@\S+\.\S+$/.test(f.email.trim())) e.email = "Enter a valid email";
-    if (!f.division) e.division = "Choose your division";
-    if (!f.district) e.district = "Choose your district";
-    if (f.address.trim().length < 5) e.address = "Enter your house, road and area";
-    if (f.postalCode.trim() && !/^\d{4}$/.test(f.postalCode.trim())) e.postalCode = "Postal code is 4 digits";
+    if (f.fullName.trim().length < 2) e.fullName = t("errName");
+    if (!/^(\+?88)?01[3-9]\d{8}$/.test(f.phone.replace(/[\s-]/g, ""))) e.phone = t("errPhone");
+    if (!user && f.email.trim() && !/^\S+@\S+\.\S+$/.test(f.email.trim())) e.email = t("errEmail");
+    if (!f.division) e.division = t("errDivision");
+    if (!f.district) e.district = t("errDistrict");
+    if (f.address.trim().length < 5) e.address = t("errAddress");
+    if (f.postalCode.trim() && !/^\d{4}$/.test(f.postalCode.trim())) e.postalCode = t("errPostal");
     return e;
   }
 
@@ -123,9 +125,9 @@ export default function ShippingForm({ initialData, saved, onDistrictChange, onS
   return (
     <form onSubmit={submit} noValidate className="space-y-5">
       <div className="mb-2">
-        <h2 className="text-xl font-bold text-foreground font-outfit">Delivery details</h2>
-        <p className="text-sm text-muted-foreground/70 mt-1">Where should we deliver your order?</p>
-        {saved.length > 0 && <p className="mt-2 text-xs text-muted-foreground">We filled this in from your saved address. Change anything you like — your saved addresses stay as they are.</p>}
+        <h2 className="text-xl font-bold text-foreground font-outfit">{t("detailsTitle")}</h2>
+        <p className="text-sm text-muted-foreground/70 mt-1">{t("detailsLead")}</p>
+        {saved.length > 0 && <p className="mt-2 text-xs text-muted-foreground">{t("prefilled")}</p>}
       </div>
 
       {saved.length > 0 && (
@@ -142,46 +144,46 @@ export default function ShippingForm({ initialData, saved, onDistrictChange, onS
       {loadError && <p role="alert" className="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">{loadError}</p>}
 
       <div className="grid gap-5 sm:grid-cols-2">
-        <Field id="fullName" label="Full name" required error={errors.fullName}>
-          <input id="fullName" autoComplete="name" value={f.fullName} onChange={(e) => set("fullName", e.target.value)} placeholder="e.g. Rahim Uddin" className={input(!!errors.fullName)} aria-invalid={!!errors.fullName} />
+        <Field id="fullName" label={t("fullName")} required error={errors.fullName}>
+          <input id="fullName" autoComplete="name" value={f.fullName} onChange={(e) => set("fullName", e.target.value)} placeholder={t("fullNamePh")} className={input(!!errors.fullName)} aria-invalid={!!errors.fullName} />
         </Field>
-        <Field id="phone" label="Mobile number (the courier calls this)" required error={errors.phone}>
+        <Field id="phone" label={t("phone")} required error={errors.phone}>
           <input id="phone" type="tel" inputMode="tel" autoComplete="tel" value={f.phone} onChange={(e) => set("phone", e.target.value)} placeholder="01XXXXXXXXX" className={input(!!errors.phone)} aria-invalid={!!errors.phone} />
         </Field>
       </div>
 
       <div className="grid gap-5 sm:grid-cols-3">
-        <Field id="division" label="Division" required error={errors.division}>
+        <Field id="division" label={t("division")} required error={errors.division}>
           <select id="division" value={f.division} onChange={(e) => setF((p) => ({ ...p, division: e.target.value, district: "", upazila: "" }))} className={input(!!errors.division)}>
-            <option value="">Select…</option>
+            <option value="">{t("select")}</option>
             {divisions.map((d) => <option key={d.id} value={d.name}>{d.name}</option>)}
           </select>
         </Field>
-        <Field id="district" label="District" required error={errors.district}>
+        <Field id="district" label={t("district")} required error={errors.district}>
           <select id="district" value={f.district} disabled={!f.division} onChange={(e) => setF((p) => ({ ...p, district: e.target.value, upazila: "" }))} className={input(!!errors.district)}>
-            <option value="">Select…</option>
+            <option value="">{t("select")}</option>
             {districts.map((d) => <option key={d.id} value={d.name}>{d.name}</option>)}
           </select>
         </Field>
-        <Field id="upazila" label="Area / Thana" error={errors.upazila}>
+        <Field id="upazila" label={t("area")} error={errors.upazila}>
           <select id="upazila" value={f.upazila} disabled={!f.district || upazilas.length === 0} onChange={(e) => set("upazila", e.target.value)} className={input(false)}>
-            <option value="">Select…</option>
+            <option value="">{t("select")}</option>
             {upazilas.map((d) => <option key={d.id} value={d.name}>{d.name}</option>)}
           </select>
         </Field>
       </div>
 
       <div className="grid gap-5 sm:grid-cols-[1fr_160px]">
-        <Field id="address" label="Address" required error={errors.address}>
-          <input id="address" autoComplete="street-address" value={f.address} onChange={(e) => set("address", e.target.value)} placeholder="House / flat, road, area" className={input(!!errors.address)} aria-invalid={!!errors.address} />
+        <Field id="address" label={t("address")} required error={errors.address}>
+          <input id="address" autoComplete="street-address" value={f.address} onChange={(e) => set("address", e.target.value)} placeholder={t("addressPh")} className={input(!!errors.address)} aria-invalid={!!errors.address} />
         </Field>
-        <Field id="postalCode" label="Postal code" error={errors.postalCode}>
+        <Field id="postalCode" label={t("postalCode")} error={errors.postalCode}>
           <input id="postalCode" inputMode="numeric" maxLength={4} autoComplete="postal-code" value={f.postalCode} onChange={(e) => set("postalCode", e.target.value)} placeholder="1207" className={input(!!errors.postalCode)} />
         </Field>
       </div>
 
       <button type="submit" className="w-full py-4 rounded bg-brand-fresh text-foreground font-black text-base hover:bg-brand-fresh/90 active:scale-[0.97] transition-all shadow-[0_8px_24px_rgba(69,162,44,0.3)]">
-        Continue to payment →
+        {t("continuePayment")}
       </button>
     </form>
   );

@@ -1,7 +1,8 @@
 "use client";
 
+import { usePathname } from "@/i18n/navigation";
 import Lenis from "lenis";
-import { usePathname, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef } from "react";
 import { gsap, ScrollTrigger, MOTION_OK } from "./gsap";
 import { scrollTopNow } from "./scroll-top";

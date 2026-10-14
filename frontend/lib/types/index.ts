@@ -37,6 +37,16 @@ export interface PriceHistoryPoint {
   price: number;
 }
 
+/** How a product is sold (kg, piece, packet …). The labels are already in the page language. */
+export interface ProductUnit {
+  code: string;
+  label: string;
+  allowDecimal: boolean;
+  /** how much the + / − buttons add */
+  step: number;
+  minQty: number;
+}
+
 export type ProductBadge = 'NEW' | 'HOT' | 'BEST SELLER' | 'LIMITED STOCK';
 
 export interface Product {
@@ -52,6 +62,10 @@ export interface Product {
   subCategory: string;
   subCategoryName: string;
   productCode: string;
+  unit: ProductUnit | null;
+  /** e.g. "500 g" */
+  packSize: string;
+  isWeighed: boolean;
   price: number;
   originalPrice?: number;
   discount?: number;
@@ -231,6 +245,8 @@ export interface Order {
 }
 
 export interface User {
+  /** the language the customer chose (bn or en) */
+  language?: 'bn' | 'en';
   id: string;
   name: string;
   email: string;
@@ -277,8 +293,10 @@ export interface WishlistContextValue {
 
 export interface SignupData {
   name: string;
-  email: string;
-  phone?: string;
+  /** required: customers sign in with it */
+  phone: string;
+  /** optional, for receipts and password reset links */
+  email?: string;
   password: string;
 }
 
@@ -287,7 +305,8 @@ export interface AuthContextValue {
   isAuthenticated: boolean;
   /** true until we know whether a saved login is still valid */
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  /** `identifier` is a mobile number, or the email when the account has one */
+  login: (identifier: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   signup: (data: SignupData) => Promise<{ success: boolean; error?: string }>;
   updateProfile: (data: Partial<User>) => Promise<{ success: boolean; error?: string }>;

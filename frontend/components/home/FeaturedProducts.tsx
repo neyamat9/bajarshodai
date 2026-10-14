@@ -3,12 +3,14 @@ import type { Product } from "@/lib/types";
 import RevealGroup from "@/components/motion/RevealGroup";
 import SectionHeader from "./SectionHeader";
 import SectionMore from "./SectionMore";
+import { useTranslations } from "next-intl";
 
 interface FeaturedProductsProps {
   products: Product[];
 }
 
 export default function FeaturedProducts({ products }: FeaturedProductsProps) {
+  const t = useTranslations("Home");
   return (
     <section className="overflow-x-clip bg-background pb-16 pt-[60px] sm:pt-[58px] md:pb-20 md:pt-[71px]" aria-labelledby="featured-heading">
       <RevealGroup className="relative mx-auto max-w-[1440px] px-4 md:px-8">
@@ -17,12 +19,12 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
         <SectionHeader
           title={
             <span id="featured-heading">
-              Handpicked <span className="text-brand-fresh">smart choices</span>
+              {t.rich("featuredTitle", { accent: (c) => <span className="text-brand-fresh">{c}</span> })}
             </span>
           }
-          description="Our team's favourite accessories this month — tested, trusted and priced better."
+          description={t("featuredDesc")}
           href="/products"
-          hrefLabel="View all products"
+          hrefLabel={t("viewAllProducts")}
         />
 
         <div className="grid grid-cols-1 gap-4 [perspective:1100px] min-[480px]:grid-cols-2 min-[480px]:gap-3 md:gap-5 lg:grid-cols-4">
@@ -31,7 +33,7 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
           ))}
         </div>
 
-        <SectionMore href="/products" label="View all products" />
+        <SectionMore href="/products" label={t("viewAllProducts")} />
       </RevealGroup>
     </section>
   );

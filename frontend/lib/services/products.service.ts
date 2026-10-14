@@ -2,6 +2,7 @@ import { memo } from '../api/memo';
 import { api, type Paged, type PageMeta } from '../api/client';
 import { mapProduct } from '../api/mappers';
 import type { Product, ProductFilters } from '../types/index';
+import { clientLocale, pick, type Locale } from '../locale';
 
 export type SortOption = 'newest' | 'price-asc' | 'price-desc' | 'popular' | 'rating' | 'name';
 
@@ -39,9 +40,9 @@ export interface ProductPage {
   meta: PageMeta;
 }
 
-export async function listProducts(q: ProductQuery = {}): Promise<ProductPage> {
+export async function listProducts(q: ProductQuery = {}, locale: Locale = clientLocale()): Promise<ProductPage> {
   const res = await api.get<Paged<any>>(`/customer/products${qs({ limit: 24, ...q })}`);
-  return { products: res.data.map(mapProduct), meta: res.meta };
+  return { products: res.data.map((p) => mapProduct(p, locale)), meta: res.meta };
 }
 
 export interface FacetBrand {
@@ -72,7 +73,7 @@ export async function getProductFacets(scope: { category?: string; subCategory?:
 }
 
 // Pages that only need "all products" style lists.
-export async function getProducts(filters?: ProductFilters): Promise<Product[]> {
+export async function getProducts(filters?: ProductFilters, locale: Locale = clientLocale()): Promise<Product[]> {
   const sort: Record<string, SortOption> = { 'price-asc': 'price-asc', 'price-desc': 'price-desc', newest: 'newest', popular: 'popular' };
   const { products } = await listProducts({
     brand: filters?.brands,
@@ -81,13 +82,13 @@ export async function getProducts(filters?: ProductFilters): Promise<Product[]> 
     inStock: filters?.inStockOnly,
     sortBy: filters?.sortBy ? sort[filters.sortBy] : undefined,
     limit: 100,
-  });
+  }, locale);
   return products;
 }
 
-export async function getProductBySlug(slug: string): Promise<Product | null> {
+export async function getProductBySlug(slug: string, locale: Locale = clientLocale()): Promise<Product | null> {
   try {
-    return mapProduct(await api.get<any>(`/customer/products/${encodeURIComponent(slug)}`, { revalidate: 300 }));
+    return mapProduct(await api.get<any>(`/customer/products/${encodeURIComponent(slug)}`, { revalidate: 300 }), locale);
   } catch (e) {
     if ((e as { status?: number }).status === 404) return null;
     throw e;
@@ -104,14 +105,14 @@ export async function getProductDetailRaw(slug: string): Promise<any | null> {
   }
 }
 
-export async function getRelatedProducts(slug: string, limit = 6): Promise<Product[]> {
+export async function getRelatedProducts(slug: string, limit = 6, locale: Locale = clientLocale()): Promise<Product[]> {
   const rows = await api.get<any[]>(`/customer/products/${encodeURIComponent(slug)}/related${qs({ limit })}`, { revalidate: 300 }).catch(() => []);
-  return rows.map(mapProduct);
+  return rows.map((p) => mapProduct(p, locale));
 }
 
-export async function getFeaturedProducts(limit = 8): Promise<Product[]> {
+export async function getFeaturedProducts(limit = 8, locale: Locale = clientLocale()): Promise<Product[]> {
   const rows = await api.get<any[]>(`/customer/products/featured${qs({ limit })}`);
-  return rows.map(mapProduct);
+  return rows.map((p) => mapProduct(p, locale));
 }
 
 export interface SuggestionResult {
@@ -120,27 +121,27 @@ export interface SuggestionResult {
   subCategories: { name: string; slug: string; parentCategory?: { name: string; slug: string } }[];
   brands: { name: string; slug: string; logo: string | null }[];
 }
-export async function getSuggestions(q: string, limit = 6): Promise<SuggestionResult> {
+export async function getSuggestions(q: string, limit = 6, locale: Locale = clientLocale()): Promise<SuggestionResult> {
   // the same words typed again within 5 minutes are answered from memory
   const r = await memo(`suggest:${limit}:${q.trim().toLowerCase()}`, 5 * 60_000, () => api.get<any>(`/customer/products/suggestions${qs({ q, limit })}`, { revalidate: 0 }));
   return {
-    products: (r.products ?? []).map(mapProduct),
-    categories: r.categories ?? [],
-    subCategories: r.subCategories ?? [],
+    products: (r.products ?? []).map((p: any) => mapProduct(p, locale)),
+    categories: (r.categories ?? []).map((c: any) => ({ ...c, name: pick(locale, c.name, c.nameBn) })),
+    subCategories: (r.subCategories ?? []).map((c: any) => ({ ...c, name: pick(locale, c.name, c.nameBn) })),
     brands: r.brands ?? [],
   };
 }
 
-export async function searchProducts(query: string): Promise<Product[]> {
+export async function searchProducts(query: string, locale: Locale = clientLocale()): Promise<Product[]> {
   if (!query.trim()) return [];
-  return (await getSuggestions(query, 8)).products;
+  return (await getSuggestions(query, 8, locale)).products;
 }
 
-export async function getProductsByCategory(category: string, filters?: ProductFilters): Promise<Product[]> {
-  return (await listProducts({ category, brand: filters?.brands, limit: 100 })).products;
+export async function getProductsByCategory(category: string, filters?: ProductFilters, locale: Locale = clientLocale()): Promise<Product[]> {
+  return (await listProducts({ category, brand: filters?.brands, limit: 100 }, locale)).products;
 }
-export async function getProductsByBrand(brand: string): Promise<Product[]> {
-  return (await listProducts({ brand: [brand], limit: 100 })).products;
+export async function getProductsByBrand(brand: string, locale: Locale = clientLocale()): Promise<Product[]> {
+  return (await listProducts({ brand: [brand], limit: 100 }, locale)).products;
 }
 
 export interface HomeData {
@@ -149,12 +150,13 @@ export interface HomeData {
   bestSellers: Product[];
   onSale: Product[];
 }
-export async function getHomeData(): Promise<HomeData> {
+export async function getHomeData(locale: Locale = clientLocale()): Promise<HomeData> {
   const h = await api.get<any>('/customer/home', { revalidate: 300 });
+  const m = (list: any[] | undefined) => (list ?? []).map((p) => mapProduct(p, locale));
   return {
-    featured: (h.featured ?? []).map(mapProduct),
-    newArrivals: (h.newArrivals ?? []).map(mapProduct),
-    bestSellers: (h.bestSellers ?? []).map(mapProduct),
-    onSale: (h.onSale ?? []).map(mapProduct),
+    featured: m(h.featured),
+    newArrivals: m(h.newArrivals),
+    bestSellers: m(h.bestSellers),
+    onSale: m(h.onSale),
   };
 }

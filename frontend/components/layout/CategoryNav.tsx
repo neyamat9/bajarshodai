@@ -1,12 +1,13 @@
 "use client";
 
+import { Link } from "@/i18n/navigation";
 import type { Category } from "@/lib/types";
 import { useBrowse } from "@/components/browse/BrowseModals";
 import { gsap } from "@/components/motion/gsap";
 import { useCart } from "@/lib/hooks/use-cart";
 import { ChevronDown, LayoutGrid, ShoppingCart } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface CategoryNavProps {
   categories: Category[];
@@ -18,6 +19,7 @@ const linkClass =
   "relative inline-flex items-center gap-1 whitespace-nowrap px-3 py-3.5 text-[13px] font-semibold text-muted-foreground transition-colors hover:text-foreground after:absolute after:bottom-1.5 after:left-3 after:right-3 after:h-[2px] after:origin-left after:scale-x-0 after:bg-brand-fresh after:transition-transform hover:after:scale-x-100";
 
 function MiniCart() {
+  const th = useTranslations("Header");
   const { cartCount, openCart } = useCart();
   const btn = useRef<HTMLButtonElement>(null);
 
@@ -40,7 +42,7 @@ function MiniCart() {
       ref={btn}
       type="button"
       onClick={openCart}
-      aria-label={`Open cart, ${cartCount} items`}
+      aria-label={th("openCart", { count: cartCount })}
       className="relative ml-3 flex h-10 w-10 shrink-0 items-center justify-center rounded bg-primary text-primary-foreground shadow-md transition-colors hover:bg-brand-fresh hover:text-on-fresh"
     >
       <ShoppingCart className="h-[18px] w-[18px]" aria-hidden="true" />
@@ -54,6 +56,7 @@ function MiniCart() {
 }
 
 export default function CategoryNav({ categories, compact = false }: CategoryNavProps) {
+  const t = useTranslations("Nav");
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const { open: openBrowse } = useBrowse();
 
@@ -83,7 +86,7 @@ export default function CategoryNav({ categories, compact = false }: CategoryNav
   }, [categories]);
 
   return (
-    <nav className="relative z-[1000] overflow-x-clip border-b border-border bg-card/95 shadow-sm backdrop-blur-xl" aria-label="Product categories">
+    <nav className="relative z-[1000] overflow-x-clip border-b border-border bg-card/95 shadow-sm backdrop-blur-xl" aria-label={t("categoriesAria")}>
       <div className="mx-auto max-w-[1440px] px-4 md:px-8">
         <div className="flex items-center justify-between">
           {/* All categories: opens the floating sidebar (the same button on every screen size) */}
@@ -96,10 +99,10 @@ export default function CategoryNav({ categories, compact = false }: CategoryNav
               className="mr-1 flex shrink-0 items-center gap-2 whitespace-nowrap rounded bg-primary px-4 py-2 text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
             >
               <LayoutGrid className="h-4 w-4" aria-hidden="true" />
-              All categories
+              {t("allCategories")}
             </button>
             <Link href="/products" className={`${linkClass} hidden xl:inline-flex`}>
-              All products
+              {t("allProducts")}
             </Link>
           </div>
 
@@ -136,7 +139,7 @@ export default function CategoryNav({ categories, compact = false }: CategoryNav
                         href={`/category/${cat.slug}`}
                         className="mt-1 flex items-center justify-center rounded bg-secondary px-3 py-2 text-sm font-semibold text-primary transition-colors hover:bg-accent dark:text-accent-text"
                       >
-                        View all {cat.name}
+                        {t("viewAllOf", { name: cat.name })}
                       </Link>
                     </div>
                   </div>
@@ -151,7 +154,7 @@ export default function CategoryNav({ categories, compact = false }: CategoryNav
               href="/products"
               className="hidden items-center whitespace-nowrap rounded border border-brand-fresh/40 bg-brand-fresh/10 px-3 py-1.5 text-xs font-bold text-accent-text transition-colors hover:bg-brand-fresh hover:text-on-fresh 2xl:flex"
             >
-              Today&apos;s deals
+              {t("todaysDeals")}
             </Link>
             {compact && <MiniCart />}
           </div>

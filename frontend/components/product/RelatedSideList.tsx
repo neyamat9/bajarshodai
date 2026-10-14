@@ -1,16 +1,21 @@
+import { Link } from "@/i18n/navigation";
 import type { Product } from "@/lib/types";
 import Image from "next/image";
-import Link from "next/link";
 
-const money = (n: number) => `৳${n.toLocaleString("en-BD")}`;
+import { useLocale, useTranslations } from "next-intl";
+import { formatMoney } from "@/lib/format";
+import type { Locale } from "@/lib/locale";
 
 /** Vertical "Related Products" list for the product page's left column. */
 export default function RelatedSideList({ products }: { products: Product[] }) {
+  const t = useTranslations("Product");
+  const locale = useLocale() as Locale;
+  const money = (n: number) => formatMoney(n, locale);
   if (products.length === 0) return null;
   return (
     <section aria-labelledby="related-side-heading" className="overflow-hidden rounded border border-border bg-card">
       <h2 id="related-side-heading" className="border-b border-border px-5 py-4 font-outfit text-base font-bold text-foreground">
-        Related Products
+        {t("related.title")}
       </h2>
       <ul className="divide-y divide-border/70">
         {products.map((p) => {

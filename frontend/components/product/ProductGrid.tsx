@@ -6,6 +6,9 @@ import { listProducts, type ProductPage, type ProductQuery, type SortOption } fr
 import type { Brand, Category, Product } from "@/lib/types";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import EmptyState from "./EmptyState";
+import { useLocale, useTranslations } from "next-intl";
+import { formatMoney } from "@/lib/format";
+import type { Locale } from "@/lib/locale";
 import type { ActiveFilter } from "./FilterChips";
 import FilterChips from "./FilterChips";
 import type { FilterState } from "./FilterSidebar";
@@ -46,6 +49,8 @@ export default function ProductGrid({
   search,
   start,
 }: ProductGridProps) {
+  const t = useTranslations("Product");
+  const locale = useLocale() as Locale;
   const priceMin = Math.floor(priceRange.min);
   const priceMax = Math.ceil(priceRange.max);
   const base: FilterState = {
@@ -179,18 +184,18 @@ export default function ProductGrid({
         if (brand) chips.push({ key: `brand:${slug}`, label: brand.name });
       });
 
-    if (filters.inStockOnly) chips.push({ key: "inStock", label: "In Stock" });
-    if (onSale) chips.push({ key: "onSale", label: "On Sale" });
+    if (filters.inStockOnly) chips.push({ key: "inStock", label: t("filters.inStock") });
+    if (onSale) chips.push({ key: "onSale", label: t("filters.onSale") });
 
     if (filters.minPrice > priceMin || filters.maxPrice < priceMax) {
       chips.push({
         key: "price",
-        label: `৳${filters.minPrice.toLocaleString("en-BD")} – ৳${filters.maxPrice.toLocaleString("en-BD")}`,
+        label: `${formatMoney(filters.minPrice, locale)} – ${formatMoney(filters.maxPrice, locale)}`,
       });
     }
 
     return chips;
-  }, [filters, onSale, categories, brands, lockedCategory, lockedBrand, priceMin, priceMax]);
+  }, [filters, onSale, categories, brands, lockedCategory, lockedBrand, priceMin, priceMax, t, locale]);
 
   const handleRemoveFilter = useCallback(
     (key: string) => {

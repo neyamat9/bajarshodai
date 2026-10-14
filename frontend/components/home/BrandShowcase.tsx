@@ -1,13 +1,16 @@
 "use client";
 
+import { Link } from "@/i18n/navigation";
 import { BrowseTrigger } from "@/components/browse/BrowseModals";
 import RevealGroup from "@/components/motion/RevealGroup";
 import { gsap, MOTION_OK, ScrollTrigger, useGSAP } from "@/components/motion/gsap";
 import ProductCard from "@/components/product/ProductCard";
 import type { Brand, Product } from "@/lib/types";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { formatNumber } from "@/lib/format";
+import type { Locale } from "@/lib/locale";
 import SectionHeader from "./SectionHeader";
 import SectionMore, { sectionMoreClass } from "./SectionMore";
 
@@ -116,6 +119,8 @@ function Arrow({ dir, disabled, onClick, label }: { dir: "prev" | "next"; disabl
 const noScrollbar = "no-scrollbar drag-row";
 
 export default function BrandShowcase({ brands, productsByBrand }: BrandShowcaseProps) {
+  const t = useTranslations("Home");
+  const locale = useLocale() as Locale;
   const list = useMemo(() => brands.filter((b) => (productsByBrand[b.slug]?.length ?? 0) > 0), [brands, productsByBrand]);
   // start on the brand with the most products so the panel is never empty
   const initial = useMemo(
@@ -181,16 +186,16 @@ export default function BrandShowcase({ brands, productsByBrand }: BrandShowcase
           <SectionHeader
             title={
               <span id="brands-heading">
-                Shop by <span className="text-brand-fresh">brand</span>
+                {t.rich("brandsTitle", { accent: (c) => <span className="text-brand-fresh">{c}</span> })}
               </span>
             }
-            description="Pick a brand you trust and browse everything we stock from them."
+            description={t("brandsDesc")}
             action={
               <BrowseTrigger
                 kind="brands"
                 className="group inline-flex w-fit shrink-0 items-center gap-2 rounded border border-border bg-card px-5 py-3 text-sm font-bold text-foreground transition-colors hover:border-brand-fresh hover:text-accent-text"
               >
-                All brands
+                {t("allBrands")}
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
               </BrowseTrigger>
             }
@@ -201,12 +206,12 @@ export default function BrandShowcase({ brands, productsByBrand }: BrandShowcase
           {/* ── brand slider ── */}
           <RevealGroup>
             <div className="relative">
-              <Arrow dir="prev" label="Previous brands" disabled={!brandRow.prev} onClick={() => brandRow.page(-1)} />
-              <Arrow dir="next" label="Next brands" disabled={!brandRow.next} onClick={() => brandRow.page(1)} />
+              <Arrow dir="prev" label={t("prevBrands")} disabled={!brandRow.prev} onClick={() => brandRow.page(-1)} />
+              <Arrow dir="next" label={t("nextBrands")} disabled={!brandRow.next} onClick={() => brandRow.page(1)} />
               <div
                 ref={brandRow.ref}
                 role="tablist"
-                aria-label="Brands"
+                aria-label={t("brandsAria")}
                 className={`flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-1 md:gap-4 ${noScrollbar}`}
               >
                 {list.map((b) => {
@@ -256,21 +261,21 @@ export default function BrandShowcase({ brands, productsByBrand }: BrandShowcase
               <h3 className="font-outfit text-lg font-bold text-foreground sm:text-xl" aria-live="polite">
                 {current.name}
                 <span className="ml-2 text-sm font-medium text-muted-foreground">
-                  {products.length} product{products.length === 1 ? "" : "s"}
+                  {t("productsCount", { count: formatNumber(products.length, locale, 0) })}
                 </span>
               </h3>
               <Link
                 href={`/products?brand=${current.slug}`}
                 className="group inline-flex shrink-0 items-center gap-2 rounded bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition-colors hover:bg-brand-fresh hover:text-on-fresh"
               >
-                See all
+                {t("seeAll")}
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
               </Link>
             </div>
 
             <div className="relative">
-              <Arrow dir="prev" label="Previous products" disabled={!productRow.prev} onClick={() => productRow.page(-1)} />
-              <Arrow dir="next" label="Next products" disabled={!productRow.next} onClick={() => productRow.page(1)} />
+              <Arrow dir="prev" label={t("prevProducts")} disabled={!productRow.prev} onClick={() => productRow.page(-1)} />
+              <Arrow dir="next" label={t("nextProducts")} disabled={!productRow.next} onClick={() => productRow.page(1)} />
               <div
                 ref={productRow.ref}
                 className={`flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 ${noScrollbar}`}
@@ -291,7 +296,7 @@ export default function BrandShowcase({ brands, productsByBrand }: BrandShowcase
 
         <SectionMore>
           <BrowseTrigger kind="brands" className={sectionMoreClass}>
-            All brands
+            {t("allBrands")}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
           </BrowseTrigger>
         </SectionMore>

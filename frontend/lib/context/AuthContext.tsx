@@ -6,10 +6,12 @@ import * as auth from "@/lib/services/auth.service";
 import type { AuthContextValue, SignupData, User } from "@/lib/types";
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const t = useTranslations("Auth");
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const userRef = useRef<User | null>(null);
@@ -49,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // the server ended the session, or the customer signed out (here, or in another tab)
     const onChange = (e: Event) => {
       setUser(null);
-      if ((e as CustomEvent).detail?.reason === "expired") toast.info("Your session ended — please sign in again.", { id: "session-ended" });
+      if ((e as CustomEvent).detail?.reason === "expired") toast.info(t("sessionEnded"), { id: "session-ended" });
     };
     // another tab signed in / out / switched account
     const onStorage = (e: StorageEvent) => {
@@ -77,25 +79,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener("online", recheck);
       window.removeEventListener("focus", recheck);
     };
-  }, [restore]);
+  }, [restore, t]);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (identifier: string, password: string) => {
     try {
-      setUser(await auth.login(email.trim(), password));
+      setUser(await auth.login(identifier.trim(), password));
       return { success: true };
     } catch (e) {
-      return { success: false, error: errorMessage(e, "Login failed") };
+      return { success: false, error: errorMessage(e, t("loginFailed")) };
     }
-  }, []);
+  }, [t]);
 
   const signup = useCallback(async (data: SignupData) => {
     try {
-      setUser(await auth.register({ ...data, email: data.email.trim(), name: data.name.trim() }));
+      setUser(await auth.register({ ...data, email: data.email?.trim() || undefined, name: data.name.trim() }));
       return { success: true };
     } catch (e) {
-      return { success: false, error: errorMessage(e, "Registration failed") };
+      return { success: false, error: errorMessage(e, t("signupFailed")) };
     }
-  }, []);
+  }, [t]);
 
   const logout = useCallback(async () => {
     markLeaving(); // the pages that need an account must not pop the sign-in modal while we head home
@@ -105,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateProfile = useCallback(async (data: Partial<User>) => {
     try {
-      const u = await auth.updateProfile({ name: data.name, phone: data.phone });
+      const u = await auth.updateProfile({ name: data.name, email: data.email });
       setUser((prev) => (prev ? { ...prev, ...u } : u));
       return { success: true };
     } catch (e) {

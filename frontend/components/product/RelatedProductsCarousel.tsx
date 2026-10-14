@@ -1,26 +1,26 @@
 "use client";
 
+import { Link } from "@/i18n/navigation";
 import { useQuickAdd } from "@/lib/hooks/use-quick-add";
 import { useWishlist } from "@/lib/hooks/use-wishlist";
 import type { Product } from "@/lib/types";
 import Image from "next/image";
-import Link from "next/link";
 import { useRef } from "react";
 import { toast } from "sonner";
+import { useLocale, useTranslations } from "next-intl";
+import { formatMoney } from "@/lib/format";
+import type { Locale } from "@/lib/locale";
 
 interface RelatedProductsCarouselProps {
   products: Product[];
   title?: string;
 }
 
-function formatBDT(price: number): string {
-  return `৳${price.toLocaleString("en-BD")}`;
-}
-
 export default function RelatedProductsCarousel({
   products,
-  title = "Related Products",
+  title,
 }: RelatedProductsCarouselProps) {
+  const t = useTranslations("Product");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   if (products.length === 0) return null;
@@ -34,11 +34,11 @@ export default function RelatedProductsCarousel({
   }
 
   return (
-    <section aria-label={title}>
+    <section aria-label={title ?? t("related.title")}>
       <div className="flex items-center justify-between mb-6">
         <div>
           <p className="text-accent-text text-[10px] font-black uppercase tracking-[0.3em] mb-1">
-            Discover More
+            {t("related.discover")}
           </p>
           <h2 className="text-foreground text-2xl font-black uppercase tracking-tighter font-outfit">
             {title}
@@ -48,7 +48,7 @@ export default function RelatedProductsCarousel({
           <button
             type="button"
             onClick={scrollLeft}
-            aria-label="Scroll left"
+            aria-label={t("related.scrollLeft")}
             className="w-9 h-9 flex items-center justify-center rounded bg-muted border border-border text-muted-foreground/70 hover:text-foreground hover:border-border transition-all"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -58,7 +58,7 @@ export default function RelatedProductsCarousel({
           <button
             type="button"
             onClick={scrollRight}
-            aria-label="Scroll right"
+            aria-label={t("related.scrollRight")}
             className="w-9 h-9 flex items-center justify-center rounded bg-muted border border-border text-muted-foreground/70 hover:text-foreground hover:border-border transition-all"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -84,6 +84,9 @@ export default function RelatedProductsCarousel({
 
 // ── Related Product Card ─────────────────────────────────────────────────────
 function RelatedProductCard({ product }: { product: Product }) {
+  const t = useTranslations("Product");
+  const locale = useLocale() as Locale;
+  const formatBDT = (n: number) => formatMoney(n, locale);
   const quickAdd = useQuickAdd();
   const { addToVault, removeFromVault, isInVault } = useWishlist();
   const inVault = isInVault(product.id);
@@ -109,10 +112,10 @@ function RelatedProductCard({ product }: { product: Product }) {
         originalPrice: product.originalPrice,
         imageUrl:
           primaryImage?.url ??
-          `https://picsum.photos/seed/${product.id}/400/400`,
+          "/placeholder.svg",
         stock: product.stock,
       });
-      toast.success(`${product.name} saved to The Vault`, { duration: 2000 });
+      toast.success(t("related.savedWish", { name: product.name }), { duration: 2000 });
     }
   }
 
@@ -124,8 +127,8 @@ function RelatedProductCard({ product }: { product: Product }) {
         onClick={handleToggleWishlist}
         aria-label={
           inVault
-            ? `Remove ${product.name} from wishlist`
-            : `Add ${product.name} to wishlist`
+            ? t("card.wishRemove", { name: product.name })
+            : t("card.wishAdd", { name: product.name })
         }
         className={`absolute top-3 right-3 z-10 w-7 h-7 flex items-center justify-center rounded transition-all ${
           inVault
@@ -198,7 +201,7 @@ function RelatedProductCard({ product }: { product: Product }) {
           <button
             type="button"
             onClick={handleAddToCart}
-            aria-label={`Add ${product.name} to cart`}
+            aria-label={t("card.addNamed", { name: product.name })}
             className="w-8 h-8 rounded bg-muted border border-border flex items-center justify-center hover:bg-brand-fresh hover:border-brand-fresh transition-all group/btn active:scale-95"
           >
             <svg

@@ -1,5 +1,8 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+import { formatMoney, formatNumber } from "@/lib/format";
+import type { Locale } from "@/lib/locale";
 import { useDebouncedSearch } from "@/lib/hooks/use-debounced-search";
 import type { Brand, Category } from "@/lib/types";
 import { Check, ChevronDown, RotateCcw, Search, SlidersHorizontal, X } from "lucide-react";
@@ -34,7 +37,6 @@ interface FilterSidebarProps {
 
 const DEFAULT_PRICE_MIN = 0;
 const DEFAULT_PRICE_MAX = 500000;
-const money = (n: number) => `৳${n.toLocaleString("en-BD")}`;
 
 export default function FilterSidebar({
   categories,
@@ -48,6 +50,9 @@ export default function FilterSidebar({
   mobileOpen = false,
   onMobileClose,
 }: FilterSidebarProps) {
+  const t = useTranslations("Product");
+  const locale = useLocale() as Locale;
+  const money = (n: number) => formatMoney(n, locale);
   // Local price state for the dual-handle slider (avoids re-filtering on every drag)
   const [localMin, setLocalMin] = useState(filters.minPrice ?? priceMin);
   const [localMax, setLocalMax] = useState(filters.maxPrice ?? priceMax);
@@ -100,10 +105,10 @@ export default function FilterSidebar({
           <span className="flex h-8 w-8 items-center justify-center rounded bg-primary text-primary-foreground">
             <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
           </span>
-          Filters
+          {t("filters.title")}
           {activeCount > 0 && (
-            <span className="rounded bg-brand-fresh px-1.5 py-0.5 text-[11px] font-bold leading-none text-on-fresh" aria-label={`${activeCount} active filters`}>
-              {activeCount}
+            <span className="rounded bg-brand-fresh px-1.5 py-0.5 text-[11px] font-bold leading-none text-on-fresh" aria-label={t("filters.activeCount", { count: activeCount })}>
+              {formatNumber(activeCount, locale, 0)}
             </span>
           )}
         </h2>
@@ -111,7 +116,7 @@ export default function FilterSidebar({
           {onReset && activeCount > 0 && (
             <button type="button" onClick={onReset} className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground transition-colors hover:text-accent-text">
               <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-              Reset
+              {t("filters.reset")}
             </button>
           )}
           {onMobileClose && (
@@ -119,7 +124,7 @@ export default function FilterSidebar({
               type="button"
               onClick={onMobileClose}
               className="flex h-8 w-8 items-center justify-center rounded border border-border text-muted-foreground transition-colors hover:text-foreground lg:hidden"
-              aria-label="Close filters"
+              aria-label={t("filters.close")}
             >
               <X className="h-4 w-4" />
             </button>
@@ -128,7 +133,7 @@ export default function FilterSidebar({
       </div>
 
       {/* Availability */}
-      <Section title="Availability">
+      <Section title={t("filters.availability")}>
         <button
           type="button"
           role="switch"
@@ -136,7 +141,7 @@ export default function FilterSidebar({
           onClick={() => onFiltersChange({ ...filters, inStockOnly: !filters.inStockOnly })}
           className="group flex w-full items-center justify-between gap-3 rounded border border-border bg-background px-3.5 py-3 text-left transition-colors hover:border-brand-fresh focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-fresh/50"
         >
-          <span className="text-sm font-medium text-foreground">In stock only</span>
+          <span className="text-sm font-medium text-foreground">{t("filters.inStockOnly")}</span>
           <span className={`relative h-6 w-11 shrink-0 rounded transition-colors duration-200 ${filters.inStockOnly ? "bg-brand-fresh" : "bg-secondary"}`}>
             <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded bg-card shadow transition-transform duration-200 ${filters.inStockOnly ? "translate-x-5" : ""}`} />
           </span>
@@ -144,7 +149,7 @@ export default function FilterSidebar({
       </Section>
 
       {/* Price */}
-      <Section title="Price range">
+      <Section title={t("filters.priceRange")}>
         <div className="px-1 pb-1 pt-2">
           <DualRangeSlider
             min={priceMin}
@@ -154,33 +159,35 @@ export default function FilterSidebar({
             onChangeMin={setLocalMin}
             onChangeMax={setLocalMax}
             onCommit={() => commitPrice()}
+            minLabel={t("filters.minAria")}
+            maxLabel={t("filters.maxAria")}
           />
         </div>
         <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
           <div className="rounded border border-border bg-background px-3 py-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Min</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("filters.min")}</p>
             <p className="font-outfit text-sm font-bold text-foreground">{money(localMin)}</p>
           </div>
           <span className="h-px w-3 bg-border" aria-hidden="true" />
           <div className="rounded border border-border bg-background px-3 py-2 text-right">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Max</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("filters.max")}</p>
             <p className="font-outfit text-sm font-bold text-foreground">{money(localMax)}</p>
           </div>
         </div>
       </Section>
 
       {/* Category */}
-      <Section title="Category" count={filters.categories.length + filters.subCategories.length}>
+      <Section title={t("filters.category")} count={filters.categories.length + filters.subCategories.length}>
         <ul className="no-scrollbar -mx-1 max-h-80 space-y-0.5 overflow-y-auto px-1" data-lenis-prevent>
           {categories.map((cat) => {
             const checked = filters.categories.includes(cat.slug);
             const picked = cat.subCategories.filter((x) => filters.subCategories.includes(x.slug)).length;
             return (
               <Fragment key={cat.slug}>
-                <Option id={`cat-${cat.slug}`} label={cat.name} count={cat.productCount} checked={checked} hint={picked > 0 ? `${picked} selected` : undefined} onChange={() => toggleCategory(cat)} />
+                <Option id={`cat-${cat.slug}`} label={cat.name} count={cat.productCount} checked={checked} hint={picked > 0 ? t("filters.selected", { count: formatNumber(picked, locale, 0) }) : undefined} onChange={() => toggleCategory(cat)} />
                 {checked && cat.subCategories.length > 0 && (
                   <li>
-                    <ul className="ml-[17px] space-y-0.5 border-l border-border pl-2.5" aria-label={`${cat.name} sub-categories`}>
+                    <ul className="ml-[17px] space-y-0.5 border-l border-border pl-2.5" aria-label={t("filters.subCategories", { name: cat.name })}>
                       {cat.subCategories.map((sub) => (
                         <Option key={sub.slug} small id={`sub-${sub.slug}`} label={sub.name} checked={filters.subCategories.includes(sub.slug)} onChange={() => toggleSub(cat, sub.slug)} />
                       ))}
@@ -194,7 +201,7 @@ export default function FilterSidebar({
       </Section>
 
       {/* Brand */}
-      <Section title="Brand" count={filters.brands.length}>
+      <Section title={t("filters.brand")} count={filters.brands.length}>
         {brands.length > 6 && (
           <div className="relative mb-2.5">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
@@ -202,8 +209,8 @@ export default function FilterSidebar({
               value={brandInput}
               onChange={(e) => setBrandInput(e.target.value)}
               type="search"
-              placeholder="Search brands…"
-              aria-label="Search brands"
+              placeholder={t("filters.searchBrands")}
+              aria-label={t("filters.searchBrands")}
               className="h-9 w-full rounded border border-border bg-background pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-fresh focus:outline-none focus:ring-2 focus:ring-brand-fresh/20"
             />
           </div>
@@ -212,7 +219,7 @@ export default function FilterSidebar({
           {shownBrands.map((b) => (
             <Option key={b.slug} id={`brand-${b.slug}`} label={b.name} logo={b.logoUrl} count={b.productCount} checked={filters.brands.includes(b.slug)} onChange={() => toggle("brands", b.slug)} />
           ))}
-          {shownBrands.length === 0 && <li className="px-2 py-3 text-center text-xs text-muted-foreground">No brands match.</li>}
+          {shownBrands.length === 0 && <li className="px-2 py-3 text-center text-xs text-muted-foreground">{t("filters.noBrands")}</li>}
         </ul>
       </Section>
     </div>
@@ -245,7 +252,7 @@ export default function FilterSidebar({
         }`}
         role="dialog"
         aria-modal="true"
-        aria-label="Product filters"
+        aria-label={t("filters.dialog")}
         aria-hidden={!mobileOpen}
       >
         <div className="mx-auto mt-2.5 h-1 w-10 shrink-0 rounded bg-secondary" />
@@ -258,7 +265,7 @@ export default function FilterSidebar({
             onClick={onMobileClose}
             className="w-full rounded bg-primary py-3.5 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90 active:scale-[0.99]"
           >
-            Show results
+            {t("filters.showResults")}
           </button>
         </div>
       </div>
@@ -269,13 +276,14 @@ export default function FilterSidebar({
 /* ── Sub-components ──────────────────────────────────── */
 
 function Section({ title, count = 0, children }: { title: string; count?: number; children: React.ReactNode }) {
+  const locale = useLocale() as Locale;
   const [open, setOpen] = useState(true);
   return (
     <div className="border-b border-border last:border-b-0">
       <button type="button" onClick={() => setOpen((v) => !v)} className="group flex w-full items-center justify-between px-5 py-4" aria-expanded={open}>
         <span className="flex items-center gap-2 text-sm font-bold text-foreground">
           {title}
-          {count > 0 && <span className="rounded bg-brand-fresh/20 px-1.5 py-0.5 text-[10px] font-bold leading-none text-accent-text">{count}</span>}
+          {count > 0 && <span className="rounded bg-brand-fresh/20 px-1.5 py-0.5 text-[10px] font-bold leading-none text-accent-text">{formatNumber(count, locale, 0)}</span>}
         </span>
         <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-300 group-hover:text-foreground ${open ? "rotate-180" : ""}`} aria-hidden="true" />
       </button>
@@ -289,6 +297,7 @@ function Section({ title, count = 0, children }: { title: string; count?: number
 }
 
 function Option({ id, label, checked, onChange, count, logo, small, hint }: { id: string; label: string; checked: boolean; onChange: () => void; count?: number; logo?: string; small?: boolean; hint?: string }) {
+  const locale = useLocale() as Locale;
   return (
     <li>
       <label
@@ -313,7 +322,7 @@ function Option({ id, label, checked, onChange, count, logo, small, hint }: { id
         <span className={`min-w-0 flex-1 truncate ${small ? "text-[13px]" : "text-sm"} ${checked ? "font-semibold text-foreground" : "font-medium text-muted-foreground group-hover:text-foreground"}`}>{label}</span>
         {hint && <span className="shrink-0 text-[10px] font-semibold text-accent-text">{hint}</span>}
         {count !== undefined && (
-          <span className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold ${checked ? "bg-brand-fresh/25 text-accent-text" : "bg-secondary text-muted-foreground"}`}>{count}</span>
+          <span className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold ${checked ? "bg-brand-fresh/25 text-accent-text" : "bg-secondary text-muted-foreground"}`}>{formatNumber(count, locale, 0)}</span>
         )}
       </label>
     </li>
@@ -332,7 +341,11 @@ function DualRangeSlider({
   onChangeMin,
   onChangeMax,
   onCommit,
+  minLabel,
+  maxLabel,
 }: {
+  minLabel: string;
+  maxLabel: string;
   min: number;
   max: number;
   valueMin: number;
@@ -342,6 +355,7 @@ function DualRangeSlider({
   onCommit: () => void;
 }) {
   const range = max - min || 1;
+  const step = range <= 500 ? 1 : range <= 5000 ? 5 : range <= 50000 ? 50 : 1000;
   const leftPct = ((valueMin - min) / range) * 100;
   const rightPct = ((valueMax - min) / range) * 100;
 
@@ -354,28 +368,28 @@ function DualRangeSlider({
         type="range"
         min={min}
         max={max}
-        step={1000}
+        step={step}
         value={valueMin}
-        onChange={(e) => onChangeMin(Math.min(Number(e.target.value), valueMax - 1000))}
+        onChange={(e) => onChangeMin(Math.min(Number(e.target.value), valueMax - step))}
         onMouseUp={onCommit}
         onTouchEnd={onCommit}
         onKeyUp={onCommit}
         className="range-thumb-fresh pointer-events-none absolute h-1.5 w-full cursor-pointer appearance-none bg-transparent [&::-moz-range-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:pointer-events-auto"
-        aria-label="Minimum price"
-        style={{ zIndex: valueMin > max - 1000 ? 5 : 3 }}
+        aria-label={minLabel}
+        style={{ zIndex: valueMin > max - step ? 5 : 3 }}
       />
       <input
         type="range"
         min={min}
         max={max}
-        step={1000}
+        step={step}
         value={valueMax}
-        onChange={(e) => onChangeMax(Math.max(Number(e.target.value), valueMin + 1000))}
+        onChange={(e) => onChangeMax(Math.max(Number(e.target.value), valueMin + step))}
         onMouseUp={onCommit}
         onTouchEnd={onCommit}
         onKeyUp={onCommit}
         className="range-thumb-fresh pointer-events-none absolute h-1.5 w-full cursor-pointer appearance-none bg-transparent [&::-moz-range-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:pointer-events-auto"
-        aria-label="Maximum price"
+        aria-label={maxLabel}
         style={{ zIndex: 4 }}
       />
     </div>

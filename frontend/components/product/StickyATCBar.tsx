@@ -5,6 +5,9 @@ import type { Product, ProductVariant } from "@/lib/types";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useLocale, useTranslations } from "next-intl";
+import { formatMoney } from "@/lib/format";
+import type { Locale } from "@/lib/locale";
 
 interface StickyATCBarProps {
   product: Product;
@@ -15,16 +18,15 @@ interface StickyATCBarProps {
   atcButtonRef: React.RefObject<HTMLButtonElement | null>;
 }
 
-function formatBDT(price: number): string {
-  return `৳${price.toLocaleString("en-BD")}`;
-}
-
 export default function StickyATCBar({
   product,
   currentPrice,
   variant,
   atcButtonRef,
 }: StickyATCBarProps) {
+  const t = useTranslations("Product");
+  const locale = useLocale() as Locale;
+  const formatBDT = (n: number) => formatMoney(n, locale);
   const { addToCart } = useCart();
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -67,9 +69,9 @@ export default function StickyATCBar({
       stock: variant?.stock ?? product.stock,
     });
     if (res.ok) {
-      toast.success(`${product.name} added to cart`, { description: formatBDT(currentPrice), duration: 2500 });
+      toast.success(t("card.added", { name: product.name }), { description: formatBDT(currentPrice), duration: 2500 });
     } else {
-      toast.error(res.error ?? "Could not add to cart");
+      toast.error(res.error ?? t("card.couldNotAdd"));
     }
     setLoading(false);
   }
@@ -121,7 +123,7 @@ export default function StickyATCBar({
             type="button"
             onClick={handleAddToCart}
             disabled={loading || product.stock === 0}
-            aria-label={`Add ${product.name} to cart`}
+            aria-label={t("card.addNamed", { name: product.name })}
             className="flex-shrink-0 h-10 px-6 flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-tight text-sm rounded transition-all shadow-[0_4px_16px_rgba(69,162,44,0.3)] disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97]"
           >
             {loading ? (

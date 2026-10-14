@@ -1,7 +1,7 @@
 "use client";
 
+import { usePathname, useRouter } from "@/i18n/navigation";
 import { API_BASE_URL } from "@/lib/api/client";
-import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef } from "react";
 
 /** How often an open, visible tab asks "did the shop change?" (a ~150-byte request) */

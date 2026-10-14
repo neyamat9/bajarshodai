@@ -1,11 +1,14 @@
 "use client";
 
+import { Link } from "@/i18n/navigation";
 import { gsap } from "@/components/motion/gsap";
 import type { Category } from "@/lib/types";
 import { ArrowRight, ChevronDown, LayoutGrid, X } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useLocale, useTranslations } from "next-intl";
+import { formatNumber } from "@/lib/format";
+import type { Locale } from "@/lib/locale";
 
 interface CategorySidebarProps {
   open: boolean;
@@ -19,6 +22,8 @@ interface CategorySidebarProps {
  * All categories start collapsed; click the chevron to expand one.
  */
 export default function CategorySidebar({ open, onClose, categories }: CategorySidebarProps) {
+  const t = useTranslations("Nav");
+  const locale = useLocale() as Locale;
   const panel = useRef<HTMLElement>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   // rendered on <body>: the sticky nav has a backdrop blur, which would otherwise trap `fixed` children inside it
@@ -79,7 +84,7 @@ export default function CategorySidebar({ open, onClose, categories }: CategoryS
         data-lenis-prevent
         role="dialog"
         aria-modal="true"
-        aria-label="All categories"
+        aria-label={t("allCategories")}
         aria-hidden={!open}
         className={`fixed left-0 top-0 z-[2110] flex h-full w-full max-w-[380px] flex-col border-r border-border bg-background outline-none transition-transform duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
           open ? "translate-x-0 shadow-2xl" : "-translate-x-full"
@@ -92,14 +97,14 @@ export default function CategorySidebar({ open, onClose, categories }: CategoryS
               <LayoutGrid className="h-5 w-5" aria-hidden="true" />
             </span>
             <div className="leading-tight">
-              <h2 className="font-outfit text-lg font-extrabold">All categories</h2>
-              <p className="text-xs text-white/70">{categories.length} categories</p>
+              <h2 className="font-outfit text-lg font-extrabold">{t("allCategories")}</h2>
+              <p className="text-xs text-white/70">{t("categoriesCount", { count: formatNumber(categories.length, locale, 0) })}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close categories"
+            aria-label={t("closeCategories")}
             className="flex h-9 w-9 items-center justify-center rounded border border-white/25 transition-colors hover:bg-white/15"
           >
             <X className="h-4 w-4" />
@@ -107,7 +112,7 @@ export default function CategorySidebar({ open, onClose, categories }: CategoryS
         </div>
 
         {/* Category list */}
-        <nav aria-label="All categories" className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-3">
+        <nav aria-label={t("allCategories")} className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-3">
           <ul className="space-y-1.5">
             {categories.map((cat) => {
               const isOpen = expanded === cat.slug;
@@ -121,14 +126,14 @@ export default function CategorySidebar({ open, onClose, categories }: CategoryS
                       className="flex min-w-0 flex-1 items-center justify-between gap-2 px-4 py-3 text-sm font-bold text-foreground transition-colors hover:text-accent-text"
                     >
                       <span className="truncate">{cat.name}</span>
-                      <span className="shrink-0 rounded bg-secondary px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">{cat.productCount}</span>
+                      <span className="shrink-0 rounded bg-secondary px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">{formatNumber(cat.productCount, locale, 0)}</span>
                     </Link>
                     {hasSubs && (
                       <button
                         type="button"
                         onClick={() => setExpanded(isOpen ? null : cat.slug)}
                         aria-expanded={isOpen}
-                        aria-label={`${isOpen ? "Collapse" : "Expand"} ${cat.name}`}
+                        aria-label={t(isOpen ? "collapse" : "expand", { name: cat.name })}
                         className="flex w-11 shrink-0 items-center justify-center border-l border-border text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                       >
                         <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
@@ -160,7 +165,7 @@ export default function CategorySidebar({ open, onClose, categories }: CategoryS
                               tabIndex={isOpen ? 0 : -1}
                               className="mx-3 mb-1 mt-1.5 flex items-center justify-center gap-1.5 rounded bg-secondary px-3 py-2 text-xs font-bold text-primary transition-colors hover:bg-accent dark:text-accent-text"
                             >
-                              View all {cat.name}
+                              {t("viewAllOf", { name: cat.name })}
                               <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                             </Link>
                           </li>
@@ -181,7 +186,7 @@ export default function CategorySidebar({ open, onClose, categories }: CategoryS
             onClick={onClose}
             className="flex items-center justify-center gap-2 rounded bg-primary px-4 py-3 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Browse all products
+            {t("browseAll")}
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>

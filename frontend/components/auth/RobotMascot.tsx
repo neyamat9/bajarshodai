@@ -2,6 +2,7 @@
 
 import { gsap, useGSAP } from "@/components/motion/gsap";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 /* ───────────────────────── shared state ───────────────────────── */
 
@@ -88,6 +89,7 @@ const EYE_R = { x: 148, y: 98 };
  *  - thinking / happy / sad: while submitting, after success, after a failed attempt
  */
 export default function RobotMascot({ className = "" }: { className?: string }) {
+  const t = useTranslations("Common");
   const { mode, look } = useMascot();
   const root = useRef<SVGSVGElement>(null);
   const reduce = useRef(false);
@@ -260,7 +262,7 @@ export default function RobotMascot({ className = "" }: { className?: string }) 
   );
 
   return (
-    <svg ref={root} viewBox="0 0 240 215" className={`overflow-visible ${className}`} role="img" aria-label="Friendly robot mascot" data-mode={mode}>
+    <svg ref={root} viewBox="0 0 240 215" className={`overflow-visible ${className}`} role="img" aria-label={t("robot")} data-mode={mode}>
       <defs>
         <linearGradient id="rm-head" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#1a7d46" />

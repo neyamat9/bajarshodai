@@ -1,3 +1,5 @@
+import LoadingText from "@/components/skeletons/LoadingText";
+
 /**
  * SkeletonGrid — shimmer placeholder cards matching ProductCard dimensions.
  * Shown while the Service Layer resolves product data.
@@ -7,8 +9,8 @@ export default function SkeletonGrid({ count = 12 }: { count?: number }) {
     <div
       className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
       aria-busy="true"
-      aria-label="Loading products…"
     >
+      <LoadingText />
       {Array.from({ length: count }).map((_, i) => (
         <SkeletonCard key={i} />
       ))}

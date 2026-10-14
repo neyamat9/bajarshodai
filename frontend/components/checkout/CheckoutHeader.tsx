@@ -1,7 +1,8 @@
+import { Link } from "@/i18n/navigation";
 import CheckoutHeaderUser from "@/components/checkout/CheckoutHeaderUser";
 import BrandLogo from "@/components/layout/BrandLogo";
 import { ArrowLeft, Lock } from "lucide-react";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 /**
  * The focused checkout header — logo, a way back to the cart, who is checking out and a "secure" label.
@@ -9,6 +10,7 @@ import Link from "next/link";
  * by the instant-loading skeleton, so the skeleton shows the very same header the page will have.
  */
 export default function CheckoutHeader() {
+  const t = useTranslations("Checkout");
   return (
     <header className="bg-card border-b border-border py-4 sticky top-0 z-[1001] shadow-[0_10px_30px_rgba(11,98,52,0.18)]">
       <div className="max-w-[1440px] mx-auto px-4 md:px-8 flex items-center justify-between">
@@ -16,18 +18,18 @@ export default function CheckoutHeader() {
           <BrandLogo size="md" />
           <Link href="/cart" className="hidden items-center gap-1.5 rounded px-2.5 py-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground sm:inline-flex">
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            Back to cart
+            {t("backToCart")}
           </Link>
         </div>
 
         <div className="flex items-center gap-4">
-          <Link href="/cart" aria-label="Back to cart" className="inline-flex h-9 w-9 items-center justify-center rounded border border-border text-foreground sm:hidden">
+          <Link href="/cart" aria-label={t("backToCart")} className="inline-flex h-9 w-9 items-center justify-center rounded border border-border text-foreground sm:hidden">
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           </Link>
           <CheckoutHeaderUser />
           <div className="flex items-center gap-2 text-muted-foreground/70 text-xs">
             <Lock className="h-3.5 w-3.5" aria-hidden="true" />
-            <span className="hidden sm:inline font-medium">Secure Checkout</span>
+            <span className="hidden sm:inline font-medium">{t("secure")}</span>
           </div>
         </div>
       </div>

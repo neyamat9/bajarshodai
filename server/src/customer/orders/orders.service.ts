@@ -274,6 +274,7 @@ export class OrdersService {
                 price,
                 total: price * item.quantity,
                 productName: item.product.name,
+                productNameBn: item.product.nameBn,
                 productSlug: item.product.slug,
                 productImage: item.product.images[0]?.url ?? null,
                 variantName: item.variant?.name ?? null,
@@ -377,6 +378,7 @@ export class OrdersService {
         variantId: i.variantId,
         quantity: i.quantity,
         name: i.productName,
+        nameBn: i.productNameBn ?? null,
         variantName: i.variantName,
       })),
     );

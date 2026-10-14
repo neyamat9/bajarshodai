@@ -1,8 +1,11 @@
 "use client";
 
+import { Link } from "@/i18n/navigation";
 import type { Order } from "@/lib/types";
 import { BadgeCheck, ClipboardList, PackageOpen, PartyPopper, Truck, XCircle, type LucideIcon, PauseCircle } from "lucide-react";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { useStatusLabel } from "@/components/orders/labels";
+import { formatDate as fmtDate, formatDateTime as fmtDateTime, formatMoney } from "@/lib/format";
 
 // Small building blocks shared by the account pages.
 
@@ -16,10 +19,10 @@ export const btnOrange =
 export const btnGhost =
   "inline-flex h-11 items-center justify-center gap-2 rounded border border-border bg-card px-5 text-sm font-bold text-foreground transition-colors hover:border-brand-fresh hover:text-accent-text disabled:cursor-not-allowed disabled:opacity-60";
 
-export const formatBDT = (n: number) => `৳${n.toLocaleString("en-BD")}`;
-export const formatDate = (iso: string) => new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-export const formatDateTime = (iso: string) =>
-  new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+// These pages only render for a signed-in customer (after the page has loaded), so reading the page language here is safe.
+export const formatBDT = (n: number) => formatMoney(n);
+export const formatDate = (iso: string) => fmtDate(iso);
+export const formatDateTime = (iso: string) => fmtDateTime(iso);
 
 export function Skeleton({ className = "" }: { className?: string }) {
   return <div className={`animate-pulse rounded bg-secondary ${className}`} />;
@@ -59,11 +62,11 @@ export function EmptyState({ icon: Icon, title, text, action }: { icon: LucideIc
 
 /** The five stages of an order. `raw` is the server's own status, so Confirmed and Packing are told apart. */
 export const ORDER_STEPS = [
-  { key: "placed", label: "Placed", icon: ClipboardList },
-  { key: "confirmed", label: "Confirmed", icon: BadgeCheck },
-  { key: "packing", label: "Packing", icon: PackageOpen },
-  { key: "shipped", label: "On the way", icon: Truck },
-  { key: "delivered", label: "Delivered", icon: PartyPopper },
+  { key: "placed", label: "stepPlaced", icon: ClipboardList },
+  { key: "confirmed", label: "stepConfirmed", icon: BadgeCheck },
+  { key: "packing", label: "stepPacking", icon: PackageOpen },
+  { key: "shipped", label: "stepOnWay", icon: Truck },
+  { key: "delivered", label: "stepDelivered", icon: PartyPopper },
 ] as const;
 
 type StepOrder = Pick<Order, "status" | "rawStatus" | "statusHistory" | "placedAt" | "confirmedAt" | "processingAt" | "shippedAt" | "deliveredAt">;
@@ -85,11 +88,13 @@ export function stepIndex(o: Pick<Order, "status" | "rawStatus">): number {
  * A cancelled order shows one red note instead.
  */
 export function StepProgress({ order, timestamps = false }: { order: StepOrder; timestamps?: boolean }) {
+  const t = useTranslations("Orders");
+  const statusText = useStatusLabel();
   if (order.status === "Cancelled" || order.status === "Returned" || order.status === "Refunded") {
     return (
       <p className="flex items-center gap-2 rounded border border-red-500/30 bg-red-500/10 px-3 py-2.5 text-sm font-semibold text-red-700 dark:text-red-300">
         <XCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
-        {order.status === "Cancelled" ? "This order was cancelled." : order.status === "Returned" ? "This order was returned." : "This order was refunded."}
+        {order.status === "Cancelled" ? t("wasCancelled") : order.status === "Returned" ? t("wasReturned") : t("wasRefunded")}
       </p>
     );
   }
@@ -101,10 +106,10 @@ export function StepProgress({ order, timestamps = false }: { order: StepOrder; 
     {onHold && (
       <p className="mb-3 flex items-center gap-2 rounded border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm font-semibold text-amber-700 dark:text-amber-300">
         <PauseCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
-        On hold: we will contact you about this order.
+        {t("onHold")}
       </p>
     )}
-    <ol className="flex w-full items-start" aria-label="Order progress">
+    <ol className="flex w-full items-start" aria-label={t("progress")}>
       {ORDER_STEPS.map((s, i) => {
         const done = i < active || (i === active && active === 4);
         const current = i === active && !done;
@@ -120,9 +125,9 @@ export function StepProgress({ order, timestamps = false }: { order: StepOrder; 
               {current && <span className="absolute inset-0 animate-ping rounded-full bg-brand-fresh/20" aria-hidden="true" />}
               <Icon className="relative h-4 w-4" aria-hidden="true" />
             </span>
-            <span className={`mt-1.5 text-[11px] font-semibold leading-tight sm:text-xs ${done || current ? "text-foreground" : "text-muted-foreground"}`}>{s.label}</span>
+            <span className={`mt-1.5 text-[11px] font-semibold leading-tight sm:text-xs ${done || current ? "text-foreground" : "text-muted-foreground"}`}>{t(s.label)}</span>
             {/* the exact stage, in the admin's own words, under the step it belongs to */}
-            {current && i === 3 && <span className="mt-0.5 text-[10px] font-medium text-accent-text">{order.status}</span>}
+            {current && i === 3 && <span className="mt-0.5 text-[10px] font-medium text-accent-text">{statusText(order.status)}</span>}
             {timestamps && (done || current) && at[i] && <span className="mt-0.5 hidden text-[10px] text-muted-foreground sm:block">{formatDateTime(at[i]!)}</span>}
           </li>
         );

@@ -5,6 +5,8 @@ import { isLeaving } from "@/lib/auth-intent";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { LogIn, UserRound } from "lucide-react";
 import { useEffect } from "react";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 
 function Spinner() {
   return (
@@ -20,6 +22,7 @@ function Spinner() {
  * While the customer is deliberately signing out (and heading home) it stays quiet.
  */
 export default function RequireLogin({ children, fallback }: { children: React.ReactNode; /** shown while the login is being checked (default: a small spinner) */ fallback?: React.ReactNode }) {
+  const t = useTranslations("Account");
   const { user, isLoading } = useAuth();
   const { openAuth } = useAuthModal();
   const signedOut = !isLoading && !user;
@@ -37,15 +40,15 @@ export default function RequireLogin({ children, fallback }: { children: React.R
           <span className="mx-auto flex h-14 w-14 items-center justify-center rounded bg-primary/10 text-primary dark:text-brand-fresh">
             <UserRound className="h-7 w-7" aria-hidden="true" />
           </span>
-          <h1 className="mt-4 font-outfit text-2xl font-black text-foreground">Sign in to continue</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Your orders, wishlist and account details are waiting for you.</p>
+          <h1 className="mt-4 font-outfit text-2xl font-black text-foreground">{t("signInTitle")}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">{t("signInText")}</p>
           <button
             type="button"
             onClick={() => openAuth("login", { then: "stay" })}
             className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded bg-brand-fresh text-sm font-bold text-on-fresh transition-colors hover:bg-brand-fresh/90"
           >
             <LogIn className="h-4 w-4" aria-hidden="true" />
-            Sign in
+            {t("signIn")}
           </button>
         </div>
       </div>
@@ -59,9 +62,9 @@ export function PageShell({ eyebrow, title, accent, back, children }: { eyebrow:
     <section>
       <div className="max-w-4xl">
         {back && (
-          <a href={back.href} className="mb-4 inline-block text-xs font-bold text-muted-foreground/70 hover:text-foreground">
+          <Link href={back.href} className="mb-4 inline-block text-xs font-bold text-muted-foreground/70 hover:text-foreground">
             ← {back.label}
-          </a>
+          </Link>
         )}
         <p className="mb-3 text-[10px] font-black uppercase tracking-[0.3em] text-accent-text">{eyebrow}</p>
         <h1 className="font-outfit text-4xl font-black leading-none tracking-tight text-foreground sm:text-5xl">

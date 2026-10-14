@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname, useRouter } from "@/i18n/navigation";
 import { AuthBusyContext } from "@/components/auth/auth-busy";
 import AuthForm from "@/components/auth/AuthForm";
 import ForgotForm from "@/components/auth/ForgotForm";
@@ -9,9 +10,10 @@ import { gsap } from "@/components/motion/gsap";
 import { startNavigation } from "@/components/layout/NavigationGate";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { X } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { createContext, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslations } from "next-intl";
 
 type Mode = "login" | "signup" | "forgot" | "reset";
 
@@ -39,7 +41,7 @@ export function useAuthModal(): AuthModalValue {
   return ctx;
 }
 
-const TITLES: Record<Mode, string> = { login: "Sign in", signup: "Create account", forgot: "Forgot password", reset: "Choose a new password" };
+const TITLE_KEYS = { login: "titleLogin", signup: "titleSignup", forgot: "titleForgot", reset: "titleReset" } as const satisfies Record<Mode, string>;
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])';
 
@@ -50,6 +52,7 @@ const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), selec
  * email lands on /?reset=TOKEN, and pages that need an account open it for signed-out visitors.
  */
 export function AuthModalProvider({ children }: { children: React.ReactNode }) {
+  const t = useTranslations("Auth");
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -303,7 +306,7 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
               ref={panel}
               role="dialog"
               aria-modal="true"
-              aria-label={TITLES[mode]}
+              aria-label={t(TITLE_KEYS[mode])}
               tabIndex={-1}
               className="relative flex h-dvh w-full flex-col overflow-hidden bg-linear-to-br from-[#e1f3d8] via-[#f4f8f1] to-[#d6ebc9] outline-none dark:from-[#06120b] dark:via-[#0b2316] dark:to-[#14402a] sm:h-auto sm:max-h-[92dvh] sm:max-w-[500px] sm:rounded sm:border sm:border-border sm:shadow-2xl"
             >
@@ -313,7 +316,7 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
               <button
                 type="button"
                 onClick={closeAuth}
-                aria-label="Close"
+                aria-label={t("close")}
                 aria-disabled={busy}
                 className={`${busy ? "opacity-40" : ""} absolute right-3 top-3 z-30 flex h-10 w-10 items-center justify-center rounded border border-border bg-card/90 text-foreground shadow-sm backdrop-blur transition-colors hover:border-brand-fresh hover:text-accent-text`}
               >

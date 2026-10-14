@@ -11,6 +11,9 @@ import {
 } from "@/lib/coupon-store";
 import { applyCoupon, getCheckoutSummary, type CheckoutSummary } from "@/lib/services/checkout.service";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { translateApiMessage } from "@/lib/api-errors";
+import type { Locale } from "@/lib/locale";
 
 type CouponInfo = NonNullable<CheckoutSummary["coupon"]> & { message?: string };
 
@@ -33,6 +36,8 @@ interface Options {
  *  - the code is shared with the checkout page through localStorage
  */
 export function useCartCoupon({ enabled, signature, userId }: Options) {
+  const t = useTranslations("Cart");
+  const locale = useLocale() as Locale;
   const [code, setCode] = useState("");
   const [summary, setSummary] = useState<CheckoutSummary | null>(null);
   const [busy, setBusy] = useState(false);
@@ -67,7 +72,7 @@ export function useCartCoupon({ enabled, signature, userId }: Options) {
         if (activeCode && !(c && c.applied)) {
           // the coupon no longer works for this cart
           clearStoredCoupon();
-          setError(c?.message ?? `Coupon ${activeCode} can't be used on this order any more`);
+          setError(c?.message ? translateApiMessage(c.message, locale) : t("couponGone", { code: activeCode }));
         } else {
           setError(null);
         }
@@ -83,7 +88,7 @@ export function useCartCoupon({ enabled, signature, userId }: Options) {
         if (mine === seq.current) setBusy(false);
       }
     },
-    [],
+    [t, locale],
   );
 
   useEffect(() => {
@@ -97,15 +102,15 @@ export function useCartCoupon({ enabled, signature, userId }: Options) {
       if (inflightApply.current) return false;
       const next = normalizeCoupon(raw);
       if (!next) {
-        setError("Enter a coupon code");
+        setError(t("couponNeeded"));
         return false;
       }
       if (!COUPON_PATTERN.test(next)) {
-        setError("Coupon codes use only letters, numbers, dashes and underscores");
+        setError(t("couponChars"));
         return false;
       }
       if (next === code && summary?.coupon?.applied) {
-        setError(`${next} is already applied`);
+        setError(t("couponAlready", { code: next }));
         return false;
       }
       inflightApply.current = true;
@@ -121,7 +126,7 @@ export function useCartCoupon({ enabled, signature, userId }: Options) {
         return true;
       } catch (e) {
         if (mine === seq.current) {
-          setError(e instanceof APIError ? e.message : "Couldn't reach the server. Check your connection and try again.");
+          setError(e instanceof APIError ? e.message : translateApiMessage("Could not reach the server. Check your connection and try again.", locale));
         }
         return false;
       } finally {
@@ -129,7 +134,7 @@ export function useCartCoupon({ enabled, signature, userId }: Options) {
         if (mine === seq.current) setBusy(false);
       }
     },
-    [code, summary?.coupon?.applied],
+    [code, summary?.coupon?.applied, t, locale],
   );
 
   const remove = useCallback(() => {

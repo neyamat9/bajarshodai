@@ -8,6 +8,9 @@ import RelatedProductsCarousel from "@/components/product/RelatedProductsCarouse
 import RelatedSideList from "@/components/product/RelatedSideList";
 import StickyATCBar from "@/components/product/StickyATCBar";
 import RevealGroup from "@/components/motion/RevealGroup";
+import { useLocale, useTranslations } from "next-intl";
+import { formatMoney } from "@/lib/format";
+import type { Locale } from "@/lib/locale";
 import { useRecentlyViewed } from "@/lib/hooks/use-recently-viewed";
 import { getProductBySlug } from "@/lib/services/products.service";
 import type { Product, ProductVariant, Question, Review } from "@/lib/types";
@@ -22,9 +25,11 @@ interface ProductDetailClientProps {
   paymentMethods?: string[];
 }
 
-const money = (n: number) => `৳${n.toLocaleString("en-BD")}`;
 
 export default function ProductDetailClient({ product: initial, relatedProducts, reviews, reviewStats, questions, paymentMethods }: ProductDetailClientProps) {
+  const t = useTranslations("Product");
+  const locale = useLocale() as Locale;
+  const money = (n: number) => formatMoney(n, locale);
   const { addToRecentlyViewed } = useRecentlyViewed();
   const atcButtonRef = useRef<HTMLButtonElement>(null);
   const [variant, setVariant] = useState<ProductVariant | null>(null);
@@ -59,10 +64,8 @@ export default function ProductDetailClient({ product: initial, relatedProducts,
     setVariant(v);
   }
 
-  const extra = product as Product & { reviewCount?: number };
   const save = product.originalPrice && product.originalPrice > product.price ? product.originalPrice - product.price : 0;
-  const stockLabel = product.stock > 0 ? "In Stock" : "Out of Stock";
-  const year = new Date().getFullYear();
+  const stockLabel = product.stock > 0 ? t("summary.inStock") : t("summary.outOfStock");
 
   return (
     <>
@@ -99,15 +102,13 @@ export default function ProductDetailClient({ product: initial, relatedProducts,
 
                 <section data-reveal="up" className="rounded border border-border bg-card p-5 sm:p-6">
                   <h2 className="font-outfit text-base font-bold leading-snug text-foreground sm:text-lg">
-                    What is the {product.name} Price in Bangladesh {year}?
+                    {t("detail.heading", { name: product.name })}
                   </h2>
                   <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                    The {product.brandName ? `${product.brandName} ` : ""}
-                    {product.name} price in BD is <b className="text-foreground">{money(product.price)}</b>.{" "}
-                    Based on {extra.reviewCount ?? 0} {extra.reviewCount === 1 ? "review" : "reviews"}, Bazar Shodai offers this {product.categoryName.toLowerCase()} product at{" "}
-                    {money(product.price)}
-                    {save > 0 ? ` and its regular price is ${money(product.originalPrice!)}` : ""}, which is {stockLabel} now. Every item is 100% genuine, with delivery
-                    across Bangladesh and cash on delivery available.
+                    {t("detail.priceText", { name: product.name, price: money(product.price) })}
+                    {save > 0 ? t("detail.regularPrice", { price: money(product.originalPrice!) }) : ""}
+                    {t("detail.stockNow", { stock: stockLabel })}
+                    {t("detail.footer")}
                   </p>
                 </section>
               </div>
@@ -118,7 +119,7 @@ export default function ProductDetailClient({ product: initial, relatedProducts,
           {/* On phones/tablets the related list sits below instead of beside */}
           {relatedProducts.length > 0 && (
             <div className="mt-10 lg:hidden">
-              <RelatedProductsCarousel products={relatedProducts} title="Related Products" />
+              <RelatedProductsCarousel products={relatedProducts} title={t("detail.related")} />
             </div>
           )}
 

@@ -1,6 +1,7 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import LoadingText from "@/components/skeletons/LoadingText";
+import { usePathname } from "@/i18n/navigation";
 
 /**
  * Loading placeholders that copy the account pages one to one: the same frame (menu column + content column),
@@ -191,7 +192,7 @@ function bodyFor(path: string) {
 export function AccountContentSkeleton({ path }: { path?: string }) {
   const current = usePathname();
   return (
-    <div aria-busy="true" aria-label="Loading">
+    <div aria-busy="true"><LoadingText />
       {bodyFor(path ?? current)}
     </div>
   );
@@ -200,7 +201,7 @@ export function AccountContentSkeleton({ path }: { path?: string }) {
 /** The whole account page: frame + menu + content. `withMenu` is false for a signed-out visitor (no menu is shown to them). */
 export function AccountPageSkeleton({ path, withMenu = true }: { path: string; withMenu?: boolean }) {
   return (
-    <section className="min-h-screen bg-background" aria-busy="true" aria-label="Loading">
+    <section className="min-h-screen bg-background" aria-busy="true"><LoadingText />
       {withMenu ? (
         <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:gap-8 lg:px-8 lg:py-10">
           <Tabs />

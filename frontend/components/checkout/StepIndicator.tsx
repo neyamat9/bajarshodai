@@ -1,5 +1,9 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+import { formatNumber } from "@/lib/format";
+import type { Locale } from "@/lib/locale";
+
 /**
  * StepIndicator — 3-step checkout progress bar
  *
@@ -15,19 +19,22 @@ interface Step {
   shortLabel: string;
 }
 
-const STEPS: Step[] = [
-  { id: 1, label: "Shipping Info", shortLabel: "Shipping" },
-  { id: 2, label: "Payment Method", shortLabel: "Payment" },
-  { id: 3, label: "Review & Confirm", shortLabel: "Review" },
-];
+const STEP_KEYS = [
+  { id: 1, label: "stepShipping", shortLabel: "stepShippingShort" },
+  { id: 2, label: "stepPayment", shortLabel: "stepPaymentShort" },
+  { id: 3, label: "stepReview", shortLabel: "stepReviewShort" },
+] as const;
 
 interface StepIndicatorProps {
   currentStep: number; // 1 | 2 | 3
 }
 
 export default function StepIndicator({ currentStep }: StepIndicatorProps) {
+  const t = useTranslations("Checkout");
+  const locale = useLocale() as Locale;
+  const STEPS: Step[] = STEP_KEYS.map((s) => ({ id: s.id, label: t(s.label), shortLabel: t(s.shortLabel) }));
   return (
-    <nav aria-label="Checkout progress" className="w-full">
+    <nav aria-label={t("progress")} className="w-full">
       <ol className="flex items-center justify-center gap-0">
         {STEPS.map((step, index) => {
           const isCompleted = step.id < currentStep;
@@ -76,7 +83,7 @@ export default function StepIndicator({ currentStep }: StepIndicatorProps) {
                         <polyline points="20 6 9 17 4 12" />
                       </svg>
                     ) : (
-                      <span>{step.id}</span>
+                      <span>{formatNumber(step.id, locale, 0)}</span>
                     )}
                   </div>
                 </div>

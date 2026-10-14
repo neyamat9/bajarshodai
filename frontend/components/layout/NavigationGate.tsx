@@ -1,11 +1,13 @@
 "use client";
 
+import { usePathname } from "@/i18n/navigation";
 import { GenericSkeleton, HomeSkeleton, ListingSkeleton, ProductPageSkeleton } from "@/components/skeletons/PageSkeletons";
 import { scrollTopNow } from "@/components/motion/scroll-top";
 import { AccountContentSkeleton, AccountPageSkeleton, isAccountPath } from "@/components/skeletons/AccountSkeletons";
 import { CartBodySkeleton, CheckoutBodySkeleton, CheckoutOverlaySkeleton } from "@/components/skeletons/CheckoutSkeletons";
 import { tokens } from "@/lib/api/client";
-import { usePathname, useSearchParams } from "next/navigation";
+import { stripLocalePrefix } from "@/lib/locale";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 /** Tell the gate a navigation is starting (for code that calls router.push instead of clicking a link). */
@@ -17,7 +19,7 @@ const isCheckoutPath = (p: string) => p === "/cart" || p === "/checkout";
 
 /** `fromAccount` / `fromCheckout`: the click happened inside that area, where its menu / header is already on screen (only the content is replaced). */
 function skeletonFor(href: string, fromAccount: boolean, fromCheckout: boolean) {
-  const path = href.split(/[?#]/)[0].replace(/\/+$/, "") || "/";
+  const path = stripLocalePrefix(href.split(/[?#]/)[0].replace(/\/+$/, "") || "/");
   if (path === "/") return <HomeSkeleton />;
   // the cart and checkout have their own focused header, so their skeleton is a full screen of its own
   if (isCheckoutPath(path)) {
@@ -66,10 +68,10 @@ export default function NavigationGate({ children }: { children: React.ReactNode
 
   useEffect(() => {
     const begin = (href: string) => {
-      const here = window.location.pathname + window.location.search;
-      if (href === here) return;
+      const here = stripLocalePrefix(window.location.pathname) + window.location.search;
+      if (stripLocalePrefix(href.split(/[?#]/)[0]) + (href.includes("?") ? "?" + href.split("?")[1].split("#")[0] : "") === here) return;
       // (no scroll to the top here: the old page must not jump while it is still on screen — see the effect below)
-      setPending({ href, fromAccount: isAccountPath(window.location.pathname), fromCheckout: isCheckoutPath(window.location.pathname) });
+      setPending({ href, fromAccount: isAccountPath(stripLocalePrefix(window.location.pathname)), fromCheckout: isCheckoutPath(stripLocalePrefix(window.location.pathname)) });
     };
 
     const onClick = (e: MouseEvent) => {

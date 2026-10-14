@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 
 // Bazar Shodai lockup: the wide logo (cart mark + বাজার সদাই). The artwork has a
 // white background, so in light mode it is multiplied into the page colour and in

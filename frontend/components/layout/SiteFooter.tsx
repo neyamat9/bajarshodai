@@ -1,3 +1,4 @@
+import { Link } from "@/i18n/navigation";
 import BrandLogo from "@/components/layout/BrandLogo";
 import NewsletterForm from "@/components/layout/NewsletterForm";
 import SocialIcons from "@/components/layout/SocialIcons";
@@ -5,20 +6,21 @@ import RevealGroup from "@/components/motion/RevealGroup";
 import type { SiteSettings } from "@/lib/services/site.service";
 import type { Category } from "@/lib/types";
 import { ArrowRight } from "lucide-react";
-import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 const headingClass = "mb-5 font-outfit text-lg font-semibold text-white";
 const linkClass = "inline-block text-sm text-white/70 transition-all hover:translate-x-1 hover:text-brand-fresh";
 const colClass = "lg:border-l lg:border-white/10 lg:pl-7";
 
-export default function SiteFooter({ settings, categories }: { settings: SiteSettings; categories: Category[] }) {
+export default async function SiteFooter({ settings, categories }: { settings: SiteSettings; categories: Category[] }) {
+  const t = await getTranslations("Footer");
   const links = [
-    { label: "All products", href: "/products" },
-    { label: "Track your order", href: "/track-order" },
-    { label: "My orders", href: "/orders" },
-    { label: "Wishlist", href: "/wishlist" },
-    { label: "My account", href: "/account" },
-    ...(settings.returns.returnsEnabled ? [{ label: "Return policy", href: "/returns-policy" }] : []),
+    { label: t("allProducts"), href: "/products" },
+    { label: t("trackOrder"), href: "/track-order" },
+    { label: t("myOrders"), href: "/orders" },
+    { label: t("wishlist"), href: "/wishlist" },
+    { label: t("myAccount"), href: "/account" },
+    ...(settings.returns.returnsEnabled ? [{ label: t("returnPolicy"), href: "/returns-policy" }] : []),
   ];
 
   return (
@@ -40,17 +42,16 @@ export default function SiteFooter({ settings, categories }: { settings: SiteSet
             <div data-reveal="up" className="flex flex-col gap-5 sm:col-span-2 lg:col-span-4 lg:pr-8">
               <BrandLogo size="lg" tone="onDark" />
               <p className="max-w-xs text-sm leading-relaxed text-white/65">
-                Fresh fish, vegetables, fruits and every daily need — fairly priced and delivered to your door in Shahrasti,
-                Chandpur.
+                {t("about")}
               </p>
               <Link href="/contact" className="group inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-brand-fresh">
-                Contact us
+                {t("contact")}
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
               </Link>
             </div>
 
             <div data-reveal="up" className={`lg:col-span-3 ${colClass}`}>
-              <h2 className={headingClass}>Shop</h2>
+              <h2 className={headingClass}>{t("shop")}</h2>
               <ul className="space-y-3">
                 {categories.slice(0, 7).map((c) => (
                   <li key={c.slug}>
@@ -63,7 +64,7 @@ export default function SiteFooter({ settings, categories }: { settings: SiteSet
             </div>
 
             <div data-reveal="up" className={`lg:col-span-3 ${colClass}`}>
-              <h2 className={headingClass}>Help</h2>
+              <h2 className={headingClass}>{t("help")}</h2>
               <ul className="space-y-3">
                 {links.map((l) => (
                   <li key={l.label}>
@@ -76,7 +77,7 @@ export default function SiteFooter({ settings, categories }: { settings: SiteSet
             </div>
 
             <div data-reveal="up" className={`lg:col-span-2 ${colClass}`}>
-              <h2 className={headingClass}>Follow us</h2>
+              <h2 className={headingClass}>{t("follow")}</h2>
               <SocialIcons settings={settings} variant="list" />
             </div>
           </div>
@@ -85,22 +86,22 @@ export default function SiteFooter({ settings, categories }: { settings: SiteSet
           <div
             className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 text-xs text-white/55 sm:flex-row sm:pr-16"
           >
-            <p>&copy; {new Date().getFullYear()} Bazar Shodai. All rights reserved.</p>
+            <p>{t("rights", { year: new Date().getFullYear() })}</p>
             <ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
               <li>
                 <Link href="/contact" className="text-white/70 transition-colors hover:text-brand-fresh">
-                  Contact
+                  {t("contactShort")}
                 </Link>
               </li>
               {settings.returns.returnsEnabled && (
                 <li>
                   <Link href="/returns-policy" className="text-white/70 transition-colors hover:text-brand-fresh">
-                    Returns
+                    {t("returns")}
                   </Link>
                 </li>
               )}
               <li className="text-white/55">
-                Pay with cash on delivery{settings.payment.methods.includes("BKASH") ? " or bKash" : ""}
+                {t("payWith", { bkash: settings.payment.methods.includes("BKASH") ? t("orBkash") : "" })}
               </li>
             </ul>
           </div>

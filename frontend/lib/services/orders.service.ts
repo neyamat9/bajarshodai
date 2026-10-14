@@ -1,5 +1,6 @@
 import { api, API_BASE_URL, tokens } from '../api/client';
 import { mapOrder } from '../api/mappers';
+import { clientLocale } from '../locale';
 import type { Order } from '../types/index';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -24,12 +25,13 @@ export interface PlaceOrderInput {
 }
 
 export async function placeOrder(input: PlaceOrderInput): Promise<Order> {
-  return mapOrder(await api.post<any>('/customer/orders', input));
+  // the language is stored on the order: emails, notifications and the invoice follow it
+  return mapOrder(await api.post<any>('/customer/orders', { ...input, language: clientLocale() }));
 }
 
 export async function getOrders(): Promise<Order[]> {
   const rows = await api.get<any[]>('/customer/orders');
-  return rows.map(mapOrder);
+  return rows.map((o) => mapOrder(o));
 }
 
 export async function getOrderById(id: string): Promise<Order | null> {

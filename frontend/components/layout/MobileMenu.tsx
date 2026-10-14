@@ -1,5 +1,6 @@
 "use client";
 
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { useAuthModal } from "@/components/auth/AuthModal";
 import { startNavigation } from "@/components/layout/NavigationGate";
 import { gsap } from "@/components/motion/gsap";
@@ -7,10 +8,12 @@ import { useAuth } from "@/lib/hooks/use-auth";
 import { useWishlist } from "@/lib/hooks/use-wishlist";
 import { Heart, LifeBuoy, LogOut, type LucideIcon, Moon, Package, PackageSearch, RotateCcw, Sun, UserRound, X } from "lucide-react";
 import { useTheme } from "next-themes";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
+import { useLocale, useTranslations } from "next-intl";
+import LanguageSwitcher from "@/components/layout/LanguageSwitcher";
+import { localizeDigits } from "@/lib/format";
+import type { Locale } from "@/lib/locale";
 
 const subscribe = () => () => {};
 
@@ -38,6 +41,8 @@ interface Item {
  * as icons in the header on bigger screens. Slides in from the right; ✕, the backdrop, Esc and any link close it.
  */
 export default function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const t = useTranslations("Menu");
+  const locale = useLocale() as Locale;
   const { user, isLoading, logout } = useAuth();
   const { openAuth } = useAuthModal();
   const { vaultCount } = useWishlist();
@@ -87,11 +92,11 @@ export default function MobileMenu({ open, onClose }: { open: boolean; onClose: 
   if (!mounted) return null;
 
   const items: Item[] = [
-    { href: "/orders", label: "My orders", icon: Package },
-    { href: "/wishlist", label: "Wishlist", icon: Heart, badge: vaultCount },
-    { href: "/track-order", label: "Track an order", icon: PackageSearch },
-    { href: "/returns-policy", label: "Return policy", icon: RotateCcw },
-    { href: "/contact", label: "Contact us", icon: LifeBuoy },
+    { href: "/orders", label: t("myOrders"), icon: Package },
+    { href: "/wishlist", label: t("wishlist"), icon: Heart, badge: vaultCount },
+    { href: "/track-order", label: t("trackOrder"), icon: PackageSearch },
+    { href: "/returns-policy", label: t("returnPolicy"), icon: RotateCcw },
+    { href: "/contact", label: t("contact"), icon: LifeBuoy },
   ];
 
   const go = (href: string) => {
@@ -119,13 +124,13 @@ export default function MobileMenu({ open, onClose }: { open: boolean; onClose: 
         data-lenis-prevent
         role="dialog"
         aria-modal="true"
-        aria-label="Menu"
+        aria-label={t("title")}
         aria-hidden={!open}
         className={`fixed right-0 top-0 z-[2110] flex h-full w-full max-w-[340px] flex-col border-l border-border bg-background outline-none transition-transform duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${open ? "translate-x-0 shadow-2xl" : "translate-x-full"}`}
       >
         <div className="flex shrink-0 items-center justify-between bg-brand-deep px-5 py-4 text-white">
-          <h2 className="font-outfit text-lg font-extrabold">Menu</h2>
-          <button type="button" onClick={onClose} aria-label="Close menu" className="flex h-9 w-9 items-center justify-center rounded border border-white/25 transition-colors hover:bg-white/15">
+          <h2 className="font-outfit text-lg font-extrabold">{t("title")}</h2>
+          <button type="button" onClick={onClose} aria-label={t("close")} className="flex h-9 w-9 items-center justify-center rounded border border-white/25 transition-colors hover:bg-white/15">
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
@@ -151,18 +156,18 @@ export default function MobileMenu({ open, onClose }: { open: boolean; onClose: 
                   </span>
                   <div className="min-w-0">
                     <p className="truncate font-outfit text-base font-black text-foreground">{user.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                    <p className="truncate text-xs text-muted-foreground">{user.phone ? localizeDigits(user.phone, locale) : user.email}</p>
                   </div>
                 </div>
                 <Link href="/account" onClick={() => go("/account")} className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded bg-primary text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90">
                   <UserRound className="h-4 w-4" aria-hidden="true" />
-                  My account
+                  {t("myAccount")}
                 </Link>
               </>
             ) : (
               <>
-                <p className="font-outfit text-base font-black text-foreground">Welcome!</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">Sign in to see your orders, wishlist and faster checkout.</p>
+                <p className="font-outfit text-base font-black text-foreground">{t("welcome")}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{t("welcomeHint")}</p>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <button
                     type="button"
@@ -172,7 +177,7 @@ export default function MobileMenu({ open, onClose }: { open: boolean; onClose: 
                     }}
                     className="h-11 rounded bg-primary text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90"
                   >
-                    Sign in
+                    {t("signIn")}
                   </button>
                   <button
                     type="button"
@@ -182,7 +187,7 @@ export default function MobileMenu({ open, onClose }: { open: boolean; onClose: 
                     }}
                     className="h-11 rounded border border-border bg-background text-sm font-bold text-foreground transition-colors hover:border-brand-fresh hover:text-accent-text"
                   >
-                    Sign up
+                    {t("signUp")}
                   </button>
                 </div>
               </>
@@ -190,7 +195,7 @@ export default function MobileMenu({ open, onClose }: { open: boolean; onClose: 
           </div>
 
           {/* pages */}
-          <nav aria-label="Menu" className="mt-3 space-y-1.5">
+          <nav aria-label={t("title")} className="mt-3 space-y-1.5">
             {items.map((it) => (
               <Link key={it.href} href={it.href} onClick={() => go(it.href)} data-menu-row className="flex items-center gap-3 rounded border border-border bg-card px-3.5 py-3 text-sm font-semibold text-foreground transition-colors hover:border-brand-fresh hover:text-accent-text">
                 <it.icon className="h-[18px] w-[18px] text-muted-foreground" aria-hidden="true" />
@@ -200,17 +205,22 @@ export default function MobileMenu({ open, onClose }: { open: boolean; onClose: 
             ))}
           </nav>
 
+          {/* language */}
+          <div data-menu-row className="mt-3">
+            <LanguageSwitcher className="flex h-12 w-full items-center justify-center gap-2 rounded border border-border bg-card text-sm font-bold text-foreground transition-colors hover:border-brand-fresh hover:text-accent-text" />
+          </div>
+
           {/* light / dark */}
           <div data-menu-row className="mt-3 flex items-center justify-between rounded border border-border bg-card px-3.5 py-3">
             <span className="flex items-center gap-3 text-sm font-semibold text-foreground">
               {dark ? <Moon className="h-[18px] w-[18px] text-muted-foreground" aria-hidden="true" /> : <Sun className="h-[18px] w-[18px] text-muted-foreground" aria-hidden="true" />}
-              {dark ? "Dark mode" : "Light mode"}
+              {dark ? t("darkMode") : t("lightMode")}
             </span>
             <button
               type="button"
               role="switch"
               aria-checked={dark}
-              aria-label="Dark mode"
+              aria-label={t("darkMode")}
               onClick={() => setTheme(dark ? "light" : "dark")}
               className={`relative h-7 w-12 rounded-full border transition-colors ${dark ? "border-brand-fresh bg-brand-fresh" : "border-border bg-secondary"}`}
             >
@@ -223,7 +233,7 @@ export default function MobileMenu({ open, onClose }: { open: boolean; onClose: 
           <div className="shrink-0 border-t border-border bg-card px-4 py-3">
             <button type="button" onClick={signOut} className="flex h-11 w-full items-center justify-center gap-2 rounded border border-red-500/40 text-sm font-bold text-red-700 transition-colors hover:bg-red-500/10 dark:text-red-300">
               <LogOut className="h-4 w-4" aria-hidden="true" />
-              Sign out
+              {t("signOut")}
             </button>
           </div>
         )}

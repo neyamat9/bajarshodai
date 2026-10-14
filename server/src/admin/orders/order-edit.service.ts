@@ -35,6 +35,7 @@ const EDITABLE = ['PENDING', 'CONFIRMED', 'PROCESSING', 'ON_HOLD'];
 const productForLine = {
   id: true,
   name: true,
+  nameBn: true,
   slug: true,
   status: true,
   sellingPrice: true,
@@ -801,6 +802,7 @@ export class OrderEditService {
       price,
       total: round2(price * line.quantity),
       productName: product.name,
+      productNameBn: product.nameBn ?? null,
       productSlug: product.slug,
       productImage: product.images[0]?.url ?? null,
       variantName: variant?.name ?? null,

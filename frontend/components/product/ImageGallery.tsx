@@ -5,12 +5,14 @@ import type { Product, ProductImage } from "@/lib/types";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 interface ImageGalleryProps {
   product: Product;
 }
 
 export default function ImageGallery({ product }: ImageGalleryProps) {
+  const t = useTranslations("Product");
   const { addToVault, removeFromVault, isInVault } = useWishlist();
   const [activeIndex, setActiveIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -25,7 +27,7 @@ export default function ImageGallery({ product }: ImageGalleryProps) {
       : [
           {
             id: "fallback",
-            url: `https://picsum.photos/seed/${product.id}/800/800`,
+            url: "/placeholder.svg",
             alt: product.name,
             isPrimary: true,
           },
@@ -64,7 +66,7 @@ export default function ImageGallery({ product }: ImageGalleryProps) {
   function handleToggleWishlist() {
     if (inVault) {
       removeFromVault(product.id);
-      toast.info(`Removed from The Vault`);
+      toast.info(t("gallery.removedWish"));
     } else {
       const primaryImg =
         product.images.find((img) => img.isPrimary) ?? product.images[0];
@@ -75,13 +77,12 @@ export default function ImageGallery({ product }: ImageGalleryProps) {
         price: product.price,
         originalPrice: product.originalPrice,
         imageUrl:
-          primaryImg?.url ??
-          `https://picsum.photos/seed/${product.id}/400/400`,
+          primaryImg?.url ?? "/placeholder.svg",
         stock: product.stock,
       });
       setIsAnimating(true);
       setTimeout(() => setIsAnimating(false), 400);
-      toast.success(`Added to The Vault`, { duration: 2000 });
+      toast.success(t("gallery.addedWish"), { duration: 2000 });
     }
   }
 
@@ -93,7 +94,7 @@ export default function ImageGallery({ product }: ImageGalleryProps) {
         onClick={handleOpenLightbox}
         role="button"
         tabIndex={0}
-        aria-label="Open image lightbox"
+        aria-label={t("gallery.open")}
         onKeyDown={(e) => e.key === "Enter" && handleOpenLightbox()}
       >
         {/* Scale-in entrance */}
@@ -131,7 +132,7 @@ export default function ImageGallery({ product }: ImageGalleryProps) {
         {/* Zoom hint */}
         <div className="sr-only">
           <div className="bg-brand-deep/60 backdrop-blur-sm text-muted-foreground text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded border border-border">
-            Click to zoom
+            {t("gallery.zoom")}
           </div>
         </div>
 
@@ -144,8 +145,8 @@ export default function ImageGallery({ product }: ImageGalleryProps) {
           }}
           aria-label={
             inVault
-              ? `Remove ${product.name} from wishlist`
-              : `Add ${product.name} to wishlist`
+              ? t("card.wishRemove", { name: product.name })
+              : t("card.wishAdd", { name: product.name })
           }
           className={`absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center rounded border transition-all ${
             inVault
@@ -187,7 +188,7 @@ export default function ImageGallery({ product }: ImageGalleryProps) {
               key={img.id}
               type="button"
               onClick={() => handleThumbnailClick(idx)}
-              aria-label={`View image ${idx + 1}: ${img.alt}`}
+              aria-label={t("gallery.viewImage", { n: idx + 1, alt: img.alt })}
               className={`relative flex-shrink-0 w-16 h-16 rounded overflow-hidden border-2 transition-all duration-200 ${
                 idx === activeIndex
                   ? "border-brand-fresh opacity-100"
@@ -229,13 +230,14 @@ const BADGE_STYLES: Record<string, string> = {
 };
 
 function BadgeChip({ badge }: { badge: string }) {
+  const t = useTranslations("Product");
   return (
     <span
       className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded border shadow-sm ${
         BADGE_STYLES[badge] ?? "bg-secondary text-muted-foreground border-border"
       }`}
     >
-      {badge}
+      {t(`badges.${badge.replace(" ", "_")}`)}
     </span>
   );
 }
@@ -254,6 +256,7 @@ function Lightbox({
   onIndexChange,
   onClose,
 }: LightboxProps) {
+  const t = useTranslations("Product");
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const goPrev = useCallback(
@@ -274,13 +277,13 @@ function Lightbox({
       }}
       role="dialog"
       aria-modal="true"
-      aria-label="Image lightbox"
+      aria-label={t("gallery.lightbox")}
     >
       {/* Close */}
       <button
         type="button"
         onClick={onClose}
-        aria-label="Close lightbox"
+        aria-label={t("gallery.closeLightbox")}
         className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded bg-secondary border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-all z-10"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -293,7 +296,7 @@ function Lightbox({
         <button
           type="button"
           onClick={goPrev}
-          aria-label="Previous image"
+          aria-label={t("gallery.prev")}
           className="absolute left-6 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center rounded bg-secondary border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-all z-10"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -319,7 +322,7 @@ function Lightbox({
         <button
           type="button"
           onClick={goNext}
-          aria-label="Next image"
+          aria-label={t("gallery.next")}
           className="absolute right-6 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center rounded bg-secondary border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-all z-10"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -341,7 +344,7 @@ function Lightbox({
               key={img.id}
               type="button"
               onClick={() => onIndexChange(idx)}
-              aria-label={`View image ${idx + 1}`}
+              aria-label={t("gallery.viewImageN", { n: idx + 1 })}
               className={`w-12 h-12 rounded overflow-hidden border-2 transition-all ${
                 idx === currentIndex
                   ? "border-brand-fresh opacity-100"

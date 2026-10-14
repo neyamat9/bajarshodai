@@ -1,10 +1,10 @@
 "use client";
 
+import { useRouter } from "@/i18n/navigation";
 import { useAuthModal } from "@/components/auth/AuthModal";
 import { startNavigation } from "@/components/layout/NavigationGate";
 import { loadSavedAddresses } from "@/lib/checkout-prefill";
 import { useAuth } from "@/lib/hooks/use-auth";
-import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 
 export type CheckoutEntryState = "loading" | "signed-out" | "signed-in";

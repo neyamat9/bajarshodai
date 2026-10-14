@@ -3,6 +3,7 @@
 import { useMascot } from "@/components/auth/RobotMascot";
 import { AlertCircle, Eye, EyeOff, type LucideIcon } from "lucide-react";
 import { useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface AuthFieldProps {
   id: string;
@@ -11,6 +12,7 @@ interface AuthFieldProps {
   onChange: (value: string) => void;
   icon: LucideIcon;
   type?: string;
+  inputMode?: "text" | "tel" | "email" | "numeric";
   placeholder?: string;
   autoComplete?: string;
   error?: string;
@@ -26,7 +28,8 @@ interface AuthFieldProps {
  *  - a text field makes the robot watch and follow the caret;
  *  - a password field makes it cover its eyes — or peek, while the eye icon shows the password.
  */
-export default function AuthField({ id, label, value, onChange, icon: Icon, type = "text", placeholder, autoComplete, error, disabled, password, children }: AuthFieldProps) {
+export default function AuthField({ id, label, value, onChange, icon: Icon, type = "text", inputMode, placeholder, autoComplete, error, disabled, password, children }: AuthFieldProps) {
+  const t = useTranslations("Auth");
   const mascot = useMascot();
   const input = useRef<HTMLInputElement>(null);
   const [visible, setVisible] = useState(false);
@@ -61,6 +64,7 @@ export default function AuthField({ id, label, value, onChange, icon: Icon, type
           type={password ? (visible ? "text" : "password") : type}
           value={value}
           autoComplete={autoComplete}
+          inputMode={inputMode}
           placeholder={placeholder}
           disabled={disabled}
           aria-invalid={!!error}
@@ -92,7 +96,7 @@ export default function AuthField({ id, label, value, onChange, icon: Icon, type
               input.current?.focus();
               mascot.setField("password", next);
             }}
-            aria-label={visible ? "Hide password" : "Show password"}
+            aria-label={visible ? t("hide") : t("show")}
             aria-pressed={visible}
             className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
           >

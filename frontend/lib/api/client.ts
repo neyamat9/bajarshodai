@@ -15,6 +15,9 @@ export class APIError extends Error {
   }
 }
 
+import { translateApiMessage } from '../api-errors';
+import { clientLocale } from '../locale';
+
 const isBrowser = () => typeof window !== 'undefined';
 
 // ── image urls ───────────────────────────────────────────
@@ -197,7 +200,8 @@ export async function fetchAPI<T>(endpoint: string, options: RequestOptions = {}
       }
     }
   } catch (e) {
-    throw new APIError(`Could not reach the server. Check your connection and try again.${e instanceof Error ? '' : ''}`, 0);
+    void e;
+    throw new APIError(translateApiMessage('Could not reach the server. Check your connection and try again.', clientLocale()), 0);
   }
 
   const text = await res.text();
@@ -207,7 +211,7 @@ export async function fetchAPI<T>(endpoint: string, options: RequestOptions = {}
   } catch {
     json = null;
   }
-  if (!res.ok) throw new APIError(messageOf(json, `Request failed (${res.status})`), res.status, json);
+  if (!res.ok) throw new APIError(translateApiMessage(messageOf(json, `Request failed (${res.status})`), clientLocale()), res.status, json);
   if (res.status === 204 || json === null) return undefined as T;
   const env = json as { success?: boolean; data?: unknown };
   return (env && typeof env === 'object' && 'success' in env && 'data' in env ? env.data : json) as T;

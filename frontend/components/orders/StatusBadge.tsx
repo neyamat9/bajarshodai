@@ -1,4 +1,7 @@
+"use client";
+
 import type { OrderStatus } from "@/lib/types";
+import { useStatusLabel } from "@/components/orders/labels";
 
 // ── Status colour map (readable on the cream light theme and on the navy dark theme) ──
 // The eleven statuses are the same words the admin dashboard shows. Pending/On hold → amber · Confirmed → blue · Processing → sky
@@ -81,11 +84,12 @@ interface StatusBadgeProps {
 
 /** Colour-coded pill for an order status. */
 export function StatusBadge({ status, className = "" }: StatusBadgeProps) {
+  const label = useStatusLabel();
   const s = STATUS_STYLES[status];
   return (
     <span className={`inline-flex items-center gap-1.5 rounded border px-2.5 py-1 text-[11px] font-bold ${s.text} ${s.bg} ${s.border} ${className}`}>
       <span className={`inline-block h-1.5 w-1.5 rounded-full ${s.dot}`} />
-      {status}
+      {label(status)}
     </span>
   );
 }

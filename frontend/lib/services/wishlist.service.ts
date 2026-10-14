@@ -1,5 +1,6 @@
 import { api, assetUrl } from '../api/client';
 import type { WishlistItem } from '../types/index';
+import { clientLocale, pick } from '../locale';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export async function fetchWishlist(): Promise<WishlistItem[]> {
@@ -7,7 +8,7 @@ export async function fetchWishlist(): Promise<WishlistItem[]> {
   return rows.map((w) => ({
     productId: w.productId,
     slug: w.slug,
-    name: w.name,
+    name: pick(clientLocale(), w.name, w.nameBn),
     price: Number(w.price),
     originalPrice: w.originalPrice != null && Number(w.originalPrice) > Number(w.price) ? Number(w.originalPrice) : undefined,
     imageUrl: assetUrl(w.imageUrl),

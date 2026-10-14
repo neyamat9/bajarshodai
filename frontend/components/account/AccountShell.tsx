@@ -1,12 +1,14 @@
 "use client";
 
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { card } from "@/components/account/ui";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { useWishlist } from "@/lib/hooks/use-wishlist";
 import { Skeleton } from "@/components/account/ui";
 import { Heart, LayoutDashboard, LogOut, type LucideIcon, Package, RotateCcw, Settings } from "lucide-react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { formatDate } from "@/lib/format";
+import { formatNumber } from "@/lib/format";
 
 interface NavItem {
   href: string;
@@ -34,17 +36,18 @@ function initials(name: string) {
  * It lives in the account layout, so the menu stays put while you move between pages.
  */
 export default function AccountShell({ children }: { children: React.ReactNode }) {
+  const t = useTranslations("Account");
   const { user, isLoading, logout } = useAuth();
   const { vaultCount } = useWishlist();
   const pathname = usePathname();
   const router = useRouter();
 
   const items: NavItem[] = [
-    { href: "/account", label: "Overview", icon: LayoutDashboard, match: (p) => p === "/account" },
-    { href: "/orders", label: "My orders", icon: Package, match: (p) => p.startsWith("/orders") },
-    { href: "/wishlist", label: "Wishlist", icon: Heart, match: (p) => p.startsWith("/wishlist"), badge: vaultCount },
-    { href: "/account/returns", label: "Returns", icon: RotateCcw, match: (p) => p.startsWith("/account/returns") },
-    { href: "/account/settings", label: "Profile & security", icon: Settings, match: (p) => p.startsWith("/account/settings") },
+    { href: "/account", label: t("overview"), icon: LayoutDashboard, match: (p) => p === "/account" },
+    { href: "/orders", label: t("myOrders"), icon: Package, match: (p) => p.startsWith("/orders") },
+    { href: "/wishlist", label: t("wishlist"), icon: Heart, match: (p) => p.startsWith("/wishlist"), badge: vaultCount },
+    { href: "/account/returns", label: t("returns"), icon: RotateCcw, match: (p) => p.startsWith("/account/returns") },
+    { href: "/account/settings", label: t("settings"), icon: Settings, match: (p) => p.startsWith("/account/settings") },
   ];
 
   async function signOut() {
@@ -66,7 +69,7 @@ export default function AccountShell({ children }: { children: React.ReactNode }
       <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:gap-8 lg:px-8 lg:py-10">
         {/* phones & tablets: scrolling tab bar */}
         <nav
-          aria-label="Account menu"
+          aria-label={t("menu")}
           className="no-scrollbar sticky z-20 -mx-4 mb-5 flex gap-2 overflow-x-auto bg-background/90 px-4 py-2 backdrop-blur transition-[top] duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] sm:-mx-6 sm:px-6 lg:hidden"
           style={{ top: "calc(var(--sticky-top, 8rem) - 14px)" }}
          
@@ -96,8 +99,8 @@ export default function AccountShell({ children }: { children: React.ReactNode }
               <div className="relative bg-linear-to-br from-primary to-brand-deep-light px-5 pb-12 pt-6 text-white">
                 <span className="pointer-events-none absolute -right-5 -top-5 h-20 w-20 rotate-12 bg-brand-fresh/30" aria-hidden="true" />
                 <span className="pointer-events-none absolute right-12 top-14 h-3 w-3 bg-brand-fresh" aria-hidden="true" />
-                <p className="relative text-xs font-semibold text-white/70">Signed in as</p>
-                <p className="relative mt-0.5 h-5 truncate text-sm font-bold">{user?.email}</p>
+                <p className="relative text-xs font-semibold text-white/70">{t("signedInAs")}</p>
+                <p className="relative mt-0.5 h-5 truncate text-sm font-bold">{user?.phone || user?.email}</p>
               </div>
               <div className="relative z-10 -mt-9 px-5 pb-5">
                 <span className="flex h-18 w-18 items-center justify-center overflow-hidden rounded border-4 border-card bg-brand-fresh font-outfit text-2xl font-black text-on-fresh shadow-md">
@@ -111,7 +114,7 @@ export default function AccountShell({ children }: { children: React.ReactNode }
                 {user ? (
                   <>
                     <p className="mt-3 truncate font-outfit text-lg font-black text-foreground">{user.name}</p>
-                    {user.createdAt && <p className="text-xs text-muted-foreground">Member since {new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</p>}
+                    {user.createdAt && <p className="text-xs text-muted-foreground">{t("memberSince", { date: formatDate(user.createdAt, undefined, { month: "long", year: "numeric" }) })}</p>}
                   </>
                 ) : (
                   <>
@@ -120,7 +123,7 @@ export default function AccountShell({ children }: { children: React.ReactNode }
                   </>
                 )}
               </div>
-              <nav aria-label="Account menu" className="border-t border-border p-2">
+              <nav aria-label={t("menu")} className="border-t border-border p-2">
                 {items.map((it) => {
                   const on = it.match(pathname);
                   return (
@@ -134,7 +137,7 @@ export default function AccountShell({ children }: { children: React.ReactNode }
                     >
                       <it.icon className={`h-[18px] w-[18px] ${on ? "" : "text-muted-foreground group-hover:text-accent-text"}`} aria-hidden="true" />
                       <span className="flex-1">{it.label}</span>
-                      {!!it.badge && <span className={`rounded px-1.5 py-0.5 text-[11px] font-black ${on ? "bg-white/20" : "bg-brand-fresh text-on-fresh"}`}>{it.badge}</span>}
+                      {!!it.badge && <span className={`rounded px-1.5 py-0.5 text-[11px] font-black ${on ? "bg-white/20" : "bg-brand-fresh text-on-fresh"}`}>{formatNumber(it.badge, undefined, 0)}</span>}
                     </Link>
                   );
                 })}
@@ -144,7 +147,7 @@ export default function AccountShell({ children }: { children: React.ReactNode }
                   className="mt-1 flex w-full items-center gap-3 rounded px-3 py-2.5 text-sm font-semibold text-red-700 transition-colors hover:bg-red-500/10 dark:text-red-300"
                 >
                   <LogOut className="h-[18px] w-[18px]" aria-hidden="true" />
-                  Sign out
+                  {t("signOut")}
                 </button>
               </nav>
             </div>

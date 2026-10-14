@@ -23,6 +23,7 @@ const cartInclude = {
     select: {
       id: true,
       name: true,
+      nameBn: true,
       slug: true,
       status: true,
       stock: true,

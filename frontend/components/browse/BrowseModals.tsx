@@ -1,13 +1,16 @@
 "use client";
 
+import { Link } from "@/i18n/navigation";
 import CategorySidebar from "@/components/layout/CategorySidebar";
 import { gsap } from "@/components/motion/gsap";
 import { useDebouncedSearch } from "@/lib/hooks/use-debounced-search";
 import type { Brand, Category } from "@/lib/types";
 import { ArrowUpRight, Search, Tags, X } from "lucide-react";
-import Link from "next/link";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useLocale, useTranslations } from "next-intl";
+import { formatNumber } from "@/lib/format";
+import type { Locale } from "@/lib/locale";
 
 type Kind = "categories" | "brands";
 
@@ -47,6 +50,9 @@ export function BrowseTrigger({ kind, className, children }: { kind: Kind; class
 /* ───────────────────────── modal ───────────────────────── */
 
 function BrowseModal({ kind, onClose, brands }: { kind: "brands" | null; onClose: () => void; brands: Brand[] }) {
+  const t = useTranslations("Browse");
+  const tc = useTranslations("Common");
+  const locale = useLocale() as Locale;
   const [mounted, setMounted] = useState(false);
   const { input: query, setInput: setQuery, query: debounced, clear: clearSearch } = useDebouncedSearch(250);
   const panel = useRef<HTMLDivElement>(null);
@@ -127,7 +133,7 @@ function BrowseModal({ kind, onClose, brands }: { kind: "brands" | null; onClose
         ref={panel}
         role="dialog"
         aria-modal="true"
-        aria-label="All brands"
+        aria-label={t("allBrands")}
         className="relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t border border-border bg-background shadow-2xl sm:max-h-[86dvh] sm:max-w-5xl sm:rounded"
       >
         {/* Header */}
@@ -140,16 +146,16 @@ function BrowseModal({ kind, onClose, brands }: { kind: "brands" | null; onClose
                 <Tags className="h-5 w-5" aria-hidden="true" />
               </span>
               <div className="leading-tight">
-                <h2 className="font-outfit text-xl font-extrabold sm:text-2xl">All brands</h2>
+                <h2 className="font-outfit text-xl font-extrabold sm:text-2xl">{t("allBrands")}</h2>
                 <p className="mt-0.5 text-xs text-white/70 sm:text-sm">
-                  {`${brands.length} brands — pick one to see all its products`}
+                  {t("brandsCount", { count: formatNumber(brands.length, locale, 0) })}
                 </p>
               </div>
             </div>
             <button
               type="button"
               onClick={onClose}
-              aria-label="Close"
+              aria-label={tc("close")}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded border border-white/25 transition-colors hover:bg-white/15"
             >
               <X className="h-5 w-5" />
@@ -163,8 +169,8 @@ function BrowseModal({ kind, onClose, brands }: { kind: "brands" | null; onClose
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               type="search"
-              placeholder="Search brands…"
-              aria-label="Search brands"
+              placeholder={t("searchBrands")}
+              aria-label={t("searchBrandsAria")}
               className="h-11 w-full rounded border border-white/20 bg-white/10 pl-10 pr-3 text-sm text-white placeholder:text-white/55 focus:border-brand-fresh focus:outline-none focus:ring-2 focus:ring-brand-fresh/30"
             />
           </div>
@@ -173,7 +179,7 @@ function BrowseModal({ kind, onClose, brands }: { kind: "brands" | null; onClose
         {/* Body */}
         <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto p-4 sm:p-6" data-lenis-prevent>
           {brandList.length === 0 ? (
-            <Empty text="No brands match your search." />
+            <Empty text={t("noBrands")} />
           ) : (
             <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {brandList.map((b) => (
@@ -186,14 +192,14 @@ function BrowseModal({ kind, onClose, brands }: { kind: "brands" | null; onClose
                     <span className="flex h-16 w-full items-center justify-center rounded bg-white p-2 dark:bg-white">
                       {b.logoUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={b.logoUrl} alt={`${b.name} logo`} className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105" loading="lazy" draggable={false} />
+                        <img src={b.logoUrl} alt={t("brandLogo", { name: b.name })} className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105" loading="lazy" draggable={false} />
                       ) : (
                         <span className="font-outfit text-lg font-extrabold text-primary">{b.name}</span>
                       )}
                     </span>
                     <span>
                       <span className="block font-outfit text-sm font-bold text-foreground group-hover:text-accent-text">{b.name}</span>
-                      <span className="text-xs text-muted-foreground">{b.productCount} products</span>
+                      <span className="text-xs text-muted-foreground">{t("productsCount", { count: formatNumber(b.productCount, locale, 0) })}</span>
                     </span>
                   </Link>
                 </li>
@@ -204,13 +210,13 @@ function BrowseModal({ kind, onClose, brands }: { kind: "brands" | null; onClose
 
         {/* Footer */}
         <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-card px-5 py-3.5 sm:px-8">
-          <p className="hidden text-xs text-muted-foreground sm:block">Tip: press Esc to close</p>
+          <p className="hidden text-xs text-muted-foreground sm:block">{t("tipEsc")}</p>
           <Link
             href="/products"
             onClick={pick}
             className="ml-auto inline-flex items-center gap-2 rounded bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Browse all products
+            {t("browseAll")}
             <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>

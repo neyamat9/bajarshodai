@@ -1,12 +1,15 @@
 "use client";
 
+import { Link } from "@/i18n/navigation";
 import { gsap, MOTION_OK, ScrollTrigger, useGSAP } from "@/components/motion/gsap";
 import type { Banner } from "@/lib/services/site.service";
 import type { Category, Product } from "@/lib/types";
 import { ArrowRight, ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { formatMoney, formatNumber } from "@/lib/format";
+import type { Locale } from "@/lib/locale";
 
 interface HeroSectionProps {
   /** Banners the shop owner set up in the dashboard (HERO_MAIN slider + HERO_SIDE cards) */
@@ -18,16 +21,16 @@ interface HeroSectionProps {
   categories?: Category[];
 }
 
-const money = (n: number) => `৳${n.toLocaleString("en-BD")}`;
 
 /* ─────────────── dashboard-managed banners (when the owner has set some up) ─────────────── */
 
 function BannerSlide({ b, priority }: { b: Banner; priority?: boolean }) {
+  const t = useTranslations("Home");
   const inner = (
     <>
       <Image
         src={b.imageUrl}
-        alt={b.title ?? "Banner"}
+        alt={b.title ?? t("bannerAlt")}
         fill
         priority={priority}
         sizes="(min-width: 1024px) 66vw, 100vw"
@@ -57,6 +60,7 @@ function BannerSlide({ b, priority }: { b: Banner; priority?: boolean }) {
 function Slider({ banners }: { banners: Banner[] }) {
   const [i, setI] = useState(0);
   const n = banners.length;
+  const t = useTranslations("Home");
   const next = useCallback(() => setI((x) => (x + 1) % n), [n]);
   const prev = () => setI((x) => (x - 1 + n) % n);
 
@@ -81,7 +85,7 @@ function Slider({ banners }: { banners: Banner[] }) {
         <>
           <button
             type="button"
-            aria-label="Previous banner"
+            aria-label={t("prevBanner")}
             onClick={prev}
             className="absolute left-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded bg-card/90 text-foreground shadow transition-colors hover:bg-brand-fresh hover:text-on-fresh"
           >
@@ -89,7 +93,7 @@ function Slider({ banners }: { banners: Banner[] }) {
           </button>
           <button
             type="button"
-            aria-label="Next banner"
+            aria-label={t("nextBanner")}
             onClick={next}
             className="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded bg-card/90 text-foreground shadow transition-colors hover:bg-brand-fresh hover:text-on-fresh"
           >
@@ -100,7 +104,7 @@ function Slider({ banners }: { banners: Banner[] }) {
               <button
                 key={b.id}
                 type="button"
-                aria-label={`Show banner ${idx + 1}`}
+                aria-label={t("showBanner", { n: idx + 1 })}
                 onClick={() => setI(idx)}
                 className={`h-2 rounded transition-all ${idx === i ? "w-8 bg-brand-fresh" : "w-2 bg-card/70 hover:bg-card"}`}
               />
@@ -135,6 +139,7 @@ const wrap = (v: number, n: number) => ((v % n) + n) % n;
  *    scrolls again when the stack is at its first/last card.
  */
 function CardStack({ cards }: { cards: StackCard[] }) {
+  const tr = useTranslations("Home");
   const stack = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
   const api = useRef<{ goTo: (i: number) => void } | null>(null);
@@ -261,7 +266,7 @@ function CardStack({ cards }: { cards: StackCard[] }) {
       data-hero-frame
       className="relative aspect-[4/3.6] w-full select-none min-[420px]:aspect-[4/3] sm:aspect-[16/10] lg:aspect-auto lg:h-full"
       aria-roledescription="carousel"
-      aria-label="Featured products — scroll the mouse wheel over the banner to browse"
+      aria-label={tr("featuredAria")}
     >
       {cards.map((c, i) => (
         <Link
@@ -296,14 +301,14 @@ function CardStack({ cards }: { cards: StackCard[] }) {
       ))}
 
       {/* progress dots */}
-      <div className="absolute bottom-3 left-1/2 z-[200] flex -translate-x-1/2 gap-2 sm:bottom-4 sm:left-auto sm:right-5 sm:translate-x-0" role="tablist" aria-label="Choose banner">
+      <div className="absolute bottom-3 left-1/2 z-[200] flex -translate-x-1/2 gap-2 sm:bottom-4 sm:left-auto sm:right-5 sm:translate-x-0" role="tablist" aria-label={tr("chooseBanner")}>
         {cards.map((c, i) => (
           <button
             key={c.key}
             type="button"
             role="tab"
             aria-selected={i === active}
-            aria-label={`Show banner ${i + 1}`}
+            aria-label={tr("showBanner", { n: i + 1 })}
             onClick={() => api.current?.goTo(i)}
             className={`h-1.5 rounded transition-all duration-500 ${i === active ? "w-8 bg-brand-fresh" : "w-3 bg-white/60 hover:bg-white"}`}
           />
@@ -315,16 +320,12 @@ function CardStack({ cards }: { cards: StackCard[] }) {
 
 /* ─────────────── right-hand tiles ─────────────── */
 
-const TILE_COPY: Record<string, [string, string]> = {
-  fish: ["Fresh from the river", "Rui, hilsa, prawn & more"],
-  "fruits-and-vegetables": ["Farm-fresh vegetables", "Vegetables, fruits & greens"],
-  meat: ["Fresh every morning", "Chicken, beef & mutton"],
-  "eggs-and-dairy": ["Eggs & dairy", "Eggs, milk & yogurt"],
-  "rice-pulses-and-oil": ["Kitchen staples", "Rice, pulses & cooking oil"],
-};
-
 function CategoryTile({ cat, tone }: { cat: Category; tone: "deep" | "fresh" }) {
-  const [title, sub] = TILE_COPY[cat.slug] ?? [cat.name, `${cat.productCount} products`];
+  const t = useTranslations("Home");
+  const locale = useLocale() as Locale;
+  const known = t.has(`tiles.${cat.slug}.title`);
+  const title = known ? t(`tiles.${cat.slug}.title`) : cat.name;
+  const sub = known ? t(`tiles.${cat.slug}.sub`) : t("tileFallbackSub", { count: formatNumber(cat.productCount, locale, 0) });
   const image = (cat as Category & { image?: string | null }).image;
   const deep = tone === "deep";
   return (
@@ -361,7 +362,7 @@ function CategoryTile({ cat, tone }: { cat: Category; tone: "deep" | "fresh" }) 
             deep ? "bg-brand-fresh text-on-fresh" : "bg-brand-deep text-white"
           }`}
         >
-          Shop now
+          {t("shopNow")}
           <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
         </span>
       </div>
@@ -372,15 +373,18 @@ function CategoryTile({ cat, tone }: { cat: Category; tone: "deep" | "fresh" }) 
 /* ─────────────── hero ─────────────── */
 
 function Showcase({ spotlight, categories }: { spotlight: Product[]; categories: Category[] }) {
+  const t = useTranslations("Home");
+  const locale = useLocale() as Locale;
+  const money = (n: number) => formatMoney(n, locale);
   const cards: StackCard[] = [
     {
       key: "intro",
       src: "/hero-welcome.webp",
-      alt: "Bazar Shodai: fresh groceries delivered to your door",
+      alt: t("introAlt"),
       href: "/products",
-      title: "Fresh groceries, delivered fast.",
-      sub: "Fish, vegetables, fruits and everyday needs from Kalibari Bazar to your door in Shahrasti.",
-      cta: "Shop now",
+      title: t("introTitle"),
+      sub: t("introSub"),
+      cta: t("shopNow"),
     },
     ...spotlight.slice(0, 4).flatMap((p): StackCard[] => {
       const img = p.images[0]?.url;
@@ -392,8 +396,8 @@ function Showcase({ spotlight, categories }: { spotlight: Product[]; categories:
               alt: p.name,
               href: `/products/${p.slug}`,
               title: p.name,
-              sub: p.originalPrice && p.originalPrice > p.price ? `Now ${money(p.price)} — was ${money(p.originalPrice)}` : `Only ${money(p.price)}`,
-              cta: "Shop now",
+              sub: p.originalPrice && p.originalPrice > p.price ? t("nowWas", { price: money(p.price), was: money(p.originalPrice) }) : t("only", { price: money(p.price) }),
+              cta: t("shopNow"),
             },
           ]
         : [];
@@ -403,11 +407,11 @@ function Showcase({ spotlight, categories }: { spotlight: Product[]; categories:
     cards.push({
       key: "fallback-fresh",
       src: "/hero-welcome.webp",
-      alt: "Fresh fish, vegetables and fruits",
+      alt: t("freshAlt"),
       href: "/products",
-      title: "Today's fresh picks",
-      sub: "Fish, vegetables and fruits, fresh every morning.",
-      cta: "Shop fresh",
+      title: t("freshTitle"),
+      sub: t("freshSub"),
+      cta: t("shopFresh"),
     });
   }
 

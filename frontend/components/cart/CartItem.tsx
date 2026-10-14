@@ -1,12 +1,15 @@
 "use client";
 
+import { Link } from "@/i18n/navigation";
 import { useCart } from "@/lib/hooks/use-cart";
 import type { CartItem as CartItemType } from "@/lib/types";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useLocale, useTranslations } from "next-intl";
+import { formatMoney, formatQuantity } from "@/lib/format";
+import type { Locale } from "@/lib/locale";
 
 interface CartItemProps {
   item: CartItemType;
@@ -28,6 +31,8 @@ interface CartItemProps {
  *  - full: used on the /cart page (wider layout with column alignment)
  */
 export default function CartItem({ item, variant = "compact" }: CartItemProps) {
+  const t = useTranslations("Cart");
+  const locale = useLocale() as Locale;
   const { updateQuantity, removeFromCart } = useCart();
 
   // Controls the CSS exit animation before actual removal
@@ -50,17 +55,17 @@ export default function CartItem({ item, variant = "compact" }: CartItemProps) {
     // Wait for the slide-out animation (300ms) before removing from state
     removeTimerRef.current = setTimeout(async () => {
       const r = await removeFromCart(item.id);
-      if (r.ok) toast.success(`${item.name} removed from cart`);
+      if (r.ok) toast.success(t("removed", { name: item.name }));
       else {
         setIsRemoving(false);
-        toast.error(r.error ?? "Could not remove the item");
+        toast.error(r.error ?? t("removeFailed"));
       }
     }, 300);
   }
 
   async function change(q: number) {
     const r = await updateQuantity(item.id, q);
-    if (!r.ok) toast.error(r.error ?? "Could not change the quantity");
+    if (!r.ok) toast.error(r.error ?? t("qtyFailed"));
   }
 
   function handleDecrement() {
@@ -71,16 +76,14 @@ export default function CartItem({ item, variant = "compact" }: CartItemProps) {
   function handleIncrement() {
     if (item.quantity >= 99) return;
     if (item.quantity >= item.stock) {
-      toast.info(`Only ${item.stock} in stock`);
+      toast.info(t("onlyStock", { count: formatQuantity(item.stock, locale) }));
       return;
     }
     void change(item.quantity + 1);
   }
 
-  const formattedPrice = new Intl.NumberFormat("en-BD").format(item.price);
-  const formattedTotal = new Intl.NumberFormat("en-BD").format(
-    item.price * item.quantity
-  );
+  const formattedPrice = formatMoney(item.price, locale);
+  const formattedTotal = formatMoney(item.price * item.quantity, locale);
 
   const animationClasses = [
     hasEntered && !isRemoving
@@ -98,7 +101,7 @@ export default function CartItem({ item, variant = "compact" }: CartItemProps) {
     return (
       <div
         className={`group flex gap-3.5 rounded border border-border bg-background p-3 shadow-sm transition-all hover:border-brand-fresh/60 hover:shadow-md ${animationClasses}`}
-        aria-label={`Cart item: ${item.name}`}
+        aria-label={t("itemAria", { name: item.name })}
       >
         {/* Product image */}
         <Link href={`/products/${item.slug}`} className="relative h-[84px] w-[84px] flex-shrink-0 overflow-hidden rounded bg-secondary">
@@ -111,7 +114,7 @@ export default function CartItem({ item, variant = "compact" }: CartItemProps) {
             <p className="line-clamp-2 font-outfit text-sm font-semibold leading-snug text-foreground">{item.name}</p>
             <button
               onClick={handleRemove}
-              aria-label={`Remove ${item.name} from cart`}
+              aria-label={t("removeAria", { name: item.name })}
               className="-mr-1 -mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
             >
               <Trash2 className="h-4 w-4" />
@@ -125,16 +128,16 @@ export default function CartItem({ item, variant = "compact" }: CartItemProps) {
               <button
                 onClick={handleDecrement}
                 disabled={item.quantity <= 1}
-                aria-label="Decrease quantity"
+                aria-label={t("decrease")}
                 className="flex h-8 w-8 items-center justify-center text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-30"
               >
                 <Minus className="h-3.5 w-3.5" />
               </button>
-              <span className="w-8 select-none text-center text-sm font-bold text-foreground">{item.quantity}</span>
+              <span className="w-8 select-none text-center text-sm font-bold text-foreground">{formatQuantity(item.quantity, locale)}</span>
               <button
                 onClick={handleIncrement}
                 disabled={item.quantity >= 99}
-                aria-label="Increase quantity"
+                aria-label={t("increase")}
                 className="flex h-8 w-8 items-center justify-center text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-30"
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -143,8 +146,8 @@ export default function CartItem({ item, variant = "compact" }: CartItemProps) {
 
             {/* Price */}
             <div className="text-right leading-tight">
-              <p className="font-outfit text-base font-extrabold text-primary dark:text-accent-text">৳{formattedTotal}</p>
-              {item.quantity > 1 && <p className="text-[11px] text-muted-foreground">৳{formattedPrice} each</p>}
+              <p className="font-outfit text-base font-extrabold text-primary dark:text-accent-text">{formattedTotal}</p>
+              {item.quantity > 1 && <p className="text-[11px] text-muted-foreground">{t("each", { price: formattedPrice })}</p>}
             </div>
           </div>
         </div>
@@ -156,7 +159,7 @@ export default function CartItem({ item, variant = "compact" }: CartItemProps) {
   return (
     <div
       className={`flex flex-col sm:grid sm:grid-cols-[1fr_auto_auto_auto] sm:gap-4 items-start sm:items-center p-4 rounded bg-muted border border-border transition-all ${animationClasses}`}
-      aria-label={`Cart item: ${item.name}`}
+      aria-label={t("itemAria", { name: item.name })}
     >
       {/* Product info */}
       <div className="flex items-center gap-4 w-full sm:w-auto">
@@ -178,7 +181,7 @@ export default function CartItem({ item, variant = "compact" }: CartItemProps) {
           )}
           {/* Mobile: show price inline */}
           <p className="text-sm font-semibold text-accent-text mt-1 sm:hidden">
-            ৳{formattedTotal}
+            {formattedTotal}
           </p>
         </div>
       </div>
@@ -188,18 +191,18 @@ export default function CartItem({ item, variant = "compact" }: CartItemProps) {
         <button
           onClick={handleDecrement}
           disabled={item.quantity <= 1}
-          aria-label="Decrease quantity"
+          aria-label={t("decrease")}
           className="w-9 h-9 flex items-center justify-center text-foreground/80 hover:text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-lg leading-none"
         >
           −
         </button>
         <span className="flex-1 text-center text-sm font-semibold text-foreground select-none">
-          {item.quantity}
+          {formatQuantity(item.quantity, locale)}
         </span>
         <button
           onClick={handleIncrement}
           disabled={item.quantity >= 99}
-          aria-label="Increase quantity"
+          aria-label={t("increase")}
           className="w-9 h-9 flex items-center justify-center text-foreground/80 hover:text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-lg leading-none"
         >
           +
@@ -208,28 +211,28 @@ export default function CartItem({ item, variant = "compact" }: CartItemProps) {
 
       {/* Unit price — hidden on mobile */}
       <div className="hidden sm:block text-right w-24">
-        <span className="text-sm text-muted-foreground">৳{formattedPrice}</span>
+        <span className="text-sm text-muted-foreground">{formattedPrice}</span>
       </div>
 
       {/* Line total + remove */}
       <div className="hidden sm:flex flex-col items-end gap-1 w-24">
-        <span className="text-base font-bold text-foreground">৳{formattedTotal}</span>
+        <span className="text-base font-bold text-foreground">{formattedTotal}</span>
         <button
           onClick={handleRemove}
-          aria-label={`Remove ${item.name} from cart`}
+          aria-label={t("removeAria", { name: item.name })}
           className="text-xs text-muted-foreground/70 hover:text-red-400 transition-colors"
         >
-          Remove
+          {t("remove")}
         </button>
       </div>
 
       {/* Mobile remove button */}
       <button
         onClick={handleRemove}
-        aria-label={`Remove ${item.name} from cart`}
+        aria-label={t("removeAria", { name: item.name })}
         className="sm:hidden text-xs text-muted-foreground/70 hover:text-red-400 transition-colors mt-2 self-end"
       >
-        Remove
+        {t("remove")}
       </button>
     </div>
   );

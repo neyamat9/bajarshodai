@@ -2,6 +2,7 @@ import { api, APIError, clearGuestToken, guestToken, tokens, AUTH_CHANGED_EVENT 
 import { clearStoredCoupon } from '../coupon-store';
 import { mapUser } from '../api/mappers';
 import type { User } from '../types/index';
+import { clientLocale } from '../locale';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 interface AuthResponse {
@@ -17,12 +18,12 @@ function store(res: AuthResponse): User {
   return mapUser(res.user);
 }
 
-export async function login(email: string, password: string): Promise<User> {
-  return store(await api.post<AuthResponse>('/customer/auth/login', { email, password, guestToken: guestToken() ?? undefined }));
+export async function login(identifier: string, password: string): Promise<User> {
+  return store(await api.post<AuthResponse>('/customer/auth/login', { identifier, password, guestToken: guestToken() ?? undefined }));
 }
 
-export async function register(data: { name: string; email: string; phone?: string; password: string }): Promise<User> {
-  return store(await api.post<AuthResponse>('/customer/auth/register', { ...data, phone: data.phone || undefined, guestToken: guestToken() ?? undefined }));
+export async function register(data: { name: string; phone: string; email?: string; password: string }): Promise<User> {
+  return store(await api.post<AuthResponse>('/customer/auth/register', { ...data, email: data.email || undefined, language: clientLocale(), guestToken: guestToken() ?? undefined }));
 }
 
 export async function logout(): Promise<void> {
@@ -51,7 +52,7 @@ export async function fetchProfile(): Promise<User | null> {
   }
 }
 
-export async function updateProfile(data: { name?: string; phone?: string }): Promise<User> {
+export async function updateProfile(data: { name?: string; email?: string; language?: "bn" | "en" }): Promise<User> {
   return mapUser(await api.patch<any>('/customer/auth/profile', data));
 }
 

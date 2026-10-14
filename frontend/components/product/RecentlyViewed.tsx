@@ -1,13 +1,18 @@
 "use client";
 
+import { Link } from "@/i18n/navigation";
 import { useRecentlyViewed } from "@/lib/hooks/use-recently-viewed";
 import { ArrowUpRight, History, X } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 
-const money = (n: number) => `৳${n.toLocaleString("en-BD")}`;
+import { useLocale, useTranslations } from "next-intl";
+import { formatMoney } from "@/lib/format";
+import type { Locale } from "@/lib/locale";
 
 export default function RecentlyViewed({ currentProductId }: { currentProductId?: string }) {
+  const t = useTranslations("Product");
+  const locale = useLocale() as Locale;
+  const money = (n: number) => formatMoney(n, locale);
   const { recentlyViewed, clearRecentlyViewed } = useRecentlyViewed();
 
   // the product being looked at right now isn't "recent"
@@ -22,7 +27,7 @@ export default function RecentlyViewed({ currentProductId }: { currentProductId?
         <div>
           <h2 id="recently-viewed-heading" className="flex items-center gap-2 whitespace-nowrap font-outfit text-xl font-extrabold tracking-tight text-primary dark:text-foreground sm:gap-2.5 sm:text-3xl">
             <History className="h-5 w-5 shrink-0 text-brand-fresh sm:h-6 sm:w-6" aria-hidden="true" />
-            Recently viewed
+            {t("recentlyViewed")}
           </h2>
           <span className="mt-3 block h-1 w-16 bg-brand-fresh" aria-hidden="true" />
         </div>

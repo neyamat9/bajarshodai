@@ -1,21 +1,26 @@
 "use client";
 
+import { Link } from "@/i18n/navigation";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { useCart } from "@/lib/hooks/use-cart";
 import { useCartCoupon } from "@/lib/hooks/use-cart-coupon";
 import { useCheckoutEntry } from "@/lib/hooks/use-checkout-entry";
 import { AlertCircle, ArrowRight, Check, Loader2, Lock, ShoppingBag, Tag, Truck, X } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { formatMoney } from "@/lib/format";
+import { translateApiMessage } from "@/lib/api-errors";
+import type { Locale } from "@/lib/locale";
 import CartItem from "./CartItem";
-
-const fmt = (n: number) => new Intl.NumberFormat("en-BD").format(Math.round(n));
 
 /**
  * Global cart drawer — slides in from the right.
  * Rendered once in the root layout; visibility is driven by CartContext.isOpen.
  */
 export default function CartSidebar() {
+  const t = useTranslations("Cart");
+  const locale = useLocale() as Locale;
+  const money = (n: number) => formatMoney(n, locale);
   const { cart, cartCount, cartTotal, isOpen, closeCart } = useCart();
   const checkout = useCheckoutEntry(closeCart);
   const { user } = useAuth();
@@ -88,7 +93,7 @@ export default function CartSidebar() {
         data-lenis-prevent
         role="dialog"
         aria-modal="true"
-        aria-label="Shopping cart"
+        aria-label={t("cartAria")}
         className={[
           "fixed right-0 top-0 z-[2110] flex h-full w-full max-w-[440px] flex-col",
           "border-l border-border bg-background shadow-2xl outline-none",
@@ -103,15 +108,15 @@ export default function CartSidebar() {
               <ShoppingBag className="h-5 w-5" aria-hidden="true" />
             </span>
             <div className="leading-tight">
-              <h2 className="font-outfit text-xl font-bold">Your cart</h2>
+              <h2 className="font-outfit text-xl font-bold">{t("title")}</h2>
               <p className="text-xs text-white/70">
-                {cartCount === 0 ? "Nothing here yet" : `${cartCount} item${cartCount > 1 ? "s" : ""} ready to ship`}
+                {cartCount === 0 ? t("nothingYet") : t("readyToShip", { count: cartCount })}
               </p>
             </div>
           </div>
           <button
             onClick={closeCart}
-            aria-label="Close cart"
+            aria-label={t("close")}
             className="relative flex h-9 w-9 items-center justify-center rounded border border-white/20 text-white/90 transition-colors hover:bg-white/10"
           >
             <X className="h-[18px] w-[18px]" />
@@ -129,15 +134,15 @@ export default function CartSidebar() {
               <span className="absolute -bottom-2 -left-2 h-3 w-3 bg-primary/40" aria-hidden="true" />
             </div>
             <div>
-              <p className="font-outfit text-xl font-bold text-foreground">Your cart is empty</p>
-              <p className="mt-1.5 text-sm text-muted-foreground">Fresh fish, vegetables and daily needs are waiting for you.</p>
+              <p className="font-outfit text-xl font-bold text-foreground">{t("emptyTitle")}</p>
+              <p className="mt-1.5 text-sm text-muted-foreground">{t("emptyDrawer")}</p>
             </div>
             <Link
               href="/products"
               onClick={closeCart}
               className="group inline-flex items-center gap-2 rounded bg-primary px-6 py-3 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90"
             >
-              Start shopping
+              {t("startShopping")}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
             </Link>
           </div>
@@ -150,10 +155,10 @@ export default function CartSidebar() {
                   <Truck className="h-4 w-4 text-accent-text" aria-hidden="true" />
                   {toFree && toFree > 0 ? (
                     <span>
-                      Add <b className="text-accent-text">৳{fmt(toFree)}</b> more for free delivery
+                      {t.rich("addForFree", { amount: money(toFree), b: (c) => <b className="text-accent-text">{c}</b> })}
                     </span>
                   ) : (
-                    <span className="text-emerald-700 dark:text-emerald-400">You&apos;ve unlocked free delivery!</span>
+                    <span className="text-emerald-700 dark:text-emerald-400">{t("freeUnlocked")}</span>
                   )}
                 </div>
                 <div className="h-1.5 overflow-hidden rounded bg-secondary" role="progressbar" aria-valuenow={Math.round(progress)} aria-valuemin={0} aria-valuemax={100}>
@@ -179,16 +184,16 @@ export default function CartSidebar() {
                   </span>
                   <div className="min-w-0 flex-1 leading-tight">
                     <p className="truncate text-sm font-bold text-foreground">
-                      {applied.code} <span className="font-medium text-emerald-700 dark:text-emerald-400">applied</span>
+                      {t("couponApplied", { code: applied.code })}
                     </p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {freeShipLine ? "Free delivery" : discount > 0 ? `You save ৳${fmt(discount)}` : applied.description ?? "Coupon active"}
+                      {freeShipLine ? t("freeDelivery") : discount > 0 ? t("youSave", { amount: money(discount) }) : applied.description ?? t("couponActive")}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={coupon.remove}
-                    aria-label={`Remove coupon ${applied.code}`}
+                    aria-label={t("removeCoupon", { code: applied.code })}
                     className="flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-secondary hover:text-destructive"
                   >
                     <X className="h-4 w-4" />
@@ -198,7 +203,7 @@ export default function CartSidebar() {
                 <form onSubmit={onApply} noValidate>
                   <label htmlFor="drawer-coupon" className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-foreground">
                     <Tag className="h-3.5 w-3.5 text-accent-text" aria-hidden="true" />
-                    Have a coupon?
+                    {t("haveCoupon")}
                   </label>
                   <div className="flex gap-2">
                     <input
@@ -212,7 +217,7 @@ export default function CartSidebar() {
                       autoComplete="off"
                       autoCapitalize="characters"
                       spellCheck={false}
-                      placeholder="Enter code"
+                      placeholder={t("enterCode")}
                       aria-invalid={!!coupon.error}
                       aria-describedby={coupon.error ? "drawer-coupon-msg" : undefined}
                       disabled={coupon.busy}
@@ -225,14 +230,14 @@ export default function CartSidebar() {
                       disabled={coupon.busy || input.length === 0}
                       className="inline-flex h-11 min-w-[88px] items-center justify-center gap-2 rounded bg-primary px-4 text-sm font-bold text-primary-foreground transition-all hover:bg-brand-fresh hover:text-on-fresh active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-primary disabled:hover:text-primary-foreground"
                     >
-                      {coupon.busy ? <Loader2 className="h-4 w-4 animate-spin" aria-label="Checking" /> : "Apply"}
+                      {coupon.busy ? <Loader2 className="h-4 w-4 animate-spin" aria-label={t("checking")} /> : t("apply")}
                     </button>
                   </div>
                   <div aria-live="polite" className="min-h-0">
                     {coupon.error && (
                       <p id="drawer-coupon-msg" className="mt-2 flex items-start gap-1.5 text-xs font-medium text-destructive">
                         <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                        {coupon.error}
+                        {translateApiMessage(coupon.error, locale)}
                       </p>
                     )}
                   </div>
@@ -241,27 +246,27 @@ export default function CartSidebar() {
               {coupon.offline && (
                 <p className="flex items-center gap-1.5 text-xs text-muted-foreground" role="status">
                   <AlertCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                  Couldn&apos;t refresh the totals. They&apos;ll be confirmed at checkout.
+                  {t("offline")}
                 </p>
               )}
 
               {/* Totals */}
               <dl className="space-y-2 text-sm">
                 <div className="flex items-center justify-between">
-                  <dt className="text-muted-foreground">Subtotal</dt>
-                  <dd className="font-semibold text-foreground">৳{fmt(subtotal)}</dd>
+                  <dt className="text-muted-foreground">{t("subtotal")}</dt>
+                  <dd className="font-semibold text-foreground">{money(subtotal)}</dd>
                 </div>
                 {discount > 0 && (
                   <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-400">
-                    <dt>Coupon discount</dt>
-                    <dd className="font-semibold">−৳{fmt(discount)}</dd>
+                    <dt>{t("couponDiscount")}</dt>
+                    <dd className="font-semibold">−{money(discount)}</dd>
                   </div>
                 )}
                 <div className="flex items-end justify-between border-t border-dashed border-border pt-3">
-                  <dt className="font-outfit text-base font-bold text-foreground">Total</dt>
+                  <dt className="font-outfit text-base font-bold text-foreground">{t("total")}</dt>
                   <dd className="text-right leading-none">
-                    {discount > 0 && <span className="mb-1 block text-xs text-muted-foreground line-through">৳{fmt(subtotal)}</span>}
-                    <span className="font-outfit text-2xl font-extrabold text-primary dark:text-accent-text">৳{fmt(total)}</span>
+                    {discount > 0 && <span className="mb-1 block text-xs text-muted-foreground line-through">{money(subtotal)}</span>}
+                    <span className="font-outfit text-2xl font-extrabold text-primary dark:text-accent-text">{money(total)}</span>
                   </dd>
                 </div>
               </dl>
@@ -274,16 +279,16 @@ export default function CartSidebar() {
                 className="group flex w-full items-center justify-center gap-2 rounded bg-brand-fresh py-3.5 text-sm font-extrabold text-on-fresh shadow-[0_10px_24px_-10px_rgba(69,162,44,0.9)] transition-all hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0 disabled:cursor-wait disabled:opacity-80 disabled:hover:translate-y-0"
               >
                 {checkout.state === "loading" || checkout.checking ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Lock className="h-4 w-4" aria-hidden="true" />}
-                {checkout.checking ? "Checking your addresses…" : checkout.state === "signed-out" ? "Log in to checkout" : "Proceed to checkout"}
+                {checkout.checking ? t("checkingAddresses") : checkout.state === "signed-out" ? t("loginToCheckout") : t("proceed")}
                 {!checkout.checking && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />}
               </button>
-              {checkout.state === "signed-out" && <p className="-mt-1 text-center text-xs text-muted-foreground">Sign in or create an account to place your order.</p>}
+              {checkout.state === "signed-out" && <p className="-mt-1 text-center text-xs text-muted-foreground">{t("signInHint")}</p>}
               <div className="flex items-center justify-between text-sm">
                 <Link href="/cart" onClick={closeCart} className="font-semibold text-primary hover:underline dark:text-accent-text">
-                  View full cart
+                  {t("viewFull")}
                 </Link>
                 <Link href="/products" onClick={closeCart} className="text-muted-foreground transition-colors hover:text-foreground">
-                  Continue shopping
+                  {t("continueShopping")}
                 </Link>
               </div>
             </div>

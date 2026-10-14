@@ -905,6 +905,8 @@ model OrderItem {
 
   // Product snapshot (preserved even if product changes/deleted)
   productName  String
+  // Bangla name at order time, so Bangla order pages and invoices keep reading right
+  productNameBn String?
   productSlug  String
   productImage String?
   variantName  String?

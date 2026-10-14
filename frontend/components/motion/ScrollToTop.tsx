@@ -2,6 +2,7 @@
 
 import { ArrowUp } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { gsap, ScrollTrigger } from "./gsap";
 
 const R = 21;
@@ -9,6 +10,7 @@ const C = 2 * Math.PI * R;
 
 /** Floating back-to-top button with a scroll-progress ring; springs in after the first screen. */
 export default function ScrollToTop() {
+  const t = useTranslations("Common");
   const btn = useRef<HTMLButtonElement>(null);
   const ring = useRef<SVGCircleElement>(null);
 
@@ -50,7 +52,7 @@ export default function ScrollToTop() {
       ref={btn}
       type="button"
       onClick={toTop}
-      aria-label="Scroll to top"
+      aria-label={t("scrollTop")}
       className="group fixed bottom-6 right-6 z-[1500] flex h-12 w-12 items-center justify-center rounded bg-card text-foreground shadow-xl transition-colors hover:bg-brand-fresh hover:text-on-fresh"
       style={{ visibility: "hidden" }}
     >

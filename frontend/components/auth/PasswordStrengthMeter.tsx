@@ -1,5 +1,9 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+import { formatNumber } from "@/lib/format";
+import type { Locale } from "@/lib/locale";
+
 /**
  * PasswordStrengthMeter
  *
@@ -18,7 +22,7 @@ interface PasswordStrengthMeterProps {
 
 interface StrengthResult {
   score: number;       // 0–4
-  label: string;
+  label: "" | "weak" | "fair" | "good" | "strong";
   color: string;
   bgColor: string;
   width: string;       // percentage string
@@ -26,7 +30,7 @@ interface StrengthResult {
 
 function getStrength(password: string): StrengthResult {
   if (!password) {
-    return { score: 0, label: "", color: "transparent", bgColor: "transparent", width: "0%" };
+    return { score: 0, label: "" as const, color: "transparent", bgColor: "transparent", width: "0%" };
   }
 
   let score = 0;
@@ -44,22 +48,25 @@ function getStrength(password: string): StrengthResult {
   const clamped = Math.min(4, Math.max(1, score)) as 1 | 2 | 3 | 4;
 
   const levels: Record<1 | 2 | 3 | 4, Omit<StrengthResult, "score">> = {
-    1: { label: "Weak",   color: "#EF4444", bgColor: "rgba(239,68,68,0.15)",   width: "25%" },
-    2: { label: "Fair",   color: "var(--carrot)", bgColor: "rgba(245,124,0,0.15)",  width: "50%" },
-    3: { label: "Good",   color: "#CA8A04", bgColor: "rgba(234,179,8,0.15)",   width: "75%" },
-    4: { label: "Strong", color: "#22C55E", bgColor: "rgba(34,197,94,0.15)",   width: "100%" },
+    1: { label: "weak",   color: "#EF4444", bgColor: "rgba(239,68,68,0.15)",   width: "25%" },
+    2: { label: "fair",   color: "var(--carrot)", bgColor: "rgba(245,124,0,0.15)",  width: "50%" },
+    3: { label: "good",   color: "#CA8A04", bgColor: "rgba(234,179,8,0.15)",   width: "75%" },
+    4: { label: "strong", color: "#22C55E", bgColor: "rgba(34,197,94,0.15)",   width: "100%" },
   };
 
   return { score: clamped, ...levels[clamped] };
 }
 
 export default function PasswordStrengthMeter({ password }: PasswordStrengthMeterProps) {
+  const t = useTranslations("Auth");
+  const locale = useLocale() as Locale;
   const strength = getStrength(password);
 
   if (!password) return null;
+  const label = strength.label ? t(strength.label) : "";
 
   return (
-    <div className="mt-2 space-y-1.5" role="status" aria-live="polite" aria-label={`Password strength: ${strength.label}`}>
+    <div className="mt-2 space-y-1.5" role="status" aria-live="polite" aria-label={t("strength", { label })}>
       {/* Bar track */}
       <div
         className="w-full h-1.5 rounded overflow-hidden"
@@ -86,24 +93,24 @@ export default function PasswordStrengthMeter({ password }: PasswordStrengthMete
             transition: "color 300ms ease-out",
           }}
         >
-          {strength.label}
+          {label}
         </span>
         <span className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>
           {password.length < 8
-            ? `${8 - password.length} more chars needed`
+            ? t("moreChars", { count: formatNumber(8 - password.length, locale, 0) })
             : strength.score < 4
-            ? "Add symbols or numbers"
-            : "Great password!"}
+            ? t("addSymbols")
+            : t("great")}
         </span>
       </div>
 
       {/* Requirement chips */}
       <div className="flex flex-wrap gap-1.5 pt-0.5">
         {[
-          { label: "8+ chars",   met: password.length >= 8 },
-          { label: "Uppercase",  met: /[A-Z]/.test(password) },
-          { label: "Number",     met: /[0-9]/.test(password) },
-          { label: "Symbol",     met: /[^A-Za-z0-9]/.test(password) },
+          { label: t("req8"),   met: password.length >= 8 },
+          { label: t("reqUpper"),  met: /[A-Z]/.test(password) },
+          { label: t("reqNumber"),     met: /[0-9]/.test(password) },
+          { label: t("reqSymbol"),     met: /[^A-Za-z0-9]/.test(password) },
         ].map((req) => (
           <span
             key={req.label}

@@ -1,4 +1,7 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
+
+const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 // Product images are served by the API server (…/uploads/…): allow its host.
 const api = new URL(process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api");
@@ -29,4 +32,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

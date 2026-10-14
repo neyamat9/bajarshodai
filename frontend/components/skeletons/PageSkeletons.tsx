@@ -1,3 +1,4 @@
+import LoadingText from "@/components/skeletons/LoadingText";
 /**
  * Instant-loading placeholders. Each route's `loading.tsx` renders one of these the moment a link
  * is clicked, so the page shell appears immediately and the real content streams in afterwards.
@@ -29,7 +30,7 @@ function CardSkeleton() {
 
 export function CardsSkeleton({ count = 8, cols = "grid-cols-2 lg:grid-cols-4" }: { count?: number; cols?: string }) {
   return (
-    <div className={`grid gap-3 md:gap-5 ${cols}`} aria-busy="true" aria-label="Loading products">
+    <div className={`grid gap-3 md:gap-5 ${cols}`} aria-busy="true"><LoadingText />
       {Array.from({ length: count }).map((_, i) => (
         <CardSkeleton key={i} />
       ))}
@@ -40,7 +41,7 @@ export function CardsSkeleton({ count = 8, cols = "grid-cols-2 lg:grid-cols-4" }
 /** Home page: hero banner + tiles, then a category grid and product rows */
 export function HomeSkeleton() {
   return (
-    <div aria-busy="true" aria-label="Loading">
+    <div aria-busy="true"><LoadingText />
       <section className="bg-background">
         <div className="mx-auto max-w-[1440px] px-4 pb-16 pt-6 md:px-8 lg:pb-20 lg:pt-8">
           <div className="grid gap-4 lg:h-[480px] lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
@@ -104,7 +105,7 @@ export function ListingSkeleton() {
 /** Product details: related list on the left, product card, tabs */
 export function ProductPageSkeleton() {
   return (
-    <div className="min-h-screen bg-background" aria-busy="true" aria-label="Loading product">
+    <div className="min-h-screen bg-background" aria-busy="true"><LoadingText />
       <div className="mx-auto max-w-[1440px] px-4 py-6 md:px-8 md:py-8">
         <div className="flex flex-col gap-5">
           <div className="rounded border border-border bg-card p-4 sm:p-6">
@@ -178,7 +179,7 @@ export function ProductPageSkeleton() {
 /** Simple centred skeleton for forms, account and checkout pages */
 export function GenericSkeleton() {
   return (
-    <div className="mx-auto max-w-4xl space-y-5 px-4 py-12 sm:px-6" aria-busy="true" aria-label="Loading">
+    <div className="mx-auto max-w-4xl space-y-5 px-4 py-12 sm:px-6" aria-busy="true"><LoadingText />
       <Block className="h-10 w-64" />
       <Block className="h-4 w-80 max-w-full" />
       <Block className="h-48 w-full" />

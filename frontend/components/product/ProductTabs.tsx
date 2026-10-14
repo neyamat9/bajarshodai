@@ -1,13 +1,16 @@
 "use client";
 
+import { useRouter } from "@/i18n/navigation";
 import { errorMessage } from "@/lib/api/client";
 import { useAuthModal } from "@/components/auth/AuthModal";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { askQuestion, createReview, getQuestions, voteReview } from "@/lib/services/reviews.service";
 import type { Product, Question, Review } from "@/lib/types";
-import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useLocale, useTranslations } from "next-intl";
+import { formatDate, formatNumber } from "@/lib/format";
+import type { Locale } from "@/lib/locale";
 
 export interface ReviewStats {
   average: number;
@@ -31,9 +34,11 @@ function StarRating({
   rating: number;
   size?: "sm" | "md";
 }) {
+  const t = useTranslations("Product");
+  const locale = useLocale() as Locale;
   const sz = size === "md" ? "w-5 h-5" : "w-3.5 h-3.5";
   return (
-    <div className="flex items-center gap-0.5" aria-label={`${rating} out of 5 stars`}>
+    <div className="flex items-center gap-0.5" aria-label={t("reviews.starsOf5", { rating: formatNumber(rating, locale, 1) })}>
       {[1, 2, 3, 4, 5].map((star) => (
         <svg
           key={star}
@@ -57,12 +62,13 @@ function StarRating({
 
 // ── Details tab: grey group header rows, then key / value rows ─────────
 function SpecsTab({ product }: { product: Product }) {
+  const t = useTranslations("Product");
   if (!product.specs || product.specs.length === 0) {
-    return <p className="text-sm text-muted-foreground">No extra details available.</p>;
+    return <p className="text-sm text-muted-foreground">{t("tabs.noDetails")}</p>;
   }
   return (
     <div>
-      <h2 className="mb-4 font-outfit text-lg font-extrabold uppercase tracking-tight text-foreground">Product details</h2>
+      <h2 className="mb-4 font-outfit text-lg font-extrabold uppercase tracking-tight text-foreground">{t("tabs.productDetails")}</h2>
       <div className="overflow-hidden rounded border border-border">
         {product.specs.map((group) => (
           <div key={group.groupName}>
@@ -82,9 +88,10 @@ function SpecsTab({ product }: { product: Product }) {
 
 // ── Description tab ──────────────────────────────────────────────────────────
 function DescriptionTab({ product }: { product: Product }) {
+  const t = useTranslations("Product");
   return (
     <div>
-      <h2 className="mb-4 font-outfit text-lg font-extrabold uppercase tracking-tight text-foreground">Description</h2>
+      <h2 className="mb-4 font-outfit text-lg font-extrabold uppercase tracking-tight text-foreground">{t("tabs.descriptionTitle")}</h2>
       <h3 className="mb-3 font-outfit text-base font-bold text-foreground">{product.name}</h3>
       <p className="whitespace-pre-line text-sm leading-7 text-muted-foreground">{product.description || product.shortDescription}</p>
       {product.pinnedSpecs.length > 0 && (
@@ -112,6 +119,8 @@ function ReviewsTab({
   initialReviews: Review[];
   stats: ReviewStats;
 }) {
+  const t = useTranslations("Product");
+  const locale = useLocale() as Locale;
   const { user } = useAuth();
   const { openAuth } = useAuthModal();
   const router = useRouter();
@@ -161,8 +170,8 @@ function ReviewsTab({
   async function handleSubmitReview(e: React.FormEvent) {
     e.preventDefault();
     const errors: Record<string, string> = {};
-    if (formRating === 0) errors.rating = "Please select a rating";
-    if (formComment.trim().length < 10) errors.comment = "Please write at least 10 characters";
+    if (formRating === 0) errors.rating = t("reviews.pickRating");
+    if (formComment.trim().length < 10) errors.comment = t("reviews.tooShort");
 
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
@@ -177,7 +186,7 @@ function ReviewsTab({
       setFormComment("");
       setFormErrors({});
       setShowForm(false);
-      toast.success("Thanks! Your review is now live.", { duration: 3000 });
+      toast.success(t("reviews.thanks"), { duration: 3000 });
       router.refresh();
     } catch (err) {
       toast.error(errorMessage(err));
@@ -193,11 +202,11 @@ function ReviewsTab({
         {/* Average */}
         <div className="flex flex-col items-center justify-center gap-2 flex-shrink-0">
           <span className="text-foreground text-6xl font-black tracking-tighter">
-            {avgRating.toFixed(1)}
+            {formatNumber(avgRating, locale, 1)}
           </span>
           <StarRating rating={avgRating} size="md" />
           <span className="text-muted-foreground/70 text-xs font-bold">
-            {stats.total} review{stats.total !== 1 ? "s" : ""}
+            {t("reviews.count", { count: formatNumber(stats.total, locale, 0) })}
           </span>
         </div>
 
@@ -206,7 +215,7 @@ function ReviewsTab({
           {breakdown.map(({ star, count, pct }) => (
             <div key={star} className="flex items-center gap-3">
               <span className="text-muted-foreground/70 text-xs font-bold w-4 text-right flex-shrink-0">
-                {star}
+                {formatNumber(star, locale, 0)}
               </span>
               <svg className="w-3 h-3 text-amber-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -218,7 +227,7 @@ function ReviewsTab({
                 />
               </div>
               <span className="text-muted-foreground/70 text-xs font-bold w-8 flex-shrink-0">
-                {count}
+                {formatNumber(count, locale, 0)}
               </span>
             </div>
           ))}
@@ -233,11 +242,11 @@ function ReviewsTab({
             onClick={() => setShowForm((v) => !v)}
             className="px-5 py-2.5 bg-muted border border-border text-muted-foreground hover:text-foreground hover:border-border text-xs font-black uppercase tracking-widest rounded transition-all"
           >
-            {showForm ? "Cancel" : "Write a Review"}
+            {showForm ? t("reviews.cancel") : t("reviews.write")}
           </button>
         ) : (
           <button type="button" onClick={() => openAuth("login")} className="px-5 py-2.5 bg-muted border border-border text-muted-foreground hover:text-foreground text-xs font-black uppercase tracking-widest rounded transition-all">
-            Log in to write a review
+            {t("reviews.loginToWrite")}
           </button>
         )}
       </div>
@@ -249,13 +258,13 @@ function ReviewsTab({
           className="bg-muted border border-border rounded p-5 space-y-4 animate-fade-slide-up"
         >
           <h2 className="text-foreground font-black text-base uppercase tracking-tight font-outfit">
-            Write a Review
+            {t("reviews.write")}
           </h2>
 
           {/* Star selector */}
           <div>
             <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 block mb-2">
-              Rating *
+              {t("reviews.rating")}
             </label>
             <div className="flex gap-1">
               {[1, 2, 3, 4, 5].map((star) => (
@@ -265,7 +274,7 @@ function ReviewsTab({
                   onMouseEnter={() => setHoverRating(star)}
                   onMouseLeave={() => setHoverRating(0)}
                   onClick={() => setFormRating(star)}
-                  aria-label={`Rate ${star} star${star !== 1 ? "s" : ""}`}
+                  aria-label={t("reviews.rateStars", { star })}
                   className="transition-transform hover:scale-110"
                 >
                   <svg
@@ -291,7 +300,7 @@ function ReviewsTab({
           {/* Title */}
           <div>
             <label htmlFor="review-title" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 block mb-2">
-              Headline (optional)
+              {t("reviews.headline")}
             </label>
             <input
               id="review-title"
@@ -299,7 +308,7 @@ function ReviewsTab({
               maxLength={150}
               value={formTitle}
               onChange={(e) => setFormTitle(e.target.value)}
-              placeholder="Sum it up in a few words"
+              placeholder={t("reviews.headlinePlaceholder")}
               className="w-full h-10 bg-muted border border-border rounded px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-fresh/40 transition-colors"
             />
           </div>
@@ -307,13 +316,13 @@ function ReviewsTab({
           {/* Comment */}
           <div>
             <label htmlFor="review-comment" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 block mb-2">
-              Review *
+              {t("reviews.review")}
             </label>
             <textarea
               id="review-comment"
               value={formComment}
               onChange={(e) => setFormComment(e.target.value)}
-              placeholder="Share your experience with this product..."
+              placeholder={t("reviews.reviewPlaceholder")}
               rows={4}
               className="w-full bg-muted border border-border rounded px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-fresh/40 transition-colors resize-none"
             />
@@ -327,7 +336,7 @@ function ReviewsTab({
             disabled={submitting}
             className="px-6 py-2.5 bg-primary text-white text-xs font-black uppercase tracking-tight rounded hover:bg-primary/90 transition-colors disabled:opacity-60"
           >
-            Submit Review
+            {t("reviews.submit")}
           </button>
         </form>
       )}
@@ -336,7 +345,7 @@ function ReviewsTab({
       <div className="space-y-4">
         {reviews.length === 0 ? (
           <p className="text-muted-foreground/70 text-sm text-center py-8">
-            No reviews yet. Be the first to review this product!
+            {t("reviews.none")}
           </p>
         ) : (
           reviews.map((review) => {
@@ -359,25 +368,21 @@ function ReviewsTab({
                       </span>
                       {review.verified && (
                         <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">
-                          Verified
+                          {t("reviews.verified")}
                         </span>
                       )}
                     </div>
                     <StarRating rating={review.rating} />
                   </div>
                   <span className="text-muted-foreground/70 text-xs flex-shrink-0">
-                    {new Date(review.date).toLocaleDateString("en-BD", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
+                    {formatDate(review.date, locale)}
                   </span>
                 </div>
                 <p className="text-muted-foreground text-sm leading-relaxed mb-4">
                   {review.comment}
                 </p>
                 <div className="flex items-center gap-3 text-xs text-muted-foreground/70">
-                  <span>Helpful?</span>
+                  <span>{t("reviews.helpful")}</span>
                   <button
                     type="button"
                     onClick={() => handleHelpful(review.id, "helpful")}
@@ -424,6 +429,8 @@ function QATab({
   product: Product;
   initialQuestions: Question[];
 }) {
+  const t = useTranslations("Product");
+  const locale = useLocale() as Locale;
   const { user } = useAuth();
   const { openAuth } = useAuthModal();
   const [questions, setQuestions] = useState<Question[]>(initialQuestions);
@@ -438,7 +445,7 @@ function QATab({
       return;
     }
     if (questionText.trim().length < 5) {
-      setQuestionError("Please enter your question (at least 5 characters)");
+      setQuestionError(t("qa.tooShort"));
       return;
     }
     setAsking(true);
@@ -447,7 +454,7 @@ function QATab({
       setQuestions(await getQuestions(product.id));
       setQuestionText("");
       setQuestionError("");
-      toast.success("Question submitted! We'll answer it soon.", { duration: 3000 });
+      toast.success(t("qa.thanks"), { duration: 3000 });
     } catch (err) {
       setQuestionError(errorMessage(err));
     } finally {
@@ -463,22 +470,22 @@ function QATab({
         className="bg-muted border border-border rounded p-5"
       >
         <h2 className="text-foreground font-black text-base uppercase tracking-tight font-outfit mb-3">
-          Ask a Question
+          {t("qa.ask")}
         </h2>
         <div className="flex flex-col gap-2 sm:flex-row">
           <input
             type="text"
             value={questionText}
             onChange={(e) => setQuestionText(e.target.value)}
-            placeholder="What would you like to know about this product?"
+            placeholder={t("qa.placeholder")}
             className="h-10 w-full min-w-0 sm:flex-1 bg-muted border border-border rounded px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-fresh/40 transition-colors"
-            aria-label="Your question"
+            aria-label={t("qa.yourQuestion")}
           />
           <button
             type="submit"
             className="px-5 h-10 w-full bg-primary text-white text-xs font-black uppercase tracking-tight rounded hover:bg-primary/90 transition-colors flex-shrink-0 sm:w-auto"
           >
-            {asking ? "…" : "Ask"}
+            {asking ? "…" : t("qa.send")}
           </button>
         </div>
         {questionError && (
@@ -490,7 +497,7 @@ function QATab({
       <div className="space-y-4">
         {questions.length === 0 ? (
           <p className="text-muted-foreground/70 text-sm text-center py-8">
-            No questions yet. Be the first to ask!
+            {t("qa.none")}
           </p>
         ) : (
           questions.map((q) => (
@@ -506,11 +513,7 @@ function QATab({
                   <p className="text-foreground text-sm font-bold">{q.questionText}</p>
                   <p className="text-muted-foreground/70 text-[11px] mt-0.5">
                     {q.askerName} ·{" "}
-                    {new Date(q.date).toLocaleDateString("en-BD", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
+                    {formatDate(q.date, locale)}
                   </p>
                 </div>
               </div>
@@ -531,7 +534,7 @@ function QATab({
               ) : (
                 <div className="ml-9">
                   <p className="text-muted-foreground/70 text-xs italic">
-                    Answer pending...
+                    {t("qa.pending")}
                   </p>
                 </div>
               )}
@@ -545,11 +548,13 @@ function QATab({
 
 // ── Main Export ──────────────────────────────────────────────────────────────
 export default function ProductTabs({ product, reviews, reviewStats, questions }: ProductTabsProps) {
+  const t = useTranslations("Product");
+  const locale = useLocale() as Locale;
   const sections = [
-    { id: "specification", label: "Details", show: product.specs.length > 0 },
-    { id: "description", label: "Description", show: true },
-    { id: "reviews", label: `Reviews(${reviewStats.total || reviews.length})`, show: true },
-    { id: "qa", label: questions.length > 0 ? `Q&A(${questions.length})` : "Q&A", show: true },
+    { id: "specification", label: t("tabs.details"), show: product.specs.length > 0 },
+    { id: "description", label: t("tabs.description"), show: true },
+    { id: "reviews", label: t("tabs.reviews", { count: formatNumber(reviewStats.total || reviews.length, locale, 0) }), show: true },
+    { id: "qa", label: questions.length > 0 ? t("tabs.qaCount", { count: formatNumber(questions.length, locale, 0) }) : t("tabs.qa"), show: true },
   ].filter((x) => x.show);
 
   const [active, setActive] = useState(sections[0]?.id ?? "");
@@ -615,7 +620,7 @@ export default function ProductTabs({ product, reviews, reviewStats, questions }
       <div
         id="product-tabbar"
         role="tablist"
-        aria-label="Jump to a section"
+        aria-label={t("tabs.jump")}
         ref={bar}
         className="no-scrollbar sticky z-30 flex overflow-x-auto rounded-t border-b border-border bg-card px-1 transition-[top] duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] max-sm:pr-8 max-sm:[mask-image:linear-gradient(to_right,#000_calc(100%-28px),transparent)] sm:px-4"
         style={{ top: "calc(var(--sticky-top, 8rem) - 16px)" }}

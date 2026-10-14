@@ -3,10 +3,12 @@
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useSyncExternalStore } from "react";
+import { useTranslations } from "next-intl";
 
 const subscribe = () => () => {};
 
 export default function ThemeToggle({ className = "" }: { className?: string }) {
+  const t = useTranslations("Common");
   const { resolvedTheme, setTheme } = useTheme();
   const mounted = useSyncExternalStore(
     subscribe,
@@ -19,8 +21,8 @@ export default function ThemeToggle({ className = "" }: { className?: string }) 
     <button
       type="button"
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      title={isDark ? "Light mode" : "Dark mode"}
+      aria-label={isDark ? t("switchToLight") : t("switchToDark")}
+      title={isDark ? t("lightMode") : t("darkMode")}
       className={`inline-flex h-10 w-10 items-center justify-center rounded border border-border bg-card text-foreground transition-colors hover:border-brand-fresh hover:text-accent-text ${className}`}
     >
       {isDark ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}

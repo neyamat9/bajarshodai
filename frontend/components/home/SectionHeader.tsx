@@ -1,5 +1,6 @@
+import { Link } from "@/i18n/navigation";
 import { ArrowRight } from "lucide-react";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 interface SectionHeaderProps {
   title: React.ReactNode;
@@ -13,6 +14,7 @@ interface SectionHeaderProps {
 }
 
 export default function SectionHeader({ title, description, href, hrefLabel, once, action }: SectionHeaderProps) {
+  const tc = useTranslations("Common");
   return (
     <div className="mb-8 flex flex-col justify-between gap-5 md:mb-12 md:flex-row md:items-end">
       <div className="max-w-2xl">
@@ -41,7 +43,7 @@ export default function SectionHeader({ title, description, href, hrefLabel, onc
           href={href}
           className="group inline-flex w-fit shrink-0 max-md:hidden items-center gap-2 rounded border border-border bg-card px-5 py-3 text-sm font-bold text-foreground transition-colors hover:border-brand-fresh hover:text-accent-text"
         >
-          {hrefLabel ?? "View all"}
+          {hrefLabel ?? tc("viewAll")}
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
         </Link>
       )}

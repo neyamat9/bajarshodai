@@ -6,6 +6,9 @@ import { addCartItem, clearCartApi, fetchCart, removeCartItem, updateCartItem } 
 import type { Cart, CartContextValue, CartItem, CartResult } from "@/lib/types";
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useLocale, useTranslations } from "next-intl";
+import { formatQuantity } from "@/lib/format";
+import type { Locale } from "@/lib/locale";
 
 const EMPTY: Cart = { items: [], updatedAt: "" };
 
@@ -18,6 +21,9 @@ export const CartActionsContext = createContext<Pick<CartContextValue, "addToCar
 // customer in their account (a guest cart moves into the account on login).
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const { user, isLoading: authLoading } = useAuth();
+  const t = useTranslations("Cart");
+  const tCard = useTranslations("Product.card");
+  const locale = useLocale() as Locale;
   const [cart, setCart] = useState<Cart>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
@@ -71,13 +77,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         await fn();
         return { ok: true };
       } catch (e) {
-        return { ok: false, error: errorMessage(e, "Could not update your cart") };
+        return { ok: false, error: errorMessage(e, t("updateFailed")) };
       } finally {
         pending.current--;
         await settle();
       }
     },
-    [settle],
+    [settle, t],
   );
 
   // Adding is instant: the cart updates on screen straight away and the server is told
@@ -87,7 +93,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const existing = cartRef.current.items.find((i) => i.productId === p.productId && i.variantId === p.variantId);
       const have = existing?.quantity ?? 0;
       if (p.stock > 0 && have + p.quantity > p.stock) {
-        return { ok: false, error: have > 0 ? `Only ${p.stock} in stock (you already have ${have})` : `Only ${p.stock} in stock` };
+        return { ok: false, error: have > 0 ? t("onlyStockHave", { count: formatQuantity(p.stock, locale), have: formatQuantity(have, locale) }) : t("onlyStock", { count: formatQuantity(p.stock, locale) }) };
       }
       const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       setCart((c) => ({
@@ -98,7 +104,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }));
       void run(() => addCartItem(p.productId, p.quantity, p.variantId)).then(async (r) => {
         if (r.ok) return;
-        toast.error(r.error ?? "Could not add to cart");
+        toast.error(r.error ?? tCard("couldNotAdd"));
         // `run` already re-read the cart from the server, which undoes the add. If that
         // re-read could not happen (server unreachable) the optimistic row is still on
         // screen — take it back out by hand.
@@ -118,7 +124,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       });
       return { ok: true };
     },
-    [run],
+    [run, t, tCard, locale],
   );
 
   // A row that was just added still has a temporary id until the server answers:

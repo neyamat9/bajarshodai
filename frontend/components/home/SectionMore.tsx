@@ -1,5 +1,6 @@
+import { Link } from "@/i18n/navigation";
 import { ArrowRight } from "lucide-react";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 /** Look shared by the "View all …" buttons that close every home section. */
 export const sectionMoreClass =
@@ -10,11 +11,12 @@ export const sectionMoreClass =
  * Pass `href` for a link, or `children` with a custom trigger (e.g. the modal buttons) wrapped by the caller.
  */
 export default function SectionMore({ href, label, children }: { href?: string; label?: string; children?: React.ReactNode }) {
+  const tc = useTranslations("Common");
   return (
     <div data-reveal="up" className="mt-8 flex justify-center md:hidden">
       {href ? (
         <Link href={href} className={sectionMoreClass}>
-          {label ?? "View all"}
+          {label ?? tc("viewAll")}
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
         </Link>
       ) : (

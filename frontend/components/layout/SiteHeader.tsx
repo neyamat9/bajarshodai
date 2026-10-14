@@ -1,5 +1,6 @@
 "use client";
 
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { useAuthModal } from "@/components/auth/AuthModal";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { useCart } from "@/lib/hooks/use-cart";
@@ -8,9 +9,11 @@ import { useSearchHistory } from "@/lib/hooks/use-search-history";
 import { useWishlist } from "@/lib/hooks/use-wishlist";
 import { searchProducts } from "@/lib/services/products.service";
 import type { Product } from "@/lib/types";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import LanguageSwitcher from "@/components/layout/LanguageSwitcher";
+import { formatMoney } from "@/lib/format";
+import type { Locale } from "@/lib/locale";
 import { startNavigation } from "@/components/layout/NavigationGate";
 import BrandLogo from "@/components/layout/BrandLogo";
 import MobileMenu from "@/components/layout/MobileMenu";
@@ -18,6 +21,8 @@ import ThemeToggle from "@/components/theme/ThemeToggle";
 import { Clock, Heart, Loader2, Menu, Search, ShoppingCart, User, X } from "lucide-react";
 
 export default function SiteHeader() {
+  const t = useTranslations("Header");
+  const locale = useLocale() as Locale;
   const { cartCount, openCart } = useCart();
   const { vaultCount } = useWishlist();
   const { user, isAuthenticated } = useAuth();
@@ -83,7 +88,7 @@ export default function SiteHeader() {
     let cancelled = false;
     setIsLoadingSuggestions(true);
 
-    searchProducts(q)
+    searchProducts(q, locale)
       .then((results) => {
         if (!cancelled) {
           setSuggestions(results.slice(0, 6));
@@ -101,7 +106,7 @@ export default function SiteHeader() {
     return () => {
       cancelled = true;
     };
-  }, [debouncedQuery]);
+  }, [debouncedQuery, locale]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -230,9 +235,9 @@ export default function SiteHeader() {
                     setTyped(false);
                   }}
                   onKeyDown={handleKeyDown}
-                  placeholder="Search fish, vegetables, fruits…"
+                  placeholder={t("searchPlaceholder")}
                   autoComplete="off"
-                  aria-label="Search products"
+                  aria-label={t("searchAria")}
                   aria-autocomplete="list"
                   aria-controls={showDropdown ? "search-suggestions" : showHistory ? "search-history" : undefined}
                   aria-activedescendant={
@@ -242,7 +247,7 @@ export default function SiteHeader() {
                 />
                 <button
                   type="submit"
-                  aria-label="Search"
+                  aria-label={t("search")}
                   className="absolute right-1.5 top-1/2 flex h-8 w-9 -translate-y-1/2 items-center justify-center rounded bg-primary text-primary-foreground transition-colors hover:bg-primary/90 md:h-9"
                 >
                   {isLoadingSuggestions ? (
@@ -256,7 +261,7 @@ export default function SiteHeader() {
                 {(showDropdown || showHistory) && (
                   <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded border border-border bg-popover shadow-xl animate-scale-in">
                     {showDropdown && (
-                      <div id="search-suggestions" role="listbox" aria-label="Search suggestions">
+                      <div id="search-suggestions" role="listbox" aria-label={t("suggestionsAria")}>
                     {suggestions.map((product, idx) => (
                       <button
                         key={product.id}
@@ -290,7 +295,7 @@ export default function SiteHeader() {
                           <p className="mt-0.5 text-[11px] font-medium text-muted-foreground">
                             {product.categoryName} ·{" "}
                             <span className="font-bold text-accent-text">
-                              ৳{product.price.toLocaleString("en-BD")}
+                              {formatMoney(product.price, locale)}
                             </span>
                           </p>
                         </div>
@@ -309,14 +314,14 @@ export default function SiteHeader() {
                       className="flex w-full items-center justify-center gap-2 border-t border-border bg-secondary/60 px-4 py-3 text-xs font-bold text-primary transition-colors hover:bg-accent dark:text-accent-text"
                     >
                       <Search className="h-3.5 w-3.5" aria-hidden="true" />
-                      See all results for &ldquo;{searchQuery.trim()}&rdquo;
+                      {t("seeAll", { q: searchQuery.trim() })}
                     </button>
                       </div>
                     )}
                     {showHistory && (
-                  <div id="search-history" role="listbox" aria-label="Your recent searches" className={suggestionCount > 0 ? "border-t border-border" : ""}>
+                  <div id="search-history" role="listbox" aria-label={t("recentAria")} className={suggestionCount > 0 ? "border-t border-border" : ""}>
                     <div className="flex items-center justify-between px-4 pb-1 pt-3">
-                      <span className="text-xs font-bold text-muted-foreground">Recent searches</span>
+                      <span className="text-xs font-bold text-muted-foreground">{t("recent")}</span>
                       <button
                         type="button"
                         onMouseDown={(e) => {
@@ -325,7 +330,7 @@ export default function SiteHeader() {
                         }}
                         className="text-xs font-semibold text-accent-text hover:underline"
                       >
-                        Clear all
+                        {t("clearAll")}
                       </button>
                     </div>
                     {historyRows.map((h, idx) => (
@@ -346,7 +351,7 @@ export default function SiteHeader() {
                         </button>
                         <button
                           type="button"
-                          aria-label={`Remove “${h.term}” from your recent searches`}
+                          aria-label={t("removeRecent", { term: h.term })}
                           onMouseDown={(e) => {
                             e.preventDefault();
                             history.remove(h.id);
@@ -367,15 +372,16 @@ export default function SiteHeader() {
 
           {/* Action Buttons */}
           <div className="order-2 ml-auto flex items-center gap-2 lg:order-3 lg:ml-0 lg:gap-3">
+            <LanguageSwitcher className="hidden h-11 items-center gap-1.5 rounded border border-border bg-card px-3 text-sm font-bold text-foreground transition-colors hover:border-brand-fresh hover:text-accent-text sm:flex" />
             <ThemeToggle className="!h-10 !w-10 max-sm:!hidden sm:!h-11 sm:!w-11" />
 
-            <Link href="/wishlist" aria-label="Wishlist" className={`${actionBtn} hidden sm:flex`}>
+            <Link href="/wishlist" aria-label={t("wishlist")} className={`${actionBtn} hidden sm:flex`}>
               <Heart className="h-[18px] w-[18px]" aria-hidden="true" />
               {vaultCount > 0 && <span className={badge}>{vaultCount > 9 ? "9+" : vaultCount}</span>}
             </Link>
 
             {isAuthenticated && user ? (
-              <Link href="/account" aria-label={`Account: ${user.name}`} className={`${actionBtn} hidden sm:flex`}>
+              <Link href="/account" aria-label={t("account", { name: user.name })} className={`${actionBtn} hidden sm:flex`}>
                 {user.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={user.avatarUrl} alt={user.name} className="h-7 w-7 rounded object-cover" />
@@ -385,19 +391,19 @@ export default function SiteHeader() {
               </Link>
             ) : (
               // signed out: sign in / sign up in a modal, right where the customer is
-              <button type="button" aria-label="Sign in" onClick={() => openAuth("login")} className={`${actionBtn} hidden sm:flex`}>
+              <button type="button" aria-label={t("signIn")} onClick={() => openAuth("login")} className={`${actionBtn} hidden sm:flex`}>
                 <User className="h-[18px] w-[18px]" aria-hidden="true" />
               </button>
             )}
 
             <button
               type="button"
-              aria-label={`Open cart, ${cartCount} items`}
+              aria-label={t("openCart", { count: cartCount })}
               onClick={openCart}
               className="relative flex h-10 items-center gap-2 rounded bg-primary px-3 sm:h-11 sm:px-3.5 text-primary-foreground transition-colors hover:bg-primary/90 md:px-4"
             >
               <ShoppingCart className="h-[18px] w-[18px]" aria-hidden="true" />
-              <span className="hidden text-sm font-semibold md:inline">Cart</span>
+              <span className="hidden text-sm font-semibold md:inline">{t("cart")}</span>
               {cartCount > 0 && (
                 <span
                   className={`${badge} transition-transform ${cartBadgeBounce ? "scale-[1.35]" : "scale-100"}`}
@@ -410,7 +416,7 @@ export default function SiteHeader() {
             {/* phones: everything that is an icon here on bigger screens lives in this menu */}
             <button
               type="button"
-              aria-label="Open menu"
+              aria-label={t("openMenu")}
               aria-haspopup="dialog"
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen(true)}

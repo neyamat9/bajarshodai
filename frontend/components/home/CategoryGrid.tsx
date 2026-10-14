@@ -1,17 +1,22 @@
+import { Link } from "@/i18n/navigation";
 import RevealGroup from "@/components/motion/RevealGroup";
 import type { Category } from "@/lib/types";
 import { BrowseTrigger } from "@/components/browse/BrowseModals";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import SectionHeader from "./SectionHeader";
 import SectionMore, { sectionMoreClass } from "./SectionMore";
+import { useLocale, useTranslations } from "next-intl";
+import { formatNumber } from "@/lib/format";
+import type { Locale } from "@/lib/locale";
 
 interface CategoryGridProps {
   categories: Category[];
 }
 
 export default function CategoryGrid({ categories }: CategoryGridProps) {
+  const t = useTranslations("Home");
+  const locale = useLocale() as Locale;
   return (
     <section className="relative overflow-hidden bg-secondary pb-16 pt-[60px] sm:pt-[58px] md:pb-20 md:pt-[71px]" aria-labelledby="categories-heading">
       {/* decorative pixels that drift while scrolling */}
@@ -24,16 +29,16 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
           once
           title={
             <span id="categories-heading">
-              Everything your kitchen <span className="text-brand-fresh">needs</span>
+              {t.rich("categoriesTitle", { accent: (c) => <span className="text-brand-fresh">{c}</span> })}
             </span>
           }
-          description="From fresh fish and vegetables to rice, oil and spices — pick a category and fill your basket."
+          description={t("categoriesDesc")}
           action={
             <BrowseTrigger
               kind="categories"
               className="group inline-flex w-fit shrink-0 items-center gap-2 rounded border border-border bg-card px-5 py-3 text-sm font-bold text-foreground transition-colors hover:border-brand-fresh hover:text-accent-text"
             >
-              All categories
+              {t("allCategories")}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
             </BrowseTrigger>
           }
@@ -86,7 +91,7 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
 
                 <div className="absolute inset-x-0 bottom-0 p-3.5 md:p-4">
                   <h3 className="line-clamp-2 break-words font-outfit text-sm font-bold leading-tight text-white min-[400px]:text-base md:text-lg">{cat.name}</h3>
-                  <p className="mt-0.5 text-xs font-medium text-white/80">{cat.productCount} products</p>
+                  <p className="mt-0.5 text-xs font-medium text-white/80">{t("productsCount", { count: formatNumber(cat.productCount, locale, 0) })}</p>
                 </div>
               </Link>
             );
@@ -95,7 +100,7 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
 
         <SectionMore>
           <BrowseTrigger kind="categories" className={sectionMoreClass}>
-            All categories
+            {t("allCategories")}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
           </BrowseTrigger>
         </SectionMore>

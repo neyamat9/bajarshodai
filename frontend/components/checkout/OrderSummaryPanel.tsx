@@ -4,6 +4,9 @@ import { errorMessage } from "@/lib/api/client";
 import type { CheckoutSummary } from "@/lib/services/checkout.service";
 import Image from "next/image";
 import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { formatMoney, formatQuantity, formatNumber } from "@/lib/format";
+import type { Locale } from "@/lib/locale";
 
 interface Props {
   summary: CheckoutSummary | null;
@@ -14,10 +17,12 @@ interface Props {
   onRemoveCoupon: () => void;
 }
 
-const fmt = (n: number) => new Intl.NumberFormat("en-BD").format(n);
 
 /** Right column: items, coupon, shipping and the total — all worked out by the server. */
 export default function OrderSummaryPanel({ summary, loading, couponCode, onApplyCoupon, onRemoveCoupon }: Props) {
+  const t = useTranslations("Checkout");
+  const locale = useLocale() as Locale;
+  const money = (n: number) => formatMoney(n, locale);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -40,7 +45,7 @@ export default function OrderSummaryPanel({ summary, loading, couponCode, onAppl
   return (
     <aside className="rounded bg-muted border border-border overflow-hidden" aria-busy={loading}>
       <div className="px-5 py-4 border-b border-border">
-        <h2 className="text-sm font-black uppercase tracking-widest text-foreground/80">Order summary</h2>
+        <h2 className="text-sm font-black uppercase tracking-widest text-foreground/80">{t("summary")}</h2>
       </div>
 
       <div className="divide-y divide-border max-h-[320px] overflow-y-auto">
@@ -52,10 +57,10 @@ export default function OrderSummaryPanel({ summary, loading, couponCode, onAppl
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-foreground line-clamp-1">{i.name}</p>
               {i.variantName && <p className="text-xs text-muted-foreground/70">{i.variantName}</p>}
-              <p className="text-xs text-muted-foreground">৳{fmt(i.unitPrice)} × {i.quantity}</p>
+              <p className="text-xs text-muted-foreground">{money(i.unitPrice)} × {formatQuantity(i.quantity, locale)}</p>
               {i.issue && <p className="text-xs text-red-400">{i.issue}</p>}
             </div>
-            <span className="text-sm font-semibold text-foreground">৳{fmt(i.lineTotal)}</span>
+            <span className="text-sm font-semibold text-foreground">{money(i.lineTotal)}</span>
           </div>
         ))}
       </div>
@@ -64,38 +69,38 @@ export default function OrderSummaryPanel({ summary, loading, couponCode, onAppl
         {summary?.coupon?.applied ? (
           <div className="flex items-center justify-between rounded border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs">
             <span className="text-emerald-300">
-              <b>{summary.coupon.code}</b> applied{summary.coupon.description ? ` — ${summary.coupon.description}` : ""}
+              {t.rich("couponApplied", { code: summary.coupon.code, desc: summary.coupon.description ? ` — ${summary.coupon.description}` : "", b: (c) => <b>{c}</b> })}
             </span>
-            <button type="button" onClick={onRemoveCoupon} className="font-bold text-foreground/80 hover:text-foreground">Remove</button>
+            <button type="button" onClick={onRemoveCoupon} className="font-bold text-foreground/80 hover:text-foreground">{t("removeCoupon")}</button>
           </div>
         ) : (
           <form onSubmit={apply} className="flex gap-2">
-            <label htmlFor="coupon" className="sr-only">Coupon code</label>
-            <input id="coupon" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="Coupon code" className="h-10 min-w-0 flex-1 rounded border border-border bg-muted px-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:border-brand-fresh focus:outline-none" />
+            <label htmlFor="coupon" className="sr-only">{t("couponLabel")}</label>
+            <input id="coupon" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder={t("couponPh")} className="h-10 min-w-0 flex-1 rounded border border-border bg-muted px-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:border-brand-fresh focus:outline-none" />
             <button type="submit" disabled={busy || !code.trim()} className="h-10 rounded bg-secondary px-4 text-xs font-black uppercase tracking-wide text-foreground hover:bg-secondary disabled:opacity-50">
-              {busy ? "…" : "Apply"}
+              {busy ? "…" : t("apply")}
             </button>
           </form>
         )}
         {err && <p role="alert" className="text-xs text-red-400">{err}</p>}
-        {couponCode && !summary?.coupon?.applied && !err && loading === false && <p className="text-xs text-amber-300">Coupon “{couponCode}” could not be applied.</p>}
+        {couponCode && !summary?.coupon?.applied && !err && loading === false && <p className="text-xs text-amber-300">{t("couponFail", { code: couponCode })}</p>}
 
         <dl className="space-y-2 text-sm">
-          <div className="flex justify-between text-muted-foreground"><dt>Subtotal</dt><dd className="text-foreground">৳{fmt(summary?.subtotal ?? 0)}</dd></div>
-          {!!summary?.discountAmount && <div className="flex justify-between text-emerald-300"><dt>Discount</dt><dd>− ৳{fmt(summary.discountAmount)}</dd></div>}
+          <div className="flex justify-between text-muted-foreground"><dt>{t("subtotal")}</dt><dd className="text-foreground">{money(summary?.subtotal ?? 0)}</dd></div>
+          {!!summary?.discountAmount && <div className="flex justify-between text-emerald-300"><dt>{t("discount")}</dt><dd>− {money(summary.discountAmount)}</dd></div>}
           <div className="flex justify-between text-muted-foreground">
-            <dt>Shipping {summary?.shipping.zoneLabel ? <span className="text-muted-foreground/70">({summary.shipping.zoneLabel})</span> : null}</dt>
-            <dd className="text-foreground">{summary?.shipping.isFree ? <span className="text-emerald-300">Free</span> : `৳${fmt(summary?.shippingCost ?? 0)}`}</dd>
+            <dt>{t("shipping")} {summary?.shipping.zoneLabel ? <span className="text-muted-foreground/70">({summary.shipping.zoneLabel})</span> : null}</dt>
+            <dd className="text-foreground">{summary?.shipping.isFree ? <span className="text-emerald-300">{t("free")}</span> : money(summary?.shippingCost ?? 0)}</dd>
           </div>
           {summary && !summary.shipping.isFree && summary.shipping.amountForFreeShipping ? (
-            <p className="text-xs text-accent-text">Add ৳{fmt(summary.shipping.amountForFreeShipping)} more for free shipping.</p>
+            <p className="text-xs text-accent-text">{t("addForFree", { amount: money(summary.shipping.amountForFreeShipping) })}</p>
           ) : null}
           <div className="flex justify-between border-t border-border pt-3 text-base font-bold">
-            <dt className="text-foreground">Total</dt>
-            <dd className="font-outfit text-xl font-black text-accent-text">৳{fmt(summary?.total ?? 0)}</dd>
+            <dt className="text-foreground">{t("total")}</dt>
+            <dd className="font-outfit text-xl font-black text-accent-text">{money(summary?.total ?? 0)}</dd>
           </div>
         </dl>
-        {summary && <p className="text-xs text-muted-foreground/70">Delivery in {summary.shipping.estimatedMinDays}–{summary.shipping.estimatedMaxDays} days.</p>}
+        {summary && <p className="text-xs text-muted-foreground/70">{t("eta", { min: formatNumber(summary.shipping.estimatedMinDays, locale, 0), max: formatNumber(summary.shipping.estimatedMaxDays, locale, 0) })}</p>}
       </div>
     </aside>
   );

@@ -1,0 +1,104 @@
+import CartSidebar from "@/components/cart/CartSidebar";
+import { AuthModalProvider } from "@/components/auth/AuthModal";
+import FreshnessWatcher from "@/components/layout/FreshnessWatcher";
+import ScrollToTop from "@/components/motion/ScrollToTop";
+import SmoothScroll from "@/components/motion/SmoothScroll";
+import ThemeProvider from "@/components/theme/ThemeProvider";
+import { isLocale, routing } from "@/i18n/routing";
+import { AuthProvider } from "@/lib/context/AuthContext";
+import { CartProvider } from "@/lib/context/CartContext";
+import { WishlistProvider } from "@/lib/context/WishlistContext";
+import type { Metadata } from "next";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
+import { Inter, Outfit } from "next/font/google";
+import localFont from "next/font/local";
+import { notFound } from "next/navigation";
+import { Toaster } from "sonner";
+import "../globals.css";
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+});
+
+const outfit = Outfit({
+  variable: "--font-outfit",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+});
+
+// Bangla text: Inter and Outfit have no Bangla letters, so the browser falls back to this font for them.
+// Self-hosted (see app/fonts/README.md): the Google font loader fails in production builds for Bengali.
+const bangla = localFont({
+  src: "../fonts/NotoSansBengali-variable.woff2",
+  variable: "--font-bangla",
+  weight: "400 800",
+  display: "swap",
+});
+
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale: isLocale(locale) ? locale : routing.defaultLocale, namespace: "Meta" });
+  return {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+    title: { default: t("title"), template: t("titleTemplate") },
+    description: t("description"),
+    keywords: t("keywords").split("|"),
+    openGraph: {
+      siteName: "Bazar Shodai",
+      type: "website",
+      locale: locale === "en" ? "en_BD" : "bn_BD",
+      images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Bazar Shodai" }],
+    },
+  };
+}
+
+export default async function LocaleLayout({
+  children,
+  params,
+}: Readonly<{
+  children: React.ReactNode;
+  params: Promise<{ locale: string }>;
+}>) {
+  const { locale } = await params;
+  if (!isLocale(locale)) notFound();
+  setRequestLocale(locale);
+  const messages = await getMessages();
+
+  return (
+    <html lang={locale} suppressHydrationWarning>
+      <head>
+        <noscript>
+          <style>{"[data-reveal],[data-hero-item]{opacity:1!important}"}</style>
+        </noscript>
+      </head>
+      <body className={`${inter.variable} ${outfit.variable} ${bangla.variable} antialiased`}>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
+            <SmoothScroll />
+            <ScrollToTop />
+            <FreshnessWatcher />
+            <AuthProvider>
+              <CartProvider>
+                <WishlistProvider>
+                  <AuthModalProvider>
+                    {children}
+                    {/* Global overlays — rendered once, visibility driven by context */}
+                    <CartSidebar />
+                  </AuthModalProvider>
+                </WishlistProvider>
+              </CartProvider>
+            </AuthProvider>
+            <Toaster position="top-center" richColors expand={true} />
+          </ThemeProvider>
+        </NextIntlClientProvider>
+      </body>
+    </html>
+  );
+}
