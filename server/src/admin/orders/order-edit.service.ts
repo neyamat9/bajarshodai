@@ -856,6 +856,16 @@ export class OrderEditService {
               country: 'Bangladesh',
               userId,
               label: 'Shipping',
+              ...(pin
+                ? {
+                    latitude: pin.lat,
+                    longitude: pin.lng,
+                    placeName: addr?.placeName ?? null,
+                    landmark: addr?.landmark ?? null,
+                    locationSource: 'PIN' as const,
+                    locationCapturedAt: new Date(),
+                  }
+                : { landmark: addr?.landmark ?? null }),
             },
           });
 
