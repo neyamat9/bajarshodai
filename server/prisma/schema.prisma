@@ -201,8 +201,8 @@ model User {
   id String @id @default(uuid())
 
   // Identity
-  email            String  @unique
-  phone            String? @unique
+  email            String? @unique // optional: customers log in with their phone
+  phone            String  @unique
   role             Role    @default(USER)
   passwordHash     String
   name             String
@@ -864,6 +864,8 @@ model Order {
 
   // WEB = placed by the customer, ADMIN = created by the shop (phone order)
   source           String  @default("WEB")
+  // language the customer used when ordering (emails, invoice and SMS follow it)
+  language         String  @default("bn")
   createdByAdminId String?
 
   // Guest checkout contact details (set only when userId is null)
