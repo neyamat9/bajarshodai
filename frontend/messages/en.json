@@ -868,7 +868,11 @@
     "needHelp": "Need help?",
     "needHelpText": "Questions about this order? We reply here and by email.",
     "contactSupport": "Contact support",
-    "returnItem": "Return an item"
+    "returnItem": "Return an item",
+    "riderTitle": "Your delivery person",
+    "riderOnTheWay": "Is on the way with your order.",
+    "riderHasIt": "Has your order and will set off soon.",
+    "callRider": "Call"
   },
   "Wishlist": {
     "titleLead": "My",

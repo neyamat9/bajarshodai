@@ -8,7 +8,7 @@ import { errorMessage } from "@/lib/api/client";
 import { useCart } from "@/lib/hooks/use-cart";
 import { cancelOrder, getOrderById, openInvoice, reorder } from "@/lib/services/orders.service";
 import { MOBILE_METHODS, type Order } from "@/lib/types";
-import { ArrowLeft, Banknote, Calendar, CheckCircle2, StickyNote, ExternalLink, FileText, Headset, MapPin, PackageSearch, RotateCcw, RotateCw, Smartphone, Truck, XCircle } from "lucide-react";
+import { ArrowLeft, Banknote, Bike, Calendar, CheckCircle2, StickyNote, ExternalLink, FileText, Headset, MapPin, PackageSearch, Phone, RotateCcw, RotateCw, Smartphone, Truck, XCircle } from "lucide-react";
 import Image from "next/image";
 import { useParams, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -261,6 +261,19 @@ function Detail() {
 
         {/* side panels */}
         <div className="space-y-5">
+          {order.rider && (
+            <div className={`${card} p-5`}>
+              <h2 className="mb-2 flex items-center gap-2 font-outfit text-base font-black text-foreground">
+                <Bike className="h-4 w-4 text-accent-text" aria-hidden="true" />
+                {t("riderTitle")}
+              </h2>
+              <p className="text-sm font-bold text-foreground">{order.rider.name}</p>
+              <p className="text-xs text-muted-foreground">{order.rider.status === "ON_THE_WAY" ? t("riderOnTheWay") : t("riderHasIt")}</p>
+              <a href={`tel:${order.rider.phone}`} className="mt-3 inline-flex items-center gap-2 rounded bg-brand-fresh px-4 py-2 text-sm font-bold text-on-fresh">
+                <Phone className="h-4 w-4" aria-hidden="true" /> {t("callRider")}
+              </a>
+            </div>
+          )}
           <div className={`${card} p-5`}>
             <h2 className="mb-3 flex items-center gap-2 font-outfit text-base font-black text-foreground">
               <MapPin className="h-4 w-4 text-accent-text" aria-hidden="true" />

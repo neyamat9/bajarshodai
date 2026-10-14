@@ -284,6 +284,8 @@ export interface Order {
   deliveryDistanceKm?: number | null;
   deliveryPlaceName?: string | null;
   deliveryLandmark?: string | null;
+  /** the rider, once the parcel is with them */
+  rider?: { name: string; phone: string; status: "PICKED_UP" | "ON_THE_WAY" } | null;
   canCancel?: boolean;
   deliveryNote?: string | null;
   paymentVerifiedAt?: string | null;

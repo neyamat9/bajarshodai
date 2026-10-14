@@ -285,6 +285,7 @@ export function mapOrder(o: Raw, locale: Locale = clientLocale()): Order {
     deliveryDistanceKm: o.deliveryDistanceKm != null ? num(o.deliveryDistanceKm) : null,
     deliveryPlaceName: o.deliveryPlaceName ?? null,
     deliveryLandmark: o.deliveryLandmark ?? null,
+    rider: o.rider ? { name: String(o.rider.name), phone: String(o.rider.phone), status: o.rider.status } : null,
     courierName: o.courierName ?? null,
     trackingNumber: o.trackingNumber ?? null,
     trackingUrl: o.trackingUrl ?? null,
