@@ -102,11 +102,23 @@ export class OrdersService {
         statusHistory: { orderBy: { createdAt: 'asc' } },
         shippingAddress: true,
         payments: true,
+        delivery: {
+          select: {
+            status: true,
+            assignee: { select: { name: true, phone: true } },
+          },
+        },
       },
     });
 
     if (!order) throw new NotFoundException('Order not found');
-    return toCustomerOrder(order);
+    // Once the parcel is with the rider the customer may call them
+    const d = order.delivery;
+    const rider =
+      d && (d.status === 'PICKED_UP' || d.status === 'ON_THE_WAY')
+        ? { name: d.assignee.name, phone: d.assignee.phone, status: d.status }
+        : null;
+    return { ...toCustomerOrder(order), rider };
   }
 
   // Places an order from the cart of a logged-in customer or a guest.
