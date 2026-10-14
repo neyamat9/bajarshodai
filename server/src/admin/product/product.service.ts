@@ -199,10 +199,6 @@ export class ProductService {
       include: {
         images: { orderBy: [{ order: 'asc' }, { createdAt: 'asc' }] },
         variants: { orderBy: { createdAt: 'asc' } },
-        specifications: {
-          include: { items: { orderBy: { displayOrder: 'asc' } } },
-          orderBy: { displayOrder: 'asc' },
-        },
         brand: { select: { id: true, name: true } },
         category: { select: { id: true, name: true } },
         subCategory: { select: { id: true, name: true } },
@@ -218,7 +214,6 @@ export class ProductService {
     return {
       ...product,
       tags: product.tags.map((t) => t.tag),
-      inTheBox: parseJsonList(product.inTheBox),
       // the everyday price, whether or not a promotion is running right now
       normalPrice: num(product.priceBeforeDiscount ?? product.sellingPrice),
       stockState: stockState(product.stock, product.lowStockThreshold),
@@ -273,7 +268,6 @@ export class ProductService {
             barcode: dto.barcode,
             description: dto.description,
             shortDescription: dto.shortDescription,
-            warrantyInfo: dto.warrantyInfo,
             status: dto.status ?? 'ACTIVE',
             buyingPrice: dto.buyingPrice,
             regularPrice: dto.regularPrice,
@@ -301,18 +295,10 @@ export class ProductService {
             metaTitle: dto.metaTitle,
             metaDescription: dto.metaDescription,
             metaKeywords: dto.metaKeywords,
-            inTheBox: dto.inTheBox?.length
-              ? JSON.stringify(dto.inTheBox)
-              : null,
-            hasSpecification:
-              dto.hasSpecification ?? !!dto.specifications?.length,
             brandId: dto.brandId,
             categoryId: dto.categoryId,
             subCategoryId: dto.subCategoryId,
             ...area,
-            specifications: dto.specifications?.length
-              ? { create: specCreate(dto.specifications) }
-              : undefined,
             attributes: attributes.length ? { create: attributes } : undefined,
             tags: tags.length
               ? { create: tags.map((tag) => ({ tag })) }
@@ -487,7 +473,6 @@ export class ProductService {
       'barcode',
       'description',
       'shortDescription',
-      'warrantyInfo',
       'status',
       'lowStockThreshold',
       'freeShipping',
@@ -506,15 +491,6 @@ export class ProductService {
     ] as const;
     for (const k of copy) {
       if (dto[k] !== undefined) (data as Record<string, unknown>)[k] = dto[k];
-    }
-    if (dto.inTheBox !== undefined) {
-      data.inTheBox = dto.inTheBox.length ? JSON.stringify(dto.inTheBox) : null;
-    }
-    if (dto.specifications !== undefined) {
-      data.hasSpecification =
-        dto.hasSpecification ?? dto.specifications.length > 0;
-    } else if (dto.hasSpecification !== undefined) {
-      data.hasSpecification = dto.hasSpecification;
     }
 
     const attributes = dto.attributes
@@ -541,14 +517,6 @@ export class ProductService {
           if (tags.length) {
             await tx.productTag.createMany({
               data: tags.map((tag) => ({ tag, productId: id })),
-            });
-          }
-        }
-        if (dto.specifications) {
-          await tx.specificationHeader.deleteMany({ where: { productId: id } });
-          for (const [i, s] of specCreate(dto.specifications).entries()) {
-            await tx.specificationHeader.create({
-              data: { ...s, displayOrder: i, productId: id },
             });
           }
         }
@@ -650,7 +618,6 @@ export class ProductService {
     await this.prisma.$transaction(async (tx) => {
       await tx.cartItem.deleteMany({ where: { productId: id } });
       await tx.wishlistItem.deleteMany({ where: { productId: id } });
-      await tx.compareItem.deleteMany({ where: { productId: id } });
       await tx.product.delete({ where: { id } });
       await writeAudit(tx, {
         adminId,
@@ -679,10 +646,6 @@ export class ProductService {
           include: { upload: true },
         },
         variants: { orderBy: { createdAt: 'asc' } },
-        specifications: {
-          include: { items: true },
-          orderBy: { displayOrder: 'asc' },
-        },
         tags: true,
         attributes: true,
       },
@@ -712,7 +675,6 @@ export class ProductService {
             barcode: null,
             description: src.description,
             shortDescription: src.shortDescription,
-            warrantyInfo: src.warrantyInfo,
             brandName: src.brandName,
             categoryName: src.categoryName,
             subCategoryName: src.subCategoryName,
@@ -725,7 +687,6 @@ export class ProductService {
             profitMargin: src.profitMargin,
             stock: 0,
             lowStockThreshold: src.lowStockThreshold,
-            inTheBox: src.inTheBox,
             weight: src.weight,
             length: src.length,
             width: src.width,
@@ -740,7 +701,6 @@ export class ProductService {
             isHot: false,
             isBestSeller: false,
             isLimitedStock: src.isLimitedStock,
-            hasSpecification: src.hasSpecification,
             taxRate: src.taxRate,
             taxType: src.taxType,
             brandId: src.brandId,
@@ -755,23 +715,6 @@ export class ProductService {
             },
           },
         });
-
-        for (const [i, s] of src.specifications.entries()) {
-          await tx.specificationHeader.create({
-            data: {
-              title: s.title,
-              displayOrder: i,
-              productId: product.id,
-              items: {
-                create: s.items.map((it, n) => ({
-                  key: it.key,
-                  value: it.value,
-                  displayOrder: n,
-                })),
-              },
-            },
-          });
-        }
 
         for (const [i, img] of src.images.entries()) {
           const uploadId = copiedUploads.get(img.id);
@@ -1022,32 +965,6 @@ export function variantRow(v: ProductVariantInputDto) {
     attribute3Name: v.attribute3Name?.trim() || null,
     attribute3Value: v.attribute3Value?.trim() || null,
   };
-}
-
-function specCreate(
-  specs: { title: string; items: { key: string; value: string }[] }[],
-) {
-  return specs.map((spec, i) => ({
-    title: spec.title,
-    displayOrder: i,
-    items: {
-      create: spec.items.map((item, n) => ({
-        key: item.key,
-        value: item.value,
-        displayOrder: n,
-      })),
-    },
-  }));
-}
-
-function parseJsonList(value: string | null): string[] {
-  if (!value) return [];
-  try {
-    const parsed: unknown = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed.map(String) : [];
-  } catch {
-    return [];
-  }
 }
 
 // Trims and drops blank / repeated tags (case-insensitively).

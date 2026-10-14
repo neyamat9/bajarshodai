@@ -6,9 +6,9 @@ export class AppService {
   getHello() {
     return {
       success: true,
-      message: 'RaizzBD Server is running',
+      message: 'Bazar Shodai API is running',
       version: '1.0.0',
-      documentation: 'http://localhost:8000/docs',
+      documentation: '/docs',
       environment: process.env.NODE_ENV || 'development',
       timestamp: new Date().toISOString(),
       host: os.hostname(),

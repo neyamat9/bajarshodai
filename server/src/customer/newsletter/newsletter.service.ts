@@ -106,10 +106,10 @@ export class NewsletterService {
       await this.mail.send({
         to: email,
         subject,
-        text: `Thanks for subscribing to ${site.storeName}! You'll be the first to hear about new gadgets and offers.\n\nUnsubscribe: ${unsubscribe}`,
+        text: `Thanks for subscribing to ${site.storeName}! You'll be the first to hear about fresh arrivals and offers.\n\nUnsubscribe: ${unsubscribe}`,
         html: renderEmailLayout(site, {
           title: subject,
-          bodyHtml: `<h2 style="margin:0 0 12px;font-size:20px">You're subscribed!</h2><p>Thanks for subscribing to ${escapeHtml(site.storeName)}. You'll be the first to hear about new gadgets, deals and offers.</p>`,
+          bodyHtml: `<h2 style="margin:0 0 12px;font-size:20px">You're subscribed!</h2><p>Thanks for subscribing to ${escapeHtml(site.storeName)}. You'll be the first to hear about fresh arrivals, deals and offers.</p>`,
           footerHtml: `<div><a href="${escapeHtml(unsubscribe)}" style="color:#666">Unsubscribe</a></div>`,
         }),
       });

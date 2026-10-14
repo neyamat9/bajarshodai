@@ -27,11 +27,6 @@ export default () => ({
         ],
   },
 
-  graphql: {
-    playground: process.env.GRAPHQL_PLAYGROUND === 'true',
-    introspection: process.env.GRAPHQL_INTROSPECTION === 'true',
-  },
-
   swagger: {
     enabled: process.env.SWAGGER_ENABLED !== 'false', // default to true
   },
@@ -61,7 +56,7 @@ export default () => ({
     secure: process.env.MAIL_SECURE === 'true',
     user: process.env.MAIL_USER,
     pass: process.env.MAIL_PASS,
-    from: process.env.MAIL_FROM || 'TechBD <no-reply@techbd.com>',
+    from: process.env.MAIL_FROM || 'Bazar Shodai <no-reply@example.com>',
   },
 
   passwordReset: {

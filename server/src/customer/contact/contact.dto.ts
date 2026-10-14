@@ -33,14 +33,14 @@ export class ContactDto {
   @IsBdMobile()
   phone?: string;
 
-  @ApiProperty({ example: 'Warranty question' })
+  @ApiProperty({ example: 'Question about my order' })
   @Transform(trim)
   @IsString()
   @MinLength(3)
   @MaxLength(150)
   subject: string;
 
-  @ApiProperty({ example: 'My earbuds stopped charging after 2 weeks...' })
+  @ApiProperty({ example: 'The fish I received was not fresh...' })
   @Transform(trim)
   @IsString()
   @MinLength(10)

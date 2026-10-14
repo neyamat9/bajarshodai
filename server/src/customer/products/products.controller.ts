@@ -24,7 +24,7 @@ export class ProductsController {
   @Get()
   @ApiOperation({
     summary:
-      'List products: filter by category, brand(s), price, stock, on sale, rating, tag and spec (spec=RAM:8GB|12GB&spec=Network:5G)',
+      'List products: filter by category, brand(s), price, stock, on sale, rating, tag and spec (spec=Origin:Local|Imported&spec=Type:Organic)',
   })
   async findAll(@Query() query: ProductQueryDto) {
     return this.productsService.findAll(query);
@@ -35,7 +35,7 @@ export class ProductsController {
   @Get('filters')
   @ApiOperation({
     summary:
-      'Filter facets for a category/sub-category/search: brands, price range, spec values (RAM, Storage, Color...), ratings, tags, availability — with counts',
+      'Filter facets for a category/sub-category/search: brands, price range, spec values (Origin, Type...), ratings, tags, availability — with counts',
   })
   async filters(@Query() scope: ProductScopeDto) {
     return this.productsService.getFilters(scope);

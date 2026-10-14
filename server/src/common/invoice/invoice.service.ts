@@ -8,7 +8,7 @@ import { escapeHtml, formatMoney } from '../mail/email-layout';
 
 const invoiceInclude = {
   items: {
-    include: { product: { select: { warrantyInfo: true, productCode: true } } },
+    include: { product: { select: { productCode: true } } },
   },
   shippingAddress: true,
   user: { select: { name: true, email: true, phone: true } },
@@ -37,7 +37,6 @@ export interface InvoiceData {
     name: string;
     variant: string | null;
     sku: string | null;
-    warranty: string | null;
     quantity: number;
     unitPrice: number;
     total: number;
@@ -108,7 +107,6 @@ export class InvoiceService {
         name: i.productName,
         variant: i.variantName,
         sku: i.variantSku ?? i.product?.productCode ?? null,
-        warranty: i.product?.warrantyInfo ?? null,
         quantity: i.quantity,
         unitPrice: Number(i.price),
         total: Number(i.total),
@@ -172,7 +170,6 @@ export class InvoiceService {
         (i, idx) => `<tr>
 <td>${idx + 1}</td>
 <td><strong>${escapeHtml(i.name)}</strong>${i.variant ? `<div class="muted">${escapeHtml(i.variant)}</div>` : ''}${i.sku ? `<div class="muted">SKU: ${escapeHtml(i.sku)}</div>` : ''}</td>
-<td>${i.warranty ? escapeHtml(i.warranty) : '—'}</td>
 <td class="num">${i.quantity}</td>
 <td class="num">${money(i.unitPrice)}</td>
 <td class="num">${money(i.total)}</td></tr>`,
@@ -225,7 +222,7 @@ ${d.customer.email ? `<div>${escapeHtml(d.customer.email)}</div>` : ''}
 ${d.payment.bkashTransactionId ? `<div class="muted">${escapeHtml(paymentLabel)} TrxID: ${escapeHtml(d.payment.bkashTransactionId)}</div>` : ''}
 <div class="muted">Order status: ${escapeHtml(d.status)}</div></div>
 </div>
-<table><thead><tr><th>#</th><th>Item</th><th>Warranty</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Amount</th></tr></thead>
+<table><thead><tr><th>#</th><th>Item</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Amount</th></tr></thead>
 <tbody>${rows}</tbody></table>
 <table class="totals">
 ${line('Subtotal', money(d.totals.subtotal))}
@@ -236,7 +233,7 @@ ${line('Total', money(d.totals.total), 'grand')}
 ${line('Paid', money(d.totals.paid))}
 ${line('Amount due', money(d.totals.due))}
 </table>
-<div class="note">Please keep this invoice for warranty claims. Warranty is provided as stated for each item${site.hotline ? `; for support call ${escapeHtml(site.hotline)}` : ''}.<br>This is a computer-generated invoice and does not require a signature.</div>
+<div class="note">Thank you for shopping with us${site.hotline ? `. For help, call ${escapeHtml(site.hotline)}` : ''}.<br>This is a computer-generated invoice and does not require a signature.</div>
 </div></body></html>`;
   }
 }

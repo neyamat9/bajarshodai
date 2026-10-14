@@ -11,7 +11,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateSubCategoryDto {
   @ApiProperty({
-    example: 'Smartphones',
+    example: 'Fresh Vegetables',
     description: 'The unique name of the sub-category',
   })
   @IsString()
@@ -19,7 +19,7 @@ export class CreateSubCategoryDto {
   name: string;
 
   @ApiProperty({
-    example: 'smartphones',
+    example: 'fresh-vegetables',
     description: 'The unique URL-friendly slug for the sub-category',
   })
   @IsString()

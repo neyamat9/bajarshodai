@@ -1,4 +1,7 @@
-# RaizBD API Build Progress
+# Bazar Shodai API Build Progress
+
+Inherited from the earlier shop and being reshaped for Bazar Shodai (see ../PLAN.md). Phase 1 removed the compare, specifications, warranty, affiliate, PC-builder and Dhaka-zone leftovers and the GraphQL layer, and added the grocery seed (units, bilingual categories, demo products). Distance-based delivery, units admin, staff and deliveries come in later phases.
+
 
 ## Infrastructure
 - [x] Rate limiting module (3 tiers: 10s/20, 60s/60, 3600s/1000)
@@ -16,16 +19,15 @@
 - [x] Reviews (list with rating breakdown, create, helpful vote)
 - [x] Q&A (list, ask)
 - [x] Addresses (CRUD with set-default)
-- [x] PC Builder (components, compatibility, save/load/delete builds)
 - [x] Coupon apply (`POST /customer/coupons/apply`) — applied at order time, released on cancel
-- [x] Shipping options (`GET /customer/shipping/options`) — GLOBAL or inside/outside Dhaka, set from admin
+- [x] Shipping options (`GET /customer/shipping/options`) — flat or inside/outside Dhaka for now; becomes distance-based from Kalibari Bazar in Phase 4
 - [x] Checkout summary (`POST /customer/checkout/summary`)
 - [x] Forgot / reset password (`/customer/auth/forgot-password`, `/reset-password/verify`, `/reset-password`)
 - [x] Order tracking (`GET /customer/orders/track?orderNumber=&phone=`, public)
 - [x] Returns (`/customer/returns`: eligibility, create, list, detail, cancel)
 - [x] Public store settings (`GET /customer/settings`)
-- [x] Filter facets (`GET /customer/products/filters`) — brands, price range, specs (RAM/Storage/Color...), ratings, tags, availability
-- [x] Product list filters: multi-brand, spec (`spec=RAM:8GB|12GB`), rating, tag, on sale, in stock; sort by rating/name
+- [x] Filter facets (`GET /customer/products/filters`) — brands, price range, attribute values, ratings, tags, availability
+- [x] Product list filters: multi-brand, attribute (`spec=Origin:Local|Imported`), rating, tag, on sale, in stock; sort by rating/name
 - [x] Search suggestions (`GET /customer/products/suggestions?q=`)
 - [x] Home sections (`/customer/products/new-arrivals`, `/best-sellers`, `/on-sale`, `GET /customer/home`)
 - [x] Guest cart (`x-guest-token` header, `POST /customer/cart/guest-token`, merge on login/register or `POST /customer/cart/merge`)
@@ -45,7 +47,7 @@
 
 ## Admin Dashboard APIs (all under `/api/admin/*`, JWT + ADMIN/SUPER_ADMIN)
 - [x] Dashboard stats (overview, revenue, orders by status, low stock, recent orders)
-- [x] Products: create/edit (auto slug, opening stock, tags, attributes, specs, variants), list with filters (status/category/brand/stock state/sort, search incl. SKU), detail, duplicate, delete (deactivates when it has orders)
+- [x] Products: create/edit (auto slug, opening stock, tags, attributes, variants), list with filters (status/category/brand/stock state/sort, search incl. SKU), detail, duplicate, delete (deactivates when it has orders)
 - [x] Scheduled discounts: `discountPrice` + `discountStart`/`discountEnd`; a 60 s job switches the live price and restores it afterwards
 - [x] Variants (`/admin/products/:id/variants`), photos (`/images`: upload, attach from library, main, reorder, delete), tags (`PUT /:id/tags`, `GET /admin/products/tags`)
 - [x] Inventory (`/admin/inventory`): summary, items, low-stock, out-of-stock, adjust (add/remove/set with reason), logs, CSV export, bulk CSV update (dry run)
@@ -93,7 +95,6 @@
 - [x] Wishlist service (list, check, add, remove)
 - [x] Reviews service (byProduct, create, vote)
 - [x] Address service (CRUD + setDefault)
-- [x] PC Builder service (components, compatible, builds CRUD)
 - [x] AuthContext now supports dual-mode (mock fallback when no backend)
 
 ## Dashboard (Vite) Integration

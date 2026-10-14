@@ -102,7 +102,7 @@ export class ProductController {
 
   @Get(':id')
   @ApiOperation({
-    summary: 'Product detail: photos, variants, tags, specs, price history',
+    summary: 'Product detail: photos, variants, tags, price history',
   })
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.products.findOne(id);
@@ -125,7 +125,7 @@ export class ProductController {
   @Patch(':id')
   @ApiOperation({
     summary:
-      'Edit a product. Only the fields you send change; tags, attributes and specifications replace the old list.',
+      'Edit a product. Only the fields you send change; tags and attributes replace the old list.',
   })
   update(
     @Param('id', ParseUUIDPipe) id: string,

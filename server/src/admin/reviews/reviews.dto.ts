@@ -108,7 +108,7 @@ export class ListQuestionsDto extends Paged {
 }
 
 export class AnswerQuestionDto {
-  @ApiProperty({ example: 'Yes, it comes with a 1 year official warranty.' })
+  @ApiProperty({ example: 'Yes, it is fresh and packed on the day of delivery.' })
   @Transform(trim)
   @IsString()
   @IsNotEmpty()

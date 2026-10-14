@@ -168,7 +168,7 @@ export interface SettingsMap {
 
 export const DEFAULT_SETTINGS: SettingsMap = {
   site: {
-    storeName: 'TechBD',
+    storeName: 'Bazar Shodai',
     tagline: '',
     logoUrl: null,
     faviconUrl: null,
@@ -219,7 +219,7 @@ export const DEFAULT_SETTINGS: SettingsMap = {
   },
   email: {
     provider: 'none',
-    fromName: 'TechBD',
+    fromName: 'Bazar Shodai',
     fromEmail: null,
     replyTo: null,
     smtpHost: null,

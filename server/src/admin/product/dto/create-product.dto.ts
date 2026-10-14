@@ -24,57 +24,23 @@ import { ProductStatus } from '@prisma/client';
 const trim = ({ value }: { value: unknown }): unknown =>
   typeof value === 'string' ? value.trim() : value;
 
-class SpecificationItemDto {
-  @ApiProperty({
-    example: 'Image Sensor',
-    description: 'The key of the specification',
-  })
-  @IsString()
-  key: string;
-
-  @ApiProperty({
-    example: '1/3" Progressive Scan CMOS',
-    description: 'The value of the specification',
-  })
-  @IsString()
-  value: string;
-}
-
-class SpecificationHeaderDto {
-  @ApiProperty({
-    example: 'General Information',
-    description: 'The heading title',
-  })
-  @IsString()
-  title: string;
-
-  @ApiProperty({
-    type: [SpecificationItemDto],
-    description: 'List of key-value pairs under this header',
-  })
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => SpecificationItemDto)
-  items: SpecificationItemDto[];
-}
-
 // Filterable attributes shown as storefront filters, e.g.
-// { name: "RAM", value: "8GB" }, { name: "Network", value: "5G" }.
+// { name: "Origin", value: "Local" }, { name: "Type", value: "Organic" }.
 export class ProductAttributeDto {
-  @ApiProperty({ example: 'RAM' })
+  @ApiProperty({ example: 'Origin' })
   @IsString()
   @IsNotEmpty()
   @MaxLength(50)
   name: string;
 
-  @ApiProperty({ example: '8GB' })
+  @ApiProperty({ example: 'Local' })
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
   value: string;
 }
 
-// One purchasable option of a product (colour / storage / size...).
+// One purchasable option of a product (pack size / weight...).
 export class ProductVariantInputDto {
   @ApiPropertyOptional({
     example: 'Black / 256GB',
@@ -143,13 +109,13 @@ export class ProductVariantInputDto {
   @MaxLength(100)
   attribute1Value?: string;
 
-  @ApiPropertyOptional({ example: 'Storage' })
+  @ApiPropertyOptional({ example: 'Pack' })
   @IsOptional()
   @IsString()
   @MaxLength(50)
   attribute2Name?: string;
 
-  @ApiPropertyOptional({ example: '256GB' })
+  @ApiPropertyOptional({ example: '500 g' })
   @IsOptional()
   @IsString()
   @MaxLength(100)
@@ -222,15 +188,6 @@ export class CreateProductDto {
   @IsString()
   @MaxLength(1000)
   shortDescription?: string;
-
-  @ApiPropertyOptional({
-    example: '1 year official warranty',
-    description: 'Shown on the product page and on invoices',
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(300)
-  warrantyInfo?: string;
 
   @ApiPropertyOptional({ enum: ProductStatus, default: 'ACTIVE' })
   @IsOptional()
@@ -397,21 +354,6 @@ export class CreateProductDto {
   @MaxLength(300)
   metaKeywords?: string;
 
-  @ApiPropertyOptional({ type: [String], example: ['Charger', 'USB-C cable'] })
-  @IsOptional()
-  @IsArray()
-  @ArrayMaxSize(30)
-  @IsString({ each: true })
-  @MaxLength(200, { each: true })
-  inTheBox?: string[];
-
-  @ApiPropertyOptional({
-    description: 'Derived from `specifications` when omitted',
-  })
-  @IsBoolean()
-  @IsOptional()
-  hasSpecification?: boolean;
-
   @ApiPropertyOptional({ example: 'BRAND_UUID', description: 'Valid Brand ID' })
   @IsUUID()
   @IsOptional()
@@ -430,19 +372,9 @@ export class CreateProductDto {
   subCategoryId?: string;
 
   @ApiPropertyOptional({
-    type: [SpecificationHeaderDto],
-    description: 'Dynamic specifications grouped by header',
-  })
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => SpecificationHeaderDto)
-  specifications?: SpecificationHeaderDto[];
-
-  @ApiPropertyOptional({
     type: [ProductAttributeDto],
     description:
-      'Filterable attributes (RAM, Storage, Color, Network...). On update, the list replaces all existing attributes.',
+      'Filterable attributes (Origin, Type, Brand...). On update, the list replaces all existing attributes.',
   })
   @IsOptional()
   @IsArray()

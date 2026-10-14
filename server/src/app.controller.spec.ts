@@ -25,8 +25,10 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+    it('reports that the Bazar Shodai API is running', () => {
+      const res = appController.getHello();
+      expect(res.success).toBe(true);
+      expect(res.message).toBe('Bazar Shodai API is running');
     });
   });
 });

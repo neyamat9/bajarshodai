@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { AuthResolver } from './auth.resolver';
 import { AuthService } from './auth.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { PassportModule } from '@nestjs/passport';
@@ -20,7 +19,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
       }),
     }),
   ],
-  providers: [AuthResolver, AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy],
   exports: [AuthService], // Export if other modules need auth verification
 })
 export class AuthModule {}

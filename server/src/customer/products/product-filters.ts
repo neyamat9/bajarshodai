@@ -8,7 +8,7 @@ export interface ParsedSpec {
   values: string[];
 }
 
-// "RAM:8GB|12GB" → { name: "RAM", values: ["8GB", "12GB"] }.
+// "Origin:Local|Imported" → { name: "Origin", values: ["Local", "Imported"] }.
 // Several params for the same name are merged.
 export function parseSpecs(specs: string[] = []): ParsedSpec[] {
   const byName = new Map<string, ParsedSpec>();

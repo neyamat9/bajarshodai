@@ -21,11 +21,6 @@ export class TransformInterceptor<T> implements NestInterceptor<T, any> {
   constructor(private reflector: Reflector) {}
 
   intercept(context: ExecutionContext, next: CallHandler<T>): Observable<any> {
-    // Skip transformation for GraphQL requests
-    if (context.getType<string>() === 'graphql') {
-      return next.handle();
-    }
-
     const res = context.switchToHttp().getResponse<{
       getHeader?: (name: string) => unknown;
     }>();

@@ -54,17 +54,8 @@ async function bootstrap() {
         directives: {
           defaultSrc: [`'self'`, 'http://localhost:8000'],
           styleSrc: [`'self'`, `'unsafe-inline'`],
-          imgSrc: [
-            `'self'`,
-            'data:',
-            'apollo-server-landing-page.cdn.apollographql.com',
-          ],
+          imgSrc: [`'self'`, 'data:'],
           scriptSrc: [`'self'`, `https: 'unsafe-inline'`],
-          manifestSrc: [
-            `'self'`,
-            'apollo-server-landing-page.cdn.apollographql.com',
-          ],
-          frameSrc: [`'self'`, 'sandbox.embed.apollographql.com'],
         },
       },
     }),
@@ -141,12 +132,12 @@ async function bootstrap() {
   // ========== SWAGGER DOCUMENTATION ==========
   if (swaggerEnabled) {
     const config = new DocumentBuilder()
-      .setTitle('GadgetBachai API')
+      .setTitle('Bazar Shodai API')
       .setDescription(
-        'The GadgetBachai API documentation - High performance E-Commerce backend for tech and gadgets',
+        'Bazar Shodai API: grocery and fresh-food delivery for Shahrasti, Chandpur',
       )
       .setVersion('1.0')
-      .addTag('GadgetBachai')
+      .addTag('Bazar Shodai')
       .addApiKey(
         {
           type: 'apiKey',
@@ -177,7 +168,7 @@ async function bootstrap() {
         filter: true,
         showRequestDuration: true,
       },
-      customSiteTitle: 'GadgetBachai API Documentation',
+      customSiteTitle: 'Bazar Shodai API Documentation',
       customfavIcon: 'https://nestjs.com/img/logo-small.svg',
       customCss: '.swagger-ui .topbar { display: none }',
     };
@@ -190,7 +181,6 @@ async function bootstrap() {
 
   // ========== STARTUP LOGS ==========
   logger.log(`🚀 Server is running on: http://localhost:${port}`);
-  logger.log(`🚀 GraphQL is running on: http://localhost:${port}/graphql`);
   logger.log(`🌍 Environment: ${nodeEnv}`);
   logger.log(`📡 API Prefix: /${apiPrefix}`);
 

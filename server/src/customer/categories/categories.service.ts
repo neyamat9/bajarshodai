@@ -48,8 +48,8 @@ export class CategoriesService {
     return category;
   }
 
-  // Active sub-categories of a category (e.g. Accessories → Chargers, Cases,
-  // Earbuds), each with its number of active products.
+  // Active sub-categories of a category (e.g. Fruits & Vegetables → Fresh Vegetables,
+  // Fresh Fruits), each with its number of active products.
   async findSubCategories(slug: string) {
     const result = await this.cache.getOrSet(
       `categories:subs:${slug}`,

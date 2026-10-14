@@ -250,13 +250,13 @@ export class UpdateEmailSettingsDto {
   @IsIn(['none', 'smtp', 'resend'])
   provider?: 'none' | 'smtp' | 'resend';
 
-  @ApiPropertyOptional({ example: 'TechBD' })
+  @ApiPropertyOptional({ example: 'Bazar Shodai' })
   @IsOptional()
   @IsString()
   @MaxLength(100)
   fromName?: string;
 
-  @ApiPropertyOptional({ nullable: true, example: 'orders@techbd.com' })
+  @ApiPropertyOptional({ nullable: true, example: 'orders@bazarshodai.com' })
   @IsOptional()
   @ValidateIf((_, v) => v !== null)
   @IsEmail()

@@ -25,7 +25,7 @@ const toList = ({ value }: { value: unknown }) => {
     .filter(Boolean);
 };
 
-// spec=RAM:8GB  /  spec=RAM:8GB|12GB  /  repeated spec params
+// spec=Origin:Local  /  spec=Origin:Local|Imported  /  repeated spec params
 const toArray = ({ value }: { value: unknown }) =>
   (Array.isArray(value) ? value : [value])
     .map((v) => String(v).trim())
@@ -123,7 +123,7 @@ export class ProductQueryDto extends ProductScopeDto {
 
   @ApiPropertyOptional({
     description:
-      'Attribute filters as Name:Value. Values of one attribute are OR-ed with "|", different attributes are AND-ed. Repeat the param: spec=RAM:8GB|12GB&spec=Storage:256GB&spec=Network:5G',
+      'Attribute filters as Name:Value. Values of one attribute are OR-ed with "|", different attributes are AND-ed. Repeat the param: spec=Origin:Local|Imported&spec=Type:Organic',
     type: [String],
   })
   @IsOptional()
@@ -134,7 +134,7 @@ export class ProductQueryDto extends ProductScopeDto {
   @MaxLength(200, { each: true })
   @Matches(/^[^:]+:.+$/, {
     each: true,
-    message: 'spec must look like Name:Value (e.g. RAM:8GB)',
+    message: 'spec must look like Name:Value (e.g. Origin:Local)',
   })
   spec?: string[];
 

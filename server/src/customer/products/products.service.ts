@@ -17,10 +17,6 @@ import {
 const productInclude = {
   images: { orderBy: { order: 'asc' as const } },
   variants: true,
-  specifications: {
-    include: { items: { orderBy: { displayOrder: 'asc' as const } } },
-    orderBy: { displayOrder: 'asc' as const },
-  },
   brand: true,
   category: true,
   subCategory: true,
