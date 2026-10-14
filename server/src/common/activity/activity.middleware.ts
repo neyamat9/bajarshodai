@@ -119,7 +119,9 @@ export class ActivityMiddleware implements NestMiddleware {
       : ctx.actor;
     if (who) {
       actorType =
-        who.role === 'ADMIN' || who.role === 'SUPER_ADMIN'
+        who.role === 'STAFF' ||
+        who.role === 'ADMIN' ||
+        who.role === 'SUPER_ADMIN'
           ? 'ADMIN'
           : 'CUSTOMER';
       actorId = who.id;
@@ -144,7 +146,7 @@ export class ActivityMiddleware implements NestMiddleware {
       describe({
         actor:
           actorType === 'ADMIN'
-            ? `Admin ${actorName ?? ''}`.trim()
+            ? `${who?.role === 'STAFF' ? 'Staff' : 'Admin'} ${actorName ?? ''}`.trim()
             : actorLabel,
         action,
         method: req.method,

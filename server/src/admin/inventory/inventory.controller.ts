@@ -20,12 +20,11 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { Role } from '@prisma/client';
 import type { User } from '@prisma/client';
 import type { Response } from 'express';
 import { memoryStorage } from 'multer';
-import { JwtAuthGuard, RolesGuard } from '../../common/guards';
-import { Roles } from '../../common/decorators';
+import { JwtAuthGuard, PermissionsGuard } from '../../common/guards';
+import { RequirePermissions } from '../../common/decorators';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { csvLine } from '../../common/utils/csv';
 import {
@@ -40,8 +39,8 @@ const CSV_CHUNK = 1000;
 
 @ApiTags('Admin - Inventory')
 @ApiBearerAuth('JWT')
-@Roles(Role.ADMIN, Role.SUPER_ADMIN)
-@UseGuards(JwtAuthGuard, RolesGuard)
+@RequirePermissions(['inventory.manage', 'products.view'], 'inventory.manage')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('admin/inventory')
 export class InventoryController {
   constructor(private readonly inventory: InventoryService) {}

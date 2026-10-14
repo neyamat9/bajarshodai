@@ -7,6 +7,8 @@ import { ProductModule } from './product/product.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { AdminOrdersModule } from './orders/orders.module';
 import { AdminUsersModule } from './users/users.module';
+import { StaffModule } from './staff/staff.module';
+import { DeliveriesModule } from './deliveries/deliveries.module';
 import { AdminCouponsModule } from './coupons/coupons.module';
 import { AdminBannersModule } from './banners/banners.module';
 import { AdminFlashDealsModule } from './flash-deals/flash-deals.module';
@@ -35,6 +37,8 @@ import { AdminAuditLogsModule } from './audit-logs/audit-logs.module';
     DashboardModule,
     AdminOrdersModule,
     AdminUsersModule,
+    StaffModule,
+    DeliveriesModule,
     AdminCouponsModule,
     AdminBannersModule,
     AdminFlashDealsModule,

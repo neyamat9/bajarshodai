@@ -6,6 +6,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { permissionsOf } from '../common/permissions';
 import { CreateUserInput } from './dto/create-user.input';
 import * as argon2 from 'argon2';
 import { User } from '@prisma/client';
@@ -198,6 +199,10 @@ export class AuthService {
       phone: user.phone,
       language: user.language,
       role: user.role,
+      // what a staff member may do (admins may do everything), and whether they can be sent to deliver
+      permissions: permissionsOf(user),
+      canDeliver: user.canDeliver,
+      staffTitle: user.staffTitle,
       avatarUrl: user.avatarUrl,
       emailVerified: user.emailVerified,
       phoneVerified: user.phoneVerified,

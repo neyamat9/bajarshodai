@@ -9,10 +9,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Prisma, Role } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import type { Response } from 'express';
-import { Roles } from '../../common/decorators';
-import { JwtAuthGuard, RolesGuard } from '../../common/guards';
+import { RequirePermissions } from '../../common/decorators';
+import { JwtAuthGuard, PermissionsGuard } from '../../common/guards';
 import { csvLine } from '../../common/utils/csv';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
@@ -29,8 +29,8 @@ const DAY = 86_400_000;
 // deletes entries. Old entries leave only through the retention job.
 @ApiTags('Admin - Activity Log')
 @ApiBearerAuth('JWT')
-@Roles(Role.ADMIN, Role.SUPER_ADMIN)
-@UseGuards(JwtAuthGuard, RolesGuard)
+@RequirePermissions('logs.view')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('admin/activity-logs')
 export class ActivityLogsController {
   constructor(private readonly prisma: PrismaService) {}

@@ -15,7 +15,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuthService } from '../../auth/auth.service';
 import { parseLoginIdentifier } from '../../common/utils/phone';
 
-const ADMIN_ROLES: Role[] = [Role.ADMIN, Role.SUPER_ADMIN];
+// everyone who may sign in to the dashboard (what each can do is decided by permissions)
+const ADMIN_ROLES: Role[] = [Role.STAFF, Role.ADMIN, Role.SUPER_ADMIN];
 const PASSWORD_HISTORY = 5;
 
 // After this many wrong passwords for one account, logins for it are paused.

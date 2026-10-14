@@ -12,9 +12,20 @@ datasource db {
 
 enum Role {
   USER
-  MODERATOR
+  // shop staff: what they may do is the `permissions` list on the user
+  STAFF
   ADMIN
   SUPER_ADMIN
+}
+
+enum DeliveryStatus {
+  ASSIGNED
+  ACCEPTED
+  PICKED_UP
+  ON_THE_WAY
+  DELIVERED
+  FAILED
+  CANCELLED
 }
 
 enum UserStatus {
@@ -208,7 +219,15 @@ enum BannerLinkType {
 
 model User {
   customerLocations CustomerLocation[]
-  locationRequests  LocationRequest[] @relation("LocationRequestsCreated")
+  locationRequests  LocationRequest[]  @relation("LocationRequestsCreated")
+
+  // Staff: the things this person may do (see common/permissions), whether they can be
+  // sent to deliver orders (any role), and what they are called in the shop
+  permissions        String[]   @default([])
+  canDeliver         Boolean    @default(false)
+  staffTitle         String?
+  deliveriesAssigned Delivery[] @relation("DeliveryAssignee")
+  deliveriesGiven    Delivery[] @relation("DeliveryAssigner")
 
   id String @id @default(uuid())
 
@@ -328,8 +347,8 @@ model Address {
   upazila  String? // upazila or city thana
 
   // Where to deliver: the pin the customer shared or dropped on the map
-  latitude  Float?
-  longitude Float?
+  latitude           Float?
+  longitude          Float?
   placeName          String? // e.g. "Kalibari Bazar, Shahrasti"
   placeNameBn        String?
   landmark           String? // "beside the green gate"
@@ -826,27 +845,27 @@ model Order {
   actualDelivery    DateTime?
 
   // Shipping
-  shippingAddressId String?
-  shippingAddress   Address? @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
-  courierName       String?
-  trackingUrl       String?
-  trackingNumber    String?
-  deliveryNote      String?
+  shippingAddressId         String?
+  shippingAddress           Address?  @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  courierName               String?
+  trackingUrl               String?
+  trackingNumber            String?
+  deliveryNote              String?
   // Where and how far (snapshot at order time: the customer can change the saved address later)
-  deliveryLat           Float?
-  deliveryLng           Float?
-  deliveryPlaceName     String?
-  deliveryLandmark      String?
-  deliveryDistanceKm    Decimal? @db.Decimal(6, 2)
-  deliveryDurationSec   Int?
+  deliveryLat               Float?
+  deliveryLng               Float?
+  deliveryPlaceName         String?
+  deliveryLandmark          String?
+  deliveryDistanceKm        Decimal?  @db.Decimal(6, 2)
+  deliveryDurationSec       Int?
   // true when the road route could not be found and the distance was estimated from the straight line
-  distanceEstimated     Boolean  @default(false)
+  distanceEstimated         Boolean   @default(false)
   // the fee the formula gave (shippingCost is what is charged: the formula, free delivery or an override)
-  deliveryFee           Decimal? @db.Decimal(10, 2)
-  deliveryFeeOverride   Decimal? @db.Decimal(10, 2)
+  deliveryFee               Decimal?  @db.Decimal(10, 2)
+  deliveryFeeOverride       Decimal?  @db.Decimal(10, 2)
   deliveryFeeOverrideReason String?
-  deliverySlot          String?
-  deliveryDate          DateTime? @db.Date
+  deliverySlot              String?
+  deliveryDate              DateTime? @db.Date
 
   // Billing
   billingAddressId String?
@@ -875,6 +894,7 @@ model Order {
   items              OrderItem[]
   statusHistory      OrderStatusHistory[]
   payments           Payment[]
+  delivery           Delivery?
   returnRequests     ReturnRequest[]
   refundTransactions RefundTransaction[]
 
@@ -903,23 +923,23 @@ model OrderItem {
   total    Decimal @db.Decimal(12, 2)
 
   // Product snapshot (preserved even if product changes/deleted)
-  productName  String
+  productName   String
   // Bangla name at order time, so Bangla order pages and invoices keep reading right
   productNameBn String?
-  productSlug  String
-  productImage String?
-  variantName  String?
-  variantSku   String?
+  productSlug   String
+  productImage  String?
+  variantName   String?
+  variantSku    String?
   // The unit text at order time (renaming a unit later never changes old orders)
-  unitLabel   String?
-  unitLabelBn String?
+  unitLabel     String?
+  unitLabelBn   String?
   // For weighed items: what was ordered, and what the packer finally weighed
-  orderedQty Decimal? @db.Decimal(10, 3)
-  finalQty   Decimal? @db.Decimal(10, 3)
-  finalTotal Decimal? @db.Decimal(12, 2)
+  orderedQty    Decimal? @db.Decimal(10, 3)
+  finalQty      Decimal? @db.Decimal(10, 3)
+  finalTotal    Decimal? @db.Decimal(12, 2)
 
-  productId    String
-  product      Product @relation(fields: [productId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
 
   variantId String?
   variant   ProductVariant? @relation(fields: [variantId], references: [id])
@@ -1620,10 +1640,10 @@ model AdminNotification {
 
 // A place a customer chose to share. Several are kept as history; the newest is the "saved location".
 model CustomerLocation {
-  id          String         @id @default(uuid())
+  id          String  @id @default(uuid())
   // a signed-in customer, or (for guests) the phone number and a device token
   userId      String?
-  user        User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
   deviceToken String?
   phone       String?
 
@@ -1659,8 +1679,8 @@ model LocationRequest {
   accuracyM   Float?
   placeName   String?
   placeNameBn String?
-  distanceKm  Decimal? @db.Decimal(6, 2)
-  deliveryFee Decimal? @db.Decimal(10, 2)
+  distanceKm  Decimal?  @db.Decimal(6, 2)
+  deliveryFee Decimal?  @db.Decimal(10, 2)
   sharedAt    DateTime?
 
   createdByStaffId String?
@@ -1670,4 +1690,65 @@ model LocationRequest {
   @@index([status])
   @@index([phone])
   @@index([orderId])
+}
+
+// One delivery per order. When an attempt fails or is cancelled the same row is given to someone
+// again (attempts goes up); every change of state is also written to DeliveryEvent.
+model Delivery {
+  id String @id @default(uuid())
+
+  orderId      String  @unique
+  assigneeId   String
+  assignedById String?
+
+  status   DeliveryStatus @default(ASSIGNED)
+  attempts Int            @default(1)
+
+  assignedAt   DateTime  @default(now())
+  acceptedAt   DateTime?
+  pickedUpAt   DateTime?
+  onTheWayAt   DateTime?
+  deliveredAt  DateTime?
+  failedAt     DateTime?
+  failedReason String?
+
+  // Cash on delivery: what the rider has to take, what was taken, and when the shop got it from the rider
+  cashToCollect      Decimal   @default(0) @db.Decimal(12, 2)
+  cashCollected      Decimal?  @db.Decimal(12, 2)
+  cashHandedOverAt   DateTime?
+  cashHandedOverById String?
+
+  note          String?
+  proofUploadId String?
+  distanceKm    Decimal? @db.Decimal(6, 2)
+  // userId, else the normalised phone: counts each customer once however they ordered
+  customerKey   String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order    Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  assignee User            @relation("DeliveryAssignee", fields: [assigneeId], references: [id], onDelete: Restrict)
+  assigner User?           @relation("DeliveryAssigner", fields: [assignedById], references: [id], onDelete: SetNull)
+  events   DeliveryEvent[]
+
+  @@index([assigneeId, status])
+  @@index([status, assignedAt])
+  @@index([deliveredAt])
+  @@index([customerKey])
+}
+
+// Append-only history of a delivery: who did what, when.
+model DeliveryEvent {
+  id         String         @id @default(uuid())
+  deliveryId String
+  status     DeliveryStatus
+  actorId    String?
+  actorName  String?
+  note       String?
+  createdAt  DateTime       @default(now())
+
+  delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+
+  @@index([deliveryId, createdAt])
 }

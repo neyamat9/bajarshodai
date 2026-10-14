@@ -1,9 +1,9 @@
 import { Controller, Get, Query, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Prisma, Role } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import type { Response } from 'express';
-import { JwtAuthGuard, RolesGuard } from '../../common/guards';
-import { Roles } from '../../common/decorators';
+import { JwtAuthGuard, PermissionsGuard } from '../../common/guards';
+import { RequirePermissions } from '../../common/decorators';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AUDIT_ACTIONS, AUDIT_TYPES } from '../../common/audit';
 import { csvLine } from '../../common/utils/csv';
@@ -49,8 +49,8 @@ function changesOf(
 
 @ApiTags('Admin - Audit Log')
 @ApiBearerAuth('JWT')
-@Roles(Role.ADMIN, Role.SUPER_ADMIN)
-@UseGuards(JwtAuthGuard, RolesGuard)
+@RequirePermissions('logs.view')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('admin/audit-logs')
 export class AuditLogsController {
   constructor(private readonly prisma: PrismaService) {}

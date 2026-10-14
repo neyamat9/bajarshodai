@@ -11,18 +11,17 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Role } from '@prisma/client';
 import type { User } from '@prisma/client';
-import { JwtAuthGuard, RolesGuard } from '../../common/guards';
-import { Roles } from '../../common/decorators';
+import { JwtAuthGuard, PermissionsGuard } from '../../common/guards';
+import { RequirePermissions } from '../../common/decorators';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AdminNotificationsService } from './admin-notifications.service';
 import { ListAdminNotificationsDto } from './admin-notifications.dto';
 
 @ApiTags('Admin - Notifications (bell)')
 @ApiBearerAuth('JWT')
-@Roles(Role.ADMIN, Role.SUPER_ADMIN)
-@UseGuards(JwtAuthGuard, RolesGuard)
+@RequirePermissions('staff')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('admin/notifications')
 export class AdminNotificationsController {
   constructor(private readonly service: AdminNotificationsService) {}

@@ -69,7 +69,7 @@ export class AdminAuthController {
 
   @Post('logout')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  @Roles(Role.STAFF, Role.ADMIN, Role.SUPER_ADMIN)
   @ApiBearerAuth('JWT')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Log out (invalidates the refresh token)' })
@@ -79,7 +79,7 @@ export class AdminAuthController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  @Roles(Role.STAFF, Role.ADMIN, Role.SUPER_ADMIN)
   @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'The signed-in admin' })
   me(@CurrentUser() user: User) {
@@ -88,7 +88,7 @@ export class AdminAuthController {
 
   @Patch('me')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  @Roles(Role.STAFF, Role.ADMIN, Role.SUPER_ADMIN)
   @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Update my name / phone' })
   updateMe(@CurrentUser() user: User, @Body() dto: AdminUpdateProfileDto) {
@@ -97,7 +97,7 @@ export class AdminAuthController {
 
   @Post('change-password')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  @Roles(Role.STAFF, Role.ADMIN, Role.SUPER_ADMIN)
   @ApiBearerAuth('JWT')
   @Throttle({ medium: { ttl: 60000, limit: 10 } })
   @HttpCode(HttpStatus.OK)

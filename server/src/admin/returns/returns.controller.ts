@@ -8,11 +8,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { Role } from '@prisma/client';
 import type { User } from '@prisma/client';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { JwtAuthGuard, RolesGuard } from '../../common/guards';
-import { Roles } from '../../common/decorators';
+import { JwtAuthGuard, PermissionsGuard } from '../../common/guards';
+import { RequirePermissions } from '../../common/decorators';
 import { AdminReturnsService } from './returns.service';
 import {
   ListReturnsDto,
@@ -21,8 +20,8 @@ import {
 
 @ApiTags('Admin - Returns')
 @ApiBearerAuth('JWT')
-@Roles(Role.ADMIN, Role.SUPER_ADMIN)
-@UseGuards(JwtAuthGuard, RolesGuard)
+@RequirePermissions('orders.view', 'orders.manage')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('admin/returns')
 export class AdminReturnsController {
   constructor(private readonly returnsService: AdminReturnsService) {}

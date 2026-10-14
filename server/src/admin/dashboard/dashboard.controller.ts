@@ -1,8 +1,7 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Role } from '@prisma/client';
-import { JwtAuthGuard, RolesGuard } from '../../common/guards';
-import { Roles } from '../../common/decorators';
+import { JwtAuthGuard, PermissionsGuard } from '../../common/guards';
+import { RequirePermissions } from '../../common/decorators';
 import { resolveRange } from '../../common/export/date-range';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { InventoryService } from '../inventory/inventory.service';
@@ -20,8 +19,8 @@ const RANGE_NOTE =
 
 @ApiTags('Admin - Dashboard & Analytics')
 @ApiBearerAuth('JWT')
-@Roles(Role.ADMIN, Role.SUPER_ADMIN)
-@UseGuards(JwtAuthGuard, RolesGuard)
+@RequirePermissions(['reports.view', 'orders.view'], ['reports.view'])
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('admin/dashboard')
 export class DashboardController {
   constructor(

@@ -8,10 +8,9 @@ import {
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsIn, IsOptional } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { Role } from '@prisma/client';
 import type { Response } from 'express';
-import { JwtAuthGuard, RolesGuard } from '../../common/guards';
-import { Roles } from '../../common/decorators';
+import { JwtAuthGuard, PermissionsGuard } from '../../common/guards';
+import { RequirePermissions } from '../../common/decorators';
 import { resolveRange } from '../../common/export/date-range';
 import { EXPORT_FORMATS, sendTable } from '../../common/export/table-export';
 import type { ExportFormat } from '../../common/export/table-export';
@@ -59,8 +58,8 @@ class StockReportQueryDto {
 
 @ApiTags('Admin - Reports')
 @ApiBearerAuth('JWT')
-@Roles(Role.ADMIN, Role.SUPER_ADMIN)
-@UseGuards(JwtAuthGuard, RolesGuard)
+@RequirePermissions('reports.view')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('admin/reports')
 export class ReportsController {
   constructor(private readonly reports: ReportsService) {}

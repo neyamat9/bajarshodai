@@ -10,17 +10,16 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Role } from '@prisma/client';
-import { JwtAuthGuard, RolesGuard } from '../../common/guards';
-import { ResponseMessage, Roles } from '../../common/decorators';
+import { JwtAuthGuard, PermissionsGuard } from '../../common/guards';
+import { ResponseMessage, RequirePermissions } from '../../common/decorators';
 import { DisplayOrderService, ReorderDto } from '../../common/display-order';
 import { UnitsService } from './units.service';
 import { CreateUnitDto, UpdateUnitDto } from './dto/unit.dto';
 
 @ApiTags('Admin - Units')
 @ApiBearerAuth('JWT')
-@Roles(Role.ADMIN, Role.SUPER_ADMIN)
-@UseGuards(JwtAuthGuard, RolesGuard)
+@RequirePermissions('products.view', 'products.manage')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('admin/units')
 export class UnitsController {
   constructor(

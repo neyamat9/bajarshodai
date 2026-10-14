@@ -21,6 +21,7 @@ import {
   UpdateShippingInfoDto,
 } from './dto/order-admin.dto';
 import { recordReceivedPayment } from './order-payments';
+import { syncDeliveryWithOrder } from '../../common/delivery/delivery-sync';
 
 // Admins can cancel until delivery (e.g. the courier returned the parcel).
 // Delivered orders go through return requests instead.
@@ -194,6 +195,13 @@ export class AdminOrdersService {
           user: { select: { id: true, name: true, email: true, phone: true } },
           items: true,
           shippingAddress: true,
+          delivery: {
+            select: {
+              id: true,
+              status: true,
+              assignee: { select: { id: true, name: true } },
+            },
+          },
           _count: { select: { items: true } },
         },
         orderBy: [SORTS[q.sortBy ?? 'newest'], { id: 'asc' }],
@@ -224,6 +232,15 @@ export class AdminOrdersService {
         refundTransactions: { orderBy: { createdAt: 'asc' } },
         returnRequests: { select: { id: true, status: true, createdAt: true } },
         user: { select: { id: true, name: true, email: true, phone: true } },
+        delivery: {
+          include: {
+            assignee: {
+              select: { id: true, name: true, phone: true, staffTitle: true },
+            },
+            assigner: { select: { id: true, name: true } },
+            events: { orderBy: { createdAt: 'asc' } },
+          },
+        },
       },
     });
     if (!order) throw new NotFoundException('Order not found');
@@ -296,7 +313,7 @@ export class AdminOrdersService {
             o.items
               .map(
                 (i) =>
-                  `${i.productName}${i.variantName ? ` (${i.variantName})` : ''} x${i.quantity}`,
+                  `${i.productName}${i.variantName ? ` (${i.variantName})` : ''} x${Number(i.quantity)}`,
               )
               .join('; '),
             Number(o.subtotal),
@@ -376,6 +393,9 @@ export class AdminOrdersService {
       });
       void this.resolveFeed(id);
       void this.notifier.orderStatusChanged(id, 'CANCELLED', note);
+      void syncDeliveryWithOrder(this.prisma, id, 'CANCELLED', null).catch(
+        () => undefined,
+      );
       return cancelled;
     }
 
@@ -454,6 +474,9 @@ export class AdminOrdersService {
       void this.adminFeed.resolve('NEW_ORDER', id);
     }
     void this.notifier.orderStatusChanged(id, nextStatus, note);
+    void syncDeliveryWithOrder(this.prisma, id, nextStatus, null).catch(
+      () => undefined,
+    );
     return updated;
   }
 

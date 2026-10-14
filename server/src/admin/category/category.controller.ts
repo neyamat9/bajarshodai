@@ -23,14 +23,13 @@ import {
   ApiParam,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { Role } from '@prisma/client';
-import { JwtAuthGuard, RolesGuard } from '../../common/guards';
-import { Roles, ResponseMessage } from '../../common/decorators';
+import { JwtAuthGuard, PermissionsGuard } from '../../common/guards';
+import { ResponseMessage, RequirePermissions } from '../../common/decorators';
 
 @ApiTags('Admin Categories')
 @ApiBearerAuth('JWT')
-@Roles(Role.ADMIN, Role.SUPER_ADMIN)
-@UseGuards(JwtAuthGuard, RolesGuard)
+@RequirePermissions('products.view', 'products.manage')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('admin/category')
 export class CategoryController {
   constructor(

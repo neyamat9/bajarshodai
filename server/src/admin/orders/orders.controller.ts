@@ -20,11 +20,10 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { Role } from '@prisma/client';
 import type { User } from '@prisma/client';
 import { InvoiceService } from '../../common/invoice';
-import { JwtAuthGuard, RolesGuard } from '../../common/guards';
-import { Roles } from '../../common/decorators';
+import { JwtAuthGuard, PermissionsGuard } from '../../common/guards';
+import { RequirePermissions } from '../../common/decorators';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AdminOrdersService } from './orders.service';
 import { OrderEditService } from './order-edit.service';
@@ -50,8 +49,8 @@ import {
 
 @ApiTags('Admin - Orders')
 @ApiBearerAuth('JWT')
-@Roles(Role.ADMIN, Role.SUPER_ADMIN)
-@UseGuards(JwtAuthGuard, RolesGuard)
+@RequirePermissions('orders.view', 'orders.manage')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('admin/orders')
 export class AdminOrdersController {
   constructor(
@@ -108,7 +107,10 @@ export class AdminOrdersController {
   }
 
   @Put(':id/delivery-pin')
-  @ApiOperation({ summary: 'Put or move the delivery pin of an order and work out the distance and charge again' })
+  @ApiOperation({
+    summary:
+      'Put or move the delivery pin of an order and work out the distance and charge again',
+  })
   setDeliveryPin(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: SetDeliveryPinDto,
@@ -118,7 +120,10 @@ export class AdminOrdersController {
   }
 
   @Get(':id/route')
-  @ApiOperation({ summary: 'The road from the shop to the delivery pin (for the map on the order page)' })
+  @ApiOperation({
+    summary:
+      'The road from the shop to the delivery pin (for the map on the order page)',
+  })
   route(@Param('id', ParseUUIDPipe) id: string) {
     return this.edit.route(id);
   }

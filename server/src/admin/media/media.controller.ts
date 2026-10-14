@@ -21,11 +21,11 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { Prisma, Role } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import type { User } from '@prisma/client';
 import { memoryStorage } from 'multer';
-import { JwtAuthGuard, RolesGuard } from '../../common/guards';
-import { Roles } from '../../common/decorators';
+import { JwtAuthGuard, PermissionsGuard } from '../../common/guards';
+import { RequirePermissions } from '../../common/decorators';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
@@ -43,8 +43,8 @@ import {
 
 @ApiTags('Admin - Media Library')
 @ApiBearerAuth('JWT')
-@Roles(Role.ADMIN, Role.SUPER_ADMIN)
-@UseGuards(JwtAuthGuard, RolesGuard)
+@RequirePermissions(['products.view', 'products.manage'], 'products.manage')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('admin/uploads')
 export class MediaController {
   constructor(

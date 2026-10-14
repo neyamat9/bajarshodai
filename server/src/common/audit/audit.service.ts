@@ -27,6 +27,13 @@ export const AUDIT_ACTIONS = [
   'USER_STATUS_CHANGED',
   'USER_ROLE_CHANGED',
   'USER_PASSWORD_RESET',
+  'STAFF_CREATED',
+  'STAFF_UPDATED',
+  'DELIVERY_ASSIGNED',
+  'DELIVERY_UNASSIGNED',
+  'DELIVERY_COMPLETED',
+  'DELIVERY_FAILED',
+  'CASH_HANDED_OVER',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
@@ -56,6 +63,14 @@ export const AUDIT_TYPES: Record<string, AuditAction[]> = {
     'USER_STATUS_CHANGED',
     'USER_ROLE_CHANGED',
     'USER_PASSWORD_RESET',
+  ],
+  staff: ['STAFF_CREATED', 'STAFF_UPDATED'],
+  deliveries: [
+    'DELIVERY_ASSIGNED',
+    'DELIVERY_UNASSIGNED',
+    'DELIVERY_COMPLETED',
+    'DELIVERY_FAILED',
+    'CASH_HANDED_OVER',
   ],
 };
 

@@ -14,11 +14,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Role } from '@prisma/client';
 import type { User } from '@prisma/client';
 import type { Response } from 'express';
-import { JwtAuthGuard, RolesGuard } from '../../common/guards';
-import { Roles } from '../../common/decorators';
+import { JwtAuthGuard, PermissionsGuard } from '../../common/guards';
+import { RequirePermissions } from '../../common/decorators';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { sendTable } from '../../common/export/table-export';
 import { AdminUsersService } from './users.service';
@@ -33,8 +32,8 @@ import {
 
 @ApiTags('Admin - Customers')
 @ApiBearerAuth('JWT')
-@Roles(Role.ADMIN, Role.SUPER_ADMIN)
-@UseGuards(JwtAuthGuard, RolesGuard)
+@RequirePermissions('customers.view', 'customers.manage')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('admin/users')
 export class AdminUsersController {
   constructor(private readonly users: AdminUsersService) {}
@@ -151,6 +150,7 @@ export class AdminUsersController {
   }
 
   @Patch(':id/role')
+  @RequirePermissions('staff.manage')
   @ApiOperation({
     summary:
       'Change a role. Granting or removing admin access needs a super admin.',

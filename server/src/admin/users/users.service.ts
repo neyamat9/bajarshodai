@@ -18,7 +18,8 @@ import {
   UserFilterDto,
 } from './dto/users-admin.dto';
 
-const ADMIN_ROLES: Role[] = [Role.ADMIN, Role.SUPER_ADMIN];
+// every dashboard account: only a super admin changes these here (staff are looked after under Staff)
+const ADMIN_ROLES: Role[] = [Role.STAFF, Role.ADMIN, Role.SUPER_ADMIN];
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const VALID_ORDER: Prisma.OrderWhereInput = {
   status: { notIn: ['CANCELLED', 'REFUNDED'] },

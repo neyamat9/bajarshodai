@@ -11,5 +11,6 @@ import { OrderPaymentsService } from './order-payments.service';
   imports: [PrismaModule, CheckoutModule, ShippingModule],
   controllers: [AdminOrdersController],
   providers: [AdminOrdersService, OrderEditService, OrderPaymentsService],
+  exports: [AdminOrdersService],
 })
 export class AdminOrdersModule {}

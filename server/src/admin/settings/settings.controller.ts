@@ -11,9 +11,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Role } from '@prisma/client';
-import { JwtAuthGuard, RolesGuard } from '../../common/guards';
-import { Roles } from '../../common/decorators';
+import { JwtAuthGuard, PermissionsGuard } from '../../common/guards';
+import { RequirePermissions } from '../../common/decorators';
 import {
   EmailSettings,
   MapsSettings,
@@ -40,8 +39,8 @@ import {
 
 @ApiTags('Admin - Settings')
 @ApiBearerAuth('JWT')
-@Roles(Role.ADMIN, Role.SUPER_ADMIN)
-@UseGuards(JwtAuthGuard, RolesGuard)
+@RequirePermissions('staff', 'settings.manage')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('admin/settings')
 export class AdminSettingsController {
   constructor(
@@ -96,7 +95,8 @@ export class AdminSettingsController {
 
   @Get()
   @ApiOperation({
-    summary: 'Get all store settings (site, payment, delivery, maps, returns, email)',
+    summary:
+      'Get all store settings (site, payment, delivery, maps, returns, email)',
   })
   async getAll() {
     const all = await this.settings.getAll();
@@ -174,10 +174,14 @@ export class AdminSettingsController {
   ) {
     const next = await this.settings.preview('delivery', dto);
     if ((next.originLat === null) !== (next.originLng === null)) {
-      throw new BadRequestException('Set both the latitude and the longitude of the origin');
+      throw new BadRequestException(
+        'Set both the latitude and the longitude of the origin',
+      );
     }
     if ((next.centerLat === null) !== (next.centerLng === null)) {
-      throw new BadRequestException('Set both the latitude and the longitude of the service area centre');
+      throw new BadRequestException(
+        'Set both the latitude and the longitude of the service area centre',
+      );
     }
     if (next.slots) {
       const ids = next.slots.map((s) => s.id);
@@ -186,7 +190,9 @@ export class AdminSettingsController {
       }
       for (const s of next.slots) {
         if (s.from >= s.to) {
-          throw new BadRequestException(`Slot "${s.label}": the end must be after the start`);
+          throw new BadRequestException(
+            `Slot "${s.label}": the end must be after the start`,
+          );
         }
       }
     }
@@ -210,7 +216,11 @@ export class AdminSettingsController {
       if (v === undefined) continue;
       // "" removes a secret; drop undefined so stored values are kept
       (patch as Record<string, unknown>)[k] =
-        (k === 'googleServerKey' || k === 'orsApiKey' || k === 'googleBrowserKey' || k === 'contactEmail') && v === ''
+        (k === 'googleServerKey' ||
+          k === 'orsApiKey' ||
+          k === 'googleBrowserKey' ||
+          k === 'contactEmail') &&
+        v === ''
           ? null
           : typeof v === 'string'
             ? v.trim()
@@ -218,7 +228,9 @@ export class AdminSettingsController {
     }
     const next = await this.settings.preview('maps', patch);
     if (next.provider === 'google' && !next.googleBrowserKey) {
-      throw new BadRequestException('Add the Google browser key before switching to Google Maps');
+      throw new BadRequestException(
+        'Add the Google browser key before switching to Google Maps',
+      );
     }
     return this.settings.mask('maps', await this.save('maps', patch, admin));
   }
@@ -226,14 +238,18 @@ export class AdminSettingsController {
   @Post('maps/test')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Test the saved map settings: one real route and one place name, with the reason when something fails',
+    summary:
+      'Test the saved map settings: one real route and one place name, with the reason when something fails',
   })
   testMaps() {
     return this.maps.test();
   }
 
   @Get('maps/usage')
-  @ApiOperation({ summary: 'How many routes, place names and searches the map was asked for today, and the daily limit' })
+  @ApiOperation({
+    summary:
+      'How many routes, place names and searches the map was asked for today, and the daily limit',
+  })
   mapsUsage() {
     return this.maps.usageToday();
   }
