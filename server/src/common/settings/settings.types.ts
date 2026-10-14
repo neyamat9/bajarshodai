@@ -6,14 +6,16 @@
 export type SettingsGroup =
   | 'site'
   | 'payment'
-  | 'shipping'
+  | 'delivery'
+  | 'maps'
   | 'returns'
   | 'email';
 
 export const SETTINGS_GROUPS: SettingsGroup[] = [
   'site',
   'payment',
-  'shipping',
+  'delivery',
+  'maps',
   'returns',
   'email',
 ];
@@ -90,27 +92,64 @@ export function mobileAccount(p: PaymentSettings, m: MobileBankingMethod) {
   };
 }
 
-// GLOBAL: one flat rate for every address.
-// ZONE:   separate rates for inside Dhaka and outside Dhaka.
-export type ShippingMode = 'GLOBAL' | 'ZONE';
-export type ShippingZone = 'INSIDE_DHAKA' | 'OUTSIDE_DHAKA';
+export interface DeliverySlot {
+  id: string;
+  label: string;
+  labelBn: string;
+  /** "09:00" (Bangladesh time) */
+  from: string;
+  to: string;
+}
 
-export interface ShippingSettings {
-  mode: ShippingMode;
-  globalRate: number;
-  globalMinDays: number;
-  globalMaxDays: number;
-  insideDhakaRate: number;
-  insideDhakaMinDays: number;
-  insideDhakaMaxDays: number;
-  outsideDhakaRate: number;
-  outsideDhakaMinDays: number;
-  outsideDhakaMaxDays: number;
-  // Cities (case-insensitive) that count as "inside Dhaka" when the customer
-  // does not pick a zone explicitly.
-  insideDhakaCities: string[];
-  // Subtotal at or above which shipping is free. null = never free.
-  freeShippingThreshold: number | null;
+// Delivery is priced by road distance from ONE point (the shop's origin: Kalibari Bazar,
+// by the Kalibari High School field / Sonali Bank Kalibari), not by zone:
+//   distance <= baseKm  -> baseCharge
+//   otherwise           -> baseCharge + perKmRate * ceil((distance - baseKm) / stepKm)
+export interface DeliverySettings {
+  // Taking orders for delivery at all
+  enabled: boolean;
+  // Where distances are measured from. null until the admin drops the pin once.
+  originLat: number | null;
+  originLng: number | null;
+  originLabel: string;
+  originLabelBn: string;
+  // Centre of the service area. null = the origin.
+  centerLat: number | null;
+  centerLng: number | null;
+  // Nothing is delivered beyond this straight-line distance from the centre.
+  serviceRadiusKm: number;
+  baseKm: number;
+  baseCharge: number;
+  perKmRate: number;
+  stepKm: number;
+  minOrderAmount: number;
+  // Subtotal at or above which delivery is free. null = never free.
+  freeDeliveryThreshold: number | null;
+  slots: DeliverySlot[];
+  // Shop hours (Bangladesh time) and a manual open/closed switch
+  openFrom: string;
+  openTo: string;
+  shopOpen: boolean;
+  // When no road route can be found: straight-line distance times this
+  routeFactor: number;
+}
+
+export type MapProviderName = 'osm' | 'google';
+
+export interface MapsSettings {
+  provider: MapProviderName;
+  // Public: sent to the browser to draw the map
+  googleBrowserKey: string | null;
+  // Secret: routes and place names, used by the server only
+  googleServerKey: string | null;
+  // Where the OpenStreetMap tiles come from (the public server is for light use only)
+  osmTileUrl: string;
+  // Secret: OpenRouteService key for road distances with OpenStreetMap
+  orsApiKey: string | null;
+  // Nominatim asks for a contact in the User-Agent
+  contactEmail: string | null;
+  // Stops a bug or a bot from running up the bill: routes and place names per day
+  dailyRequestCap: number;
 }
 
 export interface ReturnSettings {
@@ -156,12 +195,14 @@ export interface EmailSettings {
 // Fields encrypted in the database and masked in admin responses.
 export const SECRET_FIELDS: { [G in SettingsGroup]?: string[] } = {
   email: ['smtpPass', 'resendApiKey'],
+  maps: ['googleServerKey', 'orsApiKey'],
 };
 
 export interface SettingsMap {
   site: SiteSettings;
   payment: PaymentSettings;
-  shipping: ShippingSettings;
+  delivery: DeliverySettings;
+  maps: MapsSettings;
   returns: ReturnSettings;
   email: EmailSettings;
 }
@@ -198,19 +239,40 @@ export const DEFAULT_SETTINGS: SettingsMap = {
     rocketAccountType: 'personal',
     rocketInstructions: null,
   },
-  shipping: {
-    mode: 'ZONE',
-    globalRate: 100,
-    globalMinDays: 2,
-    globalMaxDays: 5,
-    insideDhakaRate: 60,
-    insideDhakaMinDays: 1,
-    insideDhakaMaxDays: 2,
-    outsideDhakaRate: 120,
-    outsideDhakaMinDays: 3,
-    outsideDhakaMaxDays: 5,
-    insideDhakaCities: ['Dhaka'],
-    freeShippingThreshold: null,
+  delivery: {
+    enabled: true,
+    // The exact point is set once from the dashboard (Settings → Delivery), on the map.
+    originLat: null,
+    originLng: null,
+    originLabel: 'Kalibari Bazar, beside Kalibari High School field / Sonali Bank Kalibari, Shahrasti',
+    originLabelBn: 'কালীবাড়ী বাজার, হাই স্কুল মাঠ সংলগ্ন / সোনালী ব্যাংক কালীবাড়ী, শাহরাস্তি',
+    centerLat: null,
+    centerLng: null,
+    serviceRadiusKm: 20,
+    baseKm: 2,
+    baseCharge: 20,
+    perKmRate: 10,
+    stepKm: 1,
+    minOrderAmount: 0,
+    freeDeliveryThreshold: null,
+    slots: [
+      { id: 'morning', label: 'Morning (9am–12pm)', labelBn: 'সকাল (৯টা–১২টা)', from: '09:00', to: '12:00' },
+      { id: 'afternoon', label: 'Afternoon (12pm–4pm)', labelBn: 'দুপুর (১২টা–৪টা)', from: '12:00', to: '16:00' },
+      { id: 'evening', label: 'Evening (4pm–8pm)', labelBn: 'সন্ধ্যা (৪টা–৮টা)', from: '16:00', to: '20:00' },
+    ],
+    openFrom: '08:00',
+    openTo: '22:00',
+    shopOpen: true,
+    routeFactor: 1.3,
+  },
+  maps: {
+    provider: 'osm',
+    googleBrowserKey: null,
+    googleServerKey: null,
+    osmTileUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    orsApiKey: null,
+    contactEmail: null,
+    dailyRequestCap: 2000,
   },
   returns: {
     returnsEnabled: true,

@@ -38,7 +38,7 @@ export default function DailySheet() {
     queryFn: () => productsApi.list({ search: f.search, categoryId: f.categoryId, sortBy: "name", limit: 100 }),
   });
 
-  const rows = q.data?.data ?? [];
+  const rows = useMemo(() => q.data?.data ?? [], [q.data]);
   const patch = (id: string, e: Edit) => setEdits((cur) => ({ ...cur, [id]: { ...cur[id], ...e } }));
 
   // only the rows that really differ from what is saved

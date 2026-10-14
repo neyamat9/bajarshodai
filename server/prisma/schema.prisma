@@ -47,6 +47,20 @@ enum CategoryStatus {
   INACTIVE
 }
 
+// How a delivery location was captured
+enum LocationSource {
+  GPS // the phone's location button
+  PIN // dropped or dragged on the map
+  SEARCH // picked from an address search
+  LINK // sent through a share-location link
+}
+
+enum LocationRequestStatus {
+  PENDING
+  SHARED
+  EXPIRED
+}
+
 enum StockLogReason {
   RESTOCK
   SALE
@@ -193,6 +207,9 @@ enum BannerLinkType {
 // ============================================================
 
 model User {
+  customerLocations CustomerLocation[]
+  locationRequests  LocationRequest[] @relation("LocationRequestsCreated")
+
   id String @id @default(uuid())
 
   // Identity
@@ -310,9 +327,15 @@ model Address {
   district String?
   upazila  String? // upazila or city thana
 
-  // Coordinates for delivery routing
+  // Where to deliver: the pin the customer shared or dropped on the map
   latitude  Float?
   longitude Float?
+  placeName          String? // e.g. "Kalibari Bazar, Shahrasti"
+  placeNameBn        String?
+  landmark           String? // "beside the green gate"
+  accuracyM          Float? // how exact the GPS fix was, in metres
+  locationSource     LocationSource?
+  locationCapturedAt DateTime?
 
   // null for addresses captured during guest checkout
   userId String?
@@ -809,8 +832,21 @@ model Order {
   trackingUrl       String?
   trackingNumber    String?
   deliveryNote      String?
-  // INSIDE_DHAKA / OUTSIDE_DHAKA / GLOBAL — the shipping rule used at checkout
-  shippingZone      String?
+  // Where and how far (snapshot at order time: the customer can change the saved address later)
+  deliveryLat           Float?
+  deliveryLng           Float?
+  deliveryPlaceName     String?
+  deliveryLandmark      String?
+  deliveryDistanceKm    Decimal? @db.Decimal(6, 2)
+  deliveryDurationSec   Int?
+  // true when the road route could not be found and the distance was estimated from the straight line
+  distanceEstimated     Boolean  @default(false)
+  // the fee the formula gave (shippingCost is what is charged: the formula, free delivery or an override)
+  deliveryFee           Decimal? @db.Decimal(10, 2)
+  deliveryFeeOverride   Decimal? @db.Decimal(10, 2)
+  deliveryFeeOverrideReason String?
+  deliverySlot          String?
+  deliveryDate          DateTime? @db.Date
 
   // Billing
   billingAddressId String?
@@ -1576,4 +1612,62 @@ model AdminNotification {
   @@index([isRead, createdAt])
   @@index([type, createdAt])
   @@index([entityType, entityId])
+}
+
+// ============================================================
+// LOCATIONS
+// ============================================================
+
+// A place a customer chose to share. Several are kept as history; the newest is the "saved location".
+model CustomerLocation {
+  id          String         @id @default(uuid())
+  // a signed-in customer, or (for guests) the phone number and a device token
+  userId      String?
+  user        User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceToken String?
+  phone       String?
+
+  lat         Float
+  lng         Float
+  accuracyM   Float?
+  placeName   String?
+  placeNameBn String?
+  source      LocationSource @default(GPS)
+
+  // the customer pressed the share button: this is the consent
+  consentAt  DateTime @default(now())
+  capturedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([userId, capturedAt])
+  @@index([deviceToken, capturedAt])
+  @@index([phone])
+}
+
+// A link the shop sends (WhatsApp / Messenger) so a customer can share a location without an account.
+model LocationRequest {
+  id        String                @id @default(uuid())
+  token     String                @unique
+  phone     String?
+  name      String?
+  orderId   String?
+  status    LocationRequestStatus @default(PENDING)
+  expiresAt DateTime
+
+  lat         Float?
+  lng         Float?
+  accuracyM   Float?
+  placeName   String?
+  placeNameBn String?
+  distanceKm  Decimal? @db.Decimal(6, 2)
+  deliveryFee Decimal? @db.Decimal(10, 2)
+  sharedAt    DateTime?
+
+  createdByStaffId String?
+  createdByStaff   User?    @relation("LocationRequestsCreated", fields: [createdByStaffId], references: [id], onDelete: SetNull)
+  createdAt        DateTime @default(now())
+
+  @@index([status])
+  @@index([phone])
+  @@index([orderId])
 }

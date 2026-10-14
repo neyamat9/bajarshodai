@@ -292,7 +292,7 @@ export class AdminOrdersService {
             o.user?.email ?? o.guestEmail ?? '',
             [a?.line1, a?.upazila, a?.city].filter(Boolean).join(', '),
             a?.district ?? '',
-            o.shippingZone ?? '',
+            o.deliveryDistanceKm ?? '',
             o.items
               .map(
                 (i) =>

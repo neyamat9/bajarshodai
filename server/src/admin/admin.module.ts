@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { BrandModule } from './brand/brand.module';
 import { CategoryModule } from './category/category.module';
 import { UnitsModule } from './units/units.module';
+import { AdminLocationsModule } from './locations/admin-locations.module';
 import { ProductModule } from './product/product.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { AdminOrdersModule } from './orders/orders.module';
@@ -29,6 +30,7 @@ import { AdminAuditLogsModule } from './audit-logs/audit-logs.module';
     BrandModule,
     CategoryModule,
     UnitsModule,
+    AdminLocationsModule,
     ProductModule,
     DashboardModule,
     AdminOrdersModule,

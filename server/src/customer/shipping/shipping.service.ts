@@ -1,129 +1,128 @@
 import { Injectable } from '@nestjs/common';
-import {
-  SettingsService,
-  ShippingSettings,
-  ShippingZone,
-} from '../../common/settings';
+import { SettingsService, DeliverySettings } from '../../common/settings';
+import { MapsService } from '../../common/maps';
+import { feeForDistance, haversineKm, withinRadius, type LatLng } from '../../common/delivery/fee';
+
+export type DeliveryBlock =
+  | 'DISABLED' // the shop is not taking delivery orders
+  | 'ORIGIN_NOT_SET' // the admin has not dropped the origin pin yet
+  | 'NO_LOCATION' // the customer has not shared a location yet
+  | 'OUT_OF_AREA'; // farther than the service radius
 
 export interface ShippingQuote {
-  // GLOBAL when the store uses one flat rate, otherwise the resolved zone.
-  zone: ShippingZone | 'GLOBAL';
-  zoneLabel: string;
-  baseRate: number;
-  // What the customer pays for shipping, after the free-shipping threshold.
+  // false when an order cannot be delivered: see `block`
+  available: boolean;
+  block: DeliveryBlock | null;
+  // Road distance from the shop's origin to the customer's pin (null until a location is known)
+  distanceKm: number | null;
+  durationSec: number | null;
+  // true when no road route was found and the distance is the straight line times a factor
+  estimated: boolean;
+  estimateNote: string | null;
+  // What the formula says for this distance
+  calculatedFee: number | null;
+  // What the customer pays after free delivery
   cost: number;
   isFree: boolean;
-  freeShippingThreshold: number | null;
-  // How much more the customer needs to add for free shipping (null if n/a).
-  amountForFreeShipping: number | null;
-  estimatedMinDays: number;
-  estimatedMaxDays: number;
+  freeDeliveryThreshold: number | null;
+  // How much more to add for free delivery (null if not applicable)
+  amountForFreeDelivery: number | null;
+  // Straight-line distance from the centre of the service area, and the limit
+  straightKm: number | null;
+  radiusKm: number;
 }
 
 export interface ShippingInput {
-  zone?: ShippingZone;
-  city?: string;
+  lat?: number | null;
+  lng?: number | null;
   // True when every product in the cart is marked "free shipping".
   allItemsFreeShipping?: boolean;
 }
 
-const ZONE_LABELS: Record<ShippingZone | 'GLOBAL', string> = {
-  GLOBAL: 'Standard Delivery',
-  INSIDE_DHAKA: 'Inside Dhaka',
-  OUTSIDE_DHAKA: 'Outside Dhaka',
-};
+/** The delivery settings a customer's browser may know (no secrets here: those live in the maps group). */
+export function publicDelivery(d: DeliverySettings) {
+  const originSet = d.originLat !== null && d.originLng !== null;
+  return {
+    enabled: d.enabled,
+    shopOpen: d.shopOpen,
+    openFrom: d.openFrom,
+    openTo: d.openTo,
+    originSet,
+    origin: originSet ? { lat: d.originLat, lng: d.originLng, label: d.originLabel, labelBn: d.originLabelBn } : null,
+    serviceRadiusKm: d.serviceRadiusKm,
+    baseKm: d.baseKm,
+    baseCharge: d.baseCharge,
+    perKmRate: d.perKmRate,
+    stepKm: d.stepKm,
+    minOrderAmount: d.minOrderAmount,
+    freeDeliveryThreshold: d.freeDeliveryThreshold,
+    slots: d.slots,
+  };
+}
 
 @Injectable()
 export class ShippingService {
-  constructor(private settings: SettingsService) {}
+  constructor(
+    private settings: SettingsService,
+    private maps: MapsService,
+  ) {}
 
   async getOptions() {
-    const s = await this.settings.get('shipping');
-    const options =
-      s.mode === 'GLOBAL'
-        ? [this.option('GLOBAL', s)]
-        : [this.option('INSIDE_DHAKA', s), this.option('OUTSIDE_DHAKA', s)];
+    return publicDelivery(await this.settings.get('delivery'));
+  }
 
-    return {
-      mode: s.mode,
-      freeShippingThreshold: s.freeShippingThreshold,
-      insideDhakaCities: s.mode === 'ZONE' ? s.insideDhakaCities : [],
-      options,
+  /** The point distances are measured from, or null until the admin sets it. */
+  origin(d: DeliverySettings): LatLng | null {
+    return d.originLat !== null && d.originLng !== null ? { lat: d.originLat, lng: d.originLng } : null;
+  }
+
+  async quote(subtotal: number, input: ShippingInput = {}): Promise<ShippingQuote> {
+    const d = await this.settings.get('delivery');
+    const threshold = d.freeDeliveryThreshold;
+    const base: ShippingQuote = {
+      available: false,
+      block: null,
+      distanceKm: null,
+      durationSec: null,
+      estimated: false,
+      estimateNote: null,
+      calculatedFee: null,
+      cost: 0,
+      isFree: false,
+      freeDeliveryThreshold: threshold,
+      amountForFreeDelivery: null,
+      straightKm: null,
+      radiusKm: d.serviceRadiusKm,
     };
-  }
+    if (!d.enabled) return { ...base, block: 'DISABLED' };
+    const origin = this.origin(d);
+    if (!origin) return { ...base, block: 'ORIGIN_NOT_SET' };
+    if (input.lat == null || input.lng == null) return { ...base, block: 'NO_LOCATION' };
 
-  async quote(
-    subtotal: number,
-    input: ShippingInput = {},
-  ): Promise<ShippingQuote> {
-    const s = await this.settings.get('shipping');
-    const zone = s.mode === 'GLOBAL' ? 'GLOBAL' : this.resolveZone(s, input);
-    const { rate, minDays, maxDays } = this.rateFor(zone, s);
+    const dest = { lat: input.lat, lng: input.lng };
+    const centre = d.centerLat !== null && d.centerLng !== null ? { lat: d.centerLat, lng: d.centerLng } : origin;
+    const inside = withinRadius(centre, dest, d.serviceRadiusKm);
+    if (!inside.ok) return { ...base, block: 'OUT_OF_AREA', straightKm: inside.km };
 
-    const threshold = s.freeShippingThreshold;
-    const qualifiesForFree =
-      !!input.allItemsFreeShipping ||
-      (threshold !== null && subtotal >= threshold);
-    const cost = qualifiesForFree ? 0 : rate;
+    const route = await this.maps.route(origin, dest);
+    // never charge for less than the straight line: a route shorter than that is a map error
+    const straight = haversineKm(origin, dest);
+    const km = Math.max(route.km, Math.round(straight * 100) / 100);
+    const fee = feeForDistance(km, d);
 
+    const qualifiesForFree = !!input.allItemsFreeShipping || (threshold !== null && subtotal >= threshold);
     return {
-      zone,
-      zoneLabel: ZONE_LABELS[zone],
-      baseRate: rate,
-      cost,
-      isFree: cost === 0,
-      freeShippingThreshold: threshold,
-      amountForFreeShipping:
-        threshold !== null && !qualifiesForFree
-          ? round2(threshold - subtotal)
-          : null,
-      estimatedMinDays: minDays,
-      estimatedMaxDays: maxDays,
-    };
-  }
-
-  // An explicit zone from the customer wins; otherwise infer it from the city.
-  private resolveZone(s: ShippingSettings, input: ShippingInput): ShippingZone {
-    if (input.zone) return input.zone;
-    const city = input.city?.trim().toLowerCase();
-    if (!city) return 'OUTSIDE_DHAKA';
-    const inside = s.insideDhakaCities.some(
-      (c) => c.trim().toLowerCase() === city,
-    );
-    return inside ? 'INSIDE_DHAKA' : 'OUTSIDE_DHAKA';
-  }
-
-  private rateFor(zone: ShippingZone | 'GLOBAL', s: ShippingSettings) {
-    switch (zone) {
-      case 'INSIDE_DHAKA':
-        return {
-          rate: s.insideDhakaRate,
-          minDays: s.insideDhakaMinDays,
-          maxDays: s.insideDhakaMaxDays,
-        };
-      case 'OUTSIDE_DHAKA':
-        return {
-          rate: s.outsideDhakaRate,
-          minDays: s.outsideDhakaMinDays,
-          maxDays: s.outsideDhakaMaxDays,
-        };
-      default:
-        return {
-          rate: s.globalRate,
-          minDays: s.globalMinDays,
-          maxDays: s.globalMaxDays,
-        };
-    }
-  }
-
-  private option(zone: ShippingZone | 'GLOBAL', s: ShippingSettings) {
-    const { rate, minDays, maxDays } = this.rateFor(zone, s);
-    return {
-      zone,
-      label: ZONE_LABELS[zone],
-      rate,
-      estimatedMinDays: minDays,
-      estimatedMaxDays: maxDays,
+      ...base,
+      available: true,
+      distanceKm: km,
+      durationSec: route.seconds,
+      estimated: route.estimated,
+      estimateNote: route.note ?? null,
+      calculatedFee: fee,
+      cost: qualifiesForFree ? 0 : fee,
+      isFree: qualifiesForFree,
+      amountForFreeDelivery: threshold !== null && !qualifiesForFree ? round2(threshold - subtotal) : null,
+      straightKm: inside.km,
     };
   }
 }

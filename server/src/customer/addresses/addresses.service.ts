@@ -45,10 +45,8 @@ export class AddressesService {
 
     const { division, district, upazila, ...rest } = dto;
     const area = this.locations.resolve({ division, district, upazila });
-    const city = rest.city?.trim() || area.district;
-    if (!city) {
-      throw new BadRequestException('Choose a district (or enter a city)');
-    }
+    // the pin is what matters now; the district and city only describe the place
+    const city = rest.city?.trim() || area.district || rest.placeName?.split(',').pop()?.trim() || 'Shahrasti';
 
     return this.prisma.$transaction(async (tx) => {
       // The first address becomes the default automatically.
@@ -63,6 +61,8 @@ export class AddressesService {
         data: {
           ...rest,
           city,
+          postalCode: rest.postalCode ?? '',
+          locationCapturedAt: rest.latitude != null ? new Date() : null,
           state: rest.state ?? area.division,
           ...area,
           userId,

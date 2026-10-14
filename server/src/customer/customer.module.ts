@@ -11,6 +11,7 @@ import { WishlistModule } from './wishlist/wishlist.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { AddressesModule } from './addresses/addresses.module';
 import { ShippingModule } from './shipping/shipping.module';
+import { MyLocationModule } from './my-location/my-location.module';
 import { CheckoutModule } from './checkout/checkout.module';
 import { CustomerSettingsModule } from './settings/settings.module';
 import { ReturnsModule } from './returns/returns.module';
@@ -36,6 +37,7 @@ import { SupportModule } from './support/support.module';
     ReviewsModule,
     AddressesModule,
     ShippingModule,
+    MyLocationModule,
     CheckoutModule,
     CustomerSettingsModule,
     ReturnsModule,

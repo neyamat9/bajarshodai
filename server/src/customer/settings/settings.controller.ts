@@ -20,14 +20,15 @@ export class SettingsController {
   @Get()
   @ApiOperation({
     summary:
-      'Public store settings: store info, payment options, shipping, return policy',
+      'Public store settings: store info, payment options, delivery rules, the map to draw, return policy',
   })
   async getPublicSettings() {
-    const [site, payment, returns, shipping] = await Promise.all([
+    const [site, payment, returns, delivery, maps] = await Promise.all([
       this.settings.get('site'),
       this.settings.get('payment'),
       this.settings.get('returns'),
       this.shippingService.getOptions(),
+      this.settings.get('maps'),
     ]);
 
     const paymentMethods: string[] = [];
@@ -46,7 +47,13 @@ export class SettingsController {
         // one entry per mobile-banking method: where to send the money
         ...accounts,
       },
-      shipping,
+      delivery,
+      // only what the browser needs to draw a map: the secret server keys never leave the server
+      maps: {
+        provider: maps.provider,
+        googleBrowserKey: maps.provider === 'google' ? maps.googleBrowserKey : null,
+        osmTileUrl: maps.osmTileUrl,
+      },
       returns,
     };
   }

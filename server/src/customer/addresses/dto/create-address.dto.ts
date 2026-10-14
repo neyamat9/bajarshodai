@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsBoolean, IsIn, IsLatitude, IsLongitude, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 import { IsBdMobile } from '../../../common/utils/phone';
 
 export class CreateAddressDto {
@@ -68,9 +69,52 @@ export class CreateAddressDto {
   @IsString()
   state?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  postalCode: string;
+  postalCode?: string;
+
+  @ApiPropertyOptional({ description: 'Delivery pin: latitude' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsLatitude()
+  latitude?: number;
+
+  @ApiPropertyOptional({ description: 'Delivery pin: longitude' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsLongitude()
+  longitude?: number;
+
+  @ApiPropertyOptional({ description: 'The place name shown on the map' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  placeName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  placeNameBn?: string;
+
+  @ApiPropertyOptional({ description: 'A landmark: "beside the green gate"' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  landmark?: string;
+
+  @ApiPropertyOptional({ description: 'How exact the GPS fix was, in metres' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  accuracyM?: number;
+
+  @ApiPropertyOptional({ enum: ['GPS', 'PIN', 'SEARCH', 'LINK'] })
+  @IsOptional()
+  @IsIn(['GPS', 'PIN', 'SEARCH', 'LINK'])
+  locationSource?: 'GPS' | 'PIN' | 'SEARCH' | 'LINK';
 
   @ApiPropertyOptional()
   @IsOptional()

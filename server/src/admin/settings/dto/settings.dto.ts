@@ -1,11 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
   IsArray,
   IsBoolean,
   IsEmail,
   IsIn,
   IsInt,
+  IsLatitude,
+  IsLongitude,
+  Matches,
   IsNumber,
   IsOptional,
   IsString,
@@ -157,71 +161,129 @@ export class UpdatePaymentSettingsDto {
   rocketInstructions?: string | null;
 }
 
-export class UpdateShippingSettingsDto {
-  @ApiPropertyOptional({
-    enum: ['GLOBAL', 'ZONE'],
-    description:
-      'GLOBAL = one flat rate for everyone; ZONE = separate inside/outside Dhaka rates',
-  })
-  @IsOptional()
-  @IsIn(['GLOBAL', 'ZONE'])
-  mode?: 'GLOBAL' | 'ZONE';
+const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-  @ApiPropertyOptional() @IsOptional() @IsNumber() @Min(0) globalRate?: number;
-  @ApiPropertyOptional() @IsOptional() @IsInt() @Min(0) globalMinDays?: number;
-  @ApiPropertyOptional() @IsOptional() @IsInt() @Min(0) globalMaxDays?: number;
+export class DeliverySlotDto {
+  @ApiProperty({ example: 'morning' }) @IsString() @MaxLength(40) id: string;
+  @ApiProperty({ example: 'Morning (9am–12pm)' }) @IsString() @MaxLength(60) label: string;
+  @ApiProperty({ example: 'সকাল (৯টা–১২টা)' }) @IsString() @MaxLength(60) labelBn: string;
+  @ApiProperty({ example: '09:00' }) @Matches(HHMM, { message: 'Use the form 09:00' }) from: string;
+  @ApiProperty({ example: '12:00' }) @Matches(HHMM, { message: 'Use the form 12:00' }) to: string;
+}
 
-  @ApiPropertyOptional()
+export class UpdateDeliverySettingsDto {
+  @ApiPropertyOptional({ description: 'Take delivery orders at all' })
   @IsOptional()
-  @IsNumber()
-  @Min(0)
-  insideDhakaRate?: number;
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  insideDhakaMinDays?: number;
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  insideDhakaMaxDays?: number;
+  @IsBoolean()
+  enabled?: boolean;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ nullable: true, description: 'The pin of Kalibari Bazar: every distance is measured from here' })
   @IsOptional()
-  @IsNumber()
-  @Min(0)
-  outsideDhakaRate?: number;
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  outsideDhakaMinDays?: number;
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  outsideDhakaMaxDays?: number;
+  @ValidateIf((_, v) => v !== null)
+  @IsLatitude()
+  originLat?: number | null;
 
-  @ApiPropertyOptional({
-    type: [String],
-    description:
-      'Cities treated as inside Dhaka when the customer does not pick a zone',
-  })
+  @ApiPropertyOptional({ nullable: true })
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  insideDhakaCities?: string[];
+  @ValidateIf((_, v) => v !== null)
+  @IsLongitude()
+  originLng?: number | null;
 
-  @ApiPropertyOptional({
-    nullable: true,
-    description: 'Free shipping at or above this subtotal. null disables it.',
-  })
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(200) originLabel?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(200) originLabelBn?: string;
+
+  @ApiPropertyOptional({ nullable: true, description: 'Centre of the service area (empty = the origin)' })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsLatitude()
+  centerLat?: number | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsLongitude()
+  centerLng?: number | null;
+
+  @ApiPropertyOptional({ example: 20 }) @IsOptional() @IsNumber() @Min(0.5) @Max(500) serviceRadiusKm?: number;
+  @ApiPropertyOptional({ example: 2 }) @IsOptional() @IsNumber() @Min(0) @Max(100) baseKm?: number;
+  @ApiPropertyOptional({ example: 20 }) @IsOptional() @IsNumber() @Min(0) baseCharge?: number;
+  @ApiPropertyOptional({ example: 10 }) @IsOptional() @IsNumber() @Min(0) perKmRate?: number;
+  @ApiPropertyOptional({ example: 1 }) @IsOptional() @IsNumber() @Min(0.1) @Max(50) stepKm?: number;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() @Min(0) minOrderAmount?: number;
+
+  @ApiPropertyOptional({ nullable: true, description: 'Delivery is free at or above this subtotal. null disables it.' })
   @IsOptional()
   @ValidateIf((_, v) => v !== null)
   @IsNumber()
   @Min(0)
-  freeShippingThreshold?: number | null;
+  freeDeliveryThreshold?: number | null;
+
+  @ApiPropertyOptional({ type: [DeliverySlotDto] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(10)
+  @ValidateNested({ each: true })
+  @Type(() => DeliverySlotDto)
+  slots?: DeliverySlotDto[];
+
+  @ApiPropertyOptional({ example: '08:00' }) @IsOptional() @Matches(HHMM) openFrom?: string;
+  @ApiPropertyOptional({ example: '22:00' }) @IsOptional() @Matches(HHMM) openTo?: string;
+  @ApiPropertyOptional({ description: 'The manual open / closed switch' }) @IsOptional() @IsBoolean() shopOpen?: boolean;
+
+  @ApiPropertyOptional({ example: 1.3, description: 'When no road route is found: straight line times this' })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(3)
+  routeFactor?: number;
+}
+
+export class UpdateMapsSettingsDto {
+  @ApiPropertyOptional({ enum: ['osm', 'google'], description: 'Which map the shop uses. Switch any time.' })
+  @IsOptional()
+  @IsIn(['osm', 'google'])
+  provider?: 'osm' | 'google';
+
+  @ApiPropertyOptional({ nullable: true, description: 'Public key for the map in the browser (limit it to your website address in Google Cloud)' })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsString()
+  @MaxLength(200)
+  googleBrowserKey?: string | null;
+
+  @ApiPropertyOptional({ nullable: true, description: 'Secret: routes and place names. Write-only; send "" to remove.' })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsString()
+  @MaxLength(200)
+  googleServerKey?: string | null;
+
+  @ApiPropertyOptional({ example: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png' })
+  @IsOptional()
+  @IsString()
+  @Matches(/^https:\/\/.*\{z\}.*\{x\}.*\{y\}/, { message: 'A tile address must be https and contain {z}, {x} and {y}' })
+  @MaxLength(300)
+  osmTileUrl?: string;
+
+  @ApiPropertyOptional({ nullable: true, description: 'Secret: OpenRouteService key. Write-only; send "" to remove.' })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsString()
+  @MaxLength(200)
+  orsApiKey?: string | null;
+
+  @ApiPropertyOptional({ nullable: true, description: 'A contact email: OpenStreetMap asks for one' })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null && v !== '')
+  @IsEmail()
+  contactEmail?: string | null;
+
+  @ApiPropertyOptional({ example: 2000, description: 'Routes and place names per day, so a bug or bot cannot run up a bill. 0 = no limit.' })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(1000000)
+  dailyRequestCap?: number;
 }
 
 export class UpdateReturnSettingsDto {

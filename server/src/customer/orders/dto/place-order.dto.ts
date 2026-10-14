@@ -3,12 +3,16 @@ import {
   IsEmail,
   IsEnum,
   IsIn,
+  IsLatitude,
+  IsLongitude,
   IsNotEmpty,
+  IsNumber,
   IsObject,
   IsOptional,
   IsString,
   Matches,
   MaxLength,
+  Min,
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
@@ -25,9 +29,43 @@ export class ShippingAddressDto {
   @IsBdMobile()
   phone: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'House, lane, area: what the rider reads' })
   @IsString()
   address: string;
+
+  @ApiProperty({ description: 'Delivery pin: latitude. Required: the delivery charge comes from it.' })
+  @Type(() => Number)
+  @IsLatitude()
+  latitude: number;
+
+  @ApiProperty({ description: 'Delivery pin: longitude' })
+  @Type(() => Number)
+  @IsLongitude()
+  longitude: number;
+
+  @ApiPropertyOptional({ description: 'The place name shown on the map' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  placeName?: string;
+
+  @ApiPropertyOptional({ description: 'A landmark: "beside the green gate"' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  landmark?: string;
+
+  @ApiPropertyOptional({ description: 'How exact the GPS fix was, in metres' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  accuracyM?: number;
+
+  @ApiPropertyOptional({ enum: ['GPS', 'PIN', 'SEARCH', 'LINK'] })
+  @IsOptional()
+  @IsIn(['GPS', 'PIN', 'SEARCH', 'LINK'])
+  locationSource?: 'GPS' | 'PIN' | 'SEARCH' | 'LINK';
 
   @ApiPropertyOptional({
     description: 'City / district. Defaults to the district when omitted.',
@@ -63,9 +101,10 @@ export class ShippingAddressDto {
   @IsString()
   state?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  postalCode: string;
+  postalCode?: string;
 }
 
 export class PlaceOrderDto {
@@ -86,14 +125,16 @@ export class PlaceOrderDto {
   @Type(() => ShippingAddressDto)
   shippingAddress: ShippingAddressDto;
 
-  @ApiPropertyOptional({
-    enum: ['INSIDE_DHAKA', 'OUTSIDE_DHAKA'],
-    description:
-      'Shipping zone picked at checkout. Ignored when shipping mode is GLOBAL. If omitted, inferred from shippingAddress.city.',
-  })
+  @ApiPropertyOptional({ description: 'Delivery time slot id, from the delivery settings' })
   @IsOptional()
-  @IsIn(['INSIDE_DHAKA', 'OUTSIDE_DHAKA'])
-  shippingZone?: 'INSIDE_DHAKA' | 'OUTSIDE_DHAKA';
+  @IsString()
+  @MaxLength(40)
+  deliverySlot?: string;
+
+  @ApiPropertyOptional({ example: '2026-10-15', description: 'Wanted delivery day (Bangladesh time)' })
+  @IsOptional()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'deliveryDate must look like 2026-10-15' })
+  deliveryDate?: string;
 
   // Required for bKash / Nagad / Rocket: the transaction ID the customer received
   // after manually sending the payment. An admin verifies it against the

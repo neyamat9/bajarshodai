@@ -16,6 +16,7 @@ import { JwtAuthGuard, RolesGuard } from '../../common/guards';
 import { Roles } from '../../common/decorators';
 import {
   EmailSettings,
+  MapsSettings,
   SECRET_FIELDS,
   SETTINGS_GROUPS,
   SettingsMap,
@@ -23,13 +24,15 @@ import {
   SettingsService,
 } from '../../common/settings';
 import { MailService } from '../../common/mail';
+import { MapsService } from '../../common/maps';
 import { AuditService } from '../../common/audit';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { User } from '@prisma/client';
 import {
   UpdatePaymentSettingsDto,
   UpdateReturnSettingsDto,
-  UpdateShippingSettingsDto,
+  UpdateDeliverySettingsDto,
+  UpdateMapsSettingsDto,
   UpdateSiteSettingsDto,
   UpdateEmailSettingsDto,
   TestEmailDto,
@@ -45,6 +48,7 @@ export class AdminSettingsController {
     private readonly settings: SettingsService,
     private readonly mail: MailService,
     private readonly audit: AuditService,
+    private readonly maps: MapsService,
   ) {}
 
   // Saves a settings group and records which values changed (secrets are
@@ -92,11 +96,15 @@ export class AdminSettingsController {
 
   @Get()
   @ApiOperation({
-    summary: 'Get all store settings (site, payment, shipping, returns)',
+    summary: 'Get all store settings (site, payment, delivery, maps, returns, email)',
   })
   async getAll() {
     const all = await this.settings.getAll();
-    return { ...all, email: this.settings.mask('email', all.email) };
+    return {
+      ...all,
+      email: this.settings.mask('email', all.email),
+      maps: this.settings.mask('maps', all.maps),
+    };
   }
 
   @Get(':group')
@@ -155,34 +163,79 @@ export class AdminSettingsController {
     return this.save('payment', dto, admin);
   }
 
-  @Put('shipping')
+  @Put('delivery')
   @ApiOperation({
     summary:
-      'Update shipping charge (GLOBAL flat rate or inside/outside Dhaka ZONE rates)',
+      'Update delivery: the Kalibari Bazar pin, service radius, the distance rates, minimum order, time slots, shop hours',
   })
-  async updateShipping(
-    @Body() dto: UpdateShippingSettingsDto,
+  async updateDelivery(
+    @Body() dto: UpdateDeliverySettingsDto,
     @CurrentUser() admin: User,
   ) {
-    const next = await this.settings.preview('shipping', dto);
-    const ranges: [number, number, string][] = [
-      [next.globalMinDays, next.globalMaxDays, 'global'],
-      [next.insideDhakaMinDays, next.insideDhakaMaxDays, 'inside Dhaka'],
-      [next.outsideDhakaMinDays, next.outsideDhakaMaxDays, 'outside Dhaka'],
-    ];
-    for (const [min, max, label] of ranges) {
-      if (min > max) {
-        throw new BadRequestException(
-          `${label}: min days cannot exceed max days`,
-        );
+    const next = await this.settings.preview('delivery', dto);
+    if ((next.originLat === null) !== (next.originLng === null)) {
+      throw new BadRequestException('Set both the latitude and the longitude of the origin');
+    }
+    if ((next.centerLat === null) !== (next.centerLng === null)) {
+      throw new BadRequestException('Set both the latitude and the longitude of the service area centre');
+    }
+    if (next.slots) {
+      const ids = next.slots.map((s) => s.id);
+      if (new Set(ids).size !== ids.length) {
+        throw new BadRequestException('Each time slot needs its own id');
+      }
+      for (const s of next.slots) {
+        if (s.from >= s.to) {
+          throw new BadRequestException(`Slot "${s.label}": the end must be after the start`);
+        }
       }
     }
-    if (dto.insideDhakaCities) {
-      dto.insideDhakaCities = dto.insideDhakaCities
-        .map((c) => c.trim())
-        .filter(Boolean);
+    if (next.openFrom >= next.openTo) {
+      throw new BadRequestException('The shop closes after it opens');
     }
-    return this.save('shipping', dto, admin);
+    return this.save('delivery', dto, admin);
+  }
+
+  @Put('maps')
+  @ApiOperation({
+    summary:
+      'Update the map service: OpenStreetMap or Google, keys (write-only), daily limit. Takes effect at once.',
+  })
+  async updateMaps(
+    @Body() dto: UpdateMapsSettingsDto,
+    @CurrentUser() admin: User,
+  ) {
+    const patch: Partial<MapsSettings> = {};
+    for (const [k, v] of Object.entries(dto)) {
+      if (v === undefined) continue;
+      // "" removes a secret; drop undefined so stored values are kept
+      (patch as Record<string, unknown>)[k] =
+        (k === 'googleServerKey' || k === 'orsApiKey' || k === 'googleBrowserKey' || k === 'contactEmail') && v === ''
+          ? null
+          : typeof v === 'string'
+            ? v.trim()
+            : v;
+    }
+    const next = await this.settings.preview('maps', patch);
+    if (next.provider === 'google' && !next.googleBrowserKey) {
+      throw new BadRequestException('Add the Google browser key before switching to Google Maps');
+    }
+    return this.settings.mask('maps', await this.save('maps', patch, admin));
+  }
+
+  @Post('maps/test')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Test the saved map settings: one real route and one place name, with the reason when something fails',
+  })
+  testMaps() {
+    return this.maps.test();
+  }
+
+  @Get('maps/usage')
+  @ApiOperation({ summary: 'How many routes, place names and searches the map was asked for today, and the daily limit' })
+  mapsUsage() {
+    return this.maps.usageToday();
   }
 
   @Put('returns')

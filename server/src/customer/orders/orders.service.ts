@@ -115,10 +115,12 @@ export class OrdersService {
     const phone = normalizeBdPhone(dto.shippingAddress.phone);
     const { division, district, upazila } = dto.shippingAddress;
     const area = this.locations.resolve({ division, district, upazila });
-    const city = dto.shippingAddress.city?.trim() || area.district;
-    if (!city) {
-      throw new BadRequestException('Choose a district (or enter a city)');
-    }
+    // The delivery is priced from the pin; the district fields are optional and only describe the place.
+    const city =
+      dto.shippingAddress.city?.trim() ||
+      area.district ||
+      dto.shippingAddress.placeName?.split(',').pop()?.trim() ||
+      'Shahrasti';
     const guestEmail = userId ? null : dto.email?.trim().toLowerCase() || null;
 
     const paymentMethods = await this.checkoutService.enabledPaymentMethods();
@@ -157,9 +159,8 @@ export class OrdersService {
         owner,
         {
           couponCode: dto.couponCode,
-          shippingZone: dto.shippingZone,
-          // The district (when chosen) decides the shipping zone.
-          city: area.district ?? city,
+          lat: dto.shippingAddress.latitude,
+          lng: dto.shippingAddress.longitude,
           phone,
         },
         tx,
@@ -168,8 +169,26 @@ export class OrdersService {
       if (quote.items.length === 0) {
         throw new BadRequestException('Cart is empty');
       }
-      if (!quote.canPlaceOrder) {
+      if (quote.issues.length) {
         throw new BadRequestException(quote.issues.join('; '));
+      }
+      const block = quote.shipping.block;
+      if (block === 'DISABLED' || !quote.shopOpen) {
+        throw new BadRequestException('We are not taking delivery orders right now. Please try again later.');
+      }
+      if (block === 'ORIGIN_NOT_SET') {
+        throw new BadRequestException('Delivery is not set up yet. Please call us to order.');
+      }
+      if (block === 'OUT_OF_AREA') {
+        throw new BadRequestException(
+          `Sorry, we deliver only within ${quote.shipping.radiusKm} km of our shop. Your location is about ${quote.shipping.straightKm} km away.`,
+        );
+      }
+      if (!quote.shipping.available) {
+        throw new BadRequestException('Share your delivery location first.');
+      }
+      if (!quote.minOrderOk) {
+        throw new BadRequestException(`The minimum order is ৳${quote.minOrderAmount}.`);
       }
       if (quote.coupon && !quote.coupon.applied) {
         throw new BadRequestException(quote.coupon.message);
@@ -225,15 +244,24 @@ export class OrdersService {
           division: area.division,
           district: area.district,
           upazila: area.upazila,
-          postalCode: dto.shippingAddress.postalCode,
+          postalCode: dto.shippingAddress.postalCode ?? '',
+          latitude: dto.shippingAddress.latitude,
+          longitude: dto.shippingAddress.longitude,
+          placeName: dto.shippingAddress.placeName ?? null,
+          landmark: dto.shippingAddress.landmark ?? null,
+          accuracyM: dto.shippingAddress.accuracyM ?? null,
+          locationSource: dto.shippingAddress.locationSource ?? 'PIN',
+          locationCapturedAt: new Date(),
           country: 'Bangladesh',
           userId,
           label: 'Shipping',
         },
       });
 
+      // the road time plus half an hour to pick and pack, at least an hour out
       const estimatedDelivery = new Date(
-        Date.now() + quote.shipping.estimatedMaxDays * 24 * 60 * 60 * 1000,
+        Date.now() +
+          Math.max(3600, (quote.shipping.durationSec ?? 0) + 1800) * 1000,
       );
 
       const created = await tx.order.create({
@@ -264,7 +292,16 @@ export class OrdersService {
           estimatedDelivery,
           deliveryNote: dto.deliveryNote ?? null,
           shippingAddressId: shippingAddress.id,
-          shippingZone: quote.shipping.zone,
+          deliveryLat: dto.shippingAddress.latitude,
+          deliveryLng: dto.shippingAddress.longitude,
+          deliveryPlaceName: dto.shippingAddress.placeName ?? null,
+          deliveryLandmark: dto.shippingAddress.landmark ?? null,
+          deliveryDistanceKm: quote.shipping.distanceKm,
+          deliveryDurationSec: quote.shipping.durationSec,
+          distanceEstimated: quote.shipping.estimated,
+          deliveryFee: quote.shipping.calculatedFee,
+          deliverySlot: dto.deliverySlot ?? null,
+          deliveryDate: dto.deliveryDate ? new Date(`${dto.deliveryDate}T00:00:00.000Z`) : null,
           items: {
             create: cartItems.map((item) => {
               const price = Number(
@@ -534,7 +571,7 @@ export class OrdersService {
       courierName: order.courierName,
       trackingNumber: order.trackingNumber,
       trackingUrl: order.trackingUrl,
-      shippingZone: order.shippingZone,
+      deliveryDistanceKm: order.deliveryDistanceKm,
       placedAt: order.placedAt,
       confirmedAt: order.confirmedAt,
       shippedAt: order.shippedAt,

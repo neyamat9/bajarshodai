@@ -13,10 +13,13 @@ import { normalizeBdPhone } from '../../common/utils/phone';
 import { writeAudit } from '../../common/audit';
 import { CouponsService } from '../../customer/coupons/coupons.service';
 import { ShippingService } from '../../customer/shipping/shipping.service';
+import { MapsService } from '../../common/maps';
 import {
   CreateOrderDto,
   OrderLineDto,
   UpdateOrderAddressDto,
+  OverrideDeliveryFeeDto,
+  SetDeliveryPinDto,
   UpdateOrderItemsDto,
 } from './dto/order-admin.dto';
 import { AdminOrdersService } from './orders.service';
@@ -55,6 +58,7 @@ export class OrderEditService {
     private stock: StockService,
     private locations: LocationsService,
     private shipping: ShippingService,
+    private maps: MapsService,
     private coupons: CouponsService,
     private notifier: OrderNotifierService,
     private orders: AdminOrdersService,
@@ -95,6 +99,16 @@ export class OrderEditService {
         district: area.district,
         upazila: area.upazila,
         postalCode: dto.postalCode ?? order.shippingAddress?.postalCode ?? '',
+        ...(dto.latitude != null && dto.longitude != null
+          ? {
+              latitude: dto.latitude,
+              longitude: dto.longitude,
+              placeName: dto.placeName ?? null,
+              landmark: dto.landmark ?? null,
+              locationSource: 'PIN' as const,
+              locationCapturedAt: new Date(),
+            }
+          : { ...(dto.landmark !== undefined ? { landmark: dto.landmark } : {}) }),
       };
       if (order.shippingAddressId) {
         await tx.address.update({
@@ -128,24 +142,34 @@ export class OrderEditService {
           where: { id: { in: order.items.map((i) => i.productId) } },
           select: { freeShipping: true },
         });
+        const lat = dto.latitude ?? order.deliveryLat ?? order.shippingAddress?.latitude;
+        const lng = dto.longitude ?? order.deliveryLng ?? order.shippingAddress?.longitude;
+        if (lat == null || lng == null) {
+          throw new BadRequestException(
+            'There is no delivery pin on this order yet: drop one on the map (or ask the customer to share their location) to work out the charge',
+          );
+        }
         const quote = await this.shipping.quote(Number(order.subtotal), {
-          city: area.district ?? city,
+          lat,
+          lng,
           allItemsFreeShipping:
             products.length > 0 && products.every((p) => p.freeShipping),
         });
-        const shippingCost = quote.cost;
-        if (
-          shippingCost !== Number(order.shippingCost) ||
-          quote.zone !== order.shippingZone
-        ) {
-          await this.applyTotals(tx, order, {
-            subtotal: Number(order.subtotal),
-            discount: Number(order.discountAmount),
-            shippingCost,
-            extra: { shippingZone: quote.zone },
-          });
-          note += `; shipping ${Number(order.shippingCost)} → ${shippingCost} (${quote.zoneLabel})`;
+        if (!quote.available) {
+          throw new BadRequestException(
+            quote.block === 'OUT_OF_AREA'
+              ? `That pin is about ${quote.straightKm} km away: outside the ${quote.radiusKm} km delivery area`
+              : 'Delivery charge cannot be worked out for that pin',
+          );
         }
+        const priced = this.pricing(quote, lat, lng, order);
+        await this.applyTotals(tx, order, {
+          subtotal: Number(order.subtotal),
+          discount: Number(order.discountAmount),
+          shippingCost: priced.shippingCost,
+          extra: priced.data,
+        });
+        note += `; delivery ${Number(order.shippingCost)} → ${priced.shippingCost} (${quote.distanceKm} km${quote.estimated ? ', estimated' : ''})`;
       }
       const a = order.shippingAddress;
       await writeAudit(tx, {
@@ -414,22 +438,25 @@ export class OrderEditService {
       discount = Math.min(discount, subtotal);
 
       let shippingCost = dto.shippingCost ?? Number(order.shippingCost);
-      let zone: string | null = order.shippingZone;
-      if (dto.shippingCost === undefined && dto.recalculateShipping) {
+      // a bigger or smaller basket can cross the free-delivery line: price again from the pin saved on the order
+      if (
+        dto.shippingCost === undefined &&
+        dto.recalculateShipping &&
+        order.deliveryLat != null &&
+        order.deliveryLng != null &&
+        order.deliveryFeeOverride === null
+      ) {
         const prods = await tx.product.findMany({
           where: { id: { in: lines.map((l) => l.productId) } },
           select: { freeShipping: true },
         });
         const quote = await this.shipping.quote(subtotal, {
-          city:
-            order.shippingAddress?.district ??
-            order.shippingAddress?.city ??
-            undefined,
+          lat: order.deliveryLat,
+          lng: order.deliveryLng,
           allItemsFreeShipping:
             prods.length > 0 && prods.every((p) => p.freeShipping),
         });
-        shippingCost = quote.cost;
-        zone = quote.zone;
+        if (quote.available) shippingCost = quote.cost;
       }
 
       const newTotal = await this.applyTotals(tx, order, {
@@ -437,7 +464,6 @@ export class OrderEditService {
         discount,
         shippingCost,
         extra: {
-          shippingZone: zone,
           ...(couponRemoved ? { couponCode: null } : {}),
         },
       });
@@ -485,12 +511,139 @@ export class OrderEditService {
     return warnings.length ? { ...updated, warnings } : updated;
   }
 
+  // ---------- delivery charge by hand + the delivery pin ----------
+
+  /** The shop sets the delivery charge of one order by hand (a reason is required) or goes back to the distance charge. */
+  async overrideDeliveryFee(id: string, dto: OverrideDeliveryFeeDto, adminId: string) {
+    const order = await this.prisma.order.findUnique({ where: { id } });
+    if (!order) throw new NotFoundException('Order not found');
+    this.assertEditable(order.status);
+    if (dto.fee !== null && !dto.reason?.trim()) {
+      throw new BadRequestException('Say why the delivery charge is changed: it goes in the activity log');
+    }
+    const calculated = order.deliveryFee !== null ? Number(order.deliveryFee) : null;
+    const back = dto.fee === null;
+    const shippingCost = back ? (calculated ?? Number(order.shippingCost)) : dto.fee!;
+
+    await this.prisma.$transaction(async (tx) => {
+      await this.applyTotals(tx, order, {
+        subtotal: Number(order.subtotal),
+        discount: Number(order.discountAmount),
+        shippingCost,
+        extra: {
+          deliveryFeeOverride: back ? null : dto.fee,
+          deliveryFeeOverrideReason: back ? null : dto.reason!.trim(),
+        },
+      });
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId: id,
+          fromStatus: order.status,
+          toStatus: order.status,
+          note: back
+            ? `Delivery charge back to the distance charge (৳${shippingCost})`
+            : `Delivery charge set by hand: ৳${Number(order.shippingCost)} → ৳${shippingCost} (${dto.reason!.trim()})`,
+          changedBy: 'admin',
+        },
+      });
+      await writeAudit(tx, {
+        adminId,
+        action: 'DELIVERY_FEE_OVERRIDDEN',
+        entity: 'Order',
+        entityId: id,
+        oldValue: { orderNumber: order.orderNumber, deliveryFee: calculated, charged: Number(order.shippingCost), override: order.deliveryFeeOverride !== null ? Number(order.deliveryFeeOverride) : null },
+        newValue: { orderNumber: order.orderNumber, charged: shippingCost, override: back ? null : dto.fee, reason: back ? null : dto.reason },
+      });
+    });
+    return this.orders.findOne(id);
+  }
+
+  /** The road from the shop to the customer for the order detail map (cached: a repeat costs nothing). */
+  async route(id: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id },
+      select: { deliveryLat: true, deliveryLng: true, shippingAddress: { select: { latitude: true, longitude: true } } },
+    });
+    if (!order) throw new NotFoundException('Order not found');
+    const lat = order.deliveryLat ?? order.shippingAddress?.latitude;
+    const lng = order.deliveryLng ?? order.shippingAddress?.longitude;
+    if (lat == null || lng == null) return { available: false as const };
+    const delivery = await this.shipping.getOptions();
+    if (!delivery.origin) return { available: false as const };
+    const r = await this.maps.route({ lat: delivery.origin.lat!, lng: delivery.origin.lng! }, { lat, lng });
+    return { available: true as const, origin: delivery.origin, destination: { lat, lng }, ...r };
+  }
+
+  /** Put (or move) the delivery pin of an order, e.g. from a location the customer shared by link. */
+  async setDeliveryPin(id: string, dto: SetDeliveryPinDto, adminId: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id },
+      include: { shippingAddress: true, items: { select: { productId: true } } },
+    });
+    if (!order) throw new NotFoundException('Order not found');
+    this.assertEditable(order.status);
+
+    const products = await this.prisma.product.findMany({
+      where: { id: { in: order.items.map((i) => i.productId) } },
+      select: { freeShipping: true },
+    });
+    const quote = await this.shipping.quote(Number(order.subtotal), {
+      lat: dto.latitude,
+      lng: dto.longitude,
+      allItemsFreeShipping: products.length > 0 && products.every((p) => p.freeShipping),
+    });
+    if (!quote.available && quote.block === 'OUT_OF_AREA') {
+      throw new BadRequestException(`That pin is about ${quote.straightKm} km away: outside the ${quote.radiusKm} km delivery area`);
+    }
+    const recalc = dto.recalculateShipping !== false && quote.available;
+    const priced = this.pricing(quote, dto.latitude, dto.longitude, order);
+
+    await this.prisma.$transaction(async (tx) => {
+      if (order.shippingAddressId) {
+        await tx.address.update({
+          where: { id: order.shippingAddressId },
+          data: { latitude: dto.latitude, longitude: dto.longitude, placeName: dto.placeName ?? null, landmark: dto.landmark ?? order.shippingAddress?.landmark ?? null, locationSource: 'PIN', locationCapturedAt: new Date() },
+        });
+      }
+      const extra = { ...(quote.available ? priced.data : { deliveryLat: dto.latitude, deliveryLng: dto.longitude }), deliveryPlaceName: dto.placeName ?? null, deliveryLandmark: dto.landmark ?? order.deliveryLandmark };
+      if (recalc) {
+        await this.applyTotals(tx, order, {
+          subtotal: Number(order.subtotal),
+          discount: Number(order.discountAmount),
+          shippingCost: priced.shippingCost,
+          extra,
+        });
+      } else {
+        await tx.order.update({ where: { id }, data: extra });
+      }
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId: id,
+          fromStatus: order.status,
+          toStatus: order.status,
+          note: `Delivery pin set by admin${quote.available ? ` (${quote.distanceKm} km${quote.estimated ? ', estimated' : ''}${recalc ? `, delivery ৳${priced.shippingCost}` : ''})` : ''}`,
+          changedBy: 'admin',
+        },
+      });
+      await writeAudit(tx, {
+        adminId,
+        action: 'ORDER_EDITED',
+        entity: 'Order',
+        entityId: id,
+        oldValue: { orderNumber: order.orderNumber, pin: order.deliveryLat != null ? { lat: order.deliveryLat, lng: order.deliveryLng } : null, shippingCost: Number(order.shippingCost) },
+        newValue: { orderNumber: order.orderNumber, pin: { lat: dto.latitude, lng: dto.longitude }, shippingCost: recalc ? priced.shippingCost : Number(order.shippingCost) },
+      });
+    });
+    return this.orders.findOne(id);
+  }
+
   // ---------- phone orders ----------
 
   /** What delivery would cost for these items and district (the same rule checkout uses). */
   async quoteShipping(
     subtotal: number,
-    district?: string,
+    lat?: number,
+    lng?: number,
     productIds: string[] = [],
   ) {
     let allFree = false;
@@ -501,11 +654,32 @@ export class OrderEditService {
       });
       allFree = rows.length > 0 && rows.every((p) => p.freeShipping);
     }
-    const area = this.locations.resolve({ district });
     return this.shipping.quote(subtotal, {
-      city: area.district ?? district,
+      lat,
+      lng,
       allItemsFreeShipping: allFree,
     });
+  }
+
+  /** The order columns that remember where, how far and how much (a fee set by hand always wins). */
+  private pricing(
+    q: Awaited<ReturnType<ShippingService['quote']>>,
+    lat: number,
+    lng: number,
+    order?: { deliveryFeeOverride: Prisma.Decimal | null },
+  ) {
+    const override = order?.deliveryFeeOverride;
+    return {
+      shippingCost: override !== null && override !== undefined ? Number(override) : q.cost,
+      data: {
+        deliveryLat: lat,
+        deliveryLng: lng,
+        deliveryDistanceKm: q.distanceKm,
+        deliveryDurationSec: q.durationSec,
+        distanceEstimated: q.estimated,
+        deliveryFee: q.calculatedFee,
+      },
+    };
   }
 
   async create(dto: CreateOrderDto, adminId: string) {
@@ -574,17 +748,33 @@ export class OrderEditService {
       const subtotal = round2(rows.reduce((s, r) => s + r.total, 0));
       const lineProducts = rows.map((r) => products.get(r.productId)!);
 
+      // A phone order: the delivery charge comes from the pin when there is one, else the staff types it.
+      const pin =
+        !walkIn && addr?.latitude != null && addr?.longitude != null
+          ? { lat: addr.latitude, lng: addr.longitude }
+          : null;
+      const pinQuote = pin
+        ? await this.shipping.quote(subtotal, {
+            ...pin,
+            allItemsFreeShipping: lineProducts.every((p) => p.freeShipping),
+          })
+        : null;
+      if (pinQuote && !pinQuote.available && dto.shippingCost === undefined) {
+        throw new BadRequestException(
+          pinQuote.block === 'OUT_OF_AREA'
+            ? `That pin is about ${pinQuote.straightKm} km away: outside the ${pinQuote.radiusKm} km delivery area (type the charge by hand to deliver anyway)`
+            : 'Delivery charge cannot be worked out for that pin',
+        );
+      }
       let shippingCost = walkIn ? 0 : dto.shippingCost;
       if (shippingCost === undefined) {
-        const quote = await this.shipping.quote(subtotal, {
-          city: area.district ?? city,
-          allItemsFreeShipping: lineProducts.every((p) => p.freeShipping),
-        });
-        shippingCost = quote.cost;
+        if (!pinQuote) {
+          throw new BadRequestException(
+            'Drop a delivery pin on the map (or send the customer a location link), or type the delivery charge',
+          );
+        }
+        shippingCost = pinQuote.cost;
       }
-      const zoneQuote = walkIn
-        ? null
-        : await this.shipping.quote(subtotal, { city: area.district ?? city });
 
       let discount = dto.discountAmount ?? 0;
       let couponResult: Awaited<ReturnType<CouponsService['evaluate']>> | null =
@@ -699,7 +889,18 @@ export class OrderEditService {
           deliveryNote: dto.deliveryNote ?? null,
           internalNote: dto.internalNote ?? null,
           shippingAddressId: address?.id ?? null,
-          shippingZone: zoneQuote?.zone ?? null,
+          ...(pin && pinQuote
+            ? {
+                deliveryLat: pin.lat,
+                deliveryLng: pin.lng,
+                deliveryPlaceName: addr?.placeName ?? null,
+                deliveryLandmark: addr?.landmark ?? null,
+                deliveryDistanceKm: pinQuote.distanceKm,
+                deliveryDurationSec: pinQuote.durationSec,
+                distanceEstimated: pinQuote.estimated,
+                deliveryFee: pinQuote.calculatedFee,
+              }
+            : {}),
           items: { create: rows },
           statusHistory: {
             create: {

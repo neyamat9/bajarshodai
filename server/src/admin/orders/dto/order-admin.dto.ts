@@ -9,6 +9,8 @@ import {
   IsEmail,
   IsIn,
   IsInt,
+  IsLatitude,
+  IsLongitude,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -280,14 +282,71 @@ export class OrderAddressDto {
   @IsString()
   @MaxLength(20)
   postalCode?: string;
+
+  @ApiPropertyOptional({ description: 'Delivery pin: latitude' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsLatitude()
+  latitude?: number;
+
+  @ApiPropertyOptional({ description: 'Delivery pin: longitude' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsLongitude()
+  longitude?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  placeName?: string;
+
+  @ApiPropertyOptional({ description: 'A landmark: "beside the green gate"' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  landmark?: string;
 }
 
 export class UpdateOrderAddressDto extends OrderAddressDto {
   @ApiPropertyOptional({
     default: false,
     description:
-      'Work out the shipping cost again for the new area (inside/outside Dhaka) and update the order total',
+      'Work out the delivery charge again from the delivery pin and update the order total (a charge set by hand is kept)',
   })
+  @IsOptional()
+  @IsBoolean()
+  recalculateShipping?: boolean;
+}
+
+export class OverrideDeliveryFeeDto {
+  @ApiProperty({
+    nullable: true,
+    example: 50,
+    description: 'The delivery charge to use for this order. null = go back to the charge the distance gives.',
+  })
+  @ValidateIf((_, v) => v !== null)
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  fee: number | null;
+
+  @ApiPropertyOptional({ description: 'Why (required when setting a charge by hand). It goes in the activity log.' })
+  @IsOptional()
+  @Transform(trim)
+  @IsString()
+  @MaxLength(300)
+  reason?: string;
+}
+
+export class SetDeliveryPinDto {
+  @ApiProperty() @Type(() => Number) @IsLatitude() latitude: number;
+  @ApiProperty() @Type(() => Number) @IsLongitude() longitude: number;
+
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(200) placeName?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(200) landmark?: string;
+
+  @ApiPropertyOptional({ default: true, description: 'Work out the distance and the delivery charge again from this pin' })
   @IsOptional()
   @IsBoolean()
   recalculateShipping?: boolean;
@@ -593,11 +652,17 @@ export class ShippingQuoteQueryDto {
   @Min(0)
   subtotal: number;
 
-  @ApiPropertyOptional({ example: 'dhaka' })
+  @ApiPropertyOptional({ description: 'Delivery pin: latitude' })
   @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  district?: string;
+  @Type(() => Number)
+  @IsLatitude()
+  lat?: number;
+
+  @ApiPropertyOptional({ description: 'Delivery pin: longitude' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsLongitude()
+  lng?: number;
 
   @ApiPropertyOptional({
     description: 'Comma separated product ids (free-shipping products)',

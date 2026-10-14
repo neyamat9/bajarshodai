@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsLatitude, IsLongitude, IsOptional, IsString, MaxLength } from 'class-validator';
 import { IsBdMobile } from '../../../common/utils/phone';
 
 export class CheckoutSummaryDto {
@@ -9,28 +10,17 @@ export class CheckoutSummaryDto {
   @MaxLength(50)
   couponCode?: string;
 
-  @ApiPropertyOptional({
-    enum: ['INSIDE_DHAKA', 'OUTSIDE_DHAKA'],
-    description:
-      'Shipping zone picked by the customer. Ignored when shipping mode is GLOBAL. If omitted, it is inferred from city.',
-  })
+  @ApiPropertyOptional({ description: 'Delivery pin: latitude. The delivery charge is worked out from it.' })
   @IsOptional()
-  @IsIn(['INSIDE_DHAKA', 'OUTSIDE_DHAKA'])
-  shippingZone?: 'INSIDE_DHAKA' | 'OUTSIDE_DHAKA';
+  @Type(() => Number)
+  @IsLatitude()
+  lat?: number;
 
-  @ApiPropertyOptional({
-    description:
-      'Delivery district (id or name). Takes priority over city when inferring the zone.',
-  })
+  @ApiPropertyOptional({ description: 'Delivery pin: longitude' })
   @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  district?: string;
-
-  @ApiPropertyOptional({ description: 'Delivery city, used to infer the zone' })
-  @IsOptional()
-  @IsString()
-  city?: string;
+  @Type(() => Number)
+  @IsLongitude()
+  lng?: number;
 
   @ApiPropertyOptional({
     description:

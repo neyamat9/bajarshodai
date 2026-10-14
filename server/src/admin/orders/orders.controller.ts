@@ -32,6 +32,8 @@ import { OrderPaymentsService } from './order-payments.service';
 import { VerifyPaymentDto } from './dto/verify-payment.dto';
 import {
   BulkOrderStatusDto,
+  OverrideDeliveryFeeDto,
+  SetDeliveryPinDto,
   CreateOrderDto,
   ExportOrdersQueryDto,
   ListOrdersDto,
@@ -92,15 +94,45 @@ export class AdminOrdersController {
     res.end();
   }
 
+  @Put(':id/delivery-fee')
+  @ApiOperation({
+    summary:
+      'Set the delivery charge of one order by hand (a reason is required and goes in the activity log), or send fee: null to go back to the distance charge',
+  })
+  overrideDeliveryFee(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: OverrideDeliveryFeeDto,
+    @CurrentUser() admin: User,
+  ) {
+    return this.edit.overrideDeliveryFee(id, dto, admin.id);
+  }
+
+  @Put(':id/delivery-pin')
+  @ApiOperation({ summary: 'Put or move the delivery pin of an order and work out the distance and charge again' })
+  setDeliveryPin(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SetDeliveryPinDto,
+    @CurrentUser() admin: User,
+  ) {
+    return this.edit.setDeliveryPin(id, dto, admin.id);
+  }
+
+  @Get(':id/route')
+  @ApiOperation({ summary: 'The road from the shop to the delivery pin (for the map on the order page)' })
+  route(@Param('id', ParseUUIDPipe) id: string) {
+    return this.edit.route(id);
+  }
+
   @Get('shipping-quote')
   @ApiOperation({
     summary:
-      'Delivery charge for a subtotal and district, from the shipping settings (used while building a phone/POS order)',
+      'Distance and delivery charge for a subtotal and a pin on the map (used while building a phone order)',
   })
   shippingQuote(@Query() q: ShippingQuoteQueryDto) {
     return this.edit.quoteShipping(
       q.subtotal,
-      q.district,
+      q.lat,
+      q.lng,
       q.productIds ? q.productIds.split(',').filter(Boolean) : [],
     );
   }

@@ -274,7 +274,17 @@ export class AnalyticsService {
   }
 
   revenueByZone(r: DateRange) {
-    return this.breakdown(r, Prisma.sql`o."shippingZone"`, 'UNKNOWN');
+    // delivery is priced by distance now: group the orders into distance bands from the shop
+    return this.breakdown(
+      r,
+      Prisma.sql`CASE
+        WHEN o."deliveryDistanceKm" IS NULL THEN NULL
+        WHEN o."deliveryDistanceKm" <= 2 THEN '0-2 km'
+        WHEN o."deliveryDistanceKm" <= 5 THEN '2-5 km'
+        WHEN o."deliveryDistanceKm" <= 10 THEN '5-10 km'
+        ELSE 'Over 10 km' END`,
+      'UNKNOWN',
+    );
   }
 
   revenueBySource(r: DateRange) {

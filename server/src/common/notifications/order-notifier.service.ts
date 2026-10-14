@@ -355,7 +355,7 @@ ${itemsHtml}
 <p style="margin:0 0 4px">Customer: ${escapeHtml(customer)}</p>
 <p style="margin:0 0 4px">Phone: ${escapeHtml(phone)}</p>
 <p style="margin:0 0 4px">Payment: ${isMobileBanking(order.paymentMethod) ? `${PAYMENT_LABEL[order.paymentMethod]} (TrxID ${escapeHtml(order.bkashTransactionId ?? '-')}, from ${escapeHtml(order.bkashSenderNumber ?? '-')})` : 'Cash on Delivery'}</p>
-<p style="margin:0 0 12px">Delivery: ${escapeHtml(order.shippingAddress?.city ?? '')} (${escapeHtml(order.shippingZone ?? '')})</p>
+<p style="margin:0 0 12px">Delivery: ${escapeHtml(order.shippingAddress?.city ?? '')} (${escapeHtml(order.deliveryDistanceKm ? `${String(order.deliveryDistanceKm)} km` : '')})</p>
 ${this.itemsTable(order, 'en', site.currencySymbol)}`;
     await this.mail.send({
       to,

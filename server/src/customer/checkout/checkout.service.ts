@@ -90,7 +90,10 @@ export interface CheckoutQuote {
   taxAmount: number;
   total: number;
   paymentMethods: string[];
-  // False when any item is unavailable / out of stock or the cart is empty.
+  minOrderAmount: number;
+  minOrderOk: boolean;
+  shopOpen: boolean;
+  // False when any item is unavailable / out of stock, the cart is empty, there is no delivery location yet, or the order is too small.
   canPlaceOrder: boolean;
   issues: string[];
   // Kept for order placement; stripped from API responses.
@@ -165,11 +168,8 @@ export class CheckoutService {
 
     const subtotal = round2(items.reduce((sum, i) => sum + i.lineTotal, 0));
     const shipping = await this.shippingService.quote(subtotal, {
-      zone: input.shippingZone,
-      city: input.district
-        ? (this.locations.resolve({ district: input.district }).district ??
-          input.city)
-        : input.city,
+      lat: input.lat,
+      lng: input.lng,
       allItemsFreeShipping:
         cartItems.length > 0 &&
         cartItems.every((ci) => ci.product.freeShipping),
@@ -204,6 +204,8 @@ export class CheckoutService {
     const total = round2(
       Math.max(0, subtotal - discountAmount) + shippingCost + taxAmount,
     );
+    const delivery = await this.settings.get('delivery');
+    const minOrderOk = subtotal >= delivery.minOrderAmount;
 
     return {
       items,
@@ -231,7 +233,16 @@ export class CheckoutService {
       taxAmount,
       total,
       paymentMethods: await this.enabledPaymentMethods(),
-      canPlaceOrder: issues.length === 0,
+      minOrderAmount: delivery.minOrderAmount,
+      minOrderOk,
+      shopOpen: delivery.shopOpen,
+      // false while the cart has a problem, no usable delivery location is known, or the order is too small
+      canPlaceOrder:
+        issues.length === 0 &&
+        items.length > 0 &&
+        shipping.available &&
+        minOrderOk &&
+        delivery.shopOpen,
       issues,
       _cartItems: cartItems,
       _coupon: couponResult,
