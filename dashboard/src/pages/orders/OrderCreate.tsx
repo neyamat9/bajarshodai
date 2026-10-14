@@ -9,7 +9,7 @@ import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, Dia
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Field } from "@/components/shared/Field";
-import { LocationSelect, type LocationValue } from "@/components/shared/LocationSelect";
+import { PinPicker } from "./components/PinPicker";
 import { CustomerPicker } from "@/components/shared/CustomerPicker";
 import { SearchInput } from "@/components/shared/FilterBar";
 import { LoadMore } from "@/components/shared/DataTable";
@@ -61,8 +61,10 @@ export default function OrderCreatePage() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
-  const [postal, setPostal] = useState("");
-  const [loc, setLoc] = useState<LocationValue>({ division: "", district: "", upazila: "" });
+  const [landmark, setLandmark] = useState("");
+  const [city, setCity] = useState("Shahrasti");
+  const [pin, setPin] = useState<{ lat: number; lng: number } | null>(null);
+  const [placeName, setPlaceName] = useState("");
   const [method, setMethod] = useState<PaymentMethod>("CASH_ON_DELIVERY");
   const [coupon, setCoupon] = useState("");
   const [discount, setDiscount] = useState("");
@@ -81,13 +83,13 @@ export default function OrderCreatePage() {
   const itemCount = lines.reduce((s, l) => s + l.quantity, 0);
   const setLine = (key: string, patch: Partial<Line>) => setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)));
 
-  // delivery charge follows the shipping settings (zone by district, free-shipping rules) until the admin types their own
+  // the delivery charge follows the pin (distance from Kalibari Bazar, free-delivery rules) until the admin types their own
   const subtotalKey = useDebounce(subtotal, 300);
   const productIds = useMemo(() => [...new Set(lines.map((l) => l.productId))].sort(), [lines]);
   const quote = useQuery({
-    queryKey: ["ship-quote", subtotalKey, loc.district, productIds.join(",")],
-    queryFn: () => ordersApi.shippingQuote({ subtotal: subtotalKey, district: loc.district || undefined, productIds }),
-    enabled: !walkIn && lines.length > 0,
+    queryKey: ["ship-quote", subtotalKey, pin?.lat, pin?.lng, productIds.join(",")],
+    queryFn: () => ordersApi.shippingQuote({ subtotal: subtotalKey, lat: pin?.lat, lng: pin?.lng, productIds }),
+    enabled: !walkIn && lines.length > 0 && !!pin,
     placeholderData: (p) => p,
   });
   const shipAuto = walkIn ? 0 : (quote.data?.cost ?? 0);
@@ -108,7 +110,9 @@ export default function OrderCreatePage() {
         setName(a.fullName || c.name);
         setPhone(a.phone || c.phone || "");
         setAddress(a.line1);
-        setLoc({ division: a.division ?? "", district: a.district ?? "", upazila: a.upazila ?? "" });
+        setLandmark(a.landmark ?? "");
+        setPin(a.latitude != null && a.longitude != null ? { lat: a.latitude, lng: a.longitude } : null);
+        setPlaceName(a.placeName ?? "");
         setShipOverride(null);
       }
     } catch {
@@ -144,8 +148,8 @@ export default function OrderCreatePage() {
   const qtyIn = (id: string, variantId?: string) => lines.find((l) => l.key === (variantId ?? id))?.quantity ?? 0;
 
   const reset = () => {
-    setLines([]); setWalkIn(false); setCustomer(null); setName(""); setPhone(""); setEmail(""); setAddress(""); setPostal("");
-    setLoc({ division: "", district: "", upazila: "" }); setMethod("CASH_ON_DELIVERY"); setCoupon(""); setDiscount(""); setShipOverride(null);
+    setLines([]); setWalkIn(false); setCustomer(null); setName(""); setPhone(""); setEmail(""); setAddress(""); setLandmark(""); setCity("Shahrasti");
+    setPin(null); setPlaceName(""); setMethod("CASH_ON_DELIVERY"); setCoupon(""); setDiscount(""); setShipOverride(null);
     setPaid(""); setTxn(""); setStatus("CONFIRMED"); setDeliverNow(true); setNote(""); setNotify(true); setErr(null); setDone(null); setCartOpen(false);
   };
 
@@ -158,7 +162,7 @@ export default function OrderCreatePage() {
         customer: customer ? { userId: customer.id } : !walkIn && email ? { email } : undefined,
         shippingAddress: walkIn
           ? undefined
-          : { fullName: name.trim(), phone: phone.trim(), address: address.trim(), postalCode: postal || undefined, division: loc.division || undefined, district: loc.district || undefined, upazila: loc.upazila || undefined },
+          : { fullName: name.trim(), phone: phone.trim(), address: address.trim(), city: city.trim() || undefined, landmark: landmark.trim() || undefined, ...(pin ? { latitude: pin.lat, longitude: pin.lng, placeName: placeName.trim() || undefined } : {}) },
         items: lines.map((l) => ({ productId: l.productId, variantId: l.variantId, quantity: l.quantity, price: Number(l.price) })),
         paymentMethod: method,
         couponCode: coupon.trim() || undefined,
@@ -197,7 +201,8 @@ export default function OrderCreatePage() {
     } else {
       if (!name.trim() || !address.trim()) return setErr("Name and address are required for delivery");
       if (!BD_PHONE.test(phone.replace(/[\s-]/g, ""))) return setErr("Enter a valid Bangladesh mobile number");
-      if (!loc.district) return setErr("Choose a district");
+      if (!pin && (shipOverride === null || shipOverride === "")) return setErr("Drop the delivery pin on the map (or send the customer the link), or type the delivery charge");
+      if (pin && quote.data && !quote.data.available && (shipOverride === null || shipOverride === "")) return setErr(quote.data.block === "OUT_OF_AREA" ? `That pin is about ${quote.data.straightKm} km away, outside the ${quote.data.radiusKm} km delivery area. Type the charge by hand to deliver anyway.` : "The delivery charge cannot be worked out for that pin: type it by hand");
     }
     if (num(paid) > total) return setErr("The amount paid is more than the total");
     setErr(null);
@@ -252,7 +257,7 @@ export default function OrderCreatePage() {
                 <p className="truncate font-semibold">{customer.name}</p>
                 <p className="truncate text-xs text-muted-foreground">{customer.phone ? `${customer.phone} · ` : ""}{customer.email}</p>
               </div>
-              <Button size="icon-xs" variant="ghost" aria-label="Choose another customer" onClick={() => { setCustomer(null); setName(""); setPhone(""); setAddress(""); setLoc({ division: "", district: "", upazila: "" }); }}><X /></Button>
+              <Button size="icon-xs" variant="ghost" aria-label="Choose another customer" onClick={() => { setCustomer(null); setName(""); setPhone(""); setAddress(""); setPin(null); setPlaceName(""); setLandmark(""); }}><X /></Button>
             </div>
           ) : (
             <CustomerPicker onPick={(c) => void pickCustomer(c)} />
@@ -326,11 +331,12 @@ export default function OrderCreatePage() {
                 <Field label="Phone" required><Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="01XXXXXXXXX" /></Field>
               </div>
               <Field label="Address" required><Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="House, road, area" /></Field>
-              <LocationSelect value={loc} onChange={(v) => { setLoc(v); setShipOverride(null); }} />
               <div className="grid grid-cols-2 gap-2">
-                <Field label="Postal code"><Input value={postal} onChange={(e) => setPostal(e.target.value)} /></Field>
-                {!customer && <Field label="Email (optional)"><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></Field>}
+                <Field label="Landmark"><Input value={landmark} onChange={(e) => setLandmark(e.target.value)} placeholder="green gate, next to the school" /></Field>
+                <Field label="Area / town" required><Input value={city} onChange={(e) => setCity(e.target.value)} /></Field>
               </div>
+              <PinPicker value={pin} onChange={(p) => { setPin(p); setShipOverride(null); }} placeName={placeName} onPlaceName={setPlaceName} phone={phone} name={name} />
+              {!customer && <Field label="Email (optional)"><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></Field>}
           </div>
         </section>
       )}
@@ -348,7 +354,7 @@ export default function OrderCreatePage() {
             {manualDiscount > 0 && <div className="flex justify-between"><dt className="text-muted-foreground">Discount</dt><dd className="font-medium text-success">− {money(Math.min(manualDiscount, subtotal))}</dd></div>}
             {coupon.trim() && <div className="flex justify-between"><dt className="text-muted-foreground">Coupon {coupon}</dt><dd className="text-xs text-muted-foreground">applied when you create</dd></div>}
             <div className="flex items-center justify-between gap-3">
-              <dt className="flex items-center gap-1.5 text-muted-foreground"><Truck className="size-3.5" /> Delivery{!walkIn && quote.data && <span className="text-[11px]">({quote.data.zoneLabel})</span>}</dt>
+              <dt className="flex items-center gap-1.5 text-muted-foreground"><Truck className="size-3.5" /> Delivery{!walkIn && quote.data?.distanceKm != null && <span className="text-[11px]">({quote.data.distanceKm} km{quote.data.estimated ? ", estimate" : ""})</span>}</dt>
               <dd className="flex items-center gap-2">
                 {walkIn ? (
                   <span className="font-medium">{money(0)} <span className="text-[11px] font-normal text-muted-foreground">no delivery</span></span>
@@ -363,9 +369,10 @@ export default function OrderCreatePage() {
                 )}
               </dd>
             </div>
-            {!walkIn && !loc.district && lines.length > 0 && <p className="text-[11px] text-muted-foreground">Choose the district for the exact delivery charge.</p>}
+            {!walkIn && !pin && lines.length > 0 && <p className="text-[11px] text-muted-foreground">Drop the pin on the map for the delivery charge, or type it.</p>}
+            {!walkIn && pin && quote.data && !quote.data.available && <p className="text-[11px] font-medium text-destructive">{quote.data.block === "OUT_OF_AREA" ? `Outside the ${quote.data.radiusKm} km delivery area.` : "Delivery is not available for this pin."}</p>}
             {!walkIn && quote.data?.isFree && lines.length > 0 && <p className="text-[11px] font-medium text-success">Free delivery applies.</p>}
-            {!walkIn && quote.data?.amountForFreeShipping != null && quote.data.amountForFreeShipping > 0 && <p className="text-[11px] text-muted-foreground">Add {money(quote.data.amountForFreeShipping)} more for free delivery.</p>}
+            {!walkIn && quote.data?.amountForFreeDelivery != null && quote.data.amountForFreeDelivery > 0 && <p className="text-[11px] text-muted-foreground">Add {money(quote.data.amountForFreeDelivery)} more for free delivery.</p>}
             <div className="flex items-baseline justify-between border-t border-border pt-2 text-base">
               <dt className="font-semibold">Total</dt>
               <dd className="font-heading text-lg font-bold">{money(total)}</dd>

@@ -34,6 +34,10 @@ export interface Address {
   country: string;
   isDefault?: boolean;
   label?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  placeName?: string | null;
+  landmark?: string | null;
 }
 export interface OrderSummary {
   id: string;
@@ -95,7 +99,18 @@ export interface OrderDetail extends OrderSummary {
   internalNote: string | null;
   staffNote: string | null;
   customerNote: string | null;
-  shippingZone: string | null;
+  deliveryLat: number | null;
+  deliveryLng: number | null;
+  deliveryPlaceName: string | null;
+  deliveryLandmark: string | null;
+  deliveryDistanceKm: string | null;
+  deliveryDurationSec: number | null;
+  distanceEstimated: boolean;
+  /** the charge the distance gives; shippingCost is what is charged */
+  deliveryFee: string | null;
+  deliveryFeeOverride: string | null;
+  deliveryFeeOverrideReason: string | null;
+  deliverySlot: string | null;
   statusHistory: { id: string; fromStatus: OrderStatus | null; toStatus: OrderStatus; note: string | null; changedBy: string | null; createdAt: string }[];
   payments: Payment[];
   refundTransactions: Refund[];
@@ -150,6 +165,10 @@ export interface AddressInput {
   upazila?: string;
   city?: string;
   postalCode?: string;
+  landmark?: string;
+  latitude?: number;
+  longitude?: number;
+  placeName?: string;
 }
 export interface CreateOrderInput {
   customer?: { userId?: string; email?: string };
@@ -172,21 +191,62 @@ export interface CreateOrderInput {
 }
 
 export interface ShippingQuote {
-  zone: string;
-  zoneLabel: string;
-  baseRate: number;
+  available: boolean;
+  block: "DISABLED" | "ORIGIN_NOT_SET" | "NO_LOCATION" | "OUT_OF_AREA" | null;
+  distanceKm: number | null;
+  durationSec: number | null;
+  estimated: boolean;
+  estimateNote: string | null;
+  calculatedFee: number | null;
   cost: number;
   isFree: boolean;
-  freeShippingThreshold: number | null;
-  amountForFreeShipping: number | null;
-  estimatedMinDays: number;
-  estimatedMaxDays: number;
+  freeDeliveryThreshold: number | null;
+  amountForFreeDelivery: number | null;
+  straightKm: number | null;
+  radiusKm: number;
+}
+
+export interface OrderRoute {
+  available: boolean;
+  origin?: { lat: number; lng: number; label?: string };
+  destination?: { lat: number; lng: number };
+  km?: number;
+  seconds?: number;
+  path?: { lat: number; lng: number }[];
+  estimated?: boolean;
+  note?: string;
+}
+
+export interface LocationRequest {
+  id: string;
+  token: string;
+  url: string;
+  phone: string | null;
+  name: string | null;
+  orderId: string | null;
+  status: "PENDING" | "SHARED" | "EXPIRED";
+  expiresAt: string;
+  lat: number | null;
+  lng: number | null;
+  accuracyM: number | null;
+  placeName: string | null;
+  placeNameBn: string | null;
+  distanceKm: number | null;
+  deliveryFee: number | null;
+  sharedAt: string | null;
+  createdAt: string;
 }
 
 export const ordersApi = {
   stats: (f: OrderFilters) => api.get<OrderStats>("/admin/orders/stats", { params: clean({ ...f }) }).then((r) => r.data),
-  shippingQuote: (p: { subtotal: number; district?: string; productIds?: string[] }) =>
-    api.get<ShippingQuote>("/admin/orders/shipping-quote", { params: clean({ subtotal: p.subtotal, district: p.district, productIds: p.productIds?.join(",") }) }).then((r) => r.data),
+  shippingQuote: (p: { subtotal: number; lat?: number; lng?: number; productIds?: string[] }) =>
+    api.get<ShippingQuote>("/admin/orders/shipping-quote", { params: clean({ subtotal: p.subtotal, lat: p.lat, lng: p.lng, productIds: p.productIds?.join(",") }) }).then((r) => r.data),
+  route: (id: string) => api.get<OrderRoute>(`/admin/orders/${id}/route`).then((r) => r.data),
+  setPin: (id: string, body: { latitude: number; longitude: number; placeName?: string; landmark?: string; recalculateShipping?: boolean }) =>
+    api.put<OrderDetail>(`/admin/orders/${id}/delivery-pin`, body).then((r) => r.data),
+  overrideFee: (id: string, body: { fee: number | null; reason?: string }) => api.put<OrderDetail>(`/admin/orders/${id}/delivery-fee`, body).then((r) => r.data),
+  requestLocation: (body: { phone?: string; name?: string; orderId?: string }) => api.post<LocationRequest>("/admin/location-requests", body).then((r) => r.data),
+  locationRequests: (orderId: string) => api.get<LocationRequest[]>("/admin/location-requests", { params: { orderId } }).then((r) => r.data),
   list: (f: OrderFilters) => api.get<Paged<OrderSummary>>("/admin/orders", { params: clean({ ...f }) }).then((r) => r.data),
   get: (id: string) => api.get<OrderDetail>(`/admin/orders/${id}`).then((r) => r.data),
   create: (body: CreateOrderInput) => api.post<OrderDetail>("/admin/orders", body).then((r) => r.data),

@@ -20,10 +20,45 @@ export const reportsApi = {
 };
 
 // ---------- settings ----------
+export interface DeliverySlot { id: string; label: string; labelBn: string; from: string; to: string }
+export interface DeliverySettings {
+  enabled: boolean;
+  originLat: number | null;
+  originLng: number | null;
+  originLabel: string;
+  originLabelBn: string;
+  centerLat: number | null;
+  centerLng: number | null;
+  serviceRadiusKm: number;
+  baseKm: number;
+  baseCharge: number;
+  perKmRate: number;
+  stepKm: number;
+  minOrderAmount: number;
+  freeDeliveryThreshold: number | null;
+  slots: DeliverySlot[];
+  openFrom: string;
+  openTo: string;
+  shopOpen: boolean;
+  routeFactor: number;
+}
+/** Secrets never come back: only a flag saying whether one is stored. */
+export interface MapsSettings {
+  provider: "osm" | "google";
+  googleBrowserKey: string | null;
+  googleServerKeySet: boolean;
+  osmTileUrl: string;
+  orsApiKeySet: boolean;
+  contactEmail: string | null;
+  dailyRequestCap: number;
+}
+export interface MapsTestResult { provider: string; route: { ok: boolean; km?: number; error?: string }; place: { ok: boolean; name?: string; error?: string } }
+export interface MapsUsage { day: string; route: number; geocode: number; search: number; cap: number; provider: string }
 export interface Settings {
   site: { storeName: string; tagline: string; logoUrl: string | null; faviconUrl: string | null; contactEmail: string | null; hotline: string | null; whatsapp: string | null; address: string | null; businessHours: string | null; currency: string; currencySymbol: string; metaTitle: string | null; metaDescription: string | null; socialLinks: Record<string, string> };
   payment: { codEnabled: boolean; bkashEnabled: boolean; bkashNumber: string | null; bkashAccountType: "personal" | "merchant" | "agent"; bkashInstructions: string | null; nagadEnabled: boolean; nagadNumber: string | null; nagadAccountType: "personal" | "merchant" | "agent"; nagadInstructions: string | null; rocketEnabled: boolean; rocketNumber: string | null; rocketAccountType: "personal" | "merchant" | "agent"; rocketInstructions: string | null };
-  shipping: { mode: "GLOBAL" | "ZONE"; globalRate: number; globalMinDays: number; globalMaxDays: number; insideDhakaRate: number; insideDhakaMinDays: number; insideDhakaMaxDays: number; outsideDhakaRate: number; outsideDhakaMinDays: number; outsideDhakaMaxDays: number; insideDhakaCities: string[]; freeShippingThreshold: number | null };
+  delivery: DeliverySettings;
+  maps: MapsSettings;
   returns: { returnsEnabled: boolean; returnWindowDays: number; policyText: string | null };
   email: {
     provider: "none" | "smtp" | "resend"; fromName: string; fromEmail: string; replyTo: string | null; smtpHost: string | null; smtpPort: number | null; smtpSecure: boolean; smtpUser: string | null; smtpPassSet: boolean; resendApiKeySet: boolean;
@@ -34,6 +69,8 @@ export type SettingsGroup = keyof Settings;
 export const settingsApi = {
   get: () => api.get<Settings>("/admin/settings").then((r) => r.data),
   save: (group: SettingsGroup, body: Record<string, unknown>) => api.put<Record<string, unknown>>(`/admin/settings/${group}`, body).then((r) => r.data),
+  testMaps: () => api.post<MapsTestResult>("/admin/settings/maps/test").then((r) => r.data),
+  mapsUsage: () => api.get<MapsUsage>("/admin/settings/maps/usage").then((r) => r.data),
   testEmail: (to: string, overrides: Record<string, unknown>) => api.post<{ message?: string }>("/admin/settings/email/test", { to, ...overrides }).then((r) => r.data),
 };
 

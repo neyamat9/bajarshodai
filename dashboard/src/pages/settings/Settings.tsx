@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAct } from "@/hooks/useAct";
 import { useUrlState } from "@/hooks/useUrlState";
 import { SettingsSkeleton } from "@/components/shared/pageSkeletons";
+import { DeliveryForm, MapsForm } from "./DeliveryMaps";
 
 const nz = (v: string) => (v.trim() === "" ? null : v.trim());
 const Toggle = ({ label, hint, checked, onChange }: { label: string; hint?: string; checked: boolean; onChange: (v: boolean) => void }) => (
@@ -115,44 +116,6 @@ function PaymentForm({ v }: { v: S["payment"] }) {
   );
 }
 
-function ShippingForm({ v }: { v: S["shipping"] }) {
-  const [f, setF] = useState({ ...v, freeShippingThreshold: v.freeShippingThreshold === null ? "" : String(v.freeShippingThreshold), cities: v.insideDhakaCities.join(", ") });
-  const save = useSave("shipping");
-  const n = (k: keyof typeof f, label: string) => (
-    <Field label={label}><Input type="number" min={0} value={String(f[k] as number)} onChange={(e) => setF({ ...f, [k]: Number(e.target.value) })} /></Field>
-  );
-  const submit = () => {
-    const pairs: [number, number, string][] = [[f.globalMinDays, f.globalMaxDays, "Standard"], [f.insideDhakaMinDays, f.insideDhakaMaxDays, "Inside Dhaka"], [f.outsideDhakaMinDays, f.outsideDhakaMaxDays, "Outside Dhaka"]];
-    const badPair = pairs.find(([a, b]) => a > b);
-    if (badPair) return toast.error(`${badPair[2]}: the fastest days cannot be more than the slowest`);
-    save.mutate({
-      mode: f.mode, globalRate: f.globalRate, globalMinDays: f.globalMinDays, globalMaxDays: f.globalMaxDays,
-      insideDhakaRate: f.insideDhakaRate, insideDhakaMinDays: f.insideDhakaMinDays, insideDhakaMaxDays: f.insideDhakaMaxDays,
-      outsideDhakaRate: f.outsideDhakaRate, outsideDhakaMinDays: f.outsideDhakaMinDays, outsideDhakaMaxDays: f.outsideDhakaMaxDays,
-      insideDhakaCities: f.cities.split(",").map((s) => s.trim()).filter(Boolean),
-      freeShippingThreshold: f.freeShippingThreshold === "" ? null : Number(f.freeShippingThreshold),
-    });
-  };
-  return (
-    <div className="grid items-start gap-4 xl:grid-cols-2 [&>button]:justify-self-start xl:[&>button]:col-span-2">
-      <Section title="How shipping is charged">
-        <Field label="Mode"><Select value={f.mode} onChange={(e) => setF({ ...f, mode: e.target.value as "GLOBAL" | "ZONE" })} className="max-w-xs"><option value="ZONE">By area: inside / outside Dhaka</option><option value="GLOBAL">One rate everywhere</option></Select></Field>
-        {f.mode === "GLOBAL" ? (
-          <div className="mt-3 grid gap-3 sm:grid-cols-3">{n("globalRate", "Rate ৳")}{n("globalMinDays", "Fastest (days)")}{n("globalMaxDays", "Slowest (days)")}</div>
-        ) : (
-          <div className="mt-3 space-y-3">
-            <div className="grid gap-3 sm:grid-cols-3">{n("insideDhakaRate", "Inside Dhaka rate ৳")}{n("insideDhakaMinDays", "Fastest (days)")}{n("insideDhakaMaxDays", "Slowest (days)")}</div>
-            <div className="grid gap-3 sm:grid-cols-3">{n("outsideDhakaRate", "Outside Dhaka rate ৳")}{n("outsideDhakaMinDays", "Fastest (days)")}{n("outsideDhakaMaxDays", "Slowest (days)")}</div>
-            <Field label="Districts counted as 'inside Dhaka'" hint="Comma separated"><Input value={f.cities} onChange={(e) => setF({ ...f, cities: e.target.value })} /></Field>
-          </div>
-        )}
-      </Section>
-      <Section title="Free shipping"><Field label="Free shipping on orders from ৳" hint="Empty = never free"><Input type="number" min={0} value={f.freeShippingThreshold} onChange={(e) => setF({ ...f, freeShippingThreshold: e.target.value })} className="max-w-xs" /></Field></Section>
-      <Button loading={save.isPending} onClick={submit}>Save shipping settings</Button>
-    </div>
-  );
-}
-
 function ReturnsForm({ v }: { v: S["returns"] }) {
   const [f, setF] = useState({ ...v, policyText: v.policyText ?? "" });
   const save = useSave("returns");
@@ -240,11 +203,12 @@ export default function Settings() {
     <div>
       <PageHeader refresh={false} title="Settings" description="How your store looks, charges and talks to customers." />
       <Tabs value={f.tab} onValueChange={(tab) => setF({ tab })}>
-        <TabsList className="mb-4"><TabsTrigger value="site">Store</TabsTrigger><TabsTrigger value="payment">Payment</TabsTrigger><TabsTrigger value="shipping">Shipping</TabsTrigger><TabsTrigger value="returns">Returns</TabsTrigger><TabsTrigger value="email">Email</TabsTrigger></TabsList>
+        <TabsList className="mb-4"><TabsTrigger value="site">Store</TabsTrigger><TabsTrigger value="payment">Payment</TabsTrigger><TabsTrigger value="delivery">Delivery</TabsTrigger><TabsTrigger value="maps">Maps</TabsTrigger><TabsTrigger value="returns">Returns</TabsTrigger><TabsTrigger value="email">Email</TabsTrigger></TabsList>
         <div>
           <TabsContent value="site"><SiteForm v={s.site} /></TabsContent>
           <TabsContent value="payment"><PaymentForm v={s.payment} /></TabsContent>
-          <TabsContent value="shipping"><ShippingForm v={s.shipping} /></TabsContent>
+          <TabsContent value="delivery"><DeliveryForm v={s.delivery} tileUrl={s.maps.osmTileUrl} /></TabsContent>
+          <TabsContent value="maps"><MapsForm v={s.maps} /></TabsContent>
           <TabsContent value="returns"><ReturnsForm v={s.returns} /></TabsContent>
           <TabsContent value="email"><EmailForm v={s.email} /></TabsContent>
         </div>

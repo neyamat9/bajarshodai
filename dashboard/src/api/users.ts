@@ -43,7 +43,7 @@ export interface CustomerDetail extends CustomerRow {
     notes: number;
     ordersByStatus: Record<string, number>;
   };
-  addresses: { id: string; fullName: string; phone: string; line1: string; district: string | null; division: string | null; upazila: string | null; isDefault: boolean }[];
+  addresses: { id: string; fullName: string; phone: string; line1: string; district: string | null; division: string | null; upazila: string | null; isDefault: boolean; latitude?: number | null; longitude?: number | null; placeName?: string | null; landmark?: string | null }[];
 }
 export interface CustomerNote {
   id: string;

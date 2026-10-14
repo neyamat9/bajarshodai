@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CreditCard, FileText, MapPin, Package, Pencil, RotateCcw, Truck, User } from "lucide-react";
+import { CreditCard, FileText, Pencil, RotateCcw, Truck, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input, Select, Textarea } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import { isMobileBanking, ORDER_STATUSES, ordersApi, PAYMENT_METHOD_LABEL, type 
 import { errorMessage, openHtml } from "@/api/client";
 import { useAct } from "@/hooks/useAct";
 import { dateTime, money, orderStatusLabel, titleCase } from "@/lib/format";
+import { DeliveryCard } from "./components/DeliveryCard";
 import { EditAddressDialog } from "./components/EditAddressDialog";
 import { EditItemsDialog } from "./components/EditItemsDialog";
 import { RecordPaymentDialog, RefundDialog } from "./components/PaymentDialogs";
@@ -195,7 +196,7 @@ export default function OrderDetailPage() {
             <dl className="border-t border-border px-4 py-3">
               <KeyValue label="Subtotal">{money(o.subtotal)}</KeyValue>
               <KeyValue label={`Discount${o.couponCode ? ` (${o.couponCode})` : ""}`}>− {money(o.discountAmount)}</KeyValue>
-              <KeyValue label="Shipping">{money(o.shippingCost)}</KeyValue>
+              <KeyValue label="Delivery">{money(o.shippingCost)}</KeyValue>
               <KeyValue label="Total" className="text-base"><span className="font-bold">{money(o.total)}</span></KeyValue>
               <KeyValue label="Paid">{money(o.paidAmount)}</KeyValue>
               {refunded > 0 && <KeyValue label="Refunded">{money(refunded)}</KeyValue>}
@@ -271,21 +272,7 @@ export default function OrderDetailPage() {
             <p className="text-[13px] text-muted-foreground">{o.user?.phone ?? o.guestPhone ?? o.shippingAddress?.phone ?? "—"}</p>
           </Section>
 
-          <Section
-            title="Delivery address"
-            actions={<div className="flex items-center gap-2"><MapPin className="size-4 text-muted-foreground" />{!locked && <Button variant="ghost" size="icon-xs" onClick={() => setDlg("address")}><Pencil /></Button>}</div>}
-          >
-            {o.shippingAddress ? (
-              <address className="text-[13px] not-italic leading-relaxed">
-                <p className="font-semibold">{o.shippingAddress.fullName}</p>
-                <p>{o.shippingAddress.phone}</p>
-                <p>{o.shippingAddress.line1}</p>
-                <p>{[o.shippingAddress.upazila, o.shippingAddress.district, o.shippingAddress.division].filter(Boolean).join(", ")}</p>
-                {o.shippingAddress.postalCode && <p>{o.shippingAddress.postalCode}</p>}
-              </address>
-            ) : <p className="text-[13px] text-muted-foreground">{o.source === "ADMIN" && !o.shippingZone ? "Walk-in sale: handed over at the counter, no delivery." : "No address."}</p>}
-            {o.shippingZone && <p className="mt-2 text-xs text-muted-foreground"><Package className="mr-1 inline size-3" />Shipping zone: {titleCase(o.shippingZone)}</p>}
-          </Section>
+          <DeliveryCard order={o} locked={locked} phone={o.user?.phone ?? o.guestPhone ?? o.shippingAddress?.phone ?? null} name={customerName === "Guest" ? null : customerName} onEditAddress={() => setDlg("address")} />
 
           <ShippingCard key={`${o.courierName}-${o.trackingNumber}-${o.trackingUrl}`} order={o} />
           <NotesCard key={`${o.internalNote}-${o.deliveryNote}`} order={o} />

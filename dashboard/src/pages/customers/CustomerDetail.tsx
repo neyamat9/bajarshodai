@@ -18,6 +18,7 @@ import { Select, Textarea } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAct } from "@/hooks/useAct";
+import { LastLocationCard } from "./LastLocationCard";
 import { dateOnly, dateTime, initials, money, titleCase } from "@/lib/format";
 import { DetailPageSkeleton } from "@/components/shared/skeletons";
 
@@ -117,7 +118,7 @@ export default function CustomerDetail() {
               )}
             </Section></TabsContent>
             <TabsContent value="addresses"><Section title="Saved addresses"><List q={addresses} empty="No saved addresses." render={(a) => (
-              <div><p className="font-medium">{a.fullName} · {a.phone} {a.isDefault && <Badge variant="brand">Default</Badge>}</p><p className="text-muted-foreground">{[a.line1, a.upazila, a.district, a.division].filter(Boolean).join(", ")}</p></div>
+              <div><p className="font-medium">{a.fullName} · {a.phone} {a.isDefault && <Badge variant="brand">Default</Badge>}</p><p className="text-muted-foreground">{[a.line1, a.landmark, a.placeName ?? [a.upazila, a.district].filter(Boolean).join(", ")].filter(Boolean).join(" · ")}</p></div>
             )} /></Section></TabsContent>
             <TabsContent value="tickets"><Section title="Support tickets"><List q={{ ...tickets, data: tickets.data?.data }} empty="No tickets." render={(t) => (
               <Link to={`/support/${t.id}`} className="flex items-center justify-between gap-3 hover:text-primary"><div><p className="font-medium">{t.ticketNumber} · {t.subject}</p><p className="text-[11px] text-muted-foreground">{titleCase(t.category)} · {dateTime(t.createdAt)}</p></div><StatusBadge status={t.status} /></Link>
@@ -137,6 +138,7 @@ export default function CustomerDetail() {
             <p className="mt-2 flex items-center gap-2 text-[13px]"><Mail className="size-4 text-muted-foreground" />{c.email ?? "No email"} {c.email && c.emailVerified && <Badge variant="success">Verified</Badge>}</p>
             <p className="mt-2 text-xs text-muted-foreground">{c.newsletter ? "Subscribed to the newsletter" : "Not on the newsletter"}</p>
           </Section>
+          <LastLocationCard userId={id} />
           <Section title="Orders by status">
             <ul className="space-y-1">{Object.entries(s.ordersByStatus).map(([k, v]) => <li key={k} className="flex items-center justify-between text-[13px]"><StatusBadge status={k} /><b>{v}</b></li>)}{!Object.keys(s.ordersByStatus).length && <li className="text-[13px] text-muted-foreground">None</li>}</ul>
           </Section>

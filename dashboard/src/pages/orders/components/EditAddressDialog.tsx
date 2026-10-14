@@ -1,35 +1,42 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Checkbox, Input, Label } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Field } from "@/components/shared/Field";
-import { LocationSelect, type LocationValue } from "@/components/shared/LocationSelect";
 import { ordersApi, type OrderDetail } from "@/api/orders";
 import { useAct } from "@/hooks/useAct";
 
+/** The words of the address. The map pin is changed on the order page itself (Move pin), because the charge follows the pin. */
 export function EditAddressDialog({ order, open, onOpenChange }: { order: OrderDetail; open: boolean; onOpenChange: (o: boolean) => void }) {
   const a = order.shippingAddress;
-  const [form, setForm] = useState({ fullName: a?.fullName ?? "", phone: a?.phone ?? "", address: a?.line1 ?? "", postalCode: a?.postalCode ?? "" });
-  const [loc, setLoc] = useState<LocationValue>({ division: a?.division ?? "", district: a?.district ?? "", upazila: a?.upazila ?? "" });
-  const [recalc, setRecalc] = useState(false);
+  const [form, setForm] = useState({ fullName: a?.fullName ?? "", phone: a?.phone ?? "", address: a?.line1 ?? "", landmark: order.deliveryLandmark ?? a?.landmark ?? "", city: a?.city ?? "" });
   const [err, setErr] = useState<string | null>(null);
   const save = useAct(
-    () => ordersApi.address(order.id, { ...form, division: loc.division || undefined, district: loc.district || undefined, upazila: loc.upazila || undefined, postalCode: form.postalCode || undefined, recalculateShipping: recalc }),
+    () =>
+      ordersApi.address(order.id, {
+        fullName: form.fullName.trim(),
+        phone: form.phone.replace(/[\s-]/g, ""),
+        address: form.address.trim(),
+        city: form.city.trim() || undefined,
+        landmark: form.landmark.trim() || undefined,
+        // keep the pin: the address text alone must not move it
+        ...(order.deliveryLat != null && order.deliveryLng != null ? { latitude: order.deliveryLat, longitude: order.deliveryLng, placeName: order.deliveryPlaceName ?? undefined } : {}),
+      }),
     { success: "Address updated", invalidate: [["order", order.id], ["orders"]], onSuccess: () => onOpenChange(false) },
   );
   const submit = () => {
     if (!form.fullName.trim() || !form.address.trim()) return setErr("Name and address are required");
     if (!/^(\+?88)?01[3-9]\d{8}$/.test(form.phone.replace(/[\s-]/g, ""))) return setErr("Enter a valid Bangladesh mobile number");
-    if (!loc.district) return setErr("Choose a district");
+    if (!form.city.trim()) return setErr("Enter the area or town");
     setErr(null);
     save.mutate();
   };
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="lg">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>Delivery address</DialogTitle>
-          <DialogDescription>Can be changed until the order is handed to the courier.</DialogDescription>
+          <DialogDescription>Can be changed until the order is handed to the rider. To change the map pin use “Move pin” on the order page.</DialogDescription>
         </DialogHeader>
         <DialogBody className="space-y-3">
           {err && <p className="rounded bg-red-50 px-3 py-2 text-xs font-medium text-destructive dark:bg-red-500/10">{err}</p>}
@@ -37,12 +44,10 @@ export function EditAddressDialog({ order, open, onOpenChange }: { order: OrderD
             <Field label="Full name" required><Input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} /></Field>
             <Field label="Phone" required><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="01XXXXXXXXX" /></Field>
           </div>
-          <Field label="Address" required><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="House, road, area" /></Field>
-          <LocationSelect value={loc} onChange={setLoc} />
-          <Field label="Postal code"><Input value={form.postalCode} onChange={(e) => setForm({ ...form, postalCode: e.target.value })} className="max-w-[160px]" /></Field>
-          <div className="flex items-center gap-2">
-            <Checkbox id="recalc" checked={recalc} onChange={(e) => setRecalc(e.target.checked)} />
-            <Label htmlFor="recalc" className="cursor-pointer text-[13px] font-normal text-foreground">Recalculate the shipping cost for the new area (inside / outside Dhaka)</Label>
+          <Field label="House, lane and area" required><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="House 3, lane beside the mosque, Kalibari" /></Field>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Landmark"><Input value={form.landmark} onChange={(e) => setForm({ ...form, landmark: e.target.value })} placeholder="green gate, next to the school field" /></Field>
+            <Field label="Area / town" required><Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="Shahrasti" /></Field>
           </div>
         </DialogBody>
         <DialogFooter>
