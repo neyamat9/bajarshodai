@@ -19,6 +19,7 @@ import { errorMessage, openHtml } from "@/api/client";
 import { useAct } from "@/hooks/useAct";
 import { dateTime, money, orderStatusLabel, titleCase } from "@/lib/format";
 import { DeliveryCard } from "./components/DeliveryCard";
+import { RiderCard } from "./components/RiderCard";
 import { EditAddressDialog } from "./components/EditAddressDialog";
 import { EditItemsDialog } from "./components/EditItemsDialog";
 import { RecordPaymentDialog, RefundDialog } from "./components/PaymentDialogs";
@@ -274,6 +275,7 @@ export default function OrderDetailPage() {
 
           <DeliveryCard order={o} locked={locked} phone={o.user?.phone ?? o.guestPhone ?? o.shippingAddress?.phone ?? null} name={customerName === "Guest" ? null : customerName} onEditAddress={() => setDlg("address")} />
 
+          <RiderCard order={o} locked={locked} />
           <ShippingCard key={`${o.courierName}-${o.trackingNumber}-${o.trackingUrl}`} order={o} />
           <NotesCard key={`${o.internalNote}-${o.deliveryNote}`} order={o} />
         </div>

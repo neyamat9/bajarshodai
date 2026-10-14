@@ -6,7 +6,8 @@ import { notificationsApi } from "@/api/notifications";
 import { useUi } from "@/store/ui";
 import { useIsDesktop } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
-import { menu } from "./menu";
+import { useAuth } from "@/store/auth";
+import { menuFor } from "./menu";
 
 export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { collapsed: collapsedPref, toggleCollapsed } = useUi();
@@ -32,6 +33,8 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
   useEffect(() => {
     document.documentElement.style.setProperty("--sidebar-w", isDesktop ? (collapsed ? "68px" : "16rem") : "0px");
   }, [collapsed, isDesktop]);
+  const user = useAuth((s) => s.user);
+  const menu = menuFor(user);
   const { data: summary } = useQuery({ queryKey: ["attention-summary"], queryFn: notificationsApi.summary, refetchInterval: 30_000 });
 
   return (

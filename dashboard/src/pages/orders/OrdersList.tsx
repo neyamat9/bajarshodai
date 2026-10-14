@@ -121,7 +121,7 @@ export default function OrdersList() {
       cell: (o) => (
         <div className="max-w-[220px]">
           <p className="truncate">{o.items[0]?.productName}{o.items.length > 1 && <span className="text-muted-foreground"> +{o.items.length - 1} more</span>}</p>
-          <p className="text-[11px] text-muted-foreground">{o.items.reduce((s, i) => s + i.quantity, 0)} {o.items.reduce((s, i) => s + i.quantity, 0) === 1 ? "unit" : "units"}</p>
+          <p className="text-[11px] text-muted-foreground">{o.items.length} {o.items.length === 1 ? "item" : "items"}</p>
         </div>
       ),
     },

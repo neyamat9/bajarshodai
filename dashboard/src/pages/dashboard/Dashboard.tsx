@@ -2,7 +2,10 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { AlertTriangle, Banknote, PackageCheck, ShoppingBag, TrendingUp, UserPlus, Wallet, Clock } from "lucide-react";
+import { AlertTriangle, Banknote, PackageCheck, Repeat, ShoppingBag, TrendingUp, Truck, UserPlus, Users, Wallet, Clock } from "lucide-react";
+import { deliveriesApi } from "@/api/deliveries";
+import { useAuth } from "@/store/auth";
+import { can } from "@/lib/access";
 import { subDays } from "date-fns";
 import { dashboardApi, type Granularity } from "@/api/dashboard";
 import { notificationsApi } from "@/api/notifications";
@@ -44,6 +47,10 @@ export default function Dashboard() {
   });
   const home = useQuery({ queryKey: ["dashboard-home"], queryFn: dashboardApi.home, refetchInterval: 60_000 });
   const attention = useQuery({ queryKey: ["attention-summary"], queryFn: notificationsApi.summary, refetchInterval: 30_000 });
+  const me = useAuth((s) => s.user);
+  const canSeeDeliveries = can(me, "delivery.manage");
+  const deliveryStats = useQuery({ queryKey: ["deliveries", "stats", "", ""], queryFn: () => deliveriesApi.stats(), enabled: canSeeDeliveries, refetchInterval: 60_000 });
+  const ds = deliveryStats.data;
 
   const d = q.data;
   const cur = d?.overview.current;
@@ -92,6 +99,15 @@ export default function Dashboard() {
         <StatCard hintSk label="Average order" value={money(Math.round(cur?.avgOrderValue ?? 0))} change={chg?.avgOrderValue} hint={cur ? `${num(cur.unitsSold)} units sold` : undefined} icon={<TrendingUp size={18} />} tone="sky" spark={series.avg} loading={q.isLoading} />
         <StatCard hintSk label="New customers" value={num(cur?.newCustomers)} change={chg?.newCustomers} hint={cur ? `${num(cur.customers)} bought` : undefined} icon={<UserPlus size={18} />} tone="green" loading={q.isLoading} />
       </div>
+
+      {canSeeDeliveries && (
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+          <StatCard label="Deliveries done" value={num(ds?.totals.deliveries)} hint="all time" icon={<Truck size={18} />} tone="fresh" loading={deliveryStats.isLoading} onClick={() => navigate("/deliveries?tab=stats")} />
+          <StatCard label="Different customers" value={num(ds?.totals.uniqueCustomers)} hint="delivered to, all time" icon={<Users size={18} />} tone="forest" loading={deliveryStats.isLoading} onClick={() => navigate("/deliveries?tab=stats")} />
+          <StatCard label="Came back" value={ds?.range.repeatCustomerPct == null ? "—" : `${ds.range.repeatCustomerPct}%`} hint="of customers, last 30 days" icon={<Repeat size={18} />} tone="green" loading={deliveryStats.isLoading} onClick={() => navigate("/deliveries?tab=stats")} />
+          <StatCard label="Cash with riders" value={money(ds?.now.cashWithRiders ?? 0)} hint={ds ? `${ds.now.withRiders} deliveries on now` : undefined} icon={<Banknote size={18} />} tone="red" loading={deliveryStats.isLoading} onClick={() => navigate("/deliveries?tab=cash")} />
+        </div>
+      )}
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-3 [&>*]:min-w-0">
         <Card className="lg:col-span-2">

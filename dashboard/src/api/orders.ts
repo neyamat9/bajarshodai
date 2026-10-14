@@ -62,6 +62,7 @@ export interface OrderSummary {
   user: { id: string; name: string; email: string; phone: string | null } | null;
   items: OrderItem[];
   shippingAddress: Address | null;
+  delivery?: { id: string; status: string; assignee: { id: string; name: string } } | null;
 }
 export interface Payment {
   id: string;
@@ -111,6 +112,16 @@ export interface OrderDetail extends OrderSummary {
   deliveryFeeOverride: string | null;
   deliveryFeeOverrideReason: string | null;
   deliverySlot: string | null;
+  delivery: {
+    id: string;
+    status: "ASSIGNED" | "ACCEPTED" | "PICKED_UP" | "ON_THE_WAY" | "DELIVERED" | "FAILED" | "CANCELLED";
+    attempts: number;
+    failedReason: string | null;
+    cashCollected: string | null;
+    cashHandedOverAt: string | null;
+    assignee: { id: string; name: string; phone: string; staffTitle: string | null };
+    events: { id: string; status: "ASSIGNED" | "ACCEPTED" | "PICKED_UP" | "ON_THE_WAY" | "DELIVERED" | "FAILED" | "CANCELLED"; actorName: string | null; note: string | null; createdAt: string }[];
+  } | null;
   statusHistory: { id: string; fromStatus: OrderStatus | null; toStatus: OrderStatus; note: string | null; changedBy: string | null; createdAt: string }[];
   payments: Payment[];
   refundTransactions: Refund[];

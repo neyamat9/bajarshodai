@@ -7,6 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Toaster } from "@/components/ui/sonner";
 import { assetUrl } from "@/api/client";
 import { useAuth } from "@/store/auth";
+import { isAdminRole } from "@/lib/access";
 import { useUi } from "@/store/ui";
 import { cn } from "@/lib/utils";
 import { ConfirmProvider } from "@/hooks/useConfirm";
@@ -93,7 +94,7 @@ export default function AdminLayout() {
             <kbd className="hidden rounded border border-border bg-card px-1.5 text-[10px] md:inline">Ctrl K</kbd>
           </button>
           <div className="ml-auto flex items-center gap-1">
-            <SyncPill />
+            {isAdminRole(user) && <SyncPill />}
             <a
               href={siteUrl}
               target="_blank"

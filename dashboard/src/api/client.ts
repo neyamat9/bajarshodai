@@ -11,7 +11,11 @@ export interface AdminUser {
   name: string;
   email: string;
   phone?: string | null;
-  role: "ADMIN" | "SUPER_ADMIN" | string;
+  role: "STAFF" | "ADMIN" | "SUPER_ADMIN" | string;
+  /** what this person may do (an admin: everything) */
+  permissions?: string[];
+  canDeliver?: boolean;
+  staffTitle?: string | null;
   avatarUrl?: string | null;
 }
 

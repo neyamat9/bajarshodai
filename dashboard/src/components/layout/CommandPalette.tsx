@@ -3,7 +3,8 @@ import { useNavigate } from "react-router";
 import { ArrowRight, Package, Search, ShoppingBag, Users } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { menu } from "./menu";
+import { useAuth } from "@/store/auth";
+import { menuFor } from "./menu";
 
 interface Cmd {
   id: string;
@@ -30,7 +31,8 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
     return () => document.removeEventListener("keydown", onKey);
   }, [onOpenChange]);
 
-  const pages = useMemo<Cmd[]>(() => menu.flatMap((s) => s.items.map((i) => ({ id: i.to, label: i.label, hint: s.title, icon: i.icon, to: i.to }))), []);
+  const user = useAuth((s) => s.user);
+  const pages = useMemo<Cmd[]>(() => menuFor(user).flatMap((s) => s.items.map((i) => ({ id: i.to, label: i.label, hint: s.title, icon: i.icon, to: i.to }))), [user]);
 
   const text = q.trim();
   const list = useMemo<Cmd[]>(() => {
