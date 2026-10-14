@@ -21,8 +21,9 @@ interface Step {
 
 const STEP_KEYS = [
   { id: 1, label: "stepShipping", shortLabel: "stepShippingShort" },
-  { id: 2, label: "stepPayment", shortLabel: "stepPaymentShort" },
-  { id: 3, label: "stepReview", shortLabel: "stepReviewShort" },
+  { id: 2, label: "stepLocation", shortLabel: "stepLocationShort" },
+  { id: 3, label: "stepPayment", shortLabel: "stepPaymentShort" },
+  { id: 4, label: "stepReview", shortLabel: "stepReviewShort" },
 ] as const;
 
 interface StepIndicatorProps {
@@ -109,7 +110,7 @@ export default function StepIndicator({ currentStep }: StepIndicatorProps) {
               {!isLast && (
                 <div
                   className={[
-                    "h-[2px] w-16 sm:w-24 md:w-32 mx-2 mb-5 rounded transition-all duration-500",
+                    "h-[2px] w-8 min-[400px]:w-12 sm:w-20 md:w-24 mx-1.5 mb-5 rounded transition-all duration-500",
                     isCompleted
                       ? "bg-brand-fresh shadow-[0_0_8px_rgba(69,162,44,0.4)]"
                       : "bg-secondary",

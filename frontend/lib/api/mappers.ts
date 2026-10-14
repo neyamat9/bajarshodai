@@ -242,6 +242,8 @@ export function mapAddress(a: Raw | null | undefined): ShippingAddress {
     address: a?.line1 ?? a?.address ?? '',
     city: [a?.upazila, a?.district ?? a?.city].filter(Boolean).join(', ') || a?.city || '',
     postalCode: a?.postalCode ?? '',
+    landmark: a?.landmark ?? undefined,
+    placeName: a?.placeName ?? undefined,
   };
 }
 
@@ -280,6 +282,9 @@ export function mapOrder(o: Raw, locale: Locale = clientLocale()): Order {
     couponCode: o.couponCode ?? null,
     paidAmount: num(o.paidAmount),
     dueAmount: num(o.dueAmount),
+    deliveryDistanceKm: o.deliveryDistanceKm != null ? num(o.deliveryDistanceKm) : null,
+    deliveryPlaceName: o.deliveryPlaceName ?? null,
+    deliveryLandmark: o.deliveryLandmark ?? null,
     courierName: o.courierName ?? null,
     trackingNumber: o.trackingNumber ?? null,
     trackingUrl: o.trackingUrl ?? null,

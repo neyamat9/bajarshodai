@@ -10,13 +10,16 @@ import { MOBILE_METHODS, type CheckoutAddress, type PaymentMethod } from "@/lib/
 import { useState } from "react";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { formatMoney } from "@/lib/format";
+import { MapPin } from "lucide-react";
+import { formatMoney, formatNumber } from "@/lib/format";
 import type { Locale } from "@/lib/locale";
 
 interface Props {
   summary: CheckoutSummary;
   address: CheckoutAddress;
   paymentMethod: PaymentMethod;
+  /** the chosen delivery time slot id ("" = any time) */
+  deliverySlot?: string;
   bkashTransactionId?: string;
   bkashSenderNumber?: string;
   couponCode?: string;
@@ -28,7 +31,7 @@ interface Props {
 const PAYMENT_CODE: Record<PaymentMethod, "CASH_ON_DELIVERY" | "BKASH" | "NAGAD" | "ROCKET"> = { "Cash on Delivery": "CASH_ON_DELIVERY", bKash: "BKASH", Nagad: "NAGAD", Rocket: "ROCKET" };
 
 /** Step 3 — check everything and place the order. */
-export default function OrderReview({ summary, address, paymentMethod, bkashTransactionId, bkashSenderNumber, couponCode, onBack, onOrderPlaced }: Props) {
+export default function OrderReview({ summary, address, paymentMethod, deliverySlot, bkashTransactionId, bkashSenderNumber, couponCode, onBack, onOrderPlaced }: Props) {
   const t = useTranslations("Checkout");
   const locale = useLocale() as Locale;
   const router = useRouter();
@@ -40,6 +43,11 @@ export default function OrderReview({ summary, address, paymentMethod, bkashTran
 
   async function place() {
     if (placing) return;
+    const pin = address.location;
+    if (!pin) {
+      setError(t("needLocation"));
+      return;
+    }
     setPlacing(true);
     setError(null);
     try {
@@ -49,12 +57,14 @@ export default function OrderReview({ summary, address, paymentMethod, bkashTran
           fullName: address.fullName,
           phone: address.phone,
           address: address.address,
-          division: address.division || undefined,
-          district: address.district || undefined,
-          upazila: address.upazila || undefined,
-          city: address.district || undefined,
-          postalCode: address.postalCode,
+          latitude: pin.lat,
+          longitude: pin.lng,
+          placeName: pin.placeName ?? undefined,
+          landmark: address.landmark || undefined,
+          accuracyM: pin.accuracyM ?? undefined,
+          locationSource: pin.source,
         },
+        deliverySlot: deliverySlot || undefined,
         ...(MOBILE_METHODS.includes(paymentMethod) ? { bkashTransactionId, bkashSenderNumber } : {}),
         couponCode: couponCode || undefined,
         deliveryNote: note.trim() || undefined,
@@ -89,7 +99,9 @@ export default function OrderReview({ summary, address, paymentMethod, bkashTran
         <p className="font-semibold text-foreground">{address.fullName}</p>
         <p>{address.phone}</p>
         <p>{address.address}</p>
-        <p>{[address.upazila, address.district, address.division].filter(Boolean).join(", ")}{address.postalCode ? ` ${address.postalCode}` : ""}</p>
+        {address.landmark && <p className="text-muted-foreground">{t("landmarkLine", { landmark: address.landmark })}</p>}
+        {address.location?.placeName && <p className="flex items-start gap-1.5 text-muted-foreground"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-text" aria-hidden="true" />{address.location.placeName}</p>}
+        {summary.shipping.distanceKm !== null && <p className="text-xs text-muted-foreground">{t("distanceLine", { km: formatNumber(summary.shipping.distanceKm, locale, 1) })}</p>}
       </section>
 
       <section className="rounded bg-muted border border-border p-4 text-sm text-foreground/80">
@@ -114,6 +126,11 @@ export default function OrderReview({ summary, address, paymentMethod, bkashTran
         </div>
       )}
       {error && <p role="alert" className="rounded border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>}
+      {!summary.canPlaceOrder && summary.issues.length === 0 && (
+        <p role="alert" className="rounded border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+          {!summary.shopOpen ? t("shopClosed") : !summary.minOrderOk ? t("minOrder", { amount: formatMoney(summary.minOrderAmount, locale) }) : summary.shipping.block === "OUT_OF_AREA" ? t("outOfArea") : t("needLocation")}
+        </p>
+      )}
 
       <div className="flex gap-3">
         <button type="button" onClick={onBack} disabled={placing} className="flex-1 py-3.5 rounded border border-border text-foreground/80 font-semibold text-sm hover:border-input hover:text-foreground disabled:opacity-30">

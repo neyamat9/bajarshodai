@@ -65,7 +65,7 @@ export default function CartSidebar() {
   const total = Math.max(0, subtotal - discount);
 
   const ship = summary?.shipping;
-  const threshold = ship?.freeShippingThreshold ?? null;
+  const threshold = ship?.freeDeliveryThreshold ?? null;
   const toFree = threshold ? Math.max(0, threshold - subtotal + discount) : null;
   const progress = threshold ? Math.min(100, (Math.max(0, subtotal - discount) / threshold) * 100) : 0;
 

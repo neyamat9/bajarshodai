@@ -89,18 +89,24 @@ export default function OrderSummaryPanel({ summary, loading, couponCode, onAppl
           <div className="flex justify-between text-muted-foreground"><dt>{t("subtotal")}</dt><dd className="text-foreground">{money(summary?.subtotal ?? 0)}</dd></div>
           {!!summary?.discountAmount && <div className="flex justify-between text-emerald-300"><dt>{t("discount")}</dt><dd>− {money(summary.discountAmount)}</dd></div>}
           <div className="flex justify-between text-muted-foreground">
-            <dt>{t("shipping")} {summary?.shipping.zoneLabel ? <span className="text-muted-foreground/70">({summary.shipping.zoneLabel})</span> : null}</dt>
-            <dd className="text-foreground">{summary?.shipping.isFree ? <span className="text-emerald-300">{t("free")}</span> : money(summary?.shippingCost ?? 0)}</dd>
+            <dt>
+              {t("shipping")}{" "}
+              {summary?.shipping.distanceKm != null ? <span className="text-muted-foreground/70">({t("km", { km: formatNumber(summary.shipping.distanceKm, locale, 1) })}{summary.shipping.estimated ? `, ${t("estimated")}` : ""})</span> : null}
+            </dt>
+            <dd className="text-foreground">
+              {!summary || !summary.shipping.available ? <span className="text-muted-foreground/70">{t("shippingPending")}</span> : summary.shippingCost === 0 ? <span className="text-emerald-300">{t("free")}</span> : money(summary.shippingCost)}
+            </dd>
           </div>
-          {summary && !summary.shipping.isFree && summary.shipping.amountForFreeShipping ? (
-            <p className="text-xs text-accent-text">{t("addForFree", { amount: money(summary.shipping.amountForFreeShipping) })}</p>
+          {summary && summary.shipping.available && summary.shippingCost > 0 && summary.shipping.amountForFreeDelivery ? (
+            <p className="text-xs text-accent-text">{t("addForFree", { amount: money(summary.shipping.amountForFreeDelivery) })}</p>
           ) : null}
+          {summary && !summary.minOrderOk ? <p className="text-xs font-medium text-amber-300">{t("minOrder", { amount: money(summary.minOrderAmount) })}</p> : null}
           <div className="flex justify-between border-t border-border pt-3 text-base font-bold">
             <dt className="text-foreground">{t("total")}</dt>
             <dd className="font-outfit text-xl font-black text-accent-text">{money(summary?.total ?? 0)}</dd>
           </div>
         </dl>
-        {summary && <p className="text-xs text-muted-foreground/70">{t("eta", { min: formatNumber(summary.shipping.estimatedMinDays, locale, 0), max: formatNumber(summary.shipping.estimatedMaxDays, locale, 0) })}</p>}
+        {summary?.shipping.durationSec ? <p className="text-xs text-muted-foreground/70">{t("eta", { min: formatNumber(Math.max(1, Math.round(summary.shipping.durationSec / 60)), locale, 0) })}</p> : null}
       </div>
     </aside>
   );

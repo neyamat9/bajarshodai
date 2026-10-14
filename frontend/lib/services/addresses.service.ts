@@ -12,6 +12,13 @@ export interface SavedAddress {
   city: string | null;
   postalCode: string | null;
   isDefault: boolean;
+  /** the saved delivery pin */
+  latitude: number | null;
+  longitude: number | null;
+  placeName: string | null;
+  landmark: string | null;
+  accuracyM: number | null;
+  locationSource: 'GPS' | 'PIN' | 'SEARCH' | 'LINK' | null;
 }
 export type AddressInput = {
   label?: string;
@@ -22,8 +29,14 @@ export type AddressInput = {
   district?: string;
   upazila?: string;
   city?: string;
-  postalCode: string;
+  postalCode?: string;
   isDefault?: boolean;
+  latitude?: number;
+  longitude?: number;
+  placeName?: string;
+  landmark?: string;
+  accuracyM?: number;
+  locationSource?: 'GPS' | 'PIN' | 'SEARCH' | 'LINK';
 };
 export const getAddresses = () => api.get<SavedAddress[]>('/customer/addresses');
 export const createAddress = (a: AddressInput) => api.post<SavedAddress>('/customer/addresses', a);

@@ -2,32 +2,32 @@
 
 import { useRouter } from "@/i18n/navigation";
 import RequireLogin from "@/components/account/RequireLogin";
+import LocationStep from "@/components/checkout/LocationStep";
 import OrderReview from "@/components/checkout/OrderReview";
 import OrderSummaryPanel from "@/components/checkout/OrderSummaryPanel";
 import { CheckoutBodySkeleton } from "@/components/skeletons/CheckoutSkeletons";
 import PaymentSelector from "@/components/checkout/PaymentSelector";
-import ShippingForm from "@/components/checkout/ShippingForm";
+import ShippingForm, { type DeliveryDetails } from "@/components/checkout/ShippingForm";
 import StepIndicator from "@/components/checkout/StepIndicator";
 import { errorMessage } from "@/lib/api/client";
 import { useCart } from "@/lib/hooks/use-cart";
 import { useAuth } from "@/lib/hooks/use-auth";
-import { loadSavedAddresses, peekSavedAddresses, toCheckoutAddress } from "@/lib/checkout-prefill";
+import { loadSavedAddresses, peekSavedAddresses, toDeliveryDetails, toPickedLocation } from "@/lib/checkout-prefill";
 import type { SavedAddress } from "@/lib/services/addresses.service";
-import { estimateForDistrict } from "@/lib/checkout-shipping";
 import { clearStoredCoupon, getStoredCoupon, storeCoupon } from "@/lib/coupon-store";
 import { applyCoupon, getCheckoutSummary, type CheckoutSummary } from "@/lib/services/checkout.service";
 import { getSiteSettings, type SiteSettings } from "@/lib/services/site.service";
-import { MOBILE_METHODS, type CheckoutAddress, type PaymentMethod } from "@/lib/types";
+import { MOBILE_METHODS, type CheckoutAddress, type DeliveryQuote, type PaymentMethod, type PickedLocation } from "@/lib/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
 const LABEL: Record<string, PaymentMethod> = { CASH_ON_DELIVERY: "Cash on Delivery", BKASH: "bKash", NAGAD: "Nagad", ROCKET: "Rocket" };
 
 /**
- * Checkout: 1 delivery details → 2 payment → 3 review & place order.
- * Prices, shipping, coupon discount and the total all come from the server,
+ * Checkout: 1 who and which house → 2 where on the map (the delivery charge comes from the pin) → 3 payment → 4 review & place order.
+ * Prices, the delivery charge, the coupon discount and the total all come from the server,
  * so what the customer sees is exactly what the order will say.
- * Only signed-in customers get here; their default saved address fills step 1 in advance.
+ * Only signed-in customers get here; their default saved address (and its pin) fills the steps in advance.
  */
 function Checkout() {
   const t = useTranslations("Checkout");
@@ -36,7 +36,11 @@ function Checkout() {
   const router = useRouter();
 
   const [step, setStep] = useState(1);
-  const [address, setAddress] = useState<CheckoutAddress | null>(null);
+  const [details, setDetails] = useState<DeliveryDetails | null>(null);
+  const [location, setLocation] = useState<PickedLocation | null>(null);
+  const [quote, setQuote] = useState<DeliveryQuote | null>(null);
+  const [quoting, setQuoting] = useState(false);
+  const [slot, setSlot] = useState("");
   const [payment, setPayment] = useState<PaymentMethod | null>(null);
   const [txn, setTxn] = useState("");
   const [sender, setSender] = useState("");
@@ -46,13 +50,7 @@ function Checkout() {
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const placed = useRef(false);
-  // the district currently picked in the form (before it is submitted) — delivery is priced from it live
-  const [formDistrict, setFormDistrict] = useState<string | null>(null);
-  const district = formDistrict ?? address?.district ?? "";
   const summarySeq = useRef(0);
-  // the moment a different district is picked, show the delivery charge for it (from the shop's settings) — the server confirms right after
-  const summaryRef = useRef<CheckoutSummary | null>(null);
-  const settingsRef = useRef<SiteSettings | null>(null);
 
   // saved addresses: loaded when the cart button was pressed, otherwise now. The form waits for them (never for long).
   const [saved, setSaved] = useState<SavedAddress[] | null>(() => (user ? peekSavedAddresses(user.id) : null));
@@ -64,41 +62,36 @@ function Checkout() {
       alive = false;
     };
   }, [user, saved]);
-  // the default (else newest) saved address becomes the starting address, so delivery cost shows at once
+  // the default (else newest) saved address fills in step 1, and its pin step 2
   const prefilled = useRef(false);
   useEffect(() => {
     if (prefilled.current || saved === null) return;
     prefilled.current = true;
-    if (saved.length > 0) setAddress((a) => a ?? toCheckoutAddress(saved[0]));
+    if (saved.length > 0) {
+      setDetails((d) => d ?? toDeliveryDetails(saved[0]));
+      setLocation((l) => l ?? toPickedLocation(saved[0]));
+    }
   }, [saved]);
 
   useEffect(() => {
     getSiteSettings().then(setSettings);
   }, []);
-  useEffect(() => {
-    summaryRef.current = summary;
-    settingsRef.current = settings;
-  }, [summary, settings]);
-  const lastDistrict = useRef(district);
-  useEffect(() => {
-    if (lastDistrict.current === district) return;
-    lastDistrict.current = district;
-    const guess = estimateForDistrict(summaryRef.current, settingsRef.current, district);
-    if (guess) setSummary(guess);
-  }, [district]);
 
   // Empty cart → back to the cart (but not right after placing an order)
   useEffect(() => {
     if (!cartLoading && cartCount === 0 && !placed.current) router.replace("/cart");
   }, [cartLoading, cartCount, router]);
 
+  const lat = location?.lat;
+  const lng = location?.lng;
+  const phone = details?.phone;
   const refresh = useCallback(async () => {
     const mine = ++summarySeq.current;
     setSummaryLoading(true);
     setSummaryError(null);
     try {
-      const s = await getCheckoutSummary({ couponCode: coupon || undefined, district: district || undefined, phone: address?.phone || undefined });
-      if (mine === summarySeq.current) setSummary(s); // ignore an answer for a district that is no longer selected
+      const s = await getCheckoutSummary({ couponCode: coupon || undefined, lat, lng, phone: phone || undefined });
+      if (mine === summarySeq.current) setSummary(s);
     } catch (e) {
       if (mine !== summarySeq.current) return;
       setSummaryError(errorMessage(e));
@@ -110,7 +103,7 @@ function Checkout() {
     } finally {
       if (mine === summarySeq.current) setSummaryLoading(false);
     }
-  }, [coupon, district, address?.phone]);
+  }, [coupon, lat, lng, phone]);
 
   useEffect(() => {
     if (cartLoading || cartCount === 0) return;
@@ -118,13 +111,19 @@ function Checkout() {
   }, [cartLoading, cartCount, cart.items, refresh]);
 
   async function handleApply(code: string) {
-    const s = await applyCoupon(code, { district: district || undefined, phone: address?.phone || undefined });
+    const s = await applyCoupon(code, { lat, lng, phone: phone || undefined });
     setSummary(s);
     setCoupon(code);
     storeCoupon(code);
   }
 
   const methods = (settings?.payment.methods ?? ["CASH_ON_DELIVERY"]).map((m) => LABEL[m]);
+  const address: CheckoutAddress | null = details ? { ...details, email: "", location } : null;
+
+  const onQuote = useCallback((q: DeliveryQuote | null, loading: boolean) => {
+    setQuote(q);
+    setQuoting(loading);
+  }, []);
 
   if (cartLoading || (cartCount === 0 && !placed.current)) return <CheckoutBodySkeleton />;
 
@@ -150,17 +149,32 @@ function Checkout() {
           {step === 1 && saved === null && <div className="h-[26rem] animate-pulse rounded bg-secondary" aria-busy="true" aria-label={t("loadingAddresses")} />}
           {step === 1 && saved !== null && (
             <ShippingForm
-              initialData={address ?? (saved.length > 0 ? toCheckoutAddress(saved[0]) : user ? { fullName: user.name, phone: user.phone } : undefined)}
+              initialData={details ?? (user ? { fullName: user.name, phone: user.phone } : undefined)}
               saved={saved ?? []}
-              onDistrictChange={setFormDistrict}
-              onSubmit={(a) => {
-                setAddress(a);
+              onPickSaved={(pin) => setLocation(pin)}
+              onSubmit={(d) => {
+                setDetails(d);
                 setStep(2);
               }}
             />
           )}
 
           {step === 2 && (
+            <LocationStep
+              location={location}
+              onLocation={setLocation}
+              quote={quote}
+              quoting={quoting}
+              onQuote={onQuote}
+              subtotal={summary?.subtotal ?? 0}
+              slot={slot}
+              onSlot={setSlot}
+              onBack={() => setStep(1)}
+              onContinue={() => setStep(3)}
+            />
+          )}
+
+          {step === 3 && (
             <PaymentSelector
               methods={methods}
               accounts={{ bKash: settings?.payment.bkash ?? null, Nagad: settings?.payment.nagad ?? null, Rocket: settings?.payment.rocket ?? null }}
@@ -171,23 +185,24 @@ function Checkout() {
               onTransactionIdChange={setTxn}
               senderNumber={sender}
               onSenderNumberChange={setSender}
-              onBack={() => setStep(1)}
-              onContinue={() => setStep(3)}
+              onBack={() => setStep(2)}
+              onContinue={() => setStep(4)}
             />
           )}
 
-          {step === 3 && address && payment && summary && (
+          {step === 4 && address && payment && summary && (
             <OrderReview
               summary={summary}
               address={address}
               paymentMethod={payment}
+              deliverySlot={slot}
               bkashTransactionId={MOBILE_METHODS.includes(payment) ? txn.trim() : undefined}
               bkashSenderNumber={MOBILE_METHODS.includes(payment) ? sender.replace(/[\s-]/g, "") : undefined}
               couponCode={summary.coupon?.applied ? summary.coupon.code : undefined}
-              onBack={() => setStep(2)}
+              onBack={() => setStep(3)}
               onOrderPlaced={() => {
                 placed.current = true;
-    clearStoredCoupon();
+                clearStoredCoupon();
                 void clearCart();
               }}
             />
@@ -195,10 +210,16 @@ function Checkout() {
         </div>
 
         <div className="lg:sticky lg:top-24">
-          <OrderSummaryPanel summary={summary} loading={summaryLoading} couponCode={coupon} onApplyCoupon={handleApply} onRemoveCoupon={() => {
-            setCoupon("");
-            clearStoredCoupon();
-          }} />
+          <OrderSummaryPanel
+            summary={summary}
+            loading={summaryLoading}
+            couponCode={coupon}
+            onApplyCoupon={handleApply}
+            onRemoveCoupon={() => {
+              setCoupon("");
+              clearStoredCoupon();
+            }}
+          />
         </div>
       </div>
     </div>

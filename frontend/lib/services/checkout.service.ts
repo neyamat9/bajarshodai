@@ -1,26 +1,30 @@
 import { api } from '../api/client';
 import { assetUrl } from '../api/client';
+import type { DeliveryQuote } from '../types/index';
 
 export interface CheckoutSummary {
   items: { cartItemId: string; productId: string; variantId: string | null; name: string; slug: string; image: string | null; variantName: string | null; unitPrice: number; quantity: number; lineTotal: number; availableStock: number; issue: string | null }[];
   itemCount: number;
   subtotal: number;
-  shipping: { zone: string; zoneLabel: string; baseRate: number; cost: number; isFree: boolean; freeShippingThreshold: number | null; amountForFreeShipping: number | null; estimatedMinDays: number; estimatedMaxDays: number };
+  shipping: DeliveryQuote;
   coupon: { applied: boolean; code: string; description: string | null; discountType: string; discount: number; shippingDiscount: number } | null;
   discountAmount: number;
   shippingCost: number;
   taxAmount: number;
   total: number;
-  paymentMethods: ('CASH_ON_DELIVERY' | 'BKASH')[];
+  paymentMethods: ('CASH_ON_DELIVERY' | 'BKASH' | 'NAGAD' | 'ROCKET')[];
+  minOrderAmount: number;
+  minOrderOk: boolean;
+  shopOpen: boolean;
   canPlaceOrder: boolean;
   issues: string[];
 }
 
 export interface SummaryInput {
   couponCode?: string;
-  district?: string;
-  city?: string;
-  shippingZone?: 'INSIDE_DHAKA' | 'OUTSIDE_DHAKA';
+  /** the delivery pin: the delivery charge comes from it */
+  lat?: number;
+  lng?: number;
   phone?: string;
 }
 

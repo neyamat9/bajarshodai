@@ -1,23 +1,30 @@
 "use client";
 
-import { errorMessage } from "@/lib/api/client";
 import { useAuth } from "@/lib/hooks/use-auth";
+import { latinDigits } from "@/lib/format";
 import type { SavedAddress } from "@/lib/services/addresses.service";
-import { getDistricts, getDivisions, getUpazilas, type Place } from "@/lib/services/checkout.service";
-import type { CheckoutAddress } from "@/lib/types";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
+import type { PickedLocation } from "@/lib/types";
 
-interface ShippingFormProps {
-  initialData?: Partial<CheckoutAddress>;
-  /** the customer's saved addresses (already loaded by the checkout page) */
-  saved: SavedAddress[];
-  /** called with the district as soon as it is picked (and once on load), so the order summary can price delivery live */
-  onDistrictChange?: (district: string) => void;
-  onSubmit: (data: CheckoutAddress) => void;
+/** What step 1 collects: who and which house. The pin comes in step 2. */
+export interface DeliveryDetails {
+  fullName: string;
+  phone: string;
+  address: string;
+  landmark: string;
 }
 
-type Errors = Partial<Record<keyof CheckoutAddress, string>>;
+interface ShippingFormProps {
+  initialData?: Partial<DeliveryDetails>;
+  /** the customer's saved addresses (already loaded by the checkout page) */
+  saved: SavedAddress[];
+  /** a saved address was picked: its pin (if it has one) is used in step 2 */
+  onPickSaved?: (location: PickedLocation | null) => void;
+  onSubmit: (data: DeliveryDetails) => void;
+}
+
+type Errors = Partial<Record<keyof DeliveryDetails, string>>;
 
 const input = (bad: boolean) =>
   [
@@ -25,7 +32,7 @@ const input = (bad: boolean) =>
     bad ? "border-red-500/60 focus:border-red-500" : "border-border focus:border-brand-fresh focus:shadow-[0_0_0_3px_rgba(69,162,44,0.15)]",
   ].join(" ");
 
-function Field({ id, label, required, error, children }: { id: string; label: string; required?: boolean; error?: string; children: React.ReactNode }) {
+function Field({ id, label, required, error, hint, children }: { id: string; label: string; required?: boolean; error?: string; hint?: string; children: React.ReactNode }) {
   return (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-foreground/80 mb-1.5">
@@ -33,82 +40,48 @@ function Field({ id, label, required, error, children }: { id: string; label: st
         {required && <span className="text-accent-text ml-0.5" aria-hidden="true">*</span>}
       </label>
       {children}
-      {error && (
+      {error ? (
         <p id={`${id}-error`} role="alert" className="mt-1.5 text-xs text-red-400">
           {error}
         </p>
-      )}
+      ) : hint ? (
+        <p className="mt-1.5 text-xs text-muted-foreground">{hint}</p>
+      ) : null}
     </div>
   );
 }
 
-/** Step 1 — who and where. Division → district → area come from the server. */
-export default function ShippingForm({ initialData, saved, onDistrictChange, onSubmit }: ShippingFormProps) {
+const asPin = (a: SavedAddress): PickedLocation | null =>
+  a.latitude != null && a.longitude != null ? { lat: a.latitude, lng: a.longitude, accuracyM: a.accuracyM, source: a.locationSource ?? "PIN", placeName: a.placeName, landmark: a.landmark } : null;
+
+/** Step 1 — who and which house. The map comes next. */
+export default function ShippingForm({ initialData, saved, onPickSaved, onSubmit }: ShippingFormProps) {
   const t = useTranslations("Checkout");
   const { user } = useAuth();
-  const [f, setF] = useState<CheckoutAddress>({
+  const [f, setF] = useState<DeliveryDetails>({
     fullName: initialData?.fullName ?? user?.name ?? "",
     phone: initialData?.phone ?? user?.phone ?? "",
-    email: initialData?.email ?? "",
     address: initialData?.address ?? "",
-    division: initialData?.division ?? "",
-    district: initialData?.district ?? "",
-    upazila: initialData?.upazila ?? "",
-    postalCode: initialData?.postalCode ?? "",
+    landmark: initialData?.landmark ?? "",
   });
   const [errors, setErrors] = useState<Errors>({});
-  const [divisions, setDivisions] = useState<Place[]>([]);
-  const [districts, setDistricts] = useState<Place[]>([]);
-  const [upazilas, setUpazilas] = useState<Place[]>([]);
-  const [loadError, setLoadError] = useState<string | null>(null);
 
-  useEffect(() => {
-    getDivisions().then(setDivisions).catch((e) => setLoadError(errorMessage(e)));
-  }, []);
-
-  const divId = divisions.find((d) => d.name === f.division)?.id;
-  const disId = districts.find((d) => d.name === f.district)?.id;
-  useEffect(() => {
-    if (!divId) return;
-    let alive = true;
-    getDistricts(divId).then((r) => alive && setDistricts(r)).catch(() => alive && setDistricts([]));
-    return () => {
-      alive = false;
-    };
-  }, [divId]);
-  useEffect(() => {
-    if (!disId) return;
-    let alive = true;
-    getUpazilas(disId).then((r) => alive && setUpazilas(r)).catch(() => alive && setUpazilas([]));
-    return () => {
-      alive = false;
-    };
-  }, [disId]);
-
-  useEffect(() => {
-    onDistrictChange?.(f.district);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [f.district]);
-
-  function set<K extends keyof CheckoutAddress>(k: K, v: CheckoutAddress[K]) {
-    setF((p) => ({ ...p, [k]: v }));
+  function set<K extends keyof DeliveryDetails>(k: K, v: DeliveryDetails[K]) {
+    setF((p) => ({ ...p, [k]: k === "phone" ? latinDigits(v) : v }));
     if (errors[k]) setErrors((e) => ({ ...e, [k]: undefined }));
   }
 
   function fillFrom(a: SavedAddress) {
-    setF((p) => ({ ...p, fullName: a.fullName, phone: a.phone, address: a.line1, division: a.division ?? "", district: a.district ?? "", upazila: a.upazila ?? "", postalCode: a.postalCode ?? "" }));
+    setF({ fullName: a.fullName, phone: a.phone, address: a.line1, landmark: a.landmark ?? "" });
     setErrors({});
+    onPickSaved?.(asPin(a));
   }
 
   function validate(): Errors {
     const e: Errors = {};
     if (f.fullName.trim().length < 2) e.fullName = t("errName");
-    if (!/^(\+?88)?01[3-9]\d{8}$/.test(f.phone.replace(/[\s-]/g, ""))) e.phone = t("errPhone");
-    if (!user && f.email.trim() && !/^\S+@\S+\.\S+$/.test(f.email.trim())) e.email = t("errEmail");
-    if (!f.division) e.division = t("errDivision");
-    if (!f.district) e.district = t("errDistrict");
+    if (!/^(\+?88)?01[3-9]\d{8}$/.test(latinDigits(f.phone).replace(/[\s-]/g, ""))) e.phone = t("errPhone");
     if (f.address.trim().length < 5) e.address = t("errAddress");
-    if (f.postalCode.trim() && !/^\d{4}$/.test(f.postalCode.trim())) e.postalCode = t("errPostal");
     return e;
   }
 
@@ -119,8 +92,10 @@ export default function ShippingForm({ initialData, saved, onDistrictChange, onS
       setErrors(e);
       return;
     }
-    onSubmit({ ...f, fullName: f.fullName.trim(), phone: f.phone.replace(/[\s-]/g, ""), email: f.email.trim(), address: f.address.trim(), postalCode: f.postalCode.trim() });
+    onSubmit({ fullName: f.fullName.trim(), phone: latinDigits(f.phone).replace(/[\s-]/g, ""), address: f.address.trim(), landmark: f.landmark.trim() });
   }
+
+  const isPicked = (a: SavedAddress) => f.address === a.line1 && f.phone === a.phone;
 
   return (
     <form onSubmit={submit} noValidate className="space-y-5">
@@ -133,57 +108,34 @@ export default function ShippingForm({ initialData, saved, onDistrictChange, onS
       {saved.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {saved.map((a) => (
-            <button key={a.id} type="button" onClick={() => fillFrom(a)} aria-pressed={f.address === a.line1 && f.district === (a.district ?? "")} className={`rounded border-2 px-3 py-2 text-left text-xs text-foreground/80 transition-colors hover:border-brand-fresh/60 ${f.address === a.line1 && f.district === (a.district ?? "") ? "border-brand-fresh bg-brand-fresh/10" : "border-border bg-card"}`}>
+            <button key={a.id} type="button" onClick={() => fillFrom(a)} aria-pressed={isPicked(a)} className={`rounded border-2 px-3 py-2 text-left text-xs text-foreground/80 transition-colors hover:border-brand-fresh/60 ${isPicked(a) ? "border-brand-fresh bg-brand-fresh/10" : "border-border bg-card"}`}>
               <b className="block text-foreground">{a.label || a.fullName}</b>
-              {a.line1}, {a.district}
+              {a.line1}
+              {a.placeName ? ` · ${a.placeName}` : ""}
             </button>
           ))}
         </div>
       )}
-
-      {loadError && <p role="alert" className="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">{loadError}</p>}
 
       <div className="grid gap-5 sm:grid-cols-2">
         <Field id="fullName" label={t("fullName")} required error={errors.fullName}>
           <input id="fullName" autoComplete="name" value={f.fullName} onChange={(e) => set("fullName", e.target.value)} placeholder={t("fullNamePh")} className={input(!!errors.fullName)} aria-invalid={!!errors.fullName} />
         </Field>
         <Field id="phone" label={t("phone")} required error={errors.phone}>
-          <input id="phone" type="tel" inputMode="tel" autoComplete="tel" value={f.phone} onChange={(e) => set("phone", e.target.value)} placeholder="01XXXXXXXXX" className={input(!!errors.phone)} aria-invalid={!!errors.phone} />
+          <input id="phone" type="tel" inputMode="tel" autoComplete="tel" value={f.phone} onChange={(e) => set("phone", e.target.value)} placeholder={t("phonePh")} className={input(!!errors.phone)} aria-invalid={!!errors.phone} />
         </Field>
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-3">
-        <Field id="division" label={t("division")} required error={errors.division}>
-          <select id="division" value={f.division} onChange={(e) => setF((p) => ({ ...p, division: e.target.value, district: "", upazila: "" }))} className={input(!!errors.division)}>
-            <option value="">{t("select")}</option>
-            {divisions.map((d) => <option key={d.id} value={d.name}>{d.name}</option>)}
-          </select>
-        </Field>
-        <Field id="district" label={t("district")} required error={errors.district}>
-          <select id="district" value={f.district} disabled={!f.division} onChange={(e) => setF((p) => ({ ...p, district: e.target.value, upazila: "" }))} className={input(!!errors.district)}>
-            <option value="">{t("select")}</option>
-            {districts.map((d) => <option key={d.id} value={d.name}>{d.name}</option>)}
-          </select>
-        </Field>
-        <Field id="upazila" label={t("area")} error={errors.upazila}>
-          <select id="upazila" value={f.upazila} disabled={!f.district || upazilas.length === 0} onChange={(e) => set("upazila", e.target.value)} className={input(false)}>
-            <option value="">{t("select")}</option>
-            {upazilas.map((d) => <option key={d.id} value={d.name}>{d.name}</option>)}
-          </select>
-        </Field>
-      </div>
+      <Field id="address" label={t("address")} required error={errors.address} hint={t("addressHint")}>
+        <input id="address" autoComplete="street-address" value={f.address} onChange={(e) => set("address", e.target.value)} placeholder={t("addressPh")} className={input(!!errors.address)} aria-invalid={!!errors.address} />
+      </Field>
 
-      <div className="grid gap-5 sm:grid-cols-[1fr_160px]">
-        <Field id="address" label={t("address")} required error={errors.address}>
-          <input id="address" autoComplete="street-address" value={f.address} onChange={(e) => set("address", e.target.value)} placeholder={t("addressPh")} className={input(!!errors.address)} aria-invalid={!!errors.address} />
-        </Field>
-        <Field id="postalCode" label={t("postalCode")} error={errors.postalCode}>
-          <input id="postalCode" inputMode="numeric" maxLength={4} autoComplete="postal-code" value={f.postalCode} onChange={(e) => set("postalCode", e.target.value)} placeholder="1207" className={input(!!errors.postalCode)} />
-        </Field>
-      </div>
+      <Field id="landmark" label={t("landmark")} hint={t("landmarkHint")}>
+        <input id="landmark" value={f.landmark} maxLength={200} onChange={(e) => set("landmark", e.target.value)} placeholder={t("landmarkPh")} className={input(false)} />
+      </Field>
 
       <button type="submit" className="w-full py-4 rounded bg-brand-fresh text-foreground font-black text-base hover:bg-brand-fresh/90 active:scale-[0.97] transition-all shadow-[0_8px_24px_rgba(69,162,44,0.3)]">
-        {t("continuePayment")}
+        {t("continueLocation")}
       </button>
     </form>
   );

@@ -3,6 +3,7 @@
 import AddressBook from "@/components/account/AddressBook";
 import ChangePassword from "@/components/account/ChangePassword";
 import RequireLogin from "@/components/account/RequireLogin";
+import SavedLocationCard from "@/components/account/SavedLocationCard";
 import { btnPrimary, card, PageHeading } from "@/components/account/ui";
 import AuthField from "@/components/auth/AuthField";
 import { useAuth } from "@/lib/hooks/use-auth";
@@ -74,6 +75,7 @@ export default function SettingsPage() {
       <div className="space-y-6">
         <ProfileCard />
         <AddressBook />
+        <SavedLocationCard />
         <ChangePassword />
       </div>
     </RequireLogin>

@@ -10,13 +10,16 @@ export interface PlaceOrderInput {
     fullName: string;
     phone: string;
     address: string;
-    division?: string;
-    district?: string;
-    upazila?: string;
-    city?: string;
-    postalCode: string;
+    /** the delivery pin */
+    latitude: number;
+    longitude: number;
+    placeName?: string;
+    landmark?: string;
+    accuracyM?: number;
+    locationSource?: 'GPS' | 'PIN' | 'SEARCH' | 'LINK';
   };
-  shippingZone?: 'INSIDE_DHAKA' | 'OUTSIDE_DHAKA';
+  deliverySlot?: string;
+  deliveryDate?: string;
   bkashTransactionId?: string;
   bkashSenderNumber?: string;
   couponCode?: string;

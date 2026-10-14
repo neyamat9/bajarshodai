@@ -1,6 +1,6 @@
 import { AUTH_CHANGED_EVENT, tokens } from "@/lib/api/client";
 import { getAddresses, type SavedAddress } from "@/lib/services/addresses.service";
-import type { CheckoutAddress } from "@/lib/types";
+import type { PickedLocation } from "@/lib/types";
 
 /**
  * Saved addresses, kept in memory so the checkout page can open already filled in.
@@ -48,16 +48,12 @@ export function refreshSavedAddresses(userId: string) {
   return loadSavedAddresses(userId);
 }
 
-/** A saved address as the checkout form wants it. */
-export function toCheckoutAddress(a: SavedAddress, email = ""): CheckoutAddress {
-  return {
-    fullName: a.fullName,
-    phone: a.phone,
-    email,
-    address: a.line1,
-    division: a.division ?? "",
-    district: a.district ?? "",
-    upazila: a.upazila ?? "",
-    postalCode: a.postalCode ?? "",
-  };
+/** A saved address as the checkout details form wants it. */
+export function toDeliveryDetails(a: SavedAddress) {
+  return { fullName: a.fullName, phone: a.phone, address: a.line1, landmark: a.landmark ?? "" };
+}
+
+/** The pin of a saved address, if it has one. */
+export function toPickedLocation(a: SavedAddress): PickedLocation | null {
+  return a.latitude != null && a.longitude != null ? { lat: a.latitude, lng: a.longitude, accuracyM: a.accuracyM, source: a.locationSource ?? "PIN", placeName: a.placeName, landmark: a.landmark } : null;
 }

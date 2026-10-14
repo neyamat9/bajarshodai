@@ -198,6 +198,40 @@ export interface ShippingAddress {
   address: string;
   city: string;
   postalCode: string;
+  landmark?: string;
+  placeName?: string;
+}
+
+/** A point on the map: where the delivery goes. */
+export interface GeoPoint {
+  lat: number;
+  lng: number;
+}
+
+/** A delivery location the customer chose: shared from the phone, dropped on the map, searched or sent through a link. */
+export interface PickedLocation extends GeoPoint {
+  accuracyM?: number | null;
+  source: 'GPS' | 'PIN' | 'SEARCH' | 'LINK';
+  /** the place name in the page language (the other language is looked up by the server) */
+  placeName?: string | null;
+  landmark?: string | null;
+}
+
+/** What delivery to a point costs: the answer of the server (the checkout never works it out itself). */
+export interface DeliveryQuote {
+  available: boolean;
+  block: 'DISABLED' | 'ORIGIN_NOT_SET' | 'NO_LOCATION' | 'OUT_OF_AREA' | null;
+  distanceKm: number | null;
+  durationSec: number | null;
+  /** no road route was found: the distance is the straight line times a factor */
+  estimated: boolean;
+  calculatedFee: number | null;
+  cost: number;
+  isFree: boolean;
+  freeDeliveryThreshold: number | null;
+  amountForFreeDelivery: number | null;
+  straightKm: number | null;
+  radiusKm: number;
 }
 
 // Where an order is delivered (checkout form)
@@ -205,11 +239,12 @@ export interface CheckoutAddress {
   fullName: string;
   phone: string;
   email: string; // guests: for the order emails
+  /** house, lane, area: what the rider reads */
   address: string;
-  division: string;
-  district: string;
-  upazila: string;
-  postalCode: string;
+  /** "beside the green gate" */
+  landmark: string;
+  /** the pin: set in the location step */
+  location: PickedLocation | null;
 }
 
 // Only Cash on Delivery and manual bKash are supported — no payment gateway.
@@ -245,6 +280,10 @@ export interface Order {
   courierName?: string | null;
   trackingNumber?: string | null;
   trackingUrl?: string | null;
+  /** road distance from the shop to the delivery pin */
+  deliveryDistanceKm?: number | null;
+  deliveryPlaceName?: string | null;
+  deliveryLandmark?: string | null;
   canCancel?: boolean;
   deliveryNote?: string | null;
   paymentVerifiedAt?: string | null;

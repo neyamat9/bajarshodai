@@ -14,8 +14,9 @@ import { useParams, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { isFinished, isOffTrack } from "@/lib/api/mappers";
-import { useTranslations } from "next-intl";
-import { formatQuantity } from "@/lib/format";
+import { useLocale, useTranslations } from "next-intl";
+import type { Locale } from "@/lib/locale";
+import { formatNumber, formatQuantity } from "@/lib/format";
 import { usePaymentLabel } from "@/components/orders/labels";
 
 function Row({ label, value, strong, tone }: { label: string; value: React.ReactNode; strong?: boolean; tone?: string }) {
@@ -57,6 +58,8 @@ function PlacedBannerGate({ order }: { order: Order }) {
 
 function Detail() {
   const t = useTranslations("Orders");
+  const tc = useTranslations("Checkout");
+  const locale = useLocale() as Locale;
   const payText = usePaymentLabel();
   const { id } = useParams<{ id: string }>();
   const { refreshCart, openCart } = useCart();
@@ -266,10 +269,15 @@ function Detail() {
             <address className="space-y-0.5 text-sm not-italic leading-relaxed text-foreground/85">
               <p className="font-bold text-foreground">{addr.fullName}</p>
               <p>{addr.address}</p>
-              <p>
-                {addr.city}
-                {addr.postalCode ? `, ${addr.postalCode}` : ""}
-              </p>
+              {order.deliveryLandmark && <p className="text-muted-foreground">{tc("landmarkLine", { landmark: order.deliveryLandmark })}</p>}
+              {(addr.city || addr.postalCode) && (
+                <p>
+                  {addr.city}
+                  {addr.postalCode ? `, ${addr.postalCode}` : ""}
+                </p>
+              )}
+              {order.deliveryPlaceName && <p className="text-muted-foreground">{order.deliveryPlaceName}</p>}
+              {order.deliveryDistanceKm != null && <p className="text-xs text-muted-foreground">{tc("distanceLine", { km: formatNumber(order.deliveryDistanceKm, locale, 1) })}</p>}
               <p className="text-muted-foreground">{addr.phone}</p>
             </address>
             {order.deliveryNote && (
