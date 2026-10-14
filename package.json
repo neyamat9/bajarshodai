@@ -1,0 +1,15 @@
+{
+  "name": "bazar-shodai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bazar Shodai (বাজার সদাই): grocery and fresh-food delivery for Shahrasti, Chandpur. Monorepo with the API server, customer storefront and admin dashboard.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/neyamat7/bazar-shodai.git"
+  },
+  "homepage": "https://github.com/neyamat7/bazar-shodai#readme",
+  "bugs": {
+    "url": "https://github.com/neyamat7/bazar-shodai/issues"
+  },
+  "license": "UNLICENSED"
+}
