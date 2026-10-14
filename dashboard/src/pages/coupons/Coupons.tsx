@@ -54,7 +54,7 @@ function Rules({ f, set }: { f: Form; set: (p: Partial<Form>) => void }) {
               <div className="flex flex-wrap gap-2">
                 {cats.data?.map((c) => {
                   const on = f.categories.includes(c.id);
-                  return <button type="button" key={c.id} onClick={() => set({ categories: on ? f.categories.filter((x) => x !== c.id) : [...f.categories, c.id] })} className={`cursor-pointer rounded border px-2.5 py-1 text-xs ${on ? "border-orange-400 bg-orange-100 text-orange-800" : "border-border"}`}>{c.name}</button>;
+                  return <button type="button" key={c.id} onClick={() => set({ categories: on ? f.categories.filter((x) => x !== c.id) : [...f.categories, c.id] })} className={`cursor-pointer rounded border px-2.5 py-1 text-xs ${on ? "border-fresh-400 bg-fresh-100 text-fresh-800" : "border-border"}`}>{c.name}</button>;
                 })}
               </div>
             </div>
@@ -210,7 +210,7 @@ function UsageDialog({ coupon, onClose }: { coupon: Coupon; onClose: () => void 
         <DialogBody className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-4">
             <StatCard label="Uses" value={s?.uses ?? "—"} hint={s?.remainingUses != null ? `${s.remainingUses} left` : "No limit"} />
-            <StatCard label="Discount given" value={s ? money(s.totalDiscountGiven) : "—"} tone="orange" />
+            <StatCard label="Discount given" value={s ? money(s.totalDiscountGiven) : "—"} tone="fresh" />
             <StatCard label="Customers" value={s?.uniqueCustomers ?? "—"} tone="sky" />
             <StatCard label="Order revenue" value={s ? money(s.orderRevenue) : "—"} tone="green" />
           </div>

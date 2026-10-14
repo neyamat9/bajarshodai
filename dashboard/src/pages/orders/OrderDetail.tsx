@@ -91,8 +91,8 @@ function NotesCard({ order }: { order: Order }) {
     <Section title="Notes">
       <div className="space-y-3">
         {order.customerNote && (
-          <div className="rounded bg-orange-50 px-3 py-2 text-[13px] dark:bg-orange-500/10">
-            <span className="text-xs font-semibold text-orange-800 dark:text-orange-300">Customer said</span>
+          <div className="rounded bg-fresh-50 px-3 py-2 text-[13px] dark:bg-fresh-500/10">
+            <span className="text-xs font-semibold text-fresh-800 dark:text-fresh-300">Customer said</span>
             <p className="mt-0.5 whitespace-pre-wrap">{order.customerNote}</p>
           </div>
         )}
@@ -143,7 +143,7 @@ export default function OrderDetailPage() {
         title={
           <span className="flex flex-wrap items-center gap-2">
             Order {o.orderNumber} <StatusBadge status={o.status} /> <StatusBadge status={o.paymentStatus} />
-            {o.source === "ADMIN" && <Badge variant="orange">Admin order</Badge>}
+            {o.source === "ADMIN" && <Badge variant="fresh">Admin order</Badge>}
           </span>
         }
         description={`Placed ${dateTime(o.placedAt)}`}
@@ -213,7 +213,7 @@ export default function OrderDetailPage() {
             }
           >
             {isMobileBanking(o.paymentMethod) && o.paymentStatus === "PENDING" && (
-              <div className="mb-3 rounded border border-orange-200 bg-orange-50 p-3 text-[13px] dark:border-orange-500/30 dark:bg-orange-500/10">
+              <div className="mb-3 rounded border border-fresh-200 bg-fresh-50 p-3 text-[13px] dark:border-fresh-500/30 dark:bg-fresh-500/10">
                 <p className="font-semibold">{PAYMENT_METHOD_LABEL[o.paymentMethod]} payment waiting to be verified</p>
                 <p className="mt-0.5 text-muted-foreground">
                   Sender {o.bkashSenderNumber ?? "—"} · Transaction <span className="font-mono">{o.bkashTransactionId ?? "—"}</span> · Amount {money(o.total)}
@@ -249,7 +249,7 @@ export default function OrderDetailPage() {
             <ol className="relative space-y-4 border-l border-border pl-5">
               {[...o.statusHistory].reverse().map((h) => (
                 <li key={h.id} className="relative">
-                  <span className="absolute -left-[25px] top-1 size-2.5 rounded-full bg-orange-500 ring-4 ring-card" />
+                  <span className="absolute -left-[25px] top-1 size-2.5 rounded-full bg-fresh-500 ring-4 ring-card" />
                   <p className="text-[13px] font-medium">
                     {h.fromStatus ? `${orderStatusLabel(h.fromStatus)} → ` : ""}{orderStatusLabel(h.toStatus)}
                   </p>

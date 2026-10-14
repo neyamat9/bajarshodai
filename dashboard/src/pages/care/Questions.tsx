@@ -40,7 +40,7 @@ export default function Questions() {
   const q = useInfiniteList(["questions", search, f.answered], (page) => reviewsApi.questions({ search, answered: f.answered, page, limit: 20 }));
   const remove = useAct(() => reviewsApi.removeQuestion(del!.id), { success: "Question deleted", invalidate: [["questions"], ["attention-summary"]], onSuccess: () => setDel(null) });
   const cols: Column<Question>[] = [
-    { key: "q", header: "Question", sk: "lines2", cell: (x) => <div className="max-w-[440px]"><p className="font-medium">{x.question}</p>{x.answer && <p className="mt-1 line-clamp-2 border-l-2 border-orange-300 pl-2 text-[13px] text-muted-foreground">{x.answer}</p>}</div> },
+    { key: "q", header: "Question", sk: "lines2", cell: (x) => <div className="max-w-[440px]"><p className="font-medium">{x.question}</p>{x.answer && <p className="mt-1 line-clamp-2 border-l-2 border-fresh-300 pl-2 text-[13px] text-muted-foreground">{x.answer}</p>}</div> },
     { key: "p", header: "Product", sk: "text", cell: (x) => <Link to={`/products/${x.product.id}/edit`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="line-clamp-2 max-w-[200px] hover:text-primary">{x.product.name}</Link> },
     { key: "u", header: "Asked by", sk: "lines2", cell: (x) => <div><p>{x.user.name}</p><p className="text-[11px] text-muted-foreground">{dateTime(x.createdAt)}</p></div> },
     { key: "s", header: "Status", sk: "badge", cell: (x) => (x.answer ? <Badge variant="success">Answered</Badge> : <Badge variant="warning">Waiting</Badge>) },

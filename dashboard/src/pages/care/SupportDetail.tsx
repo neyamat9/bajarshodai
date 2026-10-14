@@ -39,7 +39,7 @@ export default function SupportDetail() {
             <ul className="space-y-3">
               {t.messages.map((m) => (
                 <li key={m.id} className={`flex ${m.isStaff ? "justify-end" : ""}`}>
-                  <div className={`max-w-[85%] rounded px-3 py-2 text-[13px] ${m.isInternal ? "border border-dashed border-amber-400 bg-amber-50 dark:bg-amber-500/10" : m.isStaff ? "bg-navy-700 text-white" : "bg-muted"}`}>
+                  <div className={`max-w-[85%] rounded px-3 py-2 text-[13px] ${m.isInternal ? "border border-dashed border-amber-400 bg-amber-50 dark:bg-amber-500/10" : m.isStaff ? "bg-forest-700 text-white" : "bg-muted"}`}>
                     <p className="mb-0.5 flex items-center gap-1 text-[11px] opacity-70">{m.isInternal && <Lock className="size-3" />}{m.user?.name ?? (m.isStaff ? "Support" : "Customer")} · {dateTime(m.createdAt)}{m.isInternal && " · internal note"}</p>
                     <p className="whitespace-pre-wrap">{m.message}</p>
                   </div>

@@ -25,7 +25,7 @@ const RANGES = [
   { value: "90", label: "Last 90 days" },
   { value: "365", label: "Last 12 months" },
 ];
-const PIE = ["#053972", "#f99b10", "#1f5ca3", "#fbbe62", "#7fa9d9", "#b9660a"];
+const PIE = ["#0b6234", "#45a22c", "#1e88b5", "#f57c00", "#8bc34a", "#78bc93"];
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -49,9 +49,9 @@ export default function Dashboard() {
   const cur = d?.overview.current;
   const chg = d?.overview.changePercent;
   const series = useMemo(() => ({ revenue: (d?.sales ?? []).map((s) => s.revenue), orders: (d?.sales ?? []).map((s) => s.orders), avg: (d?.sales ?? []).map((s) => s.avgOrderValue) }), [d?.sales]);
-  const axis = dark ? "#8fa3be" : "#5b6b82";
-  const grid = dark ? "#1b2e4a" : "#e6ecf5";
-  const tip = { background: dark ? "#0d1b30" : "#fff", border: `1px solid ${grid}`, borderRadius: 8, fontSize: 12 };
+  const axis = dark ? "#9bb8a4" : "#587263";
+  const grid = dark ? "#1d3a28" : "#e1ecd9";
+  const tip = { background: dark ? "#0e1f15" : "#fff", border: `1px solid ${grid}`, borderRadius: 8, fontSize: 12 };
 
   const attentionItems = [
     { label: "Orders to confirm", value: attention.data?.pendingOrders, to: "/orders?status=PENDING", icon: <Clock size={15} /> },
@@ -87,7 +87,7 @@ export default function Dashboard() {
       />
 
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <StatCard hintSk label="Revenue" value={money(cur?.revenue)} change={chg?.revenue} hint="vs previous period" icon={<Banknote size={18} />} tone="orange" loading={q.isLoading} spark={series.revenue} />
+        <StatCard hintSk label="Revenue" value={money(cur?.revenue)} change={chg?.revenue} hint="vs previous period" icon={<Banknote size={18} />} tone="fresh" loading={q.isLoading} spark={series.revenue} />
         <StatCard hintSk label="Orders" value={num(cur?.orders)} change={chg?.orders} hint={cur ? `${cur.cancelledOrders} cancelled` : undefined} icon={<ShoppingBag size={18} />} loading={q.isLoading} spark={series.orders} />
         <StatCard hintSk label="Average order" value={money(Math.round(cur?.avgOrderValue ?? 0))} change={chg?.avgOrderValue} hint={cur ? `${num(cur.unitsSold)} units sold` : undefined} icon={<TrendingUp size={18} />} tone="sky" spark={series.avg} loading={q.isLoading} />
         <StatCard hintSk label="New customers" value={num(cur?.newCustomers)} change={chg?.newCustomers} hint={cur ? `${num(cur.customers)} bought` : undefined} icon={<UserPlus size={18} />} tone="green" loading={q.isLoading} />
@@ -109,15 +109,15 @@ export default function Dashboard() {
                 <AreaChart data={d?.sales ?? []} margin={{ left: -10, right: 8, top: 8 }}>
                   <defs>
                     <linearGradient id="rev" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#f99b10" stopOpacity={0.45} />
-                      <stop offset="100%" stopColor="#f99b10" stopOpacity={0.02} />
+                      <stop offset="0%" stopColor="#45a22c" stopOpacity={0.45} />
+                      <stop offset="100%" stopColor="#45a22c" stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid stroke={grid} vertical={false} />
                   <XAxis dataKey="period" tick={{ fill: axis, fontSize: 11 }} tickFormatter={(v: string) => v.slice(5)} axisLine={false} tickLine={false} minTickGap={24} />
                   <YAxis tick={{ fill: axis, fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => (v >= 1000 ? `${v / 1000}k` : String(v))} />
                   <Tooltip contentStyle={tip} formatter={(v, n) => [n === "revenue" ? money(Number(v)) : v, titleCase(String(n))]} labelFormatter={(l) => dateOnly(String(l))} />
-                  <Area type="monotone" dataKey="revenue" stroke="#f99b10" strokeWidth={2.5} fill="url(#rev)" />
+                  <Area type="monotone" dataKey="revenue" stroke="#45a22c" strokeWidth={2.5} fill="url(#rev)" />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -177,7 +177,7 @@ export default function Dashboard() {
                   <XAxis type="number" hide />
                   <YAxis type="category" dataKey="name" width={100} tick={{ fill: axis, fontSize: 11 }} axisLine={false} tickLine={false} />
                   <Tooltip contentStyle={tip} formatter={(v) => money(Number(v))} cursor={{ fill: "transparent" }} />
-                  <Bar dataKey="revenue" fill="#053972" radius={[0, 4, 4, 0]} barSize={16} />
+                  <Bar dataKey="revenue" fill="#0b6234" radius={[0, 4, 4, 0]} barSize={16} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -264,7 +264,7 @@ export default function Dashboard() {
                   <span className="block truncate text-[13px] font-medium">{r.productName}</span>
                   {r.variantName && <span className="block truncate text-[11px] text-muted-foreground">{r.variantName}</span>}
                 </span>
-                <span className="rounded bg-orange-100 px-2 py-0.5 text-xs font-bold text-orange-800 dark:bg-orange-500/15 dark:text-orange-300">{r.stock} left</span>
+                <span className="rounded bg-fresh-100 px-2 py-0.5 text-xs font-bold text-fresh-800 dark:bg-fresh-500/15 dark:text-fresh-300">{r.stock} left</span>
               </Link>
             ))}
           </CardContent>

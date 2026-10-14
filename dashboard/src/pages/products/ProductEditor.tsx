@@ -24,38 +24,36 @@ import { ProductEditorSkeleton } from "@/components/shared/pageSkeletons";
 interface Form {
   name: string; slug: string; productCode: string; barcode: string; status: ProductStatus;
   categoryId: string; subCategoryId: string; brandId: string;
-  shortDescription: string; description: string; warrantyInfo: string;
+  shortDescription: string; description: string;
   buyingPrice: string; regularPrice: string; sellingPrice: string;
   discountPrice: string; discountStart: string; discountEnd: string; discountLabel: string;
   stock: string; lowStockThreshold: string; freeShipping: boolean;
   weight: string; length: string; width: string; height: string;
   isFeatured: boolean; isNew: boolean; isHot: boolean; isBestSeller: boolean; isLimitedStock: boolean;
   metaTitle: string; metaDescription: string; metaKeywords: string;
-  inTheBox: string; tags: string;
-  specs: { title: string; items: { key: string; value: string }[] }[];
+  tags: string;
   attrs: { name: string; value: string }[];
 }
 
 const blank: Form = {
   name: "", slug: "", productCode: "", barcode: "", status: "ACTIVE", categoryId: "", subCategoryId: "", brandId: "",
-  shortDescription: "", description: "", warrantyInfo: "", buyingPrice: "", regularPrice: "", sellingPrice: "",
+  shortDescription: "", description: "", buyingPrice: "", regularPrice: "", sellingPrice: "",
   discountPrice: "", discountStart: "", discountEnd: "", discountLabel: "", stock: "0", lowStockThreshold: "5", freeShipping: false,
   weight: "", length: "", width: "", height: "", isFeatured: false, isNew: false, isHot: false, isBestSeller: false, isLimitedStock: false,
-  metaTitle: "", metaDescription: "", metaKeywords: "", inTheBox: "", tags: "", specs: [], attrs: [],
+  metaTitle: "", metaDescription: "", metaKeywords: "", tags: "", attrs: [],
 };
 const n = (v?: string | number | null) => (v === null || v === undefined ? "" : String(Number(v)));
 const toForm = (p: ProductDetail): Form => ({
   name: p.name, slug: p.slug, productCode: p.productCode ?? "", barcode: p.barcode ?? "", status: p.status,
   categoryId: p.categoryId, subCategoryId: p.subCategoryId ?? "", brandId: p.brandId ?? "",
-  shortDescription: p.shortDescription ?? "", description: p.description, warrantyInfo: p.warrantyInfo ?? "",
+  shortDescription: p.shortDescription ?? "", description: p.description,
   buyingPrice: n(p.buyingPrice), regularPrice: n(p.regularPrice), sellingPrice: n(p.priceBeforeDiscount ?? p.sellingPrice),
   discountPrice: p.discountPrice ? n(p.discountPrice) : "", discountStart: toLocalInput(p.discountStart), discountEnd: toLocalInput(p.discountEnd), discountLabel: p.discountLabel ?? "",
   stock: String(p.stock), lowStockThreshold: String(p.lowStockThreshold), freeShipping: p.freeShipping,
   weight: n(p.weight), length: n(p.length), width: n(p.width), height: n(p.height),
   isFeatured: p.isFeatured, isNew: p.isNew, isHot: p.isHot, isBestSeller: p.isBestSeller, isLimitedStock: p.isLimitedStock,
   metaTitle: p.metaTitle ?? "", metaDescription: p.metaDescription ?? "", metaKeywords: p.metaKeywords ?? "",
-  inTheBox: p.inTheBox.join("\n"), tags: p.tags.join(", "),
-  specs: p.specifications.map((s) => ({ title: s.title, items: s.items.map((i) => ({ key: i.key, value: i.value })) })),
+  tags: p.tags.join(", "),
   attrs: p.attributes.map((a) => ({ name: a.name, value: a.value })),
 });
 const num = (v: string) => (v.trim() === "" ? undefined : Number(v));
@@ -121,7 +119,7 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
     const clearOr = (v: string) => (v.trim() === "" ? null : v);
     return {
       name: f.name.trim(), slug: f.slug || undefined, productCode: f.productCode.trim() || undefined, barcode: f.barcode.trim() || undefined,
-      description: f.description, shortDescription: f.shortDescription || undefined, warrantyInfo: f.warrantyInfo || undefined,
+      description: f.description, shortDescription: f.shortDescription || undefined,
       status: f.status, categoryId: f.categoryId, subCategoryId: f.subCategoryId || undefined, brandId: f.brandId || undefined,
       buyingPrice: Number(f.buyingPrice), regularPrice: Number(f.regularPrice), sellingPrice: Number(f.sellingPrice),
       discountPrice: f.discountPrice === "" ? null : Number(f.discountPrice),
@@ -133,9 +131,7 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
       weight: num(f.weight), length: num(f.length), width: num(f.width), height: num(f.height),
       isFeatured: f.isFeatured, isNew: f.isNew, isHot: f.isHot, isBestSeller: f.isBestSeller, isLimitedStock: f.isLimitedStock,
       metaTitle: f.metaTitle || undefined, metaDescription: f.metaDescription || undefined, metaKeywords: f.metaKeywords || undefined,
-      inTheBox: f.inTheBox.split("\n").map((s) => s.trim()).filter(Boolean),
       tags: f.tags.split(",").map((s) => s.trim()).filter(Boolean),
-      specifications: f.specs.filter((s) => s.title.trim()).map((s) => ({ title: s.title.trim(), items: s.items.filter((i) => i.key.trim()).map((i) => ({ key: i.key.trim(), value: i.value })) })),
       attributes: f.attrs.filter((a) => a.name.trim() && a.value.trim()),
     };
   };
@@ -184,7 +180,7 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
           <TabsTrigger value="inventory">Inventory & shipping</TabsTrigger>
           <TabsTrigger value="photos">Photos{p ? ` (${p.images.length})` : staged.length ? ` (${staged.length})` : ""}</TabsTrigger>
           <TabsTrigger value="variants">Variants{variants.length ? ` (${variants.length})` : ""}</TabsTrigger>
-          <TabsTrigger value="details">Specs & tags</TabsTrigger>
+          <TabsTrigger value="details">Details & tags</TabsTrigger>
           <TabsTrigger value="seo">SEO</TabsTrigger>
         </TabsList>
 
@@ -230,7 +226,6 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
             <div className="space-y-3">
               <Field label="Short description" hint="One or two lines, shown near the price"><Textarea rows={2} maxLength={1000} value={f.shortDescription} onChange={(e) => set("shortDescription", e.target.value)} /></Field>
               <Field label="Full description" required error={errs.description}><Textarea rows={8} value={f.description} onChange={(e) => set("description", e.target.value)} /></Field>
-              <Field label="Warranty"><Input value={f.warrantyInfo} maxLength={300} onChange={(e) => set("warrantyInfo", e.target.value)} placeholder="e.g. 1 year official warranty" /></Field>
             </div>
           </Section>
           <Section title="Badges & shop sections" description="Where the product is highlighted on the website.">
@@ -303,28 +298,7 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
         </TabsContent>
 
         <TabsContent value="details" className="space-y-4">
-          <Section title="Specifications" description="Grouped tables shown on the product page, e.g. Display → Size: 6.7 inch.">
-            <div className="space-y-4">
-              {f.specs.map((s, si) => (
-                <div key={si} className="rounded border border-border p-3">
-                  <div className="mb-2 flex gap-2">
-                    <Input value={s.title} onChange={(e) => set("specs", f.specs.map((x, i) => (i === si ? { ...x, title: e.target.value } : x)))} placeholder="Group title (Display, Battery…)" className="font-medium" />
-                    <Button size="icon-sm" variant="ghost" aria-label="Remove group" onClick={() => set("specs", f.specs.filter((_, i) => i !== si))}><Trash2 className="text-destructive" /></Button>
-                  </div>
-                  {s.items.map((it, ii) => (
-                    <div key={ii} className="mb-2 flex gap-2">
-                      <Input value={it.key} placeholder="Name" onChange={(e) => set("specs", f.specs.map((x, i) => (i === si ? { ...x, items: x.items.map((y, j) => (j === ii ? { ...y, key: e.target.value } : y)) } : x)))} />
-                      <Input value={it.value} placeholder="Value" onChange={(e) => set("specs", f.specs.map((x, i) => (i === si ? { ...x, items: x.items.map((y, j) => (j === ii ? { ...y, value: e.target.value } : y)) } : x)))} />
-                      <Button size="icon-sm" variant="ghost" aria-label="Remove row" onClick={() => set("specs", f.specs.map((x, i) => (i === si ? { ...x, items: x.items.filter((_, j) => j !== ii) } : x)))}><Trash2 /></Button>
-                    </div>
-                  ))}
-                  <Button size="xs" variant="outline" onClick={() => set("specs", f.specs.map((x, i) => (i === si ? { ...x, items: [...x.items, { key: "", value: "" }] } : x)))}><Plus /> Row</Button>
-                </div>
-              ))}
-              <Button size="sm" variant="outline" onClick={() => set("specs", [...f.specs, { title: "", items: [{ key: "", value: "" }] }])}><Plus /> Add group</Button>
-            </div>
-          </Section>
-          <Section title="Filter attributes" description="Used by the shop's filters, e.g. RAM = 8GB, Network = 5G.">
+          <Section title="Filter attributes" description="Used by the shop's filters and shown as product details, e.g. Origin = Local, Type = Organic.">
             <div className="space-y-2">
               {f.attrs.map((a, i) => (
                 <div key={i} className="flex gap-2">
@@ -336,11 +310,8 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
               <Button size="sm" variant="outline" onClick={() => set("attrs", [...f.attrs, { name: "", value: "" }])}><Plus /> Add attribute</Button>
             </div>
           </Section>
-          <Section title="Tags & box contents">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Tags" hint="Separate with commas"><Input value={f.tags} onChange={(e) => set("tags", e.target.value)} placeholder="5G, gaming, fast charging" /></Field>
-              <Field label="What's in the box" hint="One item per line"><Textarea rows={4} value={f.inTheBox} onChange={(e) => set("inTheBox", e.target.value)} /></Field>
-            </div>
+          <Section title="Tags">
+            <Field label="Tags" hint="Separate with commas"><Input value={f.tags} onChange={(e) => set("tags", e.target.value)} placeholder="organic, fresh, local" /></Field>
           </Section>
         </TabsContent>
 
@@ -352,7 +323,7 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
               <Field label="Keywords"><Input value={f.metaKeywords} onChange={(e) => set("metaKeywords", e.target.value)} /></Field>
               <div className="rounded border border-border p-3">
                 <p className="text-[13px] font-medium text-blue-700 dark:text-blue-400">{f.metaTitle || f.name || "Product title"}</p>
-                <p className="text-xs text-emerald-700 dark:text-emerald-400">gadgetbachai.com/products/{f.slug || "product-slug"}</p>
+                <p className="text-xs text-emerald-700 dark:text-emerald-400">bazarshodai.com/products/{f.slug || "product-slug"}</p>
                 <p className="text-xs text-muted-foreground">{f.metaDescription || f.shortDescription || "Description appears here."}</p>
               </div>
             </div>

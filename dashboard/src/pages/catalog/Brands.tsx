@@ -104,7 +104,7 @@ export default function Brands() {
             <div className="flex items-center gap-3 py-2 pr-3">
               <Thumb src={b.logo} className="size-10" />
               <div className="min-w-0 flex-1">
-                <p className="line-clamp-2 break-words text-[13px] font-semibold">{b.name} {b.isHomepage && <Badge variant="orange" className="ml-1">Home</Badge>}</p>
+                <p className="line-clamp-2 break-words text-[13px] font-semibold">{b.name} {b.isHomepage && <Badge variant="fresh" className="ml-1">Home</Badge>}</p>
                 <p className="text-[11px] text-muted-foreground">/{b.slug}{b.country ? ` · ${b.country}` : ""}</p>
               </div>
               <span className={b.status === "ACTIVE" ? "max-sm:hidden" : ""}><StatusBadge status={b.status} /></span>

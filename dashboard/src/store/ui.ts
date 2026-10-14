@@ -21,6 +21,6 @@ export const useUi = create<UiState>()(
       toggleCollapsed: () => set((s) => ({ collapsed: !s.collapsed })),
       toggleSound: () => set((s) => ({ sound: !s.sound })),
     }),
-    { name: "gb-admin-ui" },
+    { name: "bs-admin-ui" },
   ),
 );

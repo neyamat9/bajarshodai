@@ -81,7 +81,7 @@ export default function CustomerDetail() {
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="Lifetime value" value={money(s.lifetimeValue)} tone="green" hint={`${s.orders} orders`} />
         <StatCard label="Average order" value={money(s.averageOrderValue)} />
-        <StatCard label="Last order" value={s.lastOrderAt ? dateOnly(s.lastOrderAt) : "—"} hint={s.firstOrderAt ? `First: ${dateOnly(s.firstOrderAt)}` : undefined} tone="orange" />
+        <StatCard label="Last order" value={s.lastOrderAt ? dateOnly(s.lastOrderAt) : "—"} hint={s.firstOrderAt ? `First: ${dateOnly(s.firstOrderAt)}` : undefined} tone="fresh" />
         <StatCard label="Support" value={`${s.openTickets} open`} hint={`${s.tickets} tickets · ${s.returns} returns · ${s.reviews} reviews`} tone="sky" />
       </div>
       <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-3 [&>*]:min-w-0">

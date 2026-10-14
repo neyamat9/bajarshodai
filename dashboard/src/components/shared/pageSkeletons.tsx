@@ -161,7 +161,7 @@ export function OrdersSkeleton() {
             label="Total orders"
             value=""
             loading
-            tone="navy"
+            tone="forest"
             icon={<ShoppingBag size={18} />}
           />
           <StatCard
@@ -169,7 +169,7 @@ export function OrdersSkeleton() {
             label="To confirm"
             value=""
             loading
-            tone="orange"
+            tone="fresh"
             icon={<Clock size={18} />}
           />
           <StatCard
@@ -185,7 +185,7 @@ export function OrdersSkeleton() {
             label="In delivery"
             value=""
             loading
-            tone="navy"
+            tone="forest"
             icon={<Truck size={18} />}
           />
           <StatCard
@@ -201,7 +201,7 @@ export function OrdersSkeleton() {
             label="Payment to verify"
             value=""
             loading
-            tone="orange"
+            tone="fresh"
             icon={<Wallet size={18} />}
           />
           <StatCard
@@ -209,7 +209,7 @@ export function OrdersSkeleton() {
             label="Revenue"
             value=""
             loading
-            tone="orange"
+            tone="fresh"
             icon={<Banknote size={18} />}
           />
           <StatCard
@@ -276,7 +276,7 @@ export function ProductsSkeleton() {
             label="Total products"
             value=""
             loading
-            tone="navy"
+            tone="forest"
             icon={<Boxes size={18} />}
           />
           <StatCard
@@ -292,7 +292,7 @@ export function ProductsSkeleton() {
             label="Draft / hidden"
             value=""
             loading
-            tone="orange"
+            tone="fresh"
             icon={<EyeOff size={18} />}
           />
           <StatCard
@@ -300,7 +300,7 @@ export function ProductsSkeleton() {
             label="Low stock"
             value=""
             loading
-            tone="orange"
+            tone="fresh"
             icon={<AlertTriangle size={18} />}
           />
           <StatCard
@@ -332,7 +332,7 @@ export function ProductsSkeleton() {
             label="On discount now"
             value=""
             loading
-            tone="navy"
+            tone="forest"
             icon={<Percent size={18} />}
           />
         </div>
@@ -444,7 +444,7 @@ export function InventorySkeleton() {
             value=""
             loading
             icon={<AlertTriangle className="size-4" />}
-            tone="orange"
+            tone="fresh"
           />
           <StatCard
             label="Out of stock"
@@ -654,7 +654,7 @@ export const BackInStockSkeleton = () =>
       stats: (
         <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard label="People waiting" value="" loading />
-          <StatCard label="Items wanted" value="" loading tone="orange" />
+          <StatCard label="Items wanted" value="" loading tone="fresh" />
           <StatCard label="Ready to alert" value="" loading tone="green" />
           <StatCard label="Failed" value="" loading tone="red" />
         </div>
@@ -727,7 +727,7 @@ export function ProductEditorSkeleton({ isNew = false }: { isNew?: boolean }) {
             "Inventory & shipping",
             "Photos",
             "Variants",
-            "Specs & tags",
+            "Details & tags",
             "SEO",
           ].map((t, i) => (
             <TabsTrigger key={t} value={i === 0 ? "basics" : t}>
@@ -763,7 +763,6 @@ export function ProductEditorSkeleton({ isNew = false }: { isNew?: boolean }) {
                 h="h-20"
               />
               <Field0 label="Full description" required h="h-[184px]" />
-              <Field0 label="Warranty" />
             </div>
           </Section>
           <Section
@@ -838,7 +837,7 @@ export function DashboardSkeleton() {
           hintSk
           spark={[]}
           icon={<Banknote size={18} />}
-          tone="orange"
+          tone="fresh"
         />
         <StatCard
           label="Orders"

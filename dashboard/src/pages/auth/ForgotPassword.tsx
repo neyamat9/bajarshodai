@@ -53,7 +53,7 @@ export default function ForgotPassword() {
           <Button type="submit" className={`w-full ${authButton}`} loading={isSubmitting}>
             Send reset link
           </Button>
-          <Link to="/login" viewTransition className="flex items-center justify-center gap-1 text-xs font-semibold text-primary hover:underline dark:text-orange-400">
+          <Link to="/login" viewTransition className="flex items-center justify-center gap-1 text-xs font-semibold text-primary hover:underline dark:text-fresh-400">
             <ArrowLeft className="size-3.5" /> Back to sign in
           </Link>
         </form>

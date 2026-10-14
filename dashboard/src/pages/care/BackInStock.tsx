@@ -48,7 +48,7 @@ export default function BackInStock() {
       <PageHeader title="Back in stock" description="Customers waiting for sold-out items. They are emailed automatically when stock returns." />
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="People waiting" value={s?.waitingRequests ?? "—"} loading={sum.isLoading} />
-        <StatCard label="Items wanted" value={s?.waitingItems ?? "—"} tone="orange" loading={sum.isLoading} />
+        <StatCard label="Items wanted" value={s?.waitingItems ?? "—"} tone="fresh" loading={sum.isLoading} />
         <StatCard label="Ready to alert" value={s?.readyToAlert ?? "—"} tone="green" loading={sum.isLoading} />
         <StatCard label="Failed" value={s?.failedAfterRetries ?? "—"} tone="red" loading={sum.isLoading} />
       </div>

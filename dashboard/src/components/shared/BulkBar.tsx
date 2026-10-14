@@ -10,7 +10,7 @@ export function BulkBar({ count, onClear, children, noun = "selected" }: { count
   if (count === 0) return null;
   return createPortal(
     <div className="no-print pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center p-3 lg:left-[var(--sidebar-w,16rem)]" role="region" aria-label="Bulk actions">
-      <div className="bulk-in pointer-events-auto flex max-w-full flex-wrap items-center gap-2 rounded border border-navy-700 bg-navy-800 px-3 py-2 text-white shadow-2xl dark:border-border dark:bg-card dark:text-foreground">
+      <div className="bulk-in pointer-events-auto flex max-w-full flex-wrap items-center gap-2 rounded border border-forest-700 bg-forest-800 px-3 py-2 text-white shadow-2xl dark:border-border dark:bg-card dark:text-foreground">
         <span className="px-1 text-[13px] font-semibold">
           {count} {noun}
         </span>

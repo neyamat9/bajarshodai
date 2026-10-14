@@ -354,7 +354,7 @@ export default function OrderCreatePage() {
                   <span className="font-medium">{money(0)} <span className="text-[11px] font-normal text-muted-foreground">no delivery</span></span>
                 ) : (
                   <>
-                    {shipOverride !== null && <button type="button" onClick={() => setShipOverride(null)} className="cursor-pointer text-[11px] font-medium text-primary hover:underline dark:text-orange-400">Auto {money(shipAuto)} · reset</button>}
+                    {shipOverride !== null && <button type="button" onClick={() => setShipOverride(null)} className="cursor-pointer text-[11px] font-medium text-primary hover:underline dark:text-fresh-400">Auto {money(shipAuto)} · reset</button>}
                     <div className="relative">
                       <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">৳</span>
                       <Input aria-label="Delivery charge" type="number" min={0} value={shipOverride ?? String(shipAuto)} onChange={(e) => setShipOverride(e.target.value)} className="h-8 w-24 pl-5 text-right" />
@@ -503,7 +503,7 @@ export default function OrderCreatePage() {
                     </div>
                     <div className="flex flex-1 flex-col gap-0.5 p-2.5">
                       <p className="line-clamp-2 min-h-[2.4em] text-[13px] font-medium leading-snug">{p.name}</p>
-                      <p className="mt-auto pt-1 text-sm font-bold text-primary dark:text-orange-400">{money(p.sellingPrice)}</p>
+                      <p className="mt-auto pt-1 text-sm font-bold text-primary dark:text-fresh-400">{money(p.sellingPrice)}</p>
                     </div>
                   </button>
                 );

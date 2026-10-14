@@ -84,12 +84,12 @@ export default function Login() {
         <div className="flex items-center justify-between gap-3">
           <label className="flex cursor-pointer select-none items-center gap-2 text-[13px] text-muted-foreground">
             <input type="checkbox" className="peer sr-only" {...register("remember")} />
-            <span className="flex size-[18px] items-center justify-center rounded border border-input bg-card text-transparent transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-4 peer-focus-visible:ring-ring/20 dark:peer-checked:border-orange-500 dark:peer-checked:bg-orange-500 dark:peer-checked:text-orange-950">
+            <span className="flex size-[18px] items-center justify-center rounded border border-input bg-card text-transparent transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-4 peer-focus-visible:ring-ring/20 dark:peer-checked:border-fresh-500 dark:peer-checked:bg-fresh-500 dark:peer-checked:text-fresh-950">
               <Check className="size-3.5" strokeWidth={3} />
             </span>
             Remember me
           </label>
-          <Link to="/forgot-password" className="text-[13px] font-semibold text-primary hover:underline dark:text-orange-400">
+          <Link to="/forgot-password" className="text-[13px] font-semibold text-primary hover:underline dark:text-fresh-400">
             Forgot password?
           </Link>
         </div>

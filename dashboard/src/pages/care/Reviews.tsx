@@ -17,7 +17,7 @@ import { dateTime } from "@/lib/format";
 import { BulkBar } from "@/components/shared/BulkBar";
 import { SavedViews } from "@/components/shared/SavedViews";
 
-const Stars = ({ n }: { n: number }) => <span className="inline-flex text-orange-500">{Array.from({ length: 5 }).map((_, i) => <Star key={i} className={`size-3.5 ${i < n ? "fill-current" : "text-border"}`} />)}</span>;
+const Stars = ({ n }: { n: number }) => <span className="inline-flex text-fresh-500">{Array.from({ length: 5 }).map((_, i) => <Star key={i} className={`size-3.5 ${i < n ? "fill-current" : "text-border"}`} />)}</span>;
 
 export default function Reviews() {
   const [f, setF] = useUrlState({ search: "", status: "", rating: "", page: "1" });

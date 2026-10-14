@@ -9,7 +9,7 @@ export function StatCard({
   value,
   hint,
   icon,
-  tone = "navy",
+  tone = "forest",
   change,
   loading,
   onClick,
@@ -21,7 +21,7 @@ export function StatCard({
   value: ReactNode;
   hint?: ReactNode;
   icon?: ReactNode;
-  tone?: "navy" | "orange" | "green" | "red" | "sky";
+  tone?: "forest" | "fresh" | "green" | "red" | "sky";
   // percent change vs the previous period (null = no comparison)
   change?: number | null;
   loading?: boolean;
@@ -34,13 +34,13 @@ export function StatCard({
   active?: boolean;
 }) {
   const tones = {
-    navy: "bg-navy-100 text-navy-700 dark:bg-navy-800 dark:text-navy-100",
-    orange: "bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300",
+    forest: "bg-forest-100 text-forest-700 dark:bg-forest-800 dark:text-forest-100",
+    fresh: "bg-fresh-100 text-fresh-700 dark:bg-fresh-500/15 dark:text-fresh-300",
     green: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
     red: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300",
     sky: "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300",
   };
-  const accents = { navy: "bg-navy-500", orange: "bg-brand", green: "bg-success", red: "bg-destructive", sky: "bg-sky-500" };
+  const accents = { forest: "bg-forest-500", fresh: "bg-brand", green: "bg-success", red: "bg-destructive", sky: "bg-sky-500" };
   return (
     <Card
       className={cn("relative overflow-hidden p-3 sm:p-4", onClick && "cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lift", active && "border-ring ring-2 ring-ring/30")}
@@ -71,7 +71,7 @@ export function StatCard({
   );
 }
 
-const STROKE = { navy: "var(--color-navy-500)", orange: "var(--color-orange-500)", green: "var(--success)", red: "var(--destructive)", sky: "#0ea5e9" } as const;
+const STROKE = { forest: "var(--color-forest-500)", fresh: "var(--color-fresh-500)", green: "var(--success)", red: "var(--destructive)", sky: "#0ea5e9" } as const;
 
 /** Tiny area line, drawn with plain SVG so every card stays light. */
 function Sparkline({ data, tone }: { data: number[]; tone: keyof typeof STROKE }) {

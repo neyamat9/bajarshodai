@@ -134,7 +134,7 @@ export default function Categories() {
                 </button>
                 <Thumb src={c.image} className="size-10" />
                 <div className="min-w-0 flex-1">
-                  <p className="line-clamp-2 break-words text-[13px] font-semibold">{c.name} {c.isHomepage && <Badge variant="orange" className="ml-1">Home</Badge>}</p>
+                  <p className="line-clamp-2 break-words text-[13px] font-semibold">{c.name} {c.isHomepage && <Badge variant="fresh" className="ml-1">Home</Badge>}</p>
                   <p className="text-[11px] text-muted-foreground">/{c.slug} · {c.subCategories.length} sub-categories</p>
                 </div>
                 <span className={c.status === "ACTIVE" ? "max-sm:hidden" : ""}><StatusBadge status={c.status} /></span>

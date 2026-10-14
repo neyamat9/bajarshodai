@@ -13,7 +13,7 @@ const queryClient = new QueryClient({
 
 // apply the saved theme before the first paint
 try {
-  const ui = JSON.parse(localStorage.getItem("gb-admin-ui") ?? "{}") as { state?: { dark?: boolean } };
+  const ui = JSON.parse(localStorage.getItem("bs-admin-ui") ?? "{}") as { state?: { dark?: boolean } };
   document.documentElement.classList.toggle("dark", !!ui.state?.dark);
 } catch {
   /* default theme */

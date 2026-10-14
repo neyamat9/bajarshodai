@@ -73,7 +73,7 @@ export function EditItemsDialog({ order, open, onOpenChange }: { order: OrderDet
                 <div className="min-w-[160px] flex-1">
                   <p className="text-[13px] font-medium">{l.name}</p>
                   {l.variantName && <p className="text-[11px] text-muted-foreground">{l.variantName}</p>}
-                  {l.isNew && <span className="text-[10px] font-semibold uppercase text-orange-600">New line</span>}
+                  {l.isNew && <span className="text-[10px] font-semibold uppercase text-fresh-600">New line</span>}
                 </div>
                 <label className="flex items-center gap-1 text-xs text-muted-foreground">Qty
                   <Input type="number" min={1} max={100} value={l.quantity} onChange={(e) => setLine(l.key, { quantity: Math.floor(Number(e.target.value)) })} className="w-16" />

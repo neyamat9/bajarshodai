@@ -51,7 +51,7 @@ describe("mapOrder", () => {
     expect(statusLabel("ON_HOLD")).toBe("On hold");
     expect(statusLabel("OUT_FOR_DELIVERY")).toBe("Out for delivery");
     const o = mapOrder({
-      id: "o1", orderNumber: "RZ-1", status: "CONFIRMED", paymentMethod: "BKASH", paymentStatus: "PENDING", subtotal: "900", shippingCost: "60", total: "960",
+      id: "o1", orderNumber: "BS-1", status: "CONFIRMED", paymentMethod: "BKASH", paymentStatus: "PENDING", subtotal: "900", shippingCost: "60", total: "960",
       discountAmount: "0", paidAmount: "0", dueAmount: "960", placedAt: "2026-01-01T00:00:00Z", estimatedDelivery: null,
       items: [{ productId: "p", productSlug: "s", productName: "Phone", price: "900", quantity: 1, productImage: null, variantName: "Black" }],
       statusHistory: [{ toStatus: "CONFIRMED", createdAt: "2026-01-02T00:00:00Z" }, { toStatus: "PENDING", createdAt: "2026-01-01T00:00:00Z" }],

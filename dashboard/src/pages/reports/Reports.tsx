@@ -69,8 +69,8 @@ export default function Reports() {
       <PageHeader title="Reports" description="Preview here, then download for Excel or CSV." />
       <div className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
         {REPORTS.map((r) => (
-          <button key={r.id} onClick={() => setF({ report: r.id })} className={cn("cursor-pointer rounded border p-3 text-left transition", r.id === def.id ? "border-orange-400 bg-orange-50 shadow-xs dark:bg-orange-500/10" : "border-border bg-card hover:border-navy-300")}>
-            <p className="flex items-center gap-1.5 text-[13px] font-semibold"><FileSpreadsheet className="size-4 text-orange-500" />{r.label}</p>
+          <button key={r.id} onClick={() => setF({ report: r.id })} className={cn("cursor-pointer rounded border p-3 text-left transition", r.id === def.id ? "border-fresh-400 bg-fresh-50 shadow-xs dark:bg-fresh-500/10" : "border-border bg-card hover:border-forest-300")}>
+            <p className="flex items-center gap-1.5 text-[13px] font-semibold"><FileSpreadsheet className="size-4 text-fresh-500" />{r.label}</p>
             <p className="mt-0.5 text-[11px] text-muted-foreground">{r.hint}</p>
           </button>
         ))}

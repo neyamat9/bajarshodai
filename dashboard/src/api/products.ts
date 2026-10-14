@@ -50,15 +50,9 @@ export interface ProductImage {
   order: number;
   uploadId: string | null;
 }
-export interface SpecHeader {
-  id: string;
-  title: string;
-  items: { id: string; key: string; value: string }[];
-}
 export interface ProductDetail extends Omit<ProductRow, "mainImage" | "_count" | "stockState"> {
   description: string;
   shortDescription: string | null;
-  warrantyInfo: string | null;
   barcode: string | null;
   discountLabel: string | null;
   profitMargin: string | null;
@@ -75,13 +69,11 @@ export interface ProductDetail extends Omit<ProductRow, "mainImage" | "_count" |
   metaTitle: string | null;
   metaDescription: string | null;
   metaKeywords: string | null;
-  inTheBox: string[];
   brandId: string | null;
   categoryId: string;
   subCategoryId: string | null;
   images: ProductImage[];
   variants: ProductVariant[];
-  specifications: SpecHeader[];
   attributes: { id: string; name: string; value: string }[];
   tags: string[];
   priceHistory: { id: string; price: string; recordedAt: string }[];
@@ -139,7 +131,6 @@ export interface ProductInput {
   barcode?: string;
   description?: string;
   shortDescription?: string;
-  warrantyInfo?: string;
   status?: ProductStatus;
   buyingPrice?: number;
   regularPrice?: number;
@@ -163,11 +154,9 @@ export interface ProductInput {
   metaTitle?: string;
   metaDescription?: string;
   metaKeywords?: string;
-  inTheBox?: string[];
   brandId?: string;
   categoryId?: string;
   subCategoryId?: string;
-  specifications?: { title: string; items: { key: string; value: string }[] }[];
   attributes?: { name: string; value: string }[];
   tags?: string[];
   variants?: VariantInput[];

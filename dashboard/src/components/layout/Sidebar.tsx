@@ -40,7 +40,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
       <div
         aria-hidden="true"
         onClick={onClose}
-        className={cn("fixed inset-0 z-30 bg-navy-950/60 backdrop-blur-[1px] transition-opacity duration-300 ease-out lg:hidden", open ? "opacity-100" : "pointer-events-none opacity-0")}
+        className={cn("fixed inset-0 z-30 bg-forest-950/60 backdrop-blur-[1px] transition-opacity duration-300 ease-out lg:hidden", open ? "opacity-100" : "pointer-events-none opacity-0")}
       />
       {/* on desktop this spacer keeps the page's column width; the sidebar itself floats above it so peeking never shoves the page */}
       <div className={cn("hidden shrink-0 transition-[width] duration-300 ease-out lg:block", collapsed ? "w-[68px]" : "w-64")} aria-hidden="true" />
@@ -51,7 +51,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
         onFocusCapture={() => collapsed && peekSoon(true)}
         onBlurCapture={(e) => collapsed && !e.currentTarget.contains(e.relatedTarget as Node | null) && peekSoon(false)}
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-72 max-w-[85vw] flex-col overflow-hidden border-r border-sidebar-border bg-gradient-to-b from-sidebar to-[#042a55] text-sidebar-foreground will-change-transform dark:to-sidebar",
+          "fixed inset-y-0 left-0 z-40 flex w-72 max-w-[85vw] flex-col overflow-hidden border-r border-sidebar-border bg-gradient-to-b from-sidebar to-forest-900 text-sidebar-foreground will-change-transform dark:to-sidebar",
           "transition-[translate,transform,width,box-shadow,visibility] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
           open ? "visible translate-x-0 shadow-2xl" : "invisible -translate-x-full shadow-none",
           "lg:visible lg:max-w-none lg:translate-x-0 lg:shadow-none",
@@ -61,22 +61,22 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
       >
         <div className={cn("flex shrink-0 border-b border-sidebar-border", compact ? "flex-col items-center gap-1 py-2" : "h-14 items-center justify-between gap-2 px-3")}>
           <NavLink to="/" className="flex min-w-0 items-center gap-2" onClick={onClose} title="Dashboard">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded bg-white p-1">
-              <img src="/logo-mark.png" alt="GadgetBachai" className="size-8 object-contain" />
+            <span className="flex size-10 shrink-0 items-center justify-center rounded bg-white p-0.5">
+              <img src="/logo-mark.png" alt="Bazar Shodai" className="size-9 object-contain" />
             </span>
             {!compact && (
               <span className="min-w-0 leading-tight">
                 <span className="block truncate font-heading text-[15px] font-bold text-white">
-                  Gadget<span className="text-orange-400">Bachai</span>
+                  Bazar <span className="text-fresh-400">Shodai</span>
                 </span>
-                <span className="block text-[10px] uppercase tracking-widest text-navy-300">Admin</span>
+                <span className="block text-[10px] uppercase tracking-widest text-forest-300">Admin</span>
               </span>
             )}
           </NavLink>
           {/* top right of the sidebar: collapse / expand on desktop, close on phones */}
           <button
             type="button"
-            className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded text-navy-200 transition-colors hover:bg-white/10 hover:text-white active:scale-95 lg:hidden"
+            className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded text-forest-200 transition-colors hover:bg-white/10 hover:text-white active:scale-95 lg:hidden"
             onClick={onClose}
             aria-label="Close menu"
           >
@@ -84,7 +84,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
           </button>
           <button
             type="button"
-            className="hidden size-8 shrink-0 cursor-pointer items-center justify-center rounded text-navy-200 transition-colors hover:bg-white/10 hover:text-white active:scale-95 lg:flex"
+            className="hidden size-8 shrink-0 cursor-pointer items-center justify-center rounded text-forest-200 transition-colors hover:bg-white/10 hover:text-white active:scale-95 lg:flex"
             onClick={() => {
               if (!collapsed) {
                 justCollapsed.current = true;
@@ -103,7 +103,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
         <nav className="custom-scrollbar flex-1 space-y-4 overflow-y-auto px-2 py-3">
           {menu.map((section) => (
             <div key={section.title}>
-              {!compact && <p className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-widest text-navy-300/70">{section.title}</p>}
+              {!compact && <p className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-widest text-forest-300/70">{section.title}</p>}
               <ul className="space-y-0.5">
                 {section.items.map((item) => {
                   const count = summary && item.badge ? item.badge(summary) : 0;
@@ -125,7 +125,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
                         {({ isActive }) => (
                           <>
                             {isActive && <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r bg-brand" />}
-                            <span className={cn("shrink-0", isActive && "text-orange-400")}>{item.icon}</span>
+                            <span className={cn("shrink-0", isActive && "text-fresh-400")}>{item.icon}</span>
                             {!compact && <span className="flex-1 truncate whitespace-nowrap">{item.label}</span>}
                             {count > 0 && (
                               <span

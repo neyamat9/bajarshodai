@@ -89,7 +89,7 @@ export default function Media() {
         ) : q.rows.length === 0 ? <EmptyState title="No images" description="Upload some to build your library." /> : (
           <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4 lg:grid-cols-6">
             {q.rows.map((m) => (
-              <button key={m.id} onClick={() => setSel(m)} className="group cursor-pointer overflow-hidden rounded border border-border text-left hover:ring-2 hover:ring-orange-400">
+              <button key={m.id} onClick={() => setSel(m)} className="group cursor-pointer overflow-hidden rounded border border-border text-left hover:ring-2 hover:ring-fresh-400">
                 <img src={assetUrl(m.thumbUrl ?? m.url)} alt={m.originalName} className="aspect-square w-full bg-muted object-cover" loading="lazy" />
                 <p className="truncate px-2 py-1 text-[11px] text-muted-foreground">{m.originalName}</p>
               </button>

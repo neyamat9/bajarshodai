@@ -67,7 +67,7 @@ export function NotificationBell() {
               }}
               className={cn("flex w-full cursor-pointer gap-3 border-b border-border/60 px-3 py-2.5 text-left last:border-0 hover:bg-muted/60", !n.isRead && "bg-accent/50")}
             >
-              <span className={cn("mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full", n.isRead ? "bg-muted text-muted-foreground" : "bg-brand/20 text-orange-700 dark:text-orange-300")}>{ICONS[n.type]}</span>
+              <span className={cn("mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full", n.isRead ? "bg-muted text-muted-foreground" : "bg-brand/20 text-fresh-700 dark:text-fresh-300")}>{ICONS[n.type]}</span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[13px] font-semibold">{n.title}</span>
                 <span className="line-clamp-2 text-xs text-muted-foreground">{n.body}</span>

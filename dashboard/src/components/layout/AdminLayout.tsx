@@ -65,7 +65,7 @@ export default function AdminLayout() {
     document.documentElement.classList.toggle("dark", dark);
   }, [dark]);
 
-  const rawSite = ((import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined) ?? "").trim() || "https://www.gadgetbachai.com";
+  const rawSite = ((import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined) ?? "").trim() || "http://localhost:3000";
   const siteUrl = /^https?:\/\//i.test(rawSite) ? rawSite : `https://${rawSite}`; // a bare "www.…" would be read as a relative link
 
   return (

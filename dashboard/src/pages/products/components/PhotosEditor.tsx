@@ -38,7 +38,7 @@ export function PhotosEditor({ productId, images, staged, onStage }: { productId
         {(images ?? []).map((im, i) => (
           <div key={im.id} className="group relative overflow-hidden rounded border border-border bg-muted">
             <img src={assetUrl(im.url)} alt={im.alt ?? ""} className="aspect-square w-full object-cover" />
-            {im.isMain && <span className="absolute left-1.5 top-1.5 rounded bg-orange-500 px-1.5 py-0.5 text-[10px] font-bold text-white">MAIN</span>}
+            {im.isMain && <span className="absolute left-1.5 top-1.5 rounded bg-fresh-500 px-1.5 py-0.5 text-[10px] font-bold text-white">MAIN</span>}
             <div className="absolute inset-x-0 bottom-0 flex justify-between gap-1 bg-gradient-to-t from-black/70 p-1.5 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
               <div className="flex gap-1">
                 <Button size="icon-xs" variant="secondary" aria-label="Move left" disabled={i === 0} onClick={() => move(i, -1)}><ArrowLeft /></Button>
@@ -52,13 +52,13 @@ export function PhotosEditor({ productId, images, staged, onStage }: { productId
           </div>
         ))}
         {staged.map((f, i) => (
-          <div key={f.name + i} className="relative overflow-hidden rounded border border-dashed border-orange-400 bg-muted">
+          <div key={f.name + i} className="relative overflow-hidden rounded border border-dashed border-fresh-400 bg-muted">
             <img src={URL.createObjectURL(f)} alt="" className="aspect-square w-full object-cover" />
-            <span className="absolute left-1.5 top-1.5 rounded bg-navy-800 px-1.5 py-0.5 text-[10px] font-bold text-white">{i === 0 ? "MAIN · " : ""}uploads on save</span>
+            <span className="absolute left-1.5 top-1.5 rounded bg-forest-800 px-1.5 py-0.5 text-[10px] font-bold text-white">{i === 0 ? "MAIN · " : ""}uploads on save</span>
             <Button size="icon-xs" variant="destructive" className="absolute right-1.5 top-1.5" aria-label="Remove" onClick={() => onStage(staged.filter((_, j) => j !== i))}><Trash2 /></Button>
           </div>
         ))}
-        <button type="button" onClick={() => input.current?.click()} className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded border-2 border-dashed border-border text-xs font-medium text-muted-foreground hover:border-orange-400 hover:text-orange-600">
+        <button type="button" onClick={() => input.current?.click()} className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded border-2 border-dashed border-border text-xs font-medium text-muted-foreground hover:border-fresh-400 hover:text-fresh-600">
           <ImagePlus className="size-6" />
           {upload.isPending ? "Uploading…" : "Add photos"}
         </button>

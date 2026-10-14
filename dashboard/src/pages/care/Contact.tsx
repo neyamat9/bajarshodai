@@ -28,7 +28,7 @@ function Detail({ m, onClose }: { m: ContactMessage; onClose: () => void }) {
         <DialogHeader><DialogTitle>{m.subject}</DialogTitle><DialogDescription>{m.name} · {m.email}{m.phone ? ` · ${m.phone}` : ""} · {dateTime(m.createdAt)}</DialogDescription></DialogHeader>
         <DialogBody className="space-y-3">
           <p className="whitespace-pre-wrap rounded bg-muted p-3 text-[13px]">{m.message}</p>
-          {m.reply && <div className="rounded border-l-2 border-orange-400 bg-orange-50 p-3 text-[13px] dark:bg-orange-500/10"><p className="mb-1 text-xs text-muted-foreground">You replied {m.repliedAt && dateTime(m.repliedAt)}</p><p className="whitespace-pre-wrap">{m.reply}</p></div>}
+          {m.reply && <div className="rounded border-l-2 border-fresh-400 bg-fresh-50 p-3 text-[13px] dark:bg-fresh-500/10"><p className="mb-1 text-xs text-muted-foreground">You replied {m.repliedAt && dateTime(m.repliedAt)}</p><p className="whitespace-pre-wrap">{m.reply}</p></div>}
           <Field label={m.reply ? "Send another reply" : "Reply by email"}><Textarea rows={4} value={reply} maxLength={10000} onChange={(e) => setReply(e.target.value)} /></Field>
           <div className="grid gap-3 sm:grid-cols-3">
             <Field label="Status"><Select value={status} onChange={(e) => setStatus(e.target.value as ContactStatus)}>{(["NEW", "READ", "REPLIED", "ARCHIVED"] as const).map((s) => <option key={s} value={s}>{s[0] + s.slice(1).toLowerCase()}</option>)}</Select></Field>

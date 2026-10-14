@@ -156,7 +156,7 @@ export default function Inventory() {
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard hintSk label="Units on hand" value={s ? num(s.unitsOnHand) : "—"} hint={s ? `${s.skuCount} items tracked` : undefined} icon={<Boxes className="size-4" />} loading={sum.isLoading} />
         <StatCard hintSk label="Stock value (cost)" value={s ? money(s.stockValueAtCost) : "—"} hint={s ? `${money(s.stockValueAtRetail)} at retail` : undefined} icon={<Wallet className="size-4" />} tone="green" loading={sum.isLoading} />
-        <StatCard label="Low stock" value={s?.lowStock ?? "—"} icon={<AlertTriangle className="size-4" />} tone="orange" loading={sum.isLoading} onClick={() => setF({ tab: "items", state: "low" })} />
+        <StatCard label="Low stock" value={s?.lowStock ?? "—"} icon={<AlertTriangle className="size-4" />} tone="fresh" loading={sum.isLoading} onClick={() => setF({ tab: "items", state: "low" })} />
         <StatCard label="Out of stock" value={s?.outOfStock ?? "—"} icon={<PackageX className="size-4" />} tone="red" loading={sum.isLoading} onClick={() => setF({ tab: "items", state: "out" })} />
       </div>
 

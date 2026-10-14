@@ -56,7 +56,7 @@ function LibraryDialog({ onPick, onClose }: { onPick: (url: string) => void; onC
           {q.isLoading ? <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p> : (q.data?.data.length ?? 0) === 0 ? <p className="py-8 text-center text-sm text-muted-foreground">No images uploaded yet.</p> : (
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-5 lg:grid-cols-6">
               {q.data?.data.map((m) => (
-                <button key={m.id} type="button" onClick={() => onPick(m.url)} className="cursor-pointer overflow-hidden rounded border border-border hover:ring-2 hover:ring-orange-400">
+                <button key={m.id} type="button" onClick={() => onPick(m.url)} className="cursor-pointer overflow-hidden rounded border border-border hover:ring-2 hover:ring-fresh-400">
                   <img src={assetUrl(m.thumbUrl ?? m.url)} alt={m.originalName} className="aspect-square w-full object-cover" />
                 </button>
               ))}

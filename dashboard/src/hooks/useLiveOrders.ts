@@ -6,7 +6,7 @@ import { notificationLink, notificationsApi } from "@/api/notifications";
 import { useUi } from "@/store/ui";
 import { ShoppingBag } from "lucide-react";
 
-const BASE_TITLE = "GadgetBachai Admin";
+const BASE_TITLE = "Bazar Shodai Admin";
 let audio: AudioContext | null = null;
 
 /** A short two-note chime made with the browser's own synth (no sound file needed). */
@@ -62,7 +62,7 @@ export function useLiveOrders() {
     for (const n of added.slice(0, 3)) {
       toast(n.title, {
         description: n.body,
-        icon: createElement(ShoppingBag, { className: "size-4 text-orange-500" }),
+        icon: createElement(ShoppingBag, { className: "size-4 text-fresh-500" }),
         duration: 12_000,
         action: { label: "View order", onClick: () => nav(notificationLink(n)) },
       });

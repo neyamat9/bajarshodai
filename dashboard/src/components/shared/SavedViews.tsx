@@ -13,7 +13,7 @@ export interface SavedView {
   query: string;
 }
 
-const key = (k: string) => `gb-views:${k}`;
+const key = (k: string) => `bs-views:${k}`;
 
 function read(k: string): SavedView[] {
   try {

@@ -5,7 +5,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* GadgetBachai brand: navy #053972 + orange #F99B10 (from the logo) */
+/* Bazar Shodai brand: deep green #0B6234 + fresh green #45A22C (from the logo) */
 @theme inline {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-heading: "Outfit", "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -19,28 +19,30 @@
   --radius-2xl: 4px;
   --radius-3xl: 4px;
 
-  --color-navy-50: #eef4fb;
-  --color-navy-100: #d9e6f5;
-  --color-navy-200: #b3cdeb;
-  --color-navy-300: #7fa9d9;
-  --color-navy-400: #4a80c2;
-  --color-navy-500: #1f5ca3;
-  --color-navy-600: #0a4a8f;
-  --color-navy-700: #053972;
-  --color-navy-800: #042d5a;
-  --color-navy-900: #031f3f;
-  --color-navy-950: #021529;
+  /* deep green (বাজার): sidebar, headings, primary buttons */
+  --color-forest-50: #eef7f1;
+  --color-forest-100: #d5ecde;
+  --color-forest-200: #abd8bd;
+  --color-forest-300: #78bc93;
+  --color-forest-400: #439a69;
+  --color-forest-500: #1a7d46;
+  --color-forest-600: #0f6e3c;
+  --color-forest-700: #0b6234;
+  --color-forest-800: #09502a;
+  --color-forest-900: #073d20;
+  --color-forest-950: #042814;
 
-  --color-orange-50: #fff7ea;
-  --color-orange-100: #feebcc;
-  --color-orange-200: #fdd79a;
-  --color-orange-300: #fbbe62;
-  --color-orange-400: #faab33;
-  --color-orange-500: #f99b10;
-  --color-orange-600: #e0840a;
-  --color-orange-700: #b9660a;
-  --color-orange-800: #8f4e0c;
-  --color-orange-900: #6f3e0d;
+  /* fresh green (সদাই): highlights, active states, accents */
+  --color-fresh-50: #f1f9ec;
+  --color-fresh-100: #def2d3;
+  --color-fresh-200: #bde5a8;
+  --color-fresh-300: #94d27a;
+  --color-fresh-400: #6bbd4c;
+  --color-fresh-500: #45a22c;
+  --color-fresh-600: #368a21;
+  --color-fresh-700: #2b6f1c;
+  --color-fresh-800: #24571a;
+  --color-fresh-900: #1e4818;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -77,71 +79,71 @@
 
 :root {
   --radius: 4px;
-  --background: #f2f5fa;
-  --foreground: #0b1b33;
+  --background: #f3f8f0;
+  --foreground: #10281a;
   --card: #ffffff;
-  --card-foreground: #0b1b33;
+  --card-foreground: #10281a;
   --popover: #ffffff;
-  --popover-foreground: #0b1b33;
-  --primary: #053972;
+  --popover-foreground: #10281a;
+  --primary: #0b6234;
   --primary-foreground: #ffffff;
-  --secondary: #e8eef7;
-  --secondary-foreground: #053972;
-  --muted: #edf1f7;
-  --muted-foreground: #5b6b82;
-  --accent: #fff1d9;
-  --accent-foreground: #8f4e0c;
-  --brand: #f99b10;
-  --brand-foreground: #2a1700;
+  --secondary: #e5efe0;
+  --secondary-foreground: #0b6234;
+  --muted: #ecf3e8;
+  --muted-foreground: #587263;
+  --accent: #e1f2d6;
+  --accent-foreground: #24571a;
+  --brand: #45a22c;
+  --brand-foreground: #05260f;
   --destructive: #d92d20;
   --success: #12875a;
   --warning: #d97706;
-  --border: #e0e7f1;
-  --input: #cdd8e8;
-  --ring: #f99b10;
-  --chart-1: #053972;
-  --chart-2: #f99b10;
-  --chart-3: #1f5ca3;
-  --chart-4: #fbbe62;
-  --chart-5: #7fa9d9;
-  --sidebar: #05346a;
-  --sidebar-foreground: #d9e6f5;
+  --border: #d6e3cd;
+  --input: #c4d6b9;
+  --ring: #45a22c;
+  --chart-1: #0b6234;
+  --chart-2: #45a22c;
+  --chart-3: #1e88b5;
+  --chart-4: #f57c00;
+  --chart-5: #8bc34a;
+  --sidebar: #0b5a30;
+  --sidebar-foreground: #d5ecde;
   --sidebar-border: rgba(255, 255, 255, 0.08);
   --sidebar-accent: rgba(255, 255, 255, 0.08);
 }
 
 .dark {
-  --background: #07111f;
-  --foreground: #e8eef7;
-  --card: #0e1d33;
-  --card-foreground: #e8eef7;
-  --popover: #0e1d33;
-  --popover-foreground: #e8eef7;
-  --primary: #f99b10;
-  --primary-foreground: #1d1000;
-  --secondary: #14263f;
-  --secondary-foreground: #d9e6f5;
-  --muted: #122238;
-  --muted-foreground: #94a8c4;
-  --accent: #2a2110;
-  --accent-foreground: #fbbe62;
-  --brand: #f99b10;
-  --brand-foreground: #1d1000;
+  --background: #08140d;
+  --foreground: #e4f2dc;
+  --card: #0e1f15;
+  --card-foreground: #e4f2dc;
+  --popover: #0e1f15;
+  --popover-foreground: #e4f2dc;
+  --primary: #45a22c;
+  --primary-foreground: #05260f;
+  --secondary: #14291c;
+  --secondary-foreground: #d5ecde;
+  --muted: #112519;
+  --muted-foreground: #9bb8a4;
+  --accent: #1b3a26;
+  --accent-foreground: #94d27a;
+  --brand: #6bbd4c;
+  --brand-foreground: #05260f;
   --destructive: #f26b5e;
   --success: #3ccf91;
-  --warning: #fbbe62;
-  --border: #1d3150;
-  --input: #2b4468;
-  --ring: #f99b10;
-  --chart-1: #7fa9d9;
-  --chart-2: #f99b10;
-  --chart-3: #4a80c2;
-  --chart-4: #fbbe62;
-  --chart-5: #b3cdeb;
-  --sidebar: #040e1c;
-  --sidebar-foreground: #b3cdeb;
+  --warning: #fbbf24;
+  --border: #1d3a28;
+  --input: #2a4d38;
+  --ring: #6bbd4c;
+  --chart-1: #78bc93;
+  --chart-2: #6bbd4c;
+  --chart-3: #4db3dd;
+  --chart-4: #ff9a3d;
+  --chart-5: #a5d96a;
+  --sidebar: #04100a;
+  --sidebar-foreground: #abd8bd;
   --sidebar-border: rgba(255, 255, 255, 0.06);
-  --sidebar-accent: rgba(249, 155, 16, 0.12);
+  --sidebar-accent: rgba(107, 189, 76, 0.14);
 }
 
 @layer base {

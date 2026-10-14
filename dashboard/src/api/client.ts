@@ -4,7 +4,7 @@ export const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) || 
 // The server's public base (for /uploads/... links that come back relative)
 export const ASSET_BASE = API_BASE.replace(/\/api\/?$/, "");
 
-const KEYS = { access: "gb_admin_access", refresh: "gb_admin_refresh", user: "gb_admin_user" } as const;
+const KEYS = { access: "bs_admin_access", refresh: "bs_admin_refresh", user: "bs_admin_user" } as const;
 
 export interface AdminUser {
   id: string;
@@ -21,7 +21,7 @@ export interface AdminUser {
  *  - sessionStorage  → not ticked: gone when the browser (tab) closes
  * Reads look in the session first; writes go to wherever the session already is (so token refreshes stay put).
  */
-const HANDOFF = "gb_admin_handoff";
+const HANDOFF = "bs_admin_handoff";
 const HANDOFF_MS = 20_000;
 
 const home = (): Storage => (sessionStorage.getItem(KEYS.access) ? sessionStorage : localStorage);
@@ -130,7 +130,7 @@ async function refreshSession(): Promise<boolean> {
   }
 }
 
-export const SESSION_EXPIRED_EVENT = "gb:session-expired";
+export const SESSION_EXPIRED_EVENT = "bs:session-expired";
 
 api.interceptors.response.use(
   (res) => {
