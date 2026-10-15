@@ -19,6 +19,7 @@ import { GRANULARITIES } from '../analytics/analytics.service';
 import type { Granularity } from '../analytics/analytics.service';
 import { autoGranularity, RangeQueryDto } from '../dashboard/dashboard.dto';
 import { ReportsService } from './reports.service';
+import { DeliveryReportsService } from './delivery-reports.service';
 
 class ReportQueryDto extends RangeQueryDto {
   @ApiPropertyOptional({
@@ -62,7 +63,49 @@ class StockReportQueryDto {
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('admin/reports')
 export class ReportsController {
-  constructor(private readonly reports: ReportsService) {}
+  constructor(
+    private readonly reports: ReportsService,
+    private readonly deliveryReports: DeliveryReportsService,
+  ) {}
+
+  @Get('deliveries-by-rider')
+  @ApiOperation({
+    summary:
+      'Per rider: delivered, not delivered, success %, customers, average time and the cash taken / handed over / still held. format=json|csv|xlsx',
+  })
+  async deliveriesByRider(@Query() q: ReportQueryDto, @Res() res: Response) {
+    await sendTable(
+      res,
+      q.format,
+      await this.deliveryReports.byRider(resolveRange(q.from, q.to)),
+    );
+  }
+
+  @Get('deliveries-by-day')
+  @ApiOperation({
+    summary:
+      'Per Bangladesh day: delivered, not delivered, customers, order value, delivery charges and cash taken. format=json|csv|xlsx',
+  })
+  async deliveriesByDay(@Query() q: ReportQueryDto, @Res() res: Response) {
+    await sendTable(
+      res,
+      q.format,
+      await this.deliveryReports.byDay(resolveRange(q.from, q.to)),
+    );
+  }
+
+  @Get('cod-reconciliation')
+  @ApiOperation({
+    summary:
+      'Cash on delivery, one row per delivery: what the order said, what the rider took, what reached the shop. format=json|csv|xlsx',
+  })
+  async codReconciliation(@Query() q: ReportQueryDto, @Res() res: Response) {
+    await sendTable(
+      res,
+      q.format,
+      await this.deliveryReports.codReconciliation(resolveRange(q.from, q.to)),
+    );
+  }
 
   @Get('sales')
   @ApiOperation({
