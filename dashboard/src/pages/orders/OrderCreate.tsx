@@ -25,6 +25,7 @@ import { useInfiniteList } from "@/hooks/useInfiniteList";
 import { useDebounce } from "@/hooks/useDebounce";
 import { cn } from "@/lib/utils";
 import { money } from "@/lib/format";
+import { tr } from "@/i18n";
 
 interface Line {
   key: string;
@@ -140,7 +141,7 @@ export default function OrderCreatePage() {
       const have = ls.find((x) => x.key === l.key);
       if (!have) return [...ls, l];
       if (have.quantity >= have.stock) {
-        toast.error(`Only ${have.stock} of ${have.name} in stock`);
+        toast.error(tr("Only {{stock}} of {{name}} in stock", { stock: have.stock, name: have.name }));
         return ls;
       }
       return ls.map((x) => (x.key === l.key ? { ...x, quantity: x.quantity + 1 } : x));
@@ -178,7 +179,7 @@ export default function OrderCreatePage() {
         try {
           await ordersApi.setStatus(o.id, "DELIVERED", "Handed over at the counter");
         } catch {
-          toast.warning("The sale was saved but could not be marked as delivered");
+          toast.warning(tr("The sale was saved but could not be marked as delivered"));
         }
       }
       return o;
@@ -194,17 +195,17 @@ export default function OrderCreatePage() {
   });
 
   const submit = () => {
-    if (lines.length === 0) return setErr("Add at least one product");
-    if (lines.some((l) => !(l.quantity >= 1) || l.price === "" || Number(l.price) < 0)) return setErr("Check the quantity and price of each item");
+    if (lines.length === 0) return setErr(tr("Add at least one product"));
+    if (lines.some((l) => !(l.quantity >= 1) || l.price === "" || Number(l.price) < 0)) return setErr(tr("Check the quantity and price of each item"));
     if (walkIn) {
-      if (phone.trim() && !BD_PHONE.test(phone.replace(/[\s-]/g, ""))) return setErr("Enter a valid Bangladesh mobile number, or leave it empty");
+      if (phone.trim() && !BD_PHONE.test(phone.replace(/[\s-]/g, ""))) return setErr(tr("Enter a valid Bangladesh mobile number, or leave it empty"));
     } else {
-      if (!name.trim() || !address.trim()) return setErr("Name and address are required for delivery");
-      if (!BD_PHONE.test(phone.replace(/[\s-]/g, ""))) return setErr("Enter a valid Bangladesh mobile number");
-      if (!pin && (shipOverride === null || shipOverride === "")) return setErr("Drop the delivery pin on the map (or send the customer the link), or type the delivery charge");
-      if (pin && quote.data && !quote.data.available && (shipOverride === null || shipOverride === "")) return setErr(quote.data.block === "OUT_OF_AREA" ? `That pin is about ${quote.data.straightKm} km away, outside the ${quote.data.radiusKm} km delivery area. Type the charge by hand to deliver anyway.` : "The delivery charge cannot be worked out for that pin: type it by hand");
+      if (!name.trim() || !address.trim()) return setErr(tr("Name and address are required for delivery"));
+      if (!BD_PHONE.test(phone.replace(/[\s-]/g, ""))) return setErr(tr("Enter a valid Bangladesh mobile number"));
+      if (!pin && (shipOverride === null || shipOverride === "")) return setErr(tr("Drop the delivery pin on the map (or send the customer the link), or type the delivery charge"));
+      if (pin && quote.data && !quote.data.available && (shipOverride === null || shipOverride === "")) return setErr(quote.data.block === "OUT_OF_AREA" ? `That pin is about ${quote.data.straightKm} km away, outside the ${quote.data.radiusKm} km delivery area. Type the charge by hand to deliver anyway.` : tr("The delivery charge cannot be worked out for that pin: type it by hand"));
     }
-    if (num(paid) > total) return setErr("The amount paid is more than the total");
+    if (num(paid) > total) return setErr(tr("The amount paid is more than the total"));
     setErr(null);
     create.mutate();
   };
@@ -230,7 +231,7 @@ export default function OrderCreatePage() {
       {/* customer */}
       <section className="rounded border border-border bg-card">
         <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2.5">
-          <h3 className="flex items-center gap-1.5 text-sm font-semibold"><UserRound className="size-4 text-muted-foreground" /> Customer</h3>
+          <h3 className="flex items-center gap-1.5 text-sm font-semibold"><UserRound className="size-4 text-muted-foreground" />{" "}{tr("Customer")}</h3>
           <label className="flex cursor-pointer items-center gap-1.5 text-xs font-medium">
             <Checkbox
               checked={walkIn}
@@ -239,16 +240,16 @@ export default function OrderCreatePage() {
                 if (e.target.checked) { setCustomer(null); setShipOverride(null); setMethod("CASH_ON_DELIVERY"); }
               }}
             />
-            <Store className="size-3.5 text-muted-foreground" /> Walk-in customer
+            <Store className="size-3.5 text-muted-foreground" />{" "}{tr("Walk-in customer")}
           </label>
         </div>
         <div className="space-y-2.5 p-3">
           {walkIn ? (
             <>
-              <p className="rounded bg-accent px-2.5 py-1.5 text-[12px] text-accent-foreground">Sold over the counter: no delivery and no delivery charge.</p>
+              <p className="rounded bg-accent px-2.5 py-1.5 text-[12px] text-accent-foreground">{tr("Sold over the counter: no delivery and no delivery charge.")}</p>
               <div className="grid grid-cols-2 gap-2">
-                <Field label="Name (optional)"><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Walk-in customer" /></Field>
-                <Field label="Phone (optional)"><Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="01XXXXXXXXX" /></Field>
+                <Field label={tr("Name (optional)")}><Input value={name} onChange={(e) => setName(e.target.value)} placeholder={tr("Walk-in customer")} /></Field>
+                <Field label={tr("Phone (optional)")}><Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="01XXXXXXXXX" /></Field>
               </div>
             </>
           ) : customer ? (
@@ -257,7 +258,7 @@ export default function OrderCreatePage() {
                 <p className="truncate font-semibold">{customer.name}</p>
                 <p className="truncate text-xs text-muted-foreground">{customer.phone ? `${customer.phone} · ` : ""}{customer.email}</p>
               </div>
-              <Button size="icon-xs" variant="ghost" aria-label="Choose another customer" onClick={() => { setCustomer(null); setName(""); setPhone(""); setAddress(""); setPin(null); setPlaceName(""); setLandmark(""); }}><X /></Button>
+              <Button size="icon-xs" variant="ghost" aria-label={tr("Choose another customer")} onClick={() => { setCustomer(null); setName(""); setPhone(""); setAddress(""); setPin(null); setPlaceName(""); setLandmark(""); }}><X /></Button>
             </div>
           ) : (
             <CustomerPicker onPick={(c) => void pickCustomer(c)} />
@@ -269,14 +270,14 @@ export default function OrderCreatePage() {
       {/* the sale */}
       <section className="rounded border border-border bg-card">
         <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
-          <h3 className="flex items-center gap-1.5 text-sm font-semibold"><ShoppingCart className="size-4 text-muted-foreground" /> Sale <span className="rounded bg-brand px-1.5 text-[10px] font-bold leading-4 text-brand-foreground">{itemCount}</span></h3>
-          {lines.length > 0 && <button type="button" onClick={() => setLines([])} className="cursor-pointer text-xs font-medium text-muted-foreground hover:text-destructive">Clear</button>}
+          <h3 className="flex items-center gap-1.5 text-sm font-semibold"><ShoppingCart className="size-4 text-muted-foreground" />{" "}{tr("Sale")}{" "}<span className="rounded bg-brand px-1.5 text-[10px] font-bold leading-4 text-brand-foreground">{itemCount}</span></h3>
+          {lines.length > 0 && <button type="button" onClick={() => setLines([])} className="cursor-pointer text-xs font-medium text-muted-foreground hover:text-destructive">{tr("Clear")}</button>}
         </div>
         {lines.length === 0 ? (
           <div className="flex flex-col items-center gap-1 px-4 py-8 text-center text-muted-foreground">
             <PackageSearch className="size-8 opacity-50" />
-            <p className="text-sm font-medium text-foreground">No products yet</p>
-            <p className="text-xs">Tap a product to add it to the sale.</p>
+            <p className="text-sm font-medium text-foreground">{tr("No products yet")}</p>
+            <p className="text-xs">{tr("Tap a product to add it to the sale.")}</p>
           </div>
         ) : (
           <ul className="divide-y divide-border">
@@ -288,19 +289,19 @@ export default function OrderCreatePage() {
                   {l.variantName && <p className="truncate text-[11px] text-muted-foreground">{l.variantName}</p>}
                   <div className="mt-1 flex items-center gap-2">
                     <div className="flex items-center rounded border border-input">
-                      <button type="button" aria-label="Less" onClick={() => (l.quantity <= 1 ? setLines((ls) => ls.filter((x) => x.key !== l.key)) : setLine(l.key, { quantity: l.quantity - 1 }))} className="flex size-7 cursor-pointer items-center justify-center hover:bg-muted"><Minus className="size-3.5" /></button>
+                      <button type="button" aria-label={tr("Less")} onClick={() => (l.quantity <= 1 ? setLines((ls) => ls.filter((x) => x.key !== l.key)) : setLine(l.key, { quantity: l.quantity - 1 }))} className="flex size-7 cursor-pointer items-center justify-center hover:bg-muted"><Minus className="size-3.5" /></button>
                       <input
-                        aria-label="Quantity"
+                        aria-label={tr("Quantity")}
                         value={l.quantity}
                         inputMode="numeric"
                         onChange={(e) => setLine(l.key, { quantity: Math.min(l.stock, Math.max(1, Math.floor(Number(e.target.value.replace(/\D/g, "")) || 1))) })}
                         className="h-7 w-9 border-x border-input bg-card text-center text-[13px] outline-none"
                       />
-                      <button type="button" aria-label="More" disabled={l.quantity >= l.stock} onClick={() => setLine(l.key, { quantity: l.quantity + 1 })} className="flex size-7 cursor-pointer items-center justify-center hover:bg-muted disabled:opacity-40"><Plus className="size-3.5" /></button>
+                      <button type="button" aria-label={tr("More")} disabled={l.quantity >= l.stock} onClick={() => setLine(l.key, { quantity: l.quantity + 1 })} className="flex size-7 cursor-pointer items-center justify-center hover:bg-muted disabled:opacity-40"><Plus className="size-3.5" /></button>
                     </div>
                     <span className="text-xs text-muted-foreground">×</span>
                     <input
-                      aria-label="Unit price"
+                      aria-label={tr("Unit price")}
                       value={l.price}
                       inputMode="decimal"
                       onChange={(e) => setLine(l.key, { price: e.target.value.replace(/[^\d.]/g, "") })}
@@ -310,7 +311,7 @@ export default function OrderCreatePage() {
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1">
                   <span className="text-[13px] font-semibold">{money(num(l.price) * l.quantity)}</span>
-                  <button type="button" aria-label="Remove" onClick={() => setLines((ls) => ls.filter((x) => x.key !== l.key))} className="cursor-pointer text-muted-foreground hover:text-destructive"><Trash2 className="size-4" /></button>
+                  <button type="button" aria-label={tr("Remove")} onClick={() => setLines((ls) => ls.filter((x) => x.key !== l.key))} className="cursor-pointer text-muted-foreground hover:text-destructive"><Trash2 className="size-4" /></button>
                 </div>
               </li>
             ))}
@@ -323,20 +324,20 @@ export default function OrderCreatePage() {
         <section className="rounded border border-border bg-card">
           <div className="flex items-center gap-1.5 border-b border-border px-3 py-2.5">
             <Truck className="size-4 text-muted-foreground" />
-            <h3 className="text-sm font-semibold">Delivery details</h3>
+            <h3 className="text-sm font-semibold">{tr("Delivery details")}</h3>
           </div>
           <div className="space-y-2.5 p-3">
               <div className="grid grid-cols-2 gap-2">
-                <Field label="Full name" required><Input value={name} onChange={(e) => setName(e.target.value)} /></Field>
-                <Field label="Phone" required><Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="01XXXXXXXXX" /></Field>
+                <Field label={tr("Full name")} required><Input value={name} onChange={(e) => setName(e.target.value)} /></Field>
+                <Field label={tr("Phone")} required><Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="01XXXXXXXXX" /></Field>
               </div>
-              <Field label="Address" required><Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="House, road, area" /></Field>
+              <Field label={tr("Address")} required><Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder={tr("House, road, area")} /></Field>
               <div className="grid grid-cols-2 gap-2">
-                <Field label="Landmark"><Input value={landmark} onChange={(e) => setLandmark(e.target.value)} placeholder="green gate, next to the school" /></Field>
-                <Field label="Area / town" required><Input value={city} onChange={(e) => setCity(e.target.value)} /></Field>
+                <Field label={tr("Landmark")}><Input value={landmark} onChange={(e) => setLandmark(e.target.value)} placeholder={tr("green gate, next to the school")} /></Field>
+                <Field label={tr("Area / town")} required><Input value={city} onChange={(e) => setCity(e.target.value)} /></Field>
               </div>
               <PinPicker value={pin} onChange={(p) => { setPin(p); setShipOverride(null); }} placeName={placeName} onPlaceName={setPlaceName} phone={phone} name={name} />
-              {!customer && <Field label="Email (optional)"><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></Field>}
+              {!customer && <Field label={tr("Email (optional)")}><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></Field>}
           </div>
         </section>
       )}
@@ -345,73 +346,73 @@ export default function OrderCreatePage() {
       <section className="rounded border border-border bg-card">
         <div className="space-y-3 p-3">
           <div className="grid grid-cols-2 gap-2">
-            <Field label="Coupon"><Input value={coupon} onChange={(e) => setCoupon(e.target.value.toUpperCase())} placeholder="Code" /></Field>
-            <Field label="Discount ৳"><Input type="number" min={0} value={discount} onChange={(e) => setDiscount(e.target.value)} disabled={!!coupon.trim()} /></Field>
+            <Field label={tr("Coupon")}><Input value={coupon} onChange={(e) => setCoupon(e.target.value.toUpperCase())} placeholder={tr("Code")} /></Field>
+            <Field label={tr("Discount ৳")}><Input type="number" min={0} value={discount} onChange={(e) => setDiscount(e.target.value)} disabled={!!coupon.trim()} /></Field>
           </div>
 
           <dl className="space-y-1.5 text-[13px]">
-            <div className="flex justify-between"><dt className="text-muted-foreground">Subtotal</dt><dd className="font-medium">{money(subtotal)}</dd></div>
-            {manualDiscount > 0 && <div className="flex justify-between"><dt className="text-muted-foreground">Discount</dt><dd className="font-medium text-success">− {money(Math.min(manualDiscount, subtotal))}</dd></div>}
-            {coupon.trim() && <div className="flex justify-between"><dt className="text-muted-foreground">Coupon {coupon}</dt><dd className="text-xs text-muted-foreground">applied when you create</dd></div>}
+            <div className="flex justify-between"><dt className="text-muted-foreground">{tr("Subtotal")}</dt><dd className="font-medium">{money(subtotal)}</dd></div>
+            {manualDiscount > 0 && <div className="flex justify-between"><dt className="text-muted-foreground">{tr("Discount")}</dt><dd className="font-medium text-success">− {money(Math.min(manualDiscount, subtotal))}</dd></div>}
+            {coupon.trim() && <div className="flex justify-between"><dt className="text-muted-foreground">Coupon {coupon}</dt><dd className="text-xs text-muted-foreground">{tr("applied when you create")}</dd></div>}
             <div className="flex items-center justify-between gap-3">
               <dt className="flex items-center gap-1.5 text-muted-foreground"><Truck className="size-3.5" /> Delivery{!walkIn && quote.data?.distanceKm != null && <span className="text-[11px]">({quote.data.distanceKm} km{quote.data.estimated ? ", estimate" : ""})</span>}</dt>
               <dd className="flex items-center gap-2">
                 {walkIn ? (
-                  <span className="font-medium">{money(0)} <span className="text-[11px] font-normal text-muted-foreground">no delivery</span></span>
+                  <span className="font-medium">{money(0)} <span className="text-[11px] font-normal text-muted-foreground">{tr("no delivery")}</span></span>
                 ) : (
                   <>
                     {shipOverride !== null && <button type="button" onClick={() => setShipOverride(null)} className="cursor-pointer text-[11px] font-medium text-primary hover:underline dark:text-fresh-400">Auto {money(shipAuto)} · reset</button>}
                     <div className="relative">
                       <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">৳</span>
-                      <Input aria-label="Delivery charge" type="number" min={0} value={shipOverride ?? String(shipAuto)} onChange={(e) => setShipOverride(e.target.value)} className="h-8 w-24 pl-5 text-right" />
+                      <Input aria-label={tr("Delivery charge")} type="number" min={0} value={shipOverride ?? String(shipAuto)} onChange={(e) => setShipOverride(e.target.value)} className="h-8 w-24 pl-5 text-right" />
                     </div>
                   </>
                 )}
               </dd>
             </div>
-            {!walkIn && !pin && lines.length > 0 && <p className="text-[11px] text-muted-foreground">Drop the pin on the map for the delivery charge, or type it.</p>}
-            {!walkIn && pin && quote.data && !quote.data.available && <p className="text-[11px] font-medium text-destructive">{quote.data.block === "OUT_OF_AREA" ? `Outside the ${quote.data.radiusKm} km delivery area.` : "Delivery is not available for this pin."}</p>}
-            {!walkIn && quote.data?.isFree && lines.length > 0 && <p className="text-[11px] font-medium text-success">Free delivery applies.</p>}
+            {!walkIn && !pin && lines.length > 0 && <p className="text-[11px] text-muted-foreground">{tr("Drop the pin on the map for the delivery charge, or type it.")}</p>}
+            {!walkIn && pin && quote.data && !quote.data.available && <p className="text-[11px] font-medium text-destructive">{quote.data.block === "OUT_OF_AREA" ? `Outside the ${quote.data.radiusKm} km delivery area.` : tr("Delivery is not available for this pin.")}</p>}
+            {!walkIn && quote.data?.isFree && lines.length > 0 && <p className="text-[11px] font-medium text-success">{tr("Free delivery applies.")}</p>}
             {!walkIn && quote.data?.amountForFreeDelivery != null && quote.data.amountForFreeDelivery > 0 && <p className="text-[11px] text-muted-foreground">Add {money(quote.data.amountForFreeDelivery)} more for free delivery.</p>}
             <div className="flex items-baseline justify-between border-t border-border pt-2 text-base">
-              <dt className="font-semibold">Total</dt>
+              <dt className="font-semibold">{tr("Total")}</dt>
               <dd className="font-heading text-lg font-bold">{money(total)}</dd>
             </div>
           </dl>
 
           <div className="grid grid-cols-2 gap-2">
-            <Field label="Payment method">
+            <Field label={tr("Payment method")}>
               <Select value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod)}>
-                <option value="CASH_ON_DELIVERY">{walkIn ? "Cash" : "Cash on delivery"}</option>
-                <option value="BKASH">bKash</option>
-                <option value="NAGAD">Nagad</option>
-                <option value="ROCKET">Rocket</option>
+                <option value="CASH_ON_DELIVERY">{walkIn ? tr("Cash") : tr("Cash on delivery")}</option>
+                <option value="BKASH">{tr("bKash")}</option>
+                <option value="NAGAD">{tr("Nagad")}</option>
+                <option value="ROCKET">{tr("Rocket")}</option>
               </Select>
             </Field>
-            <Field label="Paid now ৳">
+            <Field label={tr("Paid now ৳")}>
               <div className="flex gap-1">
                 <Input type="number" min={0} value={paid} onChange={(e) => setPaid(e.target.value)} />
-                <Button type="button" size="sm" variant="outline" className="h-9 shrink-0 px-2 text-xs" disabled={total <= 0} onClick={() => setPaid(String(total))}>Full</Button>
+                <Button type="button" size="sm" variant="outline" className="h-9 shrink-0 px-2 text-xs" disabled={total <= 0} onClick={() => setPaid(String(total))}>{tr("Full")}</Button>
               </div>
             </Field>
           </div>
-          {num(paid) > 0 && method !== "CASH_ON_DELIVERY" && <Field label="Transaction ID"><Input value={txn} onChange={(e) => setTxn(e.target.value)} /></Field>}
-          {num(paid) > 0 && <p className="text-xs text-muted-foreground">Due: <b className="text-foreground">{money(due)}</b></p>}
+          {num(paid) > 0 && method !== "CASH_ON_DELIVERY" && <Field label={tr("Transaction ID")}><Input value={txn} onChange={(e) => setTxn(e.target.value)} /></Field>}
+          {num(paid) > 0 && <p className="text-xs text-muted-foreground">{tr("Due:")}{" "}<b className="text-foreground">{money(due)}</b></p>}
 
           {walkIn ? (
-            <label className="flex cursor-pointer items-center gap-2 text-[13px]"><Checkbox checked={deliverNow} onChange={(e) => setDeliverNow(e.target.checked)} /> Handed over now (mark as delivered)</label>
+            <label className="flex cursor-pointer items-center gap-2 text-[13px]"><Checkbox checked={deliverNow} onChange={(e) => setDeliverNow(e.target.checked)} />{" "}{tr("Handed over now (mark as delivered)")}</label>
           ) : (
             <>
-              <Field label="Starting status">
+              <Field label={tr("Starting status")}>
                 <Select value={status} onChange={(e) => setStatus(e.target.value as "PENDING" | "CONFIRMED")}>
-                  <option value="CONFIRMED">Confirmed</option>
-                  <option value="PENDING">Pending</option>
+                  <option value="CONFIRMED">{tr("Confirmed")}</option>
+                  <option value="PENDING">{tr("Pending")}</option>
                 </Select>
               </Field>
-              <label className="flex cursor-pointer items-center gap-2 text-[13px]"><Checkbox checked={notify} onChange={(e) => setNotify(e.target.checked)} /> Email the customer</label>
+              <label className="flex cursor-pointer items-center gap-2 text-[13px]"><Checkbox checked={notify} onChange={(e) => setNotify(e.target.checked)} />{" "}{tr("Email the customer")}</label>
             </>
           )}
-          <Field label="Internal note"><Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} maxLength={1000} className="min-h-14" /></Field>
+          <Field label={tr("Internal note")}><Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} maxLength={1000} className="min-h-14" /></Field>
 
         </div>
       </section>
@@ -427,7 +428,7 @@ export default function OrderCreatePage() {
         <span className="font-heading text-lg font-bold">{money(total)}</span>
       </div>
       <Button className="h-11 w-full text-[15px]" variant="brand" loading={create.isPending} disabled={lines.length === 0} onClick={submit}>
-        <ReceiptText /> {walkIn ? "Complete sale" : "Create order"}
+        <ReceiptText /> {walkIn ? tr("Complete sale") : tr("Create order")}
       </Button>
     </div>
   );
@@ -435,7 +436,7 @@ export default function OrderCreatePage() {
   return (
     <div className="lg:flex lg:h-[calc(100dvh-5.5rem)] lg:flex-col">
       <div className="lg:shrink-0">
-        <PageHeader back={{ to: "/orders", label: "Orders" }} title="New sale" description="Pick products, choose the customer (or walk-in), and complete the sale. Stock is reduced straight away." />
+        <PageHeader back={{ to: "/orders", label: tr("Orders") }} title={tr("New sale")} description={tr("Pick products, choose the customer (or walk-in), and complete the sale. Stock is reduced straight away.")} />
       </div>
 
       {/* phones: as soon as something is in the sale, the button is at the top, always in reach */}
@@ -445,7 +446,7 @@ export default function OrderCreatePage() {
             <p className="flex items-center gap-1.5 text-[13px] font-semibold"><ShoppingCart className="size-4 text-muted-foreground" /> {itemCount} item{itemCount === 1 ? "" : "s"}</p>
             <p className="text-xs text-muted-foreground">{money(total)}</p>
           </div>
-          <Button variant="brand" className="shrink-0" onClick={() => setCartOpen(true)}><ReceiptText /> Create order</Button>
+          <Button variant="brand" className="shrink-0" onClick={() => setCartOpen(true)}><ReceiptText />{" "}{tr("Create order")}</Button>
         </div>
       )}
 
@@ -453,7 +454,7 @@ export default function OrderCreatePage() {
         {/* ---------- catalogue ---------- */}
         <div ref={setCatEl} className="min-w-0 space-y-3 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
           <div className="rounded border border-border bg-card p-3 lg:sticky lg:top-0 lg:z-10">
-            <SearchInput value={search} onChange={setSearch} placeholder="Search products by name, code or SKU…" className="max-w-none basis-full sm:max-w-none" />
+            <SearchInput value={search} onChange={setSearch} placeholder={tr("Search products by name, code or SKU…")} className="max-w-none basis-full sm:max-w-none" />
             <ScrollRow className="mt-2" activeKey={cat}>
               {[{ id: "", name: "All products" }, ...(cats.data ?? []).filter((c) => c.status === "ACTIVE").map((c) => ({ id: c.id, name: c.name }))].map((c) => (
                 <button
@@ -505,7 +506,7 @@ export default function OrderCreatePage() {
                     <div className="relative aspect-square w-full bg-muted">
                       <Thumb src={p.mainImage} alt={p.name} className="size-full rounded-none border-0" />
                       {inSale > 0 && <span className="absolute right-1.5 top-1.5 flex min-w-6 items-center justify-center rounded bg-primary px-1.5 text-[11px] font-bold leading-6 text-primary-foreground shadow">{inSale}</span>}
-                      {out && <span className="absolute inset-x-0 bottom-0 bg-destructive/90 py-0.5 text-center text-[10px] font-bold uppercase text-white">Out of stock</span>}
+                      {out && <span className="absolute inset-x-0 bottom-0 bg-destructive/90 py-0.5 text-center text-[10px] font-bold uppercase text-white">{tr("Out of stock")}</span>}
                       {p._count.variants > 0 && <span className="absolute left-1.5 top-1.5 rounded bg-card/90 px-1.5 py-0.5 text-[10px] font-semibold shadow-sm">{p._count.variants} options</span>}
                     </div>
                     <div className="flex flex-1 flex-col gap-0.5 p-2.5">
@@ -521,7 +522,7 @@ export default function OrderCreatePage() {
             <>
               <LoadMore list={products} root={rootEl} />
               <p className="py-2 text-center text-xs text-muted-foreground">
-                {products.isFetchingNextPage ? "Loading more…" : products.hasNextPage ? `Showing ${products.rows.length} of ${products.total}` : `All ${products.total} shown`}
+                {products.isFetchingNextPage ? tr("Loading more…") : products.hasNextPage ? tr("Showing {{shown}} of {{total}}", { shown: products.rows.length, total: products.total }) : tr("All {{total}} shown", { total: products.total })}
               </p>
             </>
           )}
@@ -538,7 +539,7 @@ export default function OrderCreatePage() {
         >
           <div className="flex shrink-0 items-center justify-between border-b border-border bg-card px-3 py-2 lg:hidden">
             <h2 className="font-heading text-base font-bold">Sale · {money(total)}</h2>
-            <Button size="sm" variant="outline" onClick={() => setCartOpen(false)}><X /> Close</Button>
+            <Button size="sm" variant="outline" onClick={() => setCartOpen(false)}><X />{" "}{tr("Close")}</Button>
           </div>
           <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain p-3">{panel}</div>
           {footer}
@@ -549,7 +550,7 @@ export default function OrderCreatePage() {
       <Dialog open={!!variantFor} onOpenChange={(o) => !o && setVariantFor(null)}>
         <DialogContent size="sm">
           <DialogHeader>
-            <DialogTitle>Choose an option</DialogTitle>
+            <DialogTitle>{tr("Choose an option")}</DialogTitle>
             <DialogDescription>{variantFor?.name}</DialogDescription>
           </DialogHeader>
           <DialogBody className="grid gap-2">
@@ -564,7 +565,7 @@ export default function OrderCreatePage() {
                 }}
                 className="flex cursor-pointer items-center justify-between gap-3 rounded border border-border px-3 py-2.5 text-left transition-colors hover:border-ring hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <span className="min-w-0"><span className="block truncate text-sm font-medium">{v.name}</span><span className="text-[11px] text-muted-foreground">{v.stock > 0 ? `${v.stock} in stock` : "Out of stock"}</span></span>
+                <span className="min-w-0"><span className="block truncate text-sm font-medium">{v.name}</span><span className="text-[11px] text-muted-foreground">{v.stock > 0 ? `${v.stock} in stock` : tr("Out of stock")}</span></span>
                 <span className="shrink-0 text-sm font-bold">{money(v.price ?? variantFor.sellingPrice)}</span>
               </button>
             ))}
@@ -577,15 +578,15 @@ export default function OrderCreatePage() {
         <DialogContent size="sm" onInteractOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
           <DialogHeader className="items-center text-center">
             <CheckCircle2 className="size-12 text-success" />
-            <DialogTitle>{walkIn ? "Sale complete" : "Order created"}</DialogTitle>
+            <DialogTitle>{walkIn ? tr("Sale complete") : tr("Order created")}</DialogTitle>
             <DialogDescription>
               <b className="text-foreground">{done?.orderNumber}</b> · {money(done?.total ?? 0)}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex-col gap-2 sm:flex-col">
-            <Button className="w-full" onClick={() => done && openHtml(`/admin/orders/${done.id}/invoice`).catch((e) => toast.error(errorMessage(e)))}><Printer /> Print receipt</Button>
-            <Button className="w-full" variant="brand" onClick={reset}><Plus /> New sale</Button>
-            <Button className="w-full" variant="ghost" onClick={() => done && nav(`/orders/${done.id}`)}>View order</Button>
+            <Button className="w-full" onClick={() => done && openHtml(`/admin/orders/${done.id}/invoice`).catch((e) => toast.error(errorMessage(e)))}><Printer />{" "}{tr("Print receipt")}</Button>
+            <Button className="w-full" variant="brand" onClick={reset}><Plus />{" "}{tr("New sale")}</Button>
+            <Button className="w-full" variant="ghost" onClick={() => done && nav(`/orders/${done.id}`)}>{tr("View order")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

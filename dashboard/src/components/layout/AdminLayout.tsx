@@ -15,7 +15,9 @@ import { Sidebar } from "./Sidebar";
 import { NotificationBell } from "./NotificationBell";
 import { CommandPalette } from "./CommandPalette";
 import { SyncPill } from "./SyncPill";
+import { LanguageToggle } from "@/components/shared/LanguageToggle";
 import { chime, useLiveOrders } from "@/hooks/useLiveOrders";
+import { tr } from "@/i18n";
 
 export default function AdminLayout() {
   const [open, setOpen] = useState(false);
@@ -78,32 +80,33 @@ export default function AdminLayout() {
           <button
             className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:scale-95 lg:hidden"
             onClick={() => setOpen(true)}
-            aria-label="Open menu"
+            aria-label={tr("Open menu")}
           >
             <Menu size={20} />
           </button>
           <button
             type="button"
             onClick={() => setPalette(true)}
-            aria-label="Quick search"
-            title="Quick search (Ctrl K)"
+            aria-label={tr("Quick search")}
+            title={tr("Quick search (Ctrl K)")}
             className="flex h-9 min-w-9 cursor-pointer items-center gap-2 rounded border border-transparent px-2.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:w-64 md:justify-start md:border-border md:bg-background"
           >
             <Search size={16} />
-            <span className="hidden flex-1 text-left md:inline">Search or jump to…</span>
-            <kbd className="hidden rounded border border-border bg-card px-1.5 text-[10px] md:inline">Ctrl K</kbd>
+            <span className="hidden flex-1 text-left md:inline">{tr("Search or jump to…")}</span>
+            <kbd className="hidden rounded border border-border bg-card px-1.5 text-[10px] md:inline">{tr("Ctrl K")}</kbd>
           </button>
           <div className="ml-auto flex items-center gap-1">
             {isAdminRole(user) && <SyncPill />}
+            <LanguageToggle />
             <a
               href={siteUrl}
               target="_blank"
               rel="noopener noreferrer"
-              title="View store"
-              aria-label="View store"
+              title={tr("View store")}
+              aria-label={tr("View store")}
               className="flex h-9 items-center gap-1.5 rounded px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
-              <ExternalLink size={16} /> <span className="hidden sm:inline">View store</span>
+              <ExternalLink size={16} /> <span className="hidden sm:inline">{tr("View store")}</span>
             </a>
             <button
               type="button"
@@ -112,13 +115,13 @@ export default function AdminLayout() {
                 if (!sound) chime();
               }}
               className="hidden size-9 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:flex"
-              aria-label={sound ? "Mute new-order sound" : "Turn on new-order sound"}
+              aria-label={sound ? tr("Mute new-order sound") : tr("Turn on new-order sound")}
               title={sound ? "New-order sound is on" : "New-order sound is off"}
               aria-pressed={sound}
             >
               {sound ? <Volume2 size={18} /> : <VolumeX size={18} />}
             </button>
-            <button onClick={toggleDark} className="flex size-9 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer" aria-label="Toggle theme">
+            <button onClick={toggleDark} className="flex size-9 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer" aria-label={tr("Toggle theme")}>
               {dark ? <Sun size={18} /> : <Moon size={18} />}
             </button>
             <NotificationBell />
@@ -142,16 +145,16 @@ export default function AdminLayout() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate("/profile")}>
-                  <UserCircle /> My profile
+                  <UserCircle />{" "}{tr("My profile")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={async () => {
                     await logout();
-                    toast.success("Signed out");
+                    toast.success(tr("Signed out"));
                     navigate("/login", { replace: true });
                   }}
                 >
-                  <LogOut /> Sign out
+                  <LogOut />{" "}{tr("Sign out")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -167,8 +170,8 @@ export default function AdminLayout() {
       <button
         type="button"
         onClick={() => main.current?.scrollTo({ top: 0, behavior: "smooth" })}
-        aria-label="Back to top"
-        title="Back to top"
+        aria-label={tr("Back to top")}
+        title={tr("Back to top")}
         tabIndex={showTop ? 0 : -1}
         className={cn(
           "no-print fixed bottom-4 right-4 z-30 flex size-10 cursor-pointer items-center justify-center rounded bg-primary text-primary-foreground shadow-lg transition-all duration-200 hover:bg-primary/90 active:scale-95",

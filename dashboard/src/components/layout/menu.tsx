@@ -7,6 +7,7 @@ import {
 import type { AttentionSummary } from "@/api/notifications";
 import type { AdminUser } from "@/api/client";
 import { can, canDeliver, isAdminRole, type Permission } from "@/lib/access";
+import { tr } from "@/i18n";
 
 export interface MenuItem {
   label: string;
@@ -29,64 +30,64 @@ export interface MenuSection {
 const i = (C: typeof LayoutDashboard) => <C size={18} />;
 
 export const menu: MenuSection[] = [
-  { title: "Overview", items: [{ label: "Dashboard", to: "/", icon: i(LayoutDashboard), end: true, needs: ["reports.view"] }] },
+  { title: tr("Overview"), items: [{ label: tr("Dashboard"), to: "/", icon: i(LayoutDashboard), end: true, needs: ["reports.view"] }] },
   {
-    title: "Delivery",
+    title: tr("Delivery"),
     items: [
-      { label: "My deliveries", to: "/my-deliveries", icon: i(Bike), rider: true },
-      { label: "Delivery board", to: "/deliveries", icon: i(Truck), needs: ["delivery.manage", "orders.assign"] },
+      { label: tr("My deliveries"), to: "/my-deliveries", icon: i(Bike), rider: true },
+      { label: tr("Delivery board"), to: "/deliveries", icon: i(Truck), needs: ["delivery.manage", "orders.assign"] },
     ],
   },
   {
-    title: "Sales",
+    title: tr("Sales"),
     items: [
-      { label: "Orders", to: "/orders", icon: i(ShoppingBag), end: true, badge: (s) => s.pendingOrders, needs: ["orders.view"] },
-      { label: "Create order", to: "/orders/new", icon: i(PlusCircle), needs: ["orders.manage"] },
-      { label: "Returns", to: "/returns", icon: i(RotateCcw), badge: (s) => s.pendingReturns, needs: ["orders.view"] },
-      { label: "Customers", to: "/customers", icon: i(Users), needs: ["customers.view"] },
+      { label: tr("Orders"), to: "/orders", icon: i(ShoppingBag), end: true, badge: (s) => s.pendingOrders, needs: ["orders.view"] },
+      { label: tr("Create order"), to: "/orders/new", icon: i(PlusCircle), needs: ["orders.manage"] },
+      { label: tr("Returns"), to: "/returns", icon: i(RotateCcw), badge: (s) => s.pendingReturns, needs: ["orders.view"] },
+      { label: tr("Customers"), to: "/customers", icon: i(Users), needs: ["customers.view"] },
     ],
   },
   {
-    title: "Catalog",
+    title: tr("Catalog"),
     items: [
-      { label: "Products", to: "/products", icon: i(Boxes), end: true, needs: ["products.view"] },
-      { label: "Add product", to: "/products/new", icon: i(PackagePlus), needs: ["products.manage"] },
-      { label: "Daily prices & stock", to: "/daily-sheet", icon: i(CalendarClock), needs: ["inventory.manage", "products.manage"] },
-      { label: "Inventory", to: "/inventory", icon: i(Warehouse), badge: (s) => s.lowStockItems + s.outOfStockItems, needs: ["inventory.manage", "products.view"] },
-      { label: "Categories", to: "/categories", icon: i(FolderTree), needs: ["products.view"] },
-      { label: "Units", to: "/units", icon: i(Ruler), needs: ["products.view"] },
-      { label: "Brands", to: "/brands", icon: i(Handshake), needs: ["products.view"] },
-      { label: "Media library", to: "/media", icon: i(Images), needs: ["products.view", "products.manage"] },
+      { label: tr("Products"), to: "/products", icon: i(Boxes), end: true, needs: ["products.view"] },
+      { label: tr("Add product"), to: "/products/new", icon: i(PackagePlus), needs: ["products.manage"] },
+      { label: tr("Daily prices & stock"), to: "/daily-sheet", icon: i(CalendarClock), needs: ["inventory.manage", "products.manage"] },
+      { label: tr("Inventory"), to: "/inventory", icon: i(Warehouse), badge: (s) => s.lowStockItems + s.outOfStockItems, needs: ["inventory.manage", "products.view"] },
+      { label: tr("Categories"), to: "/categories", icon: i(FolderTree), needs: ["products.view"] },
+      { label: tr("Units"), to: "/units", icon: i(Ruler), needs: ["products.view"] },
+      { label: tr("Brands"), to: "/brands", icon: i(Handshake), needs: ["products.view"] },
+      { label: tr("Media library"), to: "/media", icon: i(Images), needs: ["products.view", "products.manage"] },
     ],
   },
   {
-    title: "Marketing",
+    title: tr("Marketing"),
     items: [
-      { label: "Coupons", to: "/coupons", icon: i(TicketPercent), adminOnly: true },
-      { label: "Banners", to: "/banners", icon: i(GalleryHorizontal), adminOnly: true },
-      { label: "Back in stock", to: "/back-in-stock", icon: i(BellRing), adminOnly: true },
+      { label: tr("Coupons"), to: "/coupons", icon: i(TicketPercent), adminOnly: true },
+      { label: tr("Banners"), to: "/banners", icon: i(GalleryHorizontal), adminOnly: true },
+      { label: tr("Back in stock"), to: "/back-in-stock", icon: i(BellRing), adminOnly: true },
     ],
   },
   {
-    title: "Customer care",
+    title: tr("Customer care"),
     items: [
-      { label: "Reviews", to: "/reviews", icon: i(Star), adminOnly: true },
-      { label: "Questions", to: "/questions", icon: i(MessageCircleQuestion), badge: (s) => s.unansweredQuestions, adminOnly: true },
-      { label: "Support tickets", to: "/support", icon: i(LifeBuoy), badge: (s) => s.openTickets, adminOnly: true },
-      { label: "Contact messages", to: "/contact", icon: i(Mail), badge: (s) => s.newContactMessages, adminOnly: true },
-      { label: "Newsletter", to: "/newsletter", icon: i(Newspaper), adminOnly: true },
+      { label: tr("Reviews"), to: "/reviews", icon: i(Star), adminOnly: true },
+      { label: tr("Questions"), to: "/questions", icon: i(MessageCircleQuestion), badge: (s) => s.unansweredQuestions, adminOnly: true },
+      { label: tr("Support tickets"), to: "/support", icon: i(LifeBuoy), badge: (s) => s.openTickets, adminOnly: true },
+      { label: tr("Contact messages"), to: "/contact", icon: i(Mail), badge: (s) => s.newContactMessages, adminOnly: true },
+      { label: tr("Newsletter"), to: "/newsletter", icon: i(Newspaper), adminOnly: true },
     ],
   },
-  { title: "Insights", items: [{ label: "Reports", to: "/reports", icon: i(BarChart3), needs: ["reports.view"] }] },
+  { title: tr("Insights"), items: [{ label: tr("Reports"), to: "/reports", icon: i(BarChart3), needs: ["reports.view"] }] },
   {
-    title: "System",
+    title: tr("System"),
     items: [
-      { label: "Staff", to: "/staff", icon: i(UserCog), needs: ["staff.manage"] },
-      { label: "Notifications", to: "/notifications", icon: i(Bell), badge: (s) => s.unreadNotifications },
-      { label: "Settings", to: "/settings", icon: i(Settings), needs: ["settings.manage"] },
-      { label: "Activity log", to: "/activity", icon: i(History), needs: ["logs.view"] },
-      { label: "Audit log", to: "/audit", icon: i(ShieldCheck), needs: ["logs.view"] },
-      { label: "My profile", to: "/profile", icon: i(UserCircle) },
+      { label: tr("Staff"), to: "/staff", icon: i(UserCog), needs: ["staff.manage"] },
+      { label: tr("Notifications"), to: "/notifications", icon: i(Bell), badge: (s) => s.unreadNotifications },
+      { label: tr("Settings"), to: "/settings", icon: i(Settings), needs: ["settings.manage"] },
+      { label: tr("Activity log"), to: "/activity", icon: i(History), needs: ["logs.view"] },
+      { label: tr("Audit log"), to: "/audit", icon: i(ShieldCheck), needs: ["logs.view"] },
+      { label: tr("My profile"), to: "/profile", icon: i(UserCircle) },
     ],
   },
 ];

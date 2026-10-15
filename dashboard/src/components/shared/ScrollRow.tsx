@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { tr } from "@/i18n";
 
 /**
  * A row of chips that scrolls sideways every way a person might try:
@@ -100,7 +101,7 @@ export function ScrollRow({ children, className, activeKey }: { children: ReactN
             key={side}
             type="button"
             tabIndex={show ? 0 : -1}
-            aria-label={side === "left" ? "Scroll left" : "Scroll right"}
+            aria-label={side === "left" ? tr("Scroll left") : tr("Scroll right")}
             onClick={() => nudge(side === "left" ? -1 : 1)}
             className={cn(
               "absolute top-1/2 hidden size-7 -translate-y-1/2 cursor-pointer items-center justify-center rounded border border-border bg-card text-foreground shadow-md transition-all hover:border-ring hover:bg-muted [@media(hover:hover)]:flex",

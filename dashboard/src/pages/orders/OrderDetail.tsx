@@ -25,6 +25,7 @@ import { EditItemsDialog } from "./components/EditItemsDialog";
 import { RecordPaymentDialog, RefundDialog } from "./components/PaymentDialogs";
 import { DetailPageSkeleton } from "@/components/shared/skeletons";
 import { OrderProgress } from "./components/OrderProgress";
+import { tr } from "@/i18n";
 
 const LOCKED: OrderStatus[] = ["DELIVERED", "CANCELLED", "RETURNED", "REFUNDED"];
 
@@ -32,7 +33,7 @@ function StatusDialog({ order, open, onOpenChange }: { order: Order; open: boole
   const [status, setStatus] = useState<OrderStatus>(order.status);
   const [note, setNote] = useState("");
   const save = useAct(() => ordersApi.setStatus(order.id, status, note), {
-    success: "Status updated",
+    success: tr("Status updated"),
     invalidate: [["order", order.id], ["orders"]],
     onSuccess: () => onOpenChange(false),
   });
@@ -40,20 +41,20 @@ function StatusDialog({ order, open, onOpenChange }: { order: Order; open: boole
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="sm">
         <DialogHeader>
-          <DialogTitle>Change order status</DialogTitle>
-          <DialogDescription>Moving to Cancelled or Returned puts the stock back. The customer is emailed.</DialogDescription>
+          <DialogTitle>{tr("Change order status")}</DialogTitle>
+          <DialogDescription>{tr("Moving to Cancelled or Returned puts the stock back. The customer is emailed.")}</DialogDescription>
         </DialogHeader>
         <DialogBody className="space-y-3">
-          <Field label="New status">
+          <Field label={tr("New status")}>
             <Select value={status} onChange={(e) => setStatus(e.target.value as OrderStatus)}>
               {ORDER_STATUSES.map((s) => <option key={s} value={s}>{orderStatusLabel(s)}</option>)}
             </Select>
           </Field>
-          <Field label="Note (optional)"><Textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} /></Field>
+          <Field label={tr("Note (optional)")}><Textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} /></Field>
         </DialogBody>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button loading={save.isPending} disabled={status === order.status} onClick={() => save.mutate()}>Update status</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{tr("Cancel")}</Button>
+          <Button loading={save.isPending} disabled={status === order.status} onClick={() => save.mutate()}>{tr("Update status")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -67,19 +68,19 @@ function ShippingCard({ order }: { order: Order }) {
   const [notify, setNotify] = useState(false);
   const save = useAct(
     () => ordersApi.shipping(order.id, { courierName: courier || null, trackingNumber: tracking || null, trackingUrl: url || null, notifyCustomer: notify }),
-    { success: "Shipping details saved", invalidate: [["order", order.id]] },
+    { success: tr("Shipping details saved"), invalidate: [["order", order.id]] },
   );
   return (
-    <Section title="Courier & tracking" actions={<Truck className="size-4 text-muted-foreground" />}>
+    <Section title={tr("Courier & tracking")} actions={<Truck className="size-4 text-muted-foreground" />}>
       <div className="space-y-3">
-        <Field label="Courier"><Input value={courier} onChange={(e) => setCourier(e.target.value)} placeholder="Pathao, Steadfast, RedX…" /></Field>
-        <Field label="Tracking number"><Input value={tracking} onChange={(e) => setTracking(e.target.value)} /></Field>
-        <Field label="Tracking link"><Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://" /></Field>
+        <Field label={tr("Courier")}><Input value={courier} onChange={(e) => setCourier(e.target.value)} placeholder={tr("Pathao, Steadfast, RedX…")} /></Field>
+        <Field label={tr("Tracking number")}><Input value={tracking} onChange={(e) => setTracking(e.target.value)} /></Field>
+        <Field label={tr("Tracking link")}><Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://" /></Field>
         <div className="flex items-center gap-2">
           <Checkbox id="notify" checked={notify} onChange={(e) => setNotify(e.target.checked)} />
-          <Label htmlFor="notify" className="cursor-pointer text-[13px] font-normal text-foreground">Email the customer the tracking details</Label>
+          <Label htmlFor="notify" className="cursor-pointer text-[13px] font-normal text-foreground">{tr("Email the customer the tracking details")}</Label>
         </div>
-        <Button size="sm" loading={save.isPending} onClick={() => save.mutate()}>Save</Button>
+        <Button size="sm" loading={save.isPending} onClick={() => save.mutate()}>{tr("Save")}</Button>
       </div>
     </Section>
   );
@@ -88,19 +89,19 @@ function ShippingCard({ order }: { order: Order }) {
 function NotesCard({ order }: { order: Order }) {
   const [internal, setInternal] = useState(order.internalNote ?? "");
   const [delivery, setDelivery] = useState(order.deliveryNote ?? "");
-  const save = useAct(() => ordersApi.notes(order.id, { internalNote: internal || null, deliveryNote: delivery || null }), { success: "Notes saved", invalidate: [["order", order.id]] });
+  const save = useAct(() => ordersApi.notes(order.id, { internalNote: internal || null, deliveryNote: delivery || null }), { success: tr("Notes saved"), invalidate: [["order", order.id]] });
   return (
-    <Section title="Notes">
+    <Section title={tr("Notes")}>
       <div className="space-y-3">
         {order.customerNote && (
           <div className="rounded bg-fresh-50 px-3 py-2 text-[13px] dark:bg-fresh-500/10">
-            <span className="text-xs font-semibold text-fresh-800 dark:text-fresh-300">Customer said</span>
+            <span className="text-xs font-semibold text-fresh-800 dark:text-fresh-300">{tr("Customer said")}</span>
             <p className="mt-0.5 whitespace-pre-wrap">{order.customerNote}</p>
           </div>
         )}
-        <Field label="Delivery note (shown on the invoice)"><Textarea rows={2} value={delivery} onChange={(e) => setDelivery(e.target.value)} maxLength={500} /></Field>
-        <Field label="Internal note (only you see this)"><Textarea rows={3} value={internal} onChange={(e) => setInternal(e.target.value)} maxLength={1000} /></Field>
-        <Button size="sm" loading={save.isPending} onClick={() => save.mutate()}>Save notes</Button>
+        <Field label={tr("Delivery note (shown on the invoice)")}><Textarea rows={2} value={delivery} onChange={(e) => setDelivery(e.target.value)} maxLength={500} /></Field>
+        <Field label={tr("Internal note (only you see this)")}><Textarea rows={3} value={internal} onChange={(e) => setInternal(e.target.value)} maxLength={1000} /></Field>
+        <Button size="sm" loading={save.isPending} onClick={() => save.mutate()}>{tr("Save notes")}</Button>
       </div>
     </Section>
   );
@@ -112,11 +113,11 @@ export default function OrderDetailPage() {
   const [dlg, setDlg] = useState<null | "status" | "address" | "items" | "pay" | "refund" | "verifyPaid" | "verifyFailed">(null);
 
   const advance = useAct((status: OrderStatus) => ordersApi.setStatus(id, status), {
-    success: "Status updated",
+    success: tr("Status updated"),
     invalidate: [["order", id], ["orders"]],
   });
   const verify = useAct((s: "PAID" | "FAILED") => ordersApi.verifyPayment(id, s), {
-    success: "Payment updated",
+    success: tr("Payment updated"),
     invalidate: [["order", id], ["orders"]],
     onSuccess: () => setDlg(null),
   });
@@ -126,40 +127,41 @@ export default function OrderDetailPage() {
   const o = q.data;
   const locked = LOCKED.includes(o.status);
   const FLOW: { status: OrderStatus; label: string }[] = [
-    { status: "CONFIRMED", label: "Confirmed" },
-    { status: "PROCESSING", label: "Processing" },
-    { status: "SHIPPED", label: "Shipped" },
-    { status: "IN_TRANSIT", label: "In transit" },
-    { status: "OUT_FOR_DELIVERY", label: "Out for delivery" },
-    { status: "DELIVERED", label: "Delivered" },
+    { status: "CONFIRMED", label: tr("Confirmed") },
+    { status: "PROCESSING", label: tr("Processing") },
+    { status: "SHIPPED", label: tr("Shipped") },
+    { status: "IN_TRANSIT", label: tr("In transit") },
+    { status: "OUT_FOR_DELIVERY", label: tr("Out for delivery") },
+    { status: "DELIVERED", label: tr("Delivered") },
   ];
   const at = o.status === "PENDING" || o.status === "ON_HOLD" ? -1 : FLOW.findIndex((f) => f.status === o.status);
   const next = locked ? null : FLOW[at + 1] ?? null;
-  const customerName = o.user?.name ?? o.guestName ?? o.shippingAddress?.fullName ?? "Guest";
+  const knownName = o.user?.name ?? o.guestName ?? o.shippingAddress?.fullName ?? null;
+  const customerName = knownName ?? tr("Guest");
   const refunded = o.refundTransactions.filter((r) => r.status === "REFUNDED").reduce((s, r) => s + Number(r.amount), 0);
 
   return (
     <div>
       <PageHeader
-        back={{ to: "/orders", label: "Orders" }}
+        back={{ to: "/orders", label: tr("Orders") }}
         title={
           <span className="flex flex-wrap items-center gap-2">
             Order {o.orderNumber} <StatusBadge status={o.status} /> <StatusBadge status={o.paymentStatus} />
-            {o.source === "ADMIN" && <Badge variant="fresh">Admin order</Badge>}
+            {o.source === "ADMIN" && <Badge variant="fresh">{tr("Admin order")}</Badge>}
           </span>
         }
-        description={`Placed ${dateTime(o.placedAt)}`}
+        description={tr("Placed {{when}}", { when: dateTime(o.placedAt) })}
         actions={
           <>
             <Button variant="outline" size="sm" onClick={() => openHtml(`/admin/orders/${o.id}/invoice`).catch((e) => toast.error(errorMessage(e)))}>
-              <FileText /> Invoice
+              <FileText />{" "}{tr("Invoice")}
             </Button>
             {next && (
               <Button size="sm" variant="brand" loading={advance.isPending} onClick={() => advance.mutate(next.status)}>
-                Mark {next.label.toLowerCase()}
+                {tr("Mark {{status}}", { status: next.label.toLowerCase() })}
               </Button>
             )}
-            <Button size="sm" variant={next ? "outline" : "default"} onClick={() => setDlg("status")}>Change status</Button>
+            <Button size="sm" variant={next ? "outline" : "default"} onClick={() => setDlg("status")}>{tr("Change status")}</Button>
           </>
         }
       />
@@ -175,8 +177,8 @@ export default function OrderDetailPage() {
       <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-3 [&>*]:min-w-0">
         <div className="space-y-4 lg:col-span-2">
           <Section
-            title="Items"
-            actions={!locked && <Button variant="outline" size="xs" onClick={() => setDlg("items")}><Pencil /> Edit items</Button>}
+            title={tr("Items")}
+            actions={!locked && <Button variant="outline" size="xs" onClick={() => setDlg("items")}><Pencil />{" "}{tr("Edit items")}</Button>}
             className="[&>div:last-child]:p-0"
           >
             <ul className="divide-y divide-border">
@@ -195,22 +197,22 @@ export default function OrderDetailPage() {
               ))}
             </ul>
             <dl className="border-t border-border px-4 py-3">
-              <KeyValue label="Subtotal">{money(o.subtotal)}</KeyValue>
-              <KeyValue label={`Discount${o.couponCode ? ` (${o.couponCode})` : ""}`}>− {money(o.discountAmount)}</KeyValue>
-              <KeyValue label="Delivery">{money(o.shippingCost)}</KeyValue>
-              <KeyValue label="Total" className="text-base"><span className="font-bold">{money(o.total)}</span></KeyValue>
-              <KeyValue label="Paid">{money(o.paidAmount)}</KeyValue>
-              {refunded > 0 && <KeyValue label="Refunded">{money(refunded)}</KeyValue>}
-              <KeyValue label="Due"><span className={Number(o.dueAmount) > 0 ? "text-destructive" : ""}>{money(o.dueAmount)}</span></KeyValue>
+              <KeyValue label={tr("Subtotal")}>{money(o.subtotal)}</KeyValue>
+              <KeyValue label={`${tr("Discount")}${o.couponCode ? ` (${o.couponCode})` : ""}`}>− {money(o.discountAmount)}</KeyValue>
+              <KeyValue label={tr("Delivery")}>{money(o.shippingCost)}</KeyValue>
+              <KeyValue label={tr("Total")} className="text-base"><span className="font-bold">{money(o.total)}</span></KeyValue>
+              <KeyValue label={tr("Paid")}>{money(o.paidAmount)}</KeyValue>
+              {refunded > 0 && <KeyValue label={tr("Refunded")}>{money(refunded)}</KeyValue>}
+              <KeyValue label={tr("Due")}><span className={Number(o.dueAmount) > 0 ? "text-destructive" : ""}>{money(o.dueAmount)}</span></KeyValue>
             </dl>
           </Section>
 
           <Section
-            title="Payments"
+            title={tr("Payments")}
             actions={
               <div className="flex gap-2">
-                {Number(o.dueAmount) > 0 && o.status !== "CANCELLED" && <Button variant="outline" size="xs" onClick={() => setDlg("pay")}><CreditCard /> Record payment</Button>}
-                {Number(o.paidAmount) > 0 && <Button variant="outline" size="xs" onClick={() => setDlg("refund")}><RotateCcw /> Refund</Button>}
+                {Number(o.dueAmount) > 0 && o.status !== "CANCELLED" && <Button variant="outline" size="xs" onClick={() => setDlg("pay")}><CreditCard />{" "}{tr("Record payment")}</Button>}
+                {Number(o.paidAmount) > 0 && <Button variant="outline" size="xs" onClick={() => setDlg("refund")}><RotateCcw />{" "}{tr("Refund")}</Button>}
               </div>
             }
           >
@@ -222,13 +224,13 @@ export default function OrderDetailPage() {
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">Check it in your {PAYMENT_METHOD_LABEL[o.paymentMethod]} app, then confirm.</p>
                 <div className="mt-2 flex gap-2">
-                  <Button size="xs" onClick={() => setDlg("verifyPaid")}>Mark as paid</Button>
-                  <Button size="xs" variant="destructive" onClick={() => setDlg("verifyFailed")}>Mark as failed</Button>
+                  <Button size="xs" onClick={() => setDlg("verifyPaid")}>{tr("Mark as paid")}</Button>
+                  <Button size="xs" variant="destructive" onClick={() => setDlg("verifyFailed")}>{tr("Mark as failed")}</Button>
                 </div>
               </div>
             )}
             {o.payments.length === 0 ? (
-              <p className="text-[13px] text-muted-foreground">No payments recorded. Method: {titleCase(o.paymentMethod)}.</p>
+              <p className="text-[13px] text-muted-foreground">{tr("No payments recorded. Method: {{method}}.", { method: PAYMENT_METHOD_LABEL[o.paymentMethod] })}</p>
             ) : (
               <ul className="divide-y divide-border">
                 {o.payments.map((p) => (
@@ -247,7 +249,7 @@ export default function OrderDetailPage() {
             )}
           </Section>
 
-          <Section title="Timeline">
+          <Section title={tr("Timeline")}>
             <ol className="relative space-y-4 border-l border-border pl-5">
               {[...o.statusHistory].reverse().map((h) => (
                 <li key={h.id} className="relative">
@@ -264,16 +266,16 @@ export default function OrderDetailPage() {
         </div>
 
         <div className="space-y-4">
-          <Section title="Customer" actions={<User className="size-4 text-muted-foreground" />}>
+          <Section title={tr("Customer")} actions={<User className="size-4 text-muted-foreground" />}>
             <p className="text-[13px] font-semibold">
               {o.user ? <Link to={`/customers/${o.user.id}`} className="hover:text-primary">{customerName}</Link> : customerName}
-              {!o.user && <Badge className="ml-2">Guest</Badge>}
+              {!o.user && <Badge className="ml-2">{tr("Guest")}</Badge>}
             </p>
             <p className="text-[13px] text-muted-foreground">{o.user?.email ?? o.guestEmail ?? "—"}</p>
             <p className="text-[13px] text-muted-foreground">{o.user?.phone ?? o.guestPhone ?? o.shippingAddress?.phone ?? "—"}</p>
           </Section>
 
-          <DeliveryCard order={o} locked={locked} phone={o.user?.phone ?? o.guestPhone ?? o.shippingAddress?.phone ?? null} name={customerName === "Guest" ? null : customerName} onEditAddress={() => setDlg("address")} />
+          <DeliveryCard order={o} locked={locked} phone={o.user?.phone ?? o.guestPhone ?? o.shippingAddress?.phone ?? null} name={knownName} onEditAddress={() => setDlg("address")} />
 
           <RiderCard order={o} locked={locked} />
           <ShippingCard key={`${o.courierName}-${o.trackingNumber}-${o.trackingUrl}`} order={o} />
@@ -289,9 +291,9 @@ export default function OrderDetailPage() {
       <ConfirmDialog
         open={dlg === "verifyPaid" || dlg === "verifyFailed"}
         onOpenChange={() => setDlg(null)}
-        title={dlg === "verifyFailed" ? "Mark payment as failed?" : "Mark payment as paid?"}
-        description={dlg === "verifyFailed" ? "The customer will be told the payment could not be verified." : `Confirm you received ${money(o.total)} in ${PAYMENT_METHOD_LABEL[o.paymentMethod]}.`}
-        confirmLabel={dlg === "verifyFailed" ? "Mark failed" : "Mark paid"}
+        title={dlg === "verifyFailed" ? tr("Mark payment as failed?") : tr("Mark payment as paid?")}
+        description={dlg === "verifyFailed" ? tr("The customer will be told the payment could not be verified.") : tr("Confirm you received {{amount}} in {{method}}.", { amount: money(o.total), method: PAYMENT_METHOD_LABEL[o.paymentMethod] })}
+        confirmLabel={dlg === "verifyFailed" ? tr("Mark failed") : tr("Mark paid")}
         destructive={dlg === "verifyFailed"}
         loading={verify.isPending}
         onConfirm={() => verify.mutate(dlg === "verifyFailed" ? "FAILED" : "PAID")}

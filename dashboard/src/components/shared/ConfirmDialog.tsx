@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { tr } from "@/i18n";
 
 export function ConfirmDialog({
   open,
@@ -33,7 +34,7 @@ export function ConfirmDialog({
         {children && <div className="px-5 py-3">{children}</div>}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-            Cancel
+            {tr("Cancel")}
           </Button>
           <Button variant={destructive ? "destructive" : "default"} onClick={onConfirm} loading={loading}>
             {confirmLabel}

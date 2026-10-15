@@ -52,6 +52,7 @@ import { DataTable, type Column } from "./DataTable";
 import { DateInput, FilterBar, FilterSelect, SearchInput } from "./FilterBar";
 import { Field, Section } from "./Field";
 import { StatCard } from "./StatCard";
+import { tr } from "@/i18n";
 
 /**
  * Loading screens that are the REAL page with the data left out: the same title, texts, tab names, filter boxes,
@@ -130,7 +131,7 @@ function ListPage({
     />
   );
   return (
-    <div role="status" aria-label="Loading">
+    <div role="status" aria-label={tr("Loading")}>
       <PageHeader title={title} description={description} actions={actions} />
       {stats}
       {tabs ? (
@@ -158,7 +159,7 @@ export function OrdersSkeleton() {
         <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard
             hintSk
-            label="Total orders"
+            label={tr("Total orders")}
             value=""
             loading
             tone="forest"
@@ -166,7 +167,7 @@ export function OrdersSkeleton() {
           />
           <StatCard
             hintSk
-            label="To confirm"
+            label={tr("To confirm")}
             value=""
             loading
             tone="fresh"
@@ -174,7 +175,7 @@ export function OrdersSkeleton() {
           />
           <StatCard
             hintSk
-            label="To ship"
+            label={tr("To ship")}
             value=""
             loading
             tone="sky"
@@ -182,7 +183,7 @@ export function OrdersSkeleton() {
           />
           <StatCard
             hintSk
-            label="In delivery"
+            label={tr("In delivery")}
             value=""
             loading
             tone="forest"
@@ -190,7 +191,7 @@ export function OrdersSkeleton() {
           />
           <StatCard
             hintSk
-            label="Delivered"
+            label={tr("Delivered")}
             value=""
             loading
             tone="green"
@@ -198,7 +199,7 @@ export function OrdersSkeleton() {
           />
           <StatCard
             hintSk
-            label="Payment to verify"
+            label={tr("Payment to verify")}
             value=""
             loading
             tone="fresh"
@@ -206,7 +207,7 @@ export function OrdersSkeleton() {
           />
           <StatCard
             hintSk
-            label="Revenue"
+            label={tr("Revenue")}
             value=""
             loading
             tone="fresh"
@@ -214,7 +215,7 @@ export function OrdersSkeleton() {
           />
           <StatCard
             hintSk
-            label="Cancelled / returned"
+            label={tr("Cancelled / returned")}
             value=""
             loading
             tone="red"
@@ -222,13 +223,13 @@ export function OrdersSkeleton() {
           />
         </div>
       }
-      title="Orders"
-      description="Every order from the website and from phone sales."
+      title={tr("Orders")}
+      description={tr("Every order from the website and from phone sales.")}
       actions={
         <>
-          <HBtn label="Views" icon={<Bookmark />} />
-          <HBtn label="Export CSV" icon={<Download />} />
-          <HBtn label="Create order" icon={<PlusCircle />} brand />
+          <HBtn label={tr("Views")} icon={<Bookmark />} />
+          <HBtn label={tr("Export CSV")} icon={<Download />} />
+          <HBtn label={tr("Create order")} icon={<PlusCircle />} brand />
         </>
       }
       selectable
@@ -237,15 +238,15 @@ export function OrdersSkeleton() {
           <SearchInput
             value=""
             onChange={noop}
-            placeholder="Order #, customer, phone, product name…"
+            placeholder={tr("Order #, customer, phone, product name…")}
           />
-          <Sel label="All statuses" />
-          <Sel label="Any payment" />
-          <Sel label="Any method" />
-          <Sel label="All sources" />
-          <Sel label="Newest first" none />
-          <DateInput label="From" value="" onChange={noop} />
-          <DateInput label="To" value="" onChange={noop} />
+          <Sel label={tr("All statuses")} />
+          <Sel label={tr("Any payment")} />
+          <Sel label={tr("Any method")} />
+          <Sel label={tr("All sources")} />
+          <Sel label={tr("Newest first")} none />
+          <DateInput label={tr("From")} value="" onChange={noop} />
+          <DateInput label={tr("To")} value="" onChange={noop} />
         </FilterBar>
       }
       columns={[
@@ -273,7 +274,7 @@ export function ProductsSkeleton() {
         <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard
             hintSk
-            label="Total products"
+            label={tr("Total products")}
             value=""
             loading
             tone="forest"
@@ -281,7 +282,7 @@ export function ProductsSkeleton() {
           />
           <StatCard
             hintSk
-            label="Live on the shop"
+            label={tr("Live on the shop")}
             value=""
             loading
             tone="green"
@@ -289,7 +290,7 @@ export function ProductsSkeleton() {
           />
           <StatCard
             hintSk
-            label="Draft / hidden"
+            label={tr("Draft / hidden")}
             value=""
             loading
             tone="fresh"
@@ -297,7 +298,7 @@ export function ProductsSkeleton() {
           />
           <StatCard
             hintSk
-            label="Low stock"
+            label={tr("Low stock")}
             value=""
             loading
             tone="fresh"
@@ -305,7 +306,7 @@ export function ProductsSkeleton() {
           />
           <StatCard
             hintSk
-            label="Out of stock"
+            label={tr("Out of stock")}
             value=""
             loading
             tone="red"
@@ -313,7 +314,7 @@ export function ProductsSkeleton() {
           />
           <StatCard
             hintSk
-            label="Stock value"
+            label={tr("Stock value")}
             value=""
             loading
             tone="sky"
@@ -321,7 +322,7 @@ export function ProductsSkeleton() {
           />
           <StatCard
             hintSk
-            label="Best seller (30 days)"
+            label={tr("Best seller (30 days)")}
             value=""
             loading
             tone="green"
@@ -329,7 +330,7 @@ export function ProductsSkeleton() {
           />
           <StatCard
             hintSk
-            label="On discount now"
+            label={tr("On discount now")}
             value=""
             loading
             tone="forest"
@@ -337,12 +338,12 @@ export function ProductsSkeleton() {
           />
         </div>
       }
-      title="Products"
-      description="Everything you sell. Click a product to edit it."
+      title={tr("Products")}
+      description={tr("Everything you sell. Click a product to edit it.")}
       actions={
         <>
-          <HBtn label="Views" icon={<Bookmark />} />
-          <HBtn label="Add product" icon={<PlusCircle />} brand />
+          <HBtn label={tr("Views")} icon={<Bookmark />} />
+          <HBtn label={tr("Add product")} icon={<PlusCircle />} brand />
         </>
       }
       selectable
@@ -351,13 +352,13 @@ export function ProductsSkeleton() {
           <SearchInput
             value=""
             onChange={noop}
-            placeholder="Name, code, SKU, barcode…"
+            placeholder={tr("Name, code, SKU, barcode…")}
           />
-          <Sel label="All statuses" />
-          <Sel label="All categories" />
-          <Sel label="All brands" />
-          <Sel label="Any stock" />
-          <Sel label="Newest" none />
+          <Sel label={tr("All statuses")} />
+          <Sel label={tr("All categories")} />
+          <Sel label={tr("All brands")} />
+          <Sel label={tr("Any stock")} />
+          <Sel label={tr("Newest")} none />
         </FilterBar>
       }
       columns={[
@@ -376,12 +377,12 @@ export function ProductsSkeleton() {
 export function CustomersSkeleton() {
   return (
     <ListPage
-      title="Customers"
-      description="Everyone who has an account."
+      title={tr("Customers")}
+      description={tr("Everyone who has an account.")}
       actions={
         <>
-          <HBtn label="Views" icon={<Bookmark />} />
-          <HBtn label="Export CSV" icon={<Download />} />
+          <HBtn label={tr("Views")} icon={<Bookmark />} />
+          <HBtn label={tr("Export CSV")} icon={<Download />} />
         </>
       }
       toolbar={
@@ -389,13 +390,13 @@ export function CustomersSkeleton() {
           <SearchInput
             value=""
             onChange={noop}
-            placeholder="Name, email, phone…"
+            placeholder={tr("Name, email, phone…")}
           />
-          <Sel label="All statuses" />
-          <Sel label="Ordered or not" />
-          <Sel label="Newest" none />
-          <DateInput label="Joined from" value="" onChange={noop} />
-          <DateInput label="to" value="" onChange={noop} />
+          <Sel label={tr("All statuses")} />
+          <Sel label={tr("Ordered or not")} />
+          <Sel label={tr("Newest")} none />
+          <DateInput label={tr("Joined from")} value="" onChange={noop} />
+          <DateInput label={tr("to")} value="" onChange={noop} />
         </FilterBar>
       }
       columns={[
@@ -414,25 +415,25 @@ export function CustomersSkeleton() {
 export function InventorySkeleton() {
   return (
     <ListPage
-      title="Inventory"
-      description="Stock levels, adjustments and the full movement history."
+      title={tr("Inventory")}
+      description={tr("Stock levels, adjustments and the full movement history.")}
       actions={
         <>
-          <HBtn label="Export CSV" icon={<Download />} />
-          <HBtn label="Bulk update" icon={<Upload />} />
+          <HBtn label={tr("Export CSV")} icon={<Download />} />
+          <HBtn label={tr("Bulk update")} icon={<Upload />} />
         </>
       }
       stats={
         <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard
-            label="Units on hand"
+            label={tr("Units on hand")}
             value=""
             loading
             hintSk
             icon={<Boxes className="size-4" />}
           />
           <StatCard
-            label="Stock value (cost)"
+            label={tr("Stock value (cost)")}
             value=""
             loading
             hintSk
@@ -440,14 +441,14 @@ export function InventorySkeleton() {
             tone="green"
           />
           <StatCard
-            label="Low stock"
+            label={tr("Low stock")}
             value=""
             loading
             icon={<AlertTriangle className="size-4" />}
             tone="fresh"
           />
           <StatCard
-            label="Out of stock"
+            label={tr("Out of stock")}
             value=""
             loading
             icon={<PackageX className="size-4" />}
@@ -461,9 +462,9 @@ export function InventorySkeleton() {
           <SearchInput
             value=""
             onChange={noop}
-            placeholder="Product, variant, SKU…"
+            placeholder={tr("Product, variant, SKU…")}
           />
-          <Sel label="All levels" />
+          <Sel label={tr("All levels")} />
         </FilterBar>
       }
       columns={[
@@ -519,7 +520,7 @@ export const ReviewsSkeleton = () =>
       { key: "s", header: "Status", sk: "badge" },
       { key: "a", header: "", align: "right", sk: "icon" },
     ],
-    { selectable: true, actions: <HBtn label="Views" icon={<Bookmark />} /> },
+    { selectable: true, actions: <HBtn label={tr("Views")} icon={<Bookmark />} /> },
   );
 
 export const QuestionsSkeleton = () =>
@@ -600,11 +601,11 @@ export const NewsletterSkeleton = () =>
       { key: "a", header: "", align: "right", sk: "icon" },
     ],
     {
-      actions: <HBtn label="Export subscribed" icon={<Download />} />,
+      actions: <HBtn label={tr("Export subscribed")} icon={<Download />} />,
       stats: (
         <div className="mb-4 grid grid-cols-2 gap-3 lg:max-w-lg">
-          <StatCard label="Subscribed" value="" loading tone="green" />
-          <StatCard label="Unsubscribed" value="" loading tone="red" />
+          <StatCard label={tr("Subscribed")} value="" loading tone="green" />
+          <StatCard label={tr("Unsubscribed")} value="" loading tone="red" />
         </div>
       ),
     },
@@ -628,8 +629,8 @@ export const CouponsSkeleton = () =>
     {
       actions: (
         <>
-          <HBtn label="Bulk generate" icon={<Layers />} />
-          <HBtn label="New coupon" icon={<Plus />} brand />
+          <HBtn label={tr("Bulk generate")} icon={<Layers />} />
+          <HBtn label={tr("New coupon")} icon={<Plus />} brand />
         </>
       ),
     },
@@ -653,10 +654,10 @@ export const BackInStockSkeleton = () =>
     {
       stats: (
         <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatCard label="People waiting" value="" loading />
-          <StatCard label="Items wanted" value="" loading tone="fresh" />
-          <StatCard label="Ready to alert" value="" loading tone="green" />
-          <StatCard label="Failed" value="" loading tone="red" />
+          <StatCard label={tr("People waiting")} value="" loading />
+          <StatCard label={tr("Items wanted")} value="" loading tone="fresh" />
+          <StatCard label={tr("Ready to alert")} value="" loading tone="green" />
+          <StatCard label={tr("Failed")} value="" loading tone="red" />
         </div>
       ),
     },
@@ -682,7 +683,7 @@ const Field0 = ({
 
 export function ProductEditorSkeleton({ isNew = false }: { isNew?: boolean }) {
   return (
-    <div role="status" aria-label="Loading">
+    <div role="status" aria-label={tr("Loading")}>
       <PageHeader
         back={{ to: "/products", label: "Products" }}
         title={
@@ -706,15 +707,15 @@ export function ProductEditorSkeleton({ isNew = false }: { isNew?: boolean }) {
         }
         actions={
           isNew ? (
-            <HBtn label="Create product" brand />
+            <HBtn label={tr("Create product")} brand />
           ) : (
             <>
-              <HBtn label="Duplicate" icon={<Copy />} />
+              <HBtn label={tr("Duplicate")} icon={<Copy />} />
               <HBtn
-                label="Delete"
+                label={tr("Delete")}
                 icon={<Trash2 className="text-destructive" />}
               />
-              <HBtn label="Save changes" brand />
+              <HBtn label={tr("Save changes")} brand />
             </>
           )
         }
@@ -736,38 +737,38 @@ export function ProductEditorSkeleton({ isNew = false }: { isNew?: boolean }) {
           ))}
         </TabsList>
         <div className="space-y-4" inert>
-          <Section title="General">
+          <Section title={tr("General")}>
             <div className="space-y-3">
-              <Field0 label="Product name" required />
+              <Field0 label={tr("Product name")} required />
               <div className="grid gap-3 sm:grid-cols-3">
-                <Field0 label="URL slug" hint="Auto-made from the name" />
-                <Field0 label="Product code / SKU" />
-                <Field0 label="Barcode" />
+                <Field0 label={tr("URL slug")} hint={tr("Auto-made from the name")} />
+                <Field0 label={tr("Product code / SKU")} />
+                <Field0 label={tr("Barcode")} />
               </div>
               <div className="grid gap-3 sm:grid-cols-4">
-                <Field0 label="Category" required />
-                <Field0 label="Sub-category" />
-                <Field0 label="Brand" />
+                <Field0 label={tr("Category")} required />
+                <Field0 label={tr("Sub-category")} />
+                <Field0 label={tr("Brand")} />
                 <Field0
-                  label="Status"
-                  hint="Draft / inactive are hidden from the shop"
+                  label={tr("Status")}
+                  hint={tr("Draft / inactive are hidden from the shop")}
                 />
               </div>
             </div>
           </Section>
-          <Section title="Description">
+          <Section title={tr("Description")}>
             <div className="space-y-3">
               <Field0
-                label="Short description"
-                hint="One or two lines, shown near the price"
+                label={tr("Short description")}
+                hint={tr("One or two lines, shown near the price")}
                 h="h-20"
               />
-              <Field0 label="Full description" required h="h-[184px]" />
+              <Field0 label={tr("Full description")} required h="h-[184px]" />
             </div>
           </Section>
           <Section
-            title="Badges & shop sections"
-            description="Where the product is highlighted on the website."
+            title={tr("Badges & shop sections")}
+            description={tr("Where the product is highlighted on the website.")}
           >
             <div className="flex flex-wrap gap-x-6 gap-y-2">
               {[
@@ -809,9 +810,9 @@ const attIcons = [
 
 export function DashboardSkeleton() {
   return (
-    <div className="space-y-5 pb-8" role="status" aria-label="Loading">
+    <div className="space-y-5 pb-8" role="status" aria-label={tr("Loading")}>
       <PageHeader
-        title="Dashboard"
+        title={tr("Dashboard")}
         description={
           <div className="flex h-10 flex-col justify-center gap-1.5 min-[480px]:h-5">
             <Skeleton className="h-3.5 w-64 max-w-full" />
@@ -820,18 +821,18 @@ export function DashboardSkeleton() {
         }
         actions={
           <Frozen>
-            <Select value="auto" className="w-[120px]" aria-label="Group by">
-              <option value="auto">Auto</option>
+            <Select value="auto" className="w-[120px]" aria-label={tr("Group by")}>
+              <option value="auto">{tr("Auto")}</option>
             </Select>
-            <Select value="30" className="w-[150px]" aria-label="Date range">
-              <option value="30">Last 30 days</option>
+            <Select value="30" className="w-[150px]" aria-label={tr("Date range")}>
+              <option value="30">{tr("Last 30 days")}</option>
             </Select>
           </Frozen>
         }
       />
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <StatCard
-          label="Revenue"
+          label={tr("Revenue")}
           value=""
           loading
           hintSk
@@ -840,7 +841,7 @@ export function DashboardSkeleton() {
           tone="fresh"
         />
         <StatCard
-          label="Orders"
+          label={tr("Orders")}
           value=""
           loading
           hintSk
@@ -848,7 +849,7 @@ export function DashboardSkeleton() {
           icon={<ShoppingBag size={18} />}
         />
         <StatCard
-          label="Average order"
+          label={tr("Average order")}
           value=""
           loading
           hintSk
@@ -857,7 +858,7 @@ export function DashboardSkeleton() {
           tone="sky"
         />
         <StatCard
-          label="New customers"
+          label={tr("New customers")}
           value=""
           loading
           hintSk
@@ -869,9 +870,9 @@ export function DashboardSkeleton() {
         <Card className="lg:col-span-2">
           <CardHeader>
             <div>
-              <CardTitle>Sales over time</CardTitle>
+              <CardTitle>{tr("Sales over time")}</CardTitle>
               <CardDescription>
-                Revenue per day (cancelled and refunded orders excluded)
+                {tr("Revenue per day (cancelled and refunded orders excluded)")}
               </CardDescription>
             </div>
           </CardHeader>
@@ -881,7 +882,7 @@ export function DashboardSkeleton() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Needs your attention</CardTitle>
+            <CardTitle>{tr("Needs your attention")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-1">
             {attention.map((a, i) => {
@@ -905,9 +906,9 @@ export function DashboardSkeleton() {
       <div className="grid gap-4 lg:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle>Top products</CardTitle>
+            <CardTitle>{tr("Top products")}</CardTitle>
             <span className="text-xs font-medium text-primary">
-              Full report
+              {tr("Full report")}
             </span>
           </CardHeader>
           <CardContent>
@@ -916,7 +917,7 @@ export function DashboardSkeleton() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Top categories</CardTitle>
+            <CardTitle>{tr("Top categories")}</CardTitle>
           </CardHeader>
           <CardContent>
             <Skeleton className="h-52 w-full" />
@@ -941,8 +942,8 @@ export function DashboardSkeleton() {
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Latest orders</CardTitle>
-            <span className="text-xs font-medium text-primary">View all</span>
+            <CardTitle>{tr("Latest orders")}</CardTitle>
+            <span className="text-xs font-medium text-primary">{tr("View all")}</span>
           </CardHeader>
           <CardContent className="px-0">
             <ul className="divide-y divide-border">
@@ -956,8 +957,8 @@ export function DashboardSkeleton() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Low stock</CardTitle>
-            <span className="text-xs font-medium text-primary">Manage</span>
+            <CardTitle>{tr("Low stock")}</CardTitle>
+            <span className="text-xs font-medium text-primary">{tr("Manage")}</span>
           </CardHeader>
           <CardContent>
             <Skeleton className="h-40 w-full" />
@@ -990,14 +991,14 @@ export function PosSkeleton() {
   return (
     <div
       role="status"
-      aria-label="Loading"
+      aria-label={tr("Loading")}
       className="lg:flex lg:h-[calc(100dvh-5.5rem)] lg:flex-col"
     >
       <div className="lg:shrink-0">
         <PageHeader
           back={{ to: "/orders", label: "Orders" }}
-          title="New sale"
-          description="Pick products, choose the customer (or walk-in), and complete the sale. Stock is reduced straight away."
+          title={tr("New sale")}
+          description={tr("Pick products, choose the customer (or walk-in), and complete the sale. Stock is reduced straight away.")}
         />
       </div>
       <div className="grid items-start gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_400px] lg:grid-rows-[minmax(0,1fr)] lg:items-stretch xl:grid-cols-[minmax(0,1fr)_430px]">
@@ -1006,14 +1007,14 @@ export function PosSkeleton() {
             <div className="relative" inert>
               <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search products by name, code or SKU…"
+                placeholder={tr("Search products by name, code or SKU…")}
                 className="pl-8"
                 readOnly
               />
             </div>
             <div className="no-scrollbar -mx-1 mt-3 flex gap-1.5 overflow-hidden px-1 pb-1">
               <span className="flex shrink-0 items-center gap-1.5 rounded border border-primary bg-primary px-3 py-1.5 text-[13px] font-medium text-primary-foreground">
-                <LayoutGrid className="size-3.5" /> All products
+                <LayoutGrid className="size-3.5" />{" "}{tr("All products")}
               </span>
               {[88, 96, 112, 84, 100].map((w, i) => (
                 <Skeleton
@@ -1049,7 +1050,7 @@ export function PosSkeleton() {
               <section className="rounded border border-border bg-card">
                 <SecHead
                   icon={<UserRound className="size-4 text-muted-foreground" />}
-                  title="Customer"
+                  title={tr("Customer")}
                   right={
                     <span className="flex items-center gap-1.5 text-xs font-medium">
                       <Checkbox disabled />{" "}
@@ -1062,7 +1063,7 @@ export function PosSkeleton() {
                   <div className="relative" inert>
                     <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
-                      placeholder="Click to choose, or type a name, email or phone…"
+                      placeholder={tr("Click to choose, or type a name, email or phone…")}
                       className="pl-8"
                       readOnly
                     />
@@ -1086,28 +1087,28 @@ export function PosSkeleton() {
                 <div className="flex flex-col items-center gap-1 px-4 py-8 text-center text-muted-foreground">
                   <PackageSearch className="size-8 opacity-50" />
                   <p className="text-sm font-medium text-foreground">
-                    No products yet
+                    {tr("No products yet")}
                   </p>
                   <p className="text-xs">
-                    Tap a product to add it to the sale.
+                    {tr("Tap a product to add it to the sale.")}
                   </p>
                 </div>
               </section>
               <section className="rounded border border-border bg-card">
                 <SecHead
                   icon={<Truck className="size-4 text-muted-foreground" />}
-                  title="Delivery details"
+                  title={tr("Delivery details")}
                 />
                 <div className="space-y-2.5 p-3">
                   <div className="grid grid-cols-2 gap-2">
-                    <Field0 label="Full name" required />
-                    <Field0 label="Phone" required />
+                    <Field0 label={tr("Full name")} required />
+                    <Field0 label={tr("Phone")} required />
                   </div>
-                  <Field0 label="Address" required />
+                  <Field0 label={tr("Address")} required />
                   <div className="grid grid-cols-3 gap-3">
-                    <Field0 label="Division" />
-                    <Field0 label="District" required />
-                    <Field0 label="Upazila / thana" />
+                    <Field0 label={tr("Division")} />
+                    <Field0 label={tr("District")} required />
+                    <Field0 label={tr("Upazila / thana")} />
                   </div>
                 </div>
               </section>
@@ -1123,7 +1124,7 @@ export function PosSkeleton() {
               variant="brand"
               disabled
             >
-              <ReceiptText /> Create order
+              <ReceiptText />{" "}{tr("Create order")}
             </Button>
           </div>
         </aside>
@@ -1138,11 +1139,11 @@ const F2 = ({ children }: { children: ReactNode }) => (
 
 export function SettingsSkeleton() {
   return (
-    <div role="status" aria-label="Loading">
+    <div role="status" aria-label={tr("Loading")}>
       <PageHeader
         refresh={false}
-        title="Settings"
-        description="How your store looks, charges and talks to customers."
+        title={tr("Settings")}
+        description={tr("How your store looks, charges and talks to customers.")}
       />
       <Tabs value="Store">
         <TabsList className="mb-4">
@@ -1154,30 +1155,30 @@ export function SettingsSkeleton() {
         </TabsList>
       </Tabs>
       <div className="grid items-start gap-4 xl:grid-cols-2" inert>
-        <Section title="Store">
+        <Section title={tr("Store")}>
           <div className="space-y-3">
             <F2>
-              <Field0 label="Store name" required />
-              <Field0 label="Tagline" />
+              <Field0 label={tr("Store name")} required />
+              <Field0 label={tr("Tagline")} />
             </F2>
             <F2>
-              <Field0 label="Logo" h="h-20" />
-              <Field0 label="Favicon" h="h-20" />
+              <Field0 label={tr("Logo")} h="h-20" />
+              <Field0 label={tr("Favicon")} h="h-20" />
             </F2>
           </div>
         </Section>
-        <Section title="Contact">
+        <Section title={tr("Contact")}>
           <F2>
-            <Field0 label="Contact email" />
-            <Field0 label="Hotline" />
-            <Field0 label="WhatsApp" />
-            <Field0 label="Business hours" />
-            <Field label="Address" className="sm:col-span-2">
+            <Field0 label={tr("Contact email")} />
+            <Field0 label={tr("Hotline")} />
+            <Field0 label={tr("WhatsApp")} />
+            <Field0 label={tr("Business hours")} />
+            <Field label={tr("Address")} className="sm:col-span-2">
               <Skeleton className="h-[66px] w-full" />
             </Field>
           </F2>
         </Section>
-        <Section title="Social links">
+        <Section title={tr("Social links")}>
           <F2>
             {[
               "Facebook",
@@ -1191,10 +1192,10 @@ export function SettingsSkeleton() {
             ))}
           </F2>
         </Section>
-        <Section title="Search engines">
+        <Section title={tr("Search engines")}>
           <div className="space-y-3">
-            <Field0 label="Meta title" />
-            <Field0 label="Meta description" h="h-[66px]" />
+            <Field0 label={tr("Meta title")} />
+            <Field0 label={tr("Meta description")} h="h-[66px]" />
           </div>
         </Section>
       </div>
@@ -1204,14 +1205,14 @@ export function SettingsSkeleton() {
 
 export function ProfileSkeleton() {
   return (
-    <div role="status" aria-label="Loading">
+    <div role="status" aria-label={tr("Loading")}>
       <PageHeader
         refresh={false}
-        title="My account"
-        description="Your details and password."
+        title={tr("My account")}
+        description={tr("Your details and password.")}
       />
       <div className="grid items-start gap-4 xl:grid-cols-2" inert>
-        <Section title="Profile">
+        <Section title={tr("Profile")}>
           <div className="mb-4 flex items-center gap-3">
             <Skeleton className="size-14" />
             <div className="space-y-1.5">
@@ -1220,15 +1221,15 @@ export function ProfileSkeleton() {
             </div>
           </div>
           <F2>
-            <Field0 label="Name" required />
-            <Field0 label="Phone" />
+            <Field0 label={tr("Name")} required />
+            <Field0 label={tr("Phone")} />
           </F2>
         </Section>
-        <Section title="Change password">
+        <Section title={tr("Change password")}>
           <div className="space-y-3">
-            <Field0 label="Current password" />
-            <Field0 label="New password" />
-            <Field0 label="Repeat new password" />
+            <Field0 label={tr("Current password")} />
+            <Field0 label={tr("New password")} />
+            <Field0 label={tr("Repeat new password")} />
           </div>
         </Section>
       </div>

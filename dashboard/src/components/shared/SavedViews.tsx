@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { tr } from "@/i18n";
 
 export interface SavedView {
   name: string;
@@ -51,7 +52,7 @@ export function SavedViews({ storageKey, builtIns = [] }: { storageKey: string; 
       try {
         localStorage.setItem(key(storageKey), JSON.stringify(next));
       } catch {
-        toast.error("This browser could not save the view");
+        toast.error(tr("This browser could not save the view"));
       }
     },
     [storageKey],
@@ -65,13 +66,13 @@ export function SavedViews({ storageKey, builtIns = [] }: { storageKey: string; 
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" aria-label="Saved views">
-            <Bookmark /> <span className="max-w-32 truncate">{active ? active.name : "Views"}</span>
+          <Button variant="outline" size="sm" aria-label={tr("Saved views")}>
+            <Bookmark /> <span className="max-w-32 truncate">{active ? active.name : tr("Views")}</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-60">
           <DropdownMenuItem onSelect={() => setParams(new URLSearchParams(), { replace: true })}>
-            <span className="flex-1">All (no filters)</span>
+            <span className="flex-1">{tr("All (no filters)")}</span>
             {!current && <Check className="size-3.5" />}
           </DropdownMenuItem>
           {builtIns.length > 0 && <DropdownMenuSeparator />}
@@ -84,7 +85,7 @@ export function SavedViews({ storageKey, builtIns = [] }: { storageKey: string; 
           {mine.length > 0 && (
             <>
               <DropdownMenuSeparator />
-              <DropdownMenuLabel className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">My views</DropdownMenuLabel>
+              <DropdownMenuLabel className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{tr("My views")}</DropdownMenuLabel>
             </>
           )}
           {mine.map((v) => (
@@ -107,7 +108,7 @@ export function SavedViews({ storageKey, builtIns = [] }: { storageKey: string; 
           ))}
           <DropdownMenuSeparator />
           <DropdownMenuItem disabled={!current || !!active} onSelect={() => { setName(""); setNaming(true); }}>
-            <BookmarkPlus /> Save current filters…
+            <BookmarkPlus />{" "}{tr("Save current filters…")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -115,7 +116,7 @@ export function SavedViews({ storageKey, builtIns = [] }: { storageKey: string; 
       <Dialog open={naming} onOpenChange={setNaming}>
         <DialogContent size="sm">
           <DialogHeader>
-            <DialogTitle>Save this view</DialogTitle>
+            <DialogTitle>{tr("Save this view")}</DialogTitle>
           </DialogHeader>
           <form
             onSubmit={(e) => {
@@ -128,12 +129,12 @@ export function SavedViews({ storageKey, builtIns = [] }: { storageKey: string; 
             }}
           >
             <DialogBody>
-              <Input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. bKash orders to verify" maxLength={40} />
-              <p className="mt-2 text-xs text-muted-foreground">Remembers the current search and filters. Saved in this browser.</p>
+              <Input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder={tr("e.g. bKash orders to verify")} maxLength={40} />
+              <p className="mt-2 text-xs text-muted-foreground">{tr("Remembers the current search and filters. Saved in this browser.")}</p>
             </DialogBody>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setNaming(false)}>Cancel</Button>
-              <Button type="submit" disabled={!name.trim()}>Save view</Button>
+              <Button type="button" variant="outline" onClick={() => setNaming(false)}>{tr("Cancel")}</Button>
+              <Button type="submit" disabled={!name.trim()}>{tr("Save view")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

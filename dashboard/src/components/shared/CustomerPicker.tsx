@@ -5,6 +5,7 @@ import { usersApi, type CustomerRow } from "@/api/users";
 import { useInfiniteList } from "@/hooks/useInfiniteList";
 import { useDebounce } from "@/hooks/useDebounce";
 import { LoadMore } from "./DataTable";
+import { tr } from "@/i18n";
 
 /**
  * Customer dropdown: opens with the full list as soon as you click the box (more load as you scroll),
@@ -44,8 +45,8 @@ export function CustomerPicker({ onPick, placeholder = "Click to choose, or type
       {customers.isFetching && !customers.isFetchingNextPage && <Loader2 className="absolute right-2.5 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />}
       {open && (
         <div ref={setList} className="custom-scrollbar absolute z-30 mt-1 max-h-72 w-full overflow-y-auto rounded border border-border bg-popover shadow-lg">
-          {customers.isLoading && <p className="px-3 py-4 text-center text-xs text-muted-foreground">Loading customers…</p>}
-          {!customers.isLoading && customers.rows.length === 0 && <p className="px-3 py-4 text-center text-xs text-muted-foreground">No customers found</p>}
+          {customers.isLoading && <p className="px-3 py-4 text-center text-xs text-muted-foreground">{tr("Loading customers…")}</p>}
+          {!customers.isLoading && customers.rows.length === 0 && <p className="px-3 py-4 text-center text-xs text-muted-foreground">{tr("No customers found")}</p>}
           {customers.rows.map((c) => (
             <button
               key={c.id}
@@ -73,7 +74,7 @@ export function CustomerPicker({ onPick, placeholder = "Click to choose, or type
           {customers.rows.length > 0 && (
             <>
               <LoadMore list={customers} root={list} />
-              {customers.isFetchingNextPage && <p className="px-3 py-2 text-center text-[11px] text-muted-foreground">Loading more…</p>}
+              {customers.isFetchingNextPage && <p className="px-3 py-2 text-center text-[11px] text-muted-foreground">{tr("Loading more…")}</p>}
             </>
           )}
         </div>

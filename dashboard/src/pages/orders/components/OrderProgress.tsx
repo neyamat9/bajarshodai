@@ -2,15 +2,16 @@ import { Check, CircleSlash, Route, PackageCheck, PackagePlus, Settings2, Truck,
 import type { OrderDetail, OrderStatus } from "@/api/orders";
 import { dateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { tr } from "@/i18n";
 
 const STEPS: { status: OrderStatus; label: string; icon: LucideIcon }[] = [
-  { status: "PENDING", label: "Placed", icon: PackagePlus },
-  { status: "CONFIRMED", label: "Confirmed", icon: ShieldCheck },
-  { status: "PROCESSING", label: "Processing", icon: Settings2 },
-  { status: "SHIPPED", label: "Shipped", icon: Truck },
-  { status: "IN_TRANSIT", label: "In transit", icon: Route },
-  { status: "OUT_FOR_DELIVERY", label: "Out for delivery", icon: Truck },
-  { status: "DELIVERED", label: "Delivered", icon: PackageCheck },
+  { status: "PENDING", label: tr("Placed"), icon: PackagePlus },
+  { status: "CONFIRMED", label: tr("Confirmed"), icon: ShieldCheck },
+  { status: "PROCESSING", label: tr("Processing"), icon: Settings2 },
+  { status: "SHIPPED", label: tr("Shipped"), icon: Truck },
+  { status: "IN_TRANSIT", label: tr("In transit"), icon: Route },
+  { status: "OUT_FOR_DELIVERY", label: tr("Out for delivery"), icon: Truck },
+  { status: "DELIVERED", label: tr("Delivered"), icon: PackageCheck },
 ];
 const ORDER = STEPS.map((s) => s.status);
 
@@ -35,7 +36,7 @@ export function OrderProgress({ order }: { order: OrderDetail }) {
   }
 
   return (
-    <ol className="mb-4 grid gap-y-1 rounded border border-border bg-card p-4 sm:grid-cols-7" aria-label="Order progress">
+    <ol className="mb-4 grid gap-y-1 rounded border border-border bg-card p-4 sm:grid-cols-7" aria-label={tr("Order progress")}>
       {STEPS.map((s, i) => {
         const done = i < cur || order.status === "DELIVERED";
         const active = i === cur && order.status !== "DELIVERED";
@@ -65,7 +66,7 @@ export function OrderProgress({ order }: { order: OrderDetail }) {
             </span>
             <span className="min-w-0 pb-3 sm:pb-0">
               <span className={cn("block text-[13px] font-semibold", !done && !active && "text-muted-foreground")}>{s.label}</span>
-              <span className="block text-[11px] text-muted-foreground">{at ? dateTime(at) : active ? "In progress" : "—"}</span>
+              <span className="block text-[11px] text-muted-foreground">{at ? dateTime(at) : active ? tr("In progress") : "—"}</span>
             </span>
           </li>
         );

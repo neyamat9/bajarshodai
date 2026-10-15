@@ -3,6 +3,7 @@ import { DndContext, PointerSensor, KeyboardSensor, closestCenter, useSensor, us
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
+import { tr } from "@/i18n";
 
 // Drag to reorder. Returns the new id order through onReorder.
 export function SortableList<T extends { id: string }>({ items, onReorder, children }: { items: T[]; onReorder: (ids: string[]) => void; children: (item: T) => ReactNode }) {
@@ -28,7 +29,7 @@ function SortableRow({ id, children }: { id: string; children: ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   return (
     <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }} className={`flex items-center gap-2 rounded border border-border bg-card ${isDragging ? "z-10 shadow-lg" : ""}`}>
-      <button type="button" aria-label="Drag to reorder" className="cursor-grab touch-none px-2 py-3 text-muted-foreground hover:text-foreground" {...attributes} {...listeners}><GripVertical className="size-4" /></button>
+      <button type="button" aria-label={tr("Drag to reorder")} className="cursor-grab touch-none px-2 py-3 text-muted-foreground hover:text-foreground" {...attributes} {...listeners}><GripVertical className="size-4" /></button>
       <div className="min-w-0 flex-1">{children}</div>
     </div>
   );

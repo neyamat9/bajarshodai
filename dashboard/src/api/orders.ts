@@ -1,10 +1,11 @@
 import { api, clean, type Paged } from "./client";
+import { trMap } from "@/i18n";
 
 export const ORDER_STATUSES = ["PENDING", "CONFIRMED", "PROCESSING", "SHIPPED", "IN_TRANSIT", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED", "RETURNED", "REFUNDED", "ON_HOLD"] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 export type PaymentStatus = "PENDING" | "PAID" | "FAILED" | "REFUNDED" | "PARTIALLY_REFUNDED";
 export type PaymentMethod = "CASH_ON_DELIVERY" | "BKASH" | "NAGAD" | "ROCKET";
-export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = { CASH_ON_DELIVERY: "Cash on delivery", BKASH: "bKash", NAGAD: "Nagad", ROCKET: "Rocket" };
+export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = trMap({ CASH_ON_DELIVERY: "Cash on delivery", BKASH: "bKash", NAGAD: "Nagad", ROCKET: "Rocket" });
 export const isMobileBanking = (m: string) => m === "BKASH" || m === "NAGAD" || m === "ROCKET";
 
 export interface OrderItem {

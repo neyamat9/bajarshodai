@@ -7,6 +7,7 @@ import { Plus, CheckCheck, Upload } from "lucide-react";
 import { PageHeader } from "./PageHeader";
 import { Select } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { tr } from "@/i18n";
 
 /**
  * Loading placeholders shaped like the real pages (same header, cards, columns and spacing),
@@ -99,7 +100,7 @@ export function ListRowsSkeleton({ rows = 8, cols = 6 }: { rows?: number; cols?:
 /** Any list page: header + (optional stat cards) + filter bar + rows. */
 export function ListPageSkeleton({ stats = 0, actions = 1, filters = 5, rows = 8, cols = 6 }: { stats?: number; actions?: number; filters?: number; rows?: number; cols?: number }) {
   return (
-    <div role="status" aria-label="Loading">
+    <div role="status" aria-label={tr("Loading")}>
       <HeaderSkeleton actions={actions} />
       {stats > 0 && <StatCardsSkeleton n={stats} className="mb-4" />}
       <Card className="overflow-hidden">
@@ -134,7 +135,7 @@ export function SectionCardSkeleton({ rows = 3, title = true, className, childre
 /** Dashboard home. */
 export function DashboardSkeleton() {
   return (
-    <div className="space-y-5 pb-8" role="status" aria-label="Loading">
+    <div className="space-y-5 pb-8" role="status" aria-label={tr("Loading")}>
       <HeaderSkeleton actions={2} />
       <StatCardsSkeleton />
       <div className="grid gap-4 lg:grid-cols-3">
@@ -176,7 +177,7 @@ export function DashboardSkeleton() {
 /** Order detail / customer detail / ticket: header + main column + side column. */
 export function DetailPageSkeleton({ back = true }: { back?: boolean }) {
   return (
-    <div role="status" aria-label="Loading">
+    <div role="status" aria-label={tr("Loading")}>
       <HeaderSkeleton back={back} actions={3} />
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
@@ -201,7 +202,7 @@ export function DetailPageSkeleton({ back = true }: { back?: boolean }) {
 /** Settings, profile, the product editor: tabs and form sections. */
 export function FormPageSkeleton({ tabs = 5, sections = 2, back, title, text, tabNames }: { tabs?: number; sections?: number; back?: boolean; title?: string; text?: string; tabNames?: string[] }) {
   return (
-    <div role="status" aria-label="Loading">
+    <div role="status" aria-label={tr("Loading")}>
       <HeaderSkeleton back={back} actions={1} title={title} text={text} />
       {tabNames ? (
         <Tabs value={tabNames[0]}>
@@ -241,7 +242,7 @@ export function FormPageSkeleton({ tabs = 5, sections = 2, back, title, text, ta
 /** Categories, brands, banners: a list of rows with a picture. */
 export function CardListSkeleton({ rows = 6, title, text, action }: { rows?: number; title?: string; text?: string; action?: string }) {
   return (
-    <div role="status" aria-label="Loading">
+    <div role="status" aria-label={tr("Loading")}>
       <HeaderSkeleton
         actions={1}
         title={title}
@@ -272,17 +273,17 @@ export function CardListSkeleton({ rows = 6, title, text, action }: { rows?: num
 /** Media library. */
 export function GridPageSkeleton() {
   return (
-    <div role="status" aria-label="Loading">
+    <div role="status" aria-label={tr("Loading")}>
       <HeaderSkeleton
-        title="Media library"
-        text="Images you uploaded. Use them on products, banners, brands and categories."
+        title={tr("Media library")}
+        text={tr("Images you uploaded. Use them on products, banners, brands and categories.")}
         buttons={
           <>
             <Select value="g" disabled className="w-auto">
-              <option value="g">Into: General</option>
+              <option value="g">{tr("Into: General")}</option>
             </Select>
             <Button size="sm" variant="brand" disabled className="disabled:opacity-100">
-              <Upload /> Upload
+              <Upload />{" "}{tr("Upload")}
             </Button>
           </>
         }
@@ -302,13 +303,13 @@ export function GridPageSkeleton() {
 /** Notifications and other "feed" pages. */
 export function FeedPageSkeleton({ rows = 6 }: { rows?: number }) {
   return (
-    <div role="status" aria-label="Loading">
+    <div role="status" aria-label={tr("Loading")}>
       <HeaderSkeleton
-        title="Notifications"
-        text="Real-time alerts for orders, stock thresholds, payments and customer care."
+        title={tr("Notifications")}
+        text={tr("Real-time alerts for orders, stock thresholds, payments and customer care.")}
         buttons={
           <Button size="sm" variant="outline" disabled className="disabled:opacity-100">
-            <CheckCheck /> Mark all read
+            <CheckCheck />{" "}{tr("Mark all read")}
           </Button>
         }
       />
@@ -329,8 +330,8 @@ export function FeedPageSkeleton({ rows = 6 }: { rows?: number }) {
 /** Reports: tabs, a few numbers, a chart and a table. */
 export function ReportsSkeleton() {
   return (
-    <div role="status" aria-label="Loading">
-      <HeaderSkeleton title="Reports" text="Preview here, then download for Excel or CSV." />
+    <div role="status" aria-label={tr("Loading")}>
+      <HeaderSkeleton title={tr("Reports")} text={tr("Preview here, then download for Excel or CSV.")} />
       <div className="mb-4 flex gap-1 rounded bg-muted p-1 sm:w-fit">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-7 w-24 bg-card" />)}</div>
       <StatCardsSkeleton className="mb-4" />
       <Card className="mb-4 p-4"><Skeleton className="h-64 w-full" /></Card>

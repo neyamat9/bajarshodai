@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 import { Badge, type BadgeVariant } from "@/components/ui/badge";
 import { orderStatusLabel, titleCase } from "@/lib/format";
 import { ORDER_STATUSES } from "@/api/orders";
@@ -30,6 +31,6 @@ const MAP: Record<string, BadgeVariant> = {
 
 export function StatusBadge({ status, label }: { status?: string | null; label?: string }) {
   if (!status) return <Badge>—</Badge>;
-  const text = label ?? (status === "in" ? "In stock" : status === "low" ? "Low stock" : status === "out" ? "Out of stock" : status === "CASH_ON_DELIVERY" ? "Cash on delivery" : status === "BKASH" ? "bKash" : status === "NAGAD" ? "Nagad" : status === "ROCKET" ? "Rocket" : (ORDER_STATUSES as readonly string[]).includes(status) ? orderStatusLabel(status) : titleCase(status));
+  const text = label ?? (status === "in" ? tr("In stock") : status === "low" ? tr("Low stock") : status === "out" ? tr("Out of stock") : status === "CASH_ON_DELIVERY" ? tr("Cash on delivery") : status === "BKASH" ? tr("bKash") : status === "NAGAD" ? tr("Nagad") : status === "ROCKET" ? tr("Rocket") : (ORDER_STATUSES as readonly string[]).includes(status) ? orderStatusLabel(status) : titleCase(status));
   return <Badge variant={MAP[status] ?? "neutral"} dot>{text}</Badge>;
 }

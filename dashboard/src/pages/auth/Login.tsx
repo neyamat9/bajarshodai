@@ -10,6 +10,7 @@ import { Field } from "@/components/shared/Field";
 import { errorMessage } from "@/api/client";
 import { useAuth } from "@/store/auth";
 import { AuthInput, AuthShell, authButton } from "./AuthShell";
+import { tr } from "@/i18n";
 
 const schema = z.object({
   identifier: z.string().min(1, "Enter your phone number or email"),
@@ -35,7 +36,7 @@ export default function Login() {
     setError(null);
     try {
       await login(v.identifier, v.password, !!v.remember);
-      toast.success("Welcome back");
+      toast.success(tr("Welcome back"));
       navigate((loc.state as { from?: string } | null)?.from ?? "/", { replace: true });
     } catch (e) {
       setError(errorMessage(e, "Could not sign in"));
@@ -43,7 +44,7 @@ export default function Login() {
   });
 
   return (
-    <AuthShell title="Welcome back" subtitle="Sign in to manage your store.">
+    <AuthShell title={tr("Welcome back")} subtitle={tr("Sign in to manage your store.")}>
       <form onSubmit={submit} className="space-y-4" noValidate>
         {error && (
           <div role="alert" className="flex items-start gap-2 rounded border border-destructive/30 bg-red-50 px-3 py-2.5 text-sm text-destructive dark:bg-red-500/10">
@@ -52,14 +53,14 @@ export default function Login() {
           </div>
         )}
         <Field error={errors.identifier?.message}>
-          <AuthInput id="identifier" type="text" inputMode="email" autoComplete="username" autoFocus label="Phone number or email" icon={<UserRound />} aria-invalid={!!errors.identifier} {...register("identifier")} />
+          <AuthInput id="identifier" type="text" inputMode="email" autoComplete="username" autoFocus label={tr("Phone number or email")} icon={<UserRound />} aria-invalid={!!errors.identifier} {...register("identifier")} />
         </Field>
         <Field error={errors.password?.message}>
           <AuthInput
             id="password"
             type={show ? "text" : "password"}
             autoComplete="current-password"
-            label="Password"
+            label={tr("Password")}
             icon={<KeyRound />}
             aria-invalid={!!errors.password}
             onKeyUp={(e) => setCaps(e.getModifierState("CapsLock"))}
@@ -69,7 +70,7 @@ export default function Login() {
                 type="button"
                 onClick={() => setShow((v) => !v)}
                 className="flex size-9 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                aria-label={show ? "Hide password" : "Show password"}
+                aria-label={show ? tr("Hide password") : tr("Show password")}
               >
                 {show ? <EyeOff className="size-[18px]" /> : <Eye className="size-[18px]" />}
               </button>
@@ -77,7 +78,7 @@ export default function Login() {
           />
           {caps && (
             <p className="mt-1.5 flex items-center gap-1 text-[11px] font-medium text-amber-700 dark:text-amber-300">
-              <TriangleAlert className="size-3" /> Caps Lock is on
+              <TriangleAlert className="size-3" />{" "}{tr("Caps Lock is on")}
             </p>
           )}
         </Field>
@@ -87,7 +88,7 @@ export default function Login() {
             <span className="flex size-[18px] items-center justify-center rounded border border-input bg-card text-transparent transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-4 peer-focus-visible:ring-ring/20 dark:peer-checked:border-fresh-500 dark:peer-checked:bg-fresh-500 dark:peer-checked:text-fresh-950">
               <Check className="size-3.5" strokeWidth={3} />
             </span>
-            Remember me
+            {tr("Remember me")}
           </label>
           <Link to="/forgot-password" className="text-[13px] font-semibold text-primary hover:underline dark:text-fresh-400">
             Forgot password?

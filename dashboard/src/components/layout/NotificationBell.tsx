@@ -6,6 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/compon
 import { Button } from "@/components/ui/button";
 import { timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { tr } from "@/i18n";
 
 const ICONS: Record<AdminNotification["type"], React.ReactNode> = {
   NEW_ORDER: <Package size={15} />,
@@ -40,7 +41,7 @@ export function NotificationBell() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="relative flex size-9 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer outline-none" aria-label="Notifications">
+        <button className="relative flex size-9 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer outline-none" aria-label={tr("Notifications")}>
           <Bell size={18} />
           {unread > 0 && (
             <span className="absolute -right-0.5 -top-0.5 flex min-w-4 items-center justify-center rounded bg-brand px-1 text-[10px] font-bold leading-4 text-brand-foreground">
@@ -53,11 +54,11 @@ export function NotificationBell() {
         <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
           <p className="text-sm font-semibold">Notifications {unread > 0 && <span className="text-muted-foreground">({unread} new)</span>}</p>
           <Button size="xs" variant="ghost" disabled={unread === 0} onClick={() => readAll.mutate()}>
-            <CheckCheck /> Mark all read
+            <CheckCheck />{" "}{tr("Mark all read")}
           </Button>
         </div>
         <div className="custom-scrollbar max-h-[380px] overflow-y-auto">
-          {(feed?.data ?? []).length === 0 && <p className="px-4 py-10 text-center text-xs text-muted-foreground">You're all caught up.</p>}
+          {(feed?.data ?? []).length === 0 && <p className="px-4 py-10 text-center text-xs text-muted-foreground">{tr("You're all caught up.")}</p>}
           {(feed?.data ?? []).map((n) => (
             <button
               key={n.id}
@@ -78,7 +79,7 @@ export function NotificationBell() {
           ))}
         </div>
         <button onClick={() => navigate("/notifications")} className="w-full cursor-pointer border-t border-border py-2 text-center text-xs font-semibold text-primary hover:bg-muted/60">
-          View all notifications
+          {tr("View all notifications")}
         </button>
       </DropdownMenuContent>
     </DropdownMenu>

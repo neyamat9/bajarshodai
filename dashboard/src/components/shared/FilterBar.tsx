@@ -3,6 +3,7 @@ import { Search, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { tr } from "@/i18n";
 
 /**
  * Row of filters. On phones the search box stays visible and the rest folds into a "Filters" panel (with a count of the active ones);
@@ -108,7 +109,7 @@ export function SearchInput({ value, onChange, placeholder = "Search…", classN
             input.current?.focus();
           }}
           className="absolute right-1 top-1/2 flex size-7 -translate-y-1/2 cursor-pointer items-center justify-center text-muted-foreground hover:text-foreground"
-          aria-label="Clear search"
+          aria-label={tr("Clear search")}
         >
           <X className="size-3.5" />
         </button>
@@ -133,7 +134,7 @@ export function FilterSelect({
   label?: string;
 }) {
   return (
-    <Select value={value} onChange={(e) => onChange(e.target.value)} className={cn("w-auto min-w-[130px] max-md:w-full max-md:min-w-0", className)} aria-label={label ?? all ?? "Filter"}>
+    <Select value={value} onChange={(e) => onChange(e.target.value)} className={cn("w-auto min-w-[130px] max-md:w-full max-md:min-w-0", className)} aria-label={label ?? all ?? tr("Filter")}>
       {all !== null && <option value="">{all}</option>}
       {options.map((o) => (
         <option key={o.value} value={o.value}>

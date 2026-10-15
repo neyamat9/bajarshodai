@@ -6,6 +6,7 @@ import { Field } from "@/components/shared/Field";
 import { ordersApi, type OrderDetail, type PaymentMethod } from "@/api/orders";
 import { useAct } from "@/hooks/useAct";
 import { money } from "@/lib/format";
+import { tr } from "@/i18n";
 
 export function RecordPaymentDialog({ order, open, onOpenChange }: { order: OrderDetail; open: boolean; onOpenChange: (o: boolean) => void }) {
   const due = Math.max(0, Number(order.total) - Number(order.paidAmount));
@@ -14,7 +15,7 @@ export function RecordPaymentDialog({ order, open, onOpenChange }: { order: Orde
   const [txn, setTxn] = useState("");
   const [note, setNote] = useState("");
   const save = useAct(() => ordersApi.recordPayment(order.id, { amount: Number(amount), method, transactionId: txn || undefined, note: note || undefined }), {
-    success: "Payment recorded",
+    success: tr("Payment recorded"),
     invalidate: [["order", order.id], ["orders"]],
     onSuccess: () => onOpenChange(false),
   });
@@ -23,27 +24,27 @@ export function RecordPaymentDialog({ order, open, onOpenChange }: { order: Orde
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="sm">
         <DialogHeader>
-          <DialogTitle>Record a payment</DialogTitle>
-          <DialogDescription>Money received outside the website: cash at the shop, bKash / Nagad / Rocket to the merchant number, a deposit…</DialogDescription>
+          <DialogTitle>{tr("Record a payment")}</DialogTitle>
+          <DialogDescription>{tr("Money received outside the website: cash at the shop, bKash / Nagad / Rocket to the merchant number, a deposit…")}</DialogDescription>
         </DialogHeader>
         <DialogBody className="space-y-3">
-          <Field label={`Amount ৳ (due ${money(due)})`} error={Number(amount) > due ? "More than what is due" : undefined}>
+          <Field label={tr("Amount ৳ (due {{amount}})", { amount: money(due) })} error={Number(amount) > due ? tr("More than what is due") : undefined}>
             <Input type="number" min={0} step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} />
           </Field>
-          <Field label="Method">
+          <Field label={tr("Method")}>
             <Select value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod)}>
-              <option value="CASH_ON_DELIVERY">Cash</option>
-              <option value="BKASH">bKash</option>
-              <option value="NAGAD">Nagad</option>
-              <option value="ROCKET">Rocket</option>
+              <option value="CASH_ON_DELIVERY">{tr("Cash")}</option>
+              <option value="BKASH">{tr("bKash")}</option>
+              <option value="NAGAD">{tr("Nagad")}</option>
+              <option value="ROCKET">{tr("Rocket")}</option>
             </Select>
           </Field>
-          <Field label="Transaction ID (optional)"><Input value={txn} onChange={(e) => setTxn(e.target.value)} /></Field>
-          <Field label="Note (optional)"><Input value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} /></Field>
+          <Field label={tr("Transaction ID (optional)")}><Input value={txn} onChange={(e) => setTxn(e.target.value)} /></Field>
+          <Field label={tr("Note (optional)")}><Input value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} /></Field>
         </DialogBody>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button loading={save.isPending} disabled={bad} onClick={() => save.mutate()}>Record payment</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{tr("Cancel")}</Button>
+          <Button loading={save.isPending} disabled={bad} onClick={() => save.mutate()}>{tr("Record payment")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -61,7 +62,7 @@ export function RefundDialog({ order, open, onOpenChange }: { order: OrderDetail
   const [method, setMethod] = useState<"ORIGINAL_PAYMENT" | "STORE_CREDIT" | "BANK_TRANSFER">("ORIGINAL_PAYMENT");
   const [reason, setReason] = useState("");
   const save = useAct(() => ordersApi.refund(order.id, { paymentId: paymentId || undefined, amount: Number(amount), method, reason }), {
-    success: "Refund recorded",
+    success: tr("Refund recorded"),
     invalidate: [["order", order.id], ["orders"]],
     onSuccess: () => onOpenChange(false),
   });
@@ -70,38 +71,38 @@ export function RefundDialog({ order, open, onOpenChange }: { order: OrderDetail
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="sm">
         <DialogHeader>
-          <DialogTitle>Record a refund</DialogTitle>
-          <DialogDescription>This records money you gave back. Send the money itself (bKash, bank) separately.</DialogDescription>
+          <DialogTitle>{tr("Record a refund")}</DialogTitle>
+          <DialogDescription>{tr("This records money you gave back. Send the money itself (bKash, bank) separately.")}</DialogDescription>
         </DialogHeader>
         <DialogBody className="space-y-3">
           {refundable.length === 0 ? (
-            <p className="text-sm text-muted-foreground">There is no received payment left to refund on this order.</p>
+            <p className="text-sm text-muted-foreground">{tr("There is no received payment left to refund on this order.")}</p>
           ) : (
             <>
               {refundable.length > 1 && (
-                <Field label="Payment">
+                <Field label={tr("Payment")}>
                   <Select value={paymentId} onChange={(e) => { setPaymentId(e.target.value); setAmount(String(refundable.find((x) => x.p.id === e.target.value)?.room ?? 0)); }}>
                     {refundable.map(({ p, room: r }) => <option key={p.id} value={p.id}>{money(p.amount)} · {p.method} · {money(r)} refundable</option>)}
                   </Select>
                 </Field>
               )}
-              <Field label={`Amount ৳ (up to ${money(room)})`} error={Number(amount) > room ? "More than can be refunded" : undefined}>
+              <Field label={tr("Amount ৳ (up to {{amount}})", { amount: money(room) })} error={Number(amount) > room ? tr("More than can be refunded") : undefined}>
                 <Input type="number" min={0} step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} />
               </Field>
-              <Field label="Paid back by">
+              <Field label={tr("Paid back by")}>
                 <Select value={method} onChange={(e) => setMethod(e.target.value as typeof method)}>
-                  <option value="ORIGINAL_PAYMENT">Original payment method</option>
-                  <option value="BANK_TRANSFER">Bank transfer</option>
-                  <option value="STORE_CREDIT">Store credit</option>
+                  <option value="ORIGINAL_PAYMENT">{tr("Original payment method")}</option>
+                  <option value="BANK_TRANSFER">{tr("Bank transfer")}</option>
+                  <option value="STORE_CREDIT">{tr("Store credit")}</option>
                 </Select>
               </Field>
-              <Field label="Reason" required><Textarea value={reason} onChange={(e) => setReason(e.target.value)} maxLength={500} /></Field>
+              <Field label={tr("Reason")} required><Textarea value={reason} onChange={(e) => setReason(e.target.value)} maxLength={500} /></Field>
             </>
           )}
         </DialogBody>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button variant="destructive" loading={save.isPending} disabled={bad || refundable.length === 0} onClick={() => save.mutate()}>Record refund</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{tr("Cancel")}</Button>
+          <Button variant="destructive" loading={save.isPending} disabled={bad || refundable.length === 0} onClick={() => save.mutate()}>{tr("Record refund")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

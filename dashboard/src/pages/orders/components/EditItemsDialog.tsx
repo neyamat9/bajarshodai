@@ -10,6 +10,7 @@ import { Thumb } from "@/components/shared/Thumb";
 import { ordersApi, type OrderDetail } from "@/api/orders";
 import { useAct } from "@/hooks/useAct";
 import { money } from "@/lib/format";
+import { tr } from "@/i18n";
 
 interface Line {
   key: string;
@@ -44,7 +45,7 @@ export function EditItemsDialog({ order, open, onOpenChange }: { order: OrderDet
         reason: reason || undefined,
       }),
     {
-      success: "Order updated",
+      success: tr("Order updated"),
       invalidate: [["order", order.id], ["orders"]],
       onSuccess: (o) => {
         (o.warnings ?? []).forEach((w) => toast.info(w, { duration: 8000 }));
@@ -63,7 +64,7 @@ export function EditItemsDialog({ order, open, onOpenChange }: { order: OrderDet
       <DialogContent size="xl">
         <DialogHeader>
           <DialogTitle>Edit items — {order.orderNumber}</DialogTitle>
-          <DialogDescription>Stock and totals follow your changes. A coupon discount is recalculated unless you set the discount by hand.</DialogDescription>
+          <DialogDescription>{tr("Stock and totals follow your changes. A coupon discount is recalculated unless you set the discount by hand.")}</DialogDescription>
         </DialogHeader>
         <DialogBody className="space-y-4">
           <div className="space-y-2">
@@ -73,7 +74,7 @@ export function EditItemsDialog({ order, open, onOpenChange }: { order: OrderDet
                 <div className="min-w-[160px] flex-1">
                   <p className="text-[13px] font-medium">{l.name}</p>
                   {l.variantName && <p className="text-[11px] text-muted-foreground">{l.variantName}</p>}
-                  {l.isNew && <span className="text-[10px] font-semibold uppercase text-fresh-600">New line</span>}
+                  {l.isNew && <span className="text-[10px] font-semibold uppercase text-fresh-600">{tr("New line")}</span>}
                 </div>
                 <label className="flex items-center gap-1 text-xs text-muted-foreground">Qty
                   <Input type="number" min={1} max={100} value={l.quantity} onChange={(e) => setLine(l.key, { quantity: Math.floor(Number(e.target.value)) })} className="w-16" />
@@ -82,7 +83,7 @@ export function EditItemsDialog({ order, open, onOpenChange }: { order: OrderDet
                   <Input type="number" min={0} step="0.01" value={l.price} onChange={(e) => setLine(l.key, { price: e.target.value })} className="w-24" />
                 </label>
                 <span className="w-24 text-right text-[13px] font-semibold">{money(Number(l.price || 0) * l.quantity)}</span>
-                <Button size="icon-sm" variant="ghost" onClick={() => setLines((ls) => ls.filter((x) => x.key !== l.key))} aria-label="Remove line" disabled={lines.length === 1}>
+                <Button size="icon-sm" variant="ghost" onClick={() => setLines((ls) => ls.filter((x) => x.key !== l.key))} aria-label={tr("Remove line")} disabled={lines.length === 1}>
                   <Trash2 className="text-destructive" />
                 </Button>
               </div>
@@ -90,7 +91,7 @@ export function EditItemsDialog({ order, open, onOpenChange }: { order: OrderDet
           </div>
 
           <div>
-            <Label className="mb-1 block">Add a product</Label>
+            <Label className="mb-1 block">{tr("Add a product")}</Label>
             <ProductPicker
               onPick={(p) => {
                 if (p.variants.length) {
@@ -109,33 +110,33 @@ export function EditItemsDialog({ order, open, onOpenChange }: { order: OrderDet
                       {v.name} · {v.stock} left
                     </Button>
                   ))}
-                  <Button size="sm" variant="ghost" onClick={() => setPendingVariant(null)}>Cancel</Button>
+                  <Button size="sm" variant="ghost" onClick={() => setPendingVariant(null)}>{tr("Cancel")}</Button>
                 </div>
               </div>
             )}
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
-            <Field label="Discount ৳ (optional)" hint={`Now ${money(order.discountAmount)}${order.couponCode ? ` (coupon ${order.couponCode})` : ""}. Leave empty to keep / recalculate.`}>
+            <Field label={tr("Discount ৳ (optional)")} hint={`${tr("Now {{amount}}", { amount: money(order.discountAmount) })}${order.couponCode ? ` (${tr("coupon")} ${order.couponCode})` : ""}. ${tr("Leave empty to keep / recalculate.")}`}>
               <Input type="number" min={0} value={discount} onChange={(e) => setDiscount(e.target.value)} />
             </Field>
-            <Field label="Shipping ৳ (optional)" hint={`Now ${money(order.shippingCost)}`}>
+            <Field label={tr("Shipping ৳ (optional)")} hint={tr("Now {{amount}}", { amount: money(order.shippingCost) })}>
               <Input type="number" min={0} value={shipping} onChange={(e) => setShipping(e.target.value)} disabled={recalc} />
             </Field>
-            <Field label="Reason (added to the timeline)">
+            <Field label={tr("Reason (added to the timeline)")}>
               <Input value={reason} onChange={(e) => setReason(e.target.value)} maxLength={300} />
             </Field>
           </div>
           <div className="flex items-center gap-2">
             <Checkbox id="recalc-ship" checked={recalc} onChange={(e) => setRecalc(e.target.checked)} />
-            <Label htmlFor="recalc-ship" className="cursor-pointer text-[13px] font-normal text-foreground">Work out shipping again from the new subtotal</Label>
+            <Label htmlFor="recalc-ship" className="cursor-pointer text-[13px] font-normal text-foreground">{tr("Work out shipping again from the new subtotal")}</Label>
           </div>
         </DialogBody>
         <DialogFooter className="items-center sm:justify-between">
-          <p className="text-sm">New subtotal: <b>{money(subtotal)}</b></p>
+          <p className="text-sm">{tr("New subtotal:")}{" "}<b>{money(subtotal)}</b></p>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button loading={save.isPending} disabled={invalid} onClick={() => save.mutate()}>Save changes</Button>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>{tr("Cancel")}</Button>
+            <Button loading={save.isPending} disabled={invalid} onClick={() => save.mutate()}>{tr("Save changes")}</Button>
           </div>
         </DialogFooter>
       </DialogContent>

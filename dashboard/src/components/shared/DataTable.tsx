@@ -12,6 +12,8 @@ import { EmptyState, ErrorState } from "./EmptyState";
 import { Pagination } from "./Pagination";
 import type { PageMeta } from "@/api/client";
 import type { InfiniteList } from "@/hooks/useInfiniteList";
+import { tr } from "@/i18n";
+import { num } from "@/lib/format";
 
 /**
  * How a column shows up in the phone card layout (below 768px):
@@ -130,21 +132,21 @@ export function InfiniteFooter({ list }: { list: Pick<InfiniteList<unknown>, "ro
       <div className="flex min-h-11 items-center justify-center gap-2 border-t border-border px-4 py-2.5 text-xs text-muted-foreground" aria-live="polite">
         {list.isError ? (
           <>
-            <span className="text-destructive">Could not load more.</span>
+            <span className="text-destructive">{tr("Could not load more.")}</span>
             <Button size="xs" variant="outline" onClick={list.fetchNextPage}>
-              Retry
+              {tr("Retry")}
             </Button>
           </>
         ) : list.isFetchingNextPage ? (
           <>
-            <Loader2 className="size-3.5 animate-spin" /> Loading more…
+            <Loader2 className="size-3.5 animate-spin" />{" "}{tr("Loading more…")}
           </>
         ) : list.hasNextPage ? (
           <span>
-            Showing <b className="text-foreground">{list.rows.length.toLocaleString()}</b> of <b className="text-foreground">{list.total.toLocaleString()}</b>
+            Showing <b className="text-foreground">{list.rows.length.toLocaleString()}</b>{" "}{tr("of")}{" "}<b className="text-foreground">{list.total.toLocaleString()}</b>
           </span>
         ) : (
-          <span>{list.total > 1 ? `All ${list.total.toLocaleString()} shown` : "End of list"}</span>
+          <span>{list.total > 1 ? tr("All {{total}} shown", { total: num(list.total) }) : tr("End of list")}</span>
         )}
       </div>
     </>
@@ -222,7 +224,7 @@ export function DataTable<T extends object>({
       >
         {selectable && (
           <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>
-            <Checkbox checked={!!id && !!selected?.includes(id)} onChange={(e) => toggleOne(id, e.target.checked)} aria-label="Select row" />
+            <Checkbox checked={!!id && !!selected?.includes(id)} onChange={(e) => toggleOne(id, e.target.checked)} aria-label={tr("Select row")} />
           </div>
         )}
         <div className="min-w-0 flex-1">
@@ -332,7 +334,7 @@ export function DataTable<T extends object>({
                 <TableRow className="hover:bg-transparent">
                   {selectable && (
                     <TableHead className="w-9">
-                      <Checkbox checked={!!allSelected} onChange={(e) => toggleAll(e.target.checked)} aria-label="Select all" />
+                      <Checkbox checked={!!allSelected} onChange={(e) => toggleAll(e.target.checked)} aria-label={tr("Select all")} />
                     </TableHead>
                   )}
                   {columns.map((c) => (
@@ -367,7 +369,7 @@ export function DataTable<T extends object>({
                       >
                         {selectable && (
                           <TableCell onClick={(e) => e.stopPropagation()}>
-                            <Checkbox checked={!!rid(row) && !!selected?.includes(rid(row))} onChange={(e) => toggleOne(rid(row), e.target.checked)} aria-label="Select row" />
+                            <Checkbox checked={!!rid(row) && !!selected?.includes(rid(row))} onChange={(e) => toggleOne(rid(row), e.target.checked)} aria-label={tr("Select row")} />
                           </TableCell>
                         )}
                         {columns.map((c) => (

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { AlertTriangle, Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { tr } from "@/i18n";
 
 export function EmptyState({ title = "Nothing here yet", description, action, icon }: { title?: string; description?: string; action?: ReactNode; icon?: ReactNode }) {
   return (
@@ -19,11 +20,11 @@ export function ErrorState({ message, onRetry }: { message?: string; onRetry?: (
       <div className="flex size-14 items-center justify-center rounded border border-dashed border-red-300 bg-red-50 text-destructive dark:border-red-500/40 dark:bg-red-500/10">
         <AlertTriangle className="size-5" />
       </div>
-      <p className="text-sm font-semibold">Could not load this</p>
-      <p className="max-w-sm text-xs text-muted-foreground">{message ?? "Check your connection and try again."}</p>
+      <p className="text-sm font-semibold">{tr("Could not load this")}</p>
+      <p className="max-w-sm text-xs text-muted-foreground">{message ?? tr("Check your connection and try again.")}</p>
       {onRetry && (
         <Button size="sm" variant="outline" onClick={onRetry}>
-          Try again
+          {tr("Try again")}
         </Button>
       )}
     </div>

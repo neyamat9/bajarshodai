@@ -7,6 +7,7 @@ import { api } from "@/api/client";
 import { settingsApi } from "@/api/system";
 import { dateTime, money } from "@/lib/format";
 import type { ShippingQuote } from "@/api/orders";
+import { tr } from "@/i18n";
 
 const AdminMap = lazy(() => import("@/components/map/AdminMap"));
 
@@ -20,11 +21,11 @@ export function LastLocationCard({ userId }: { userId: string }) {
   const d = settings.data?.delivery;
   const origin = d && d.originLat !== null && d.originLng !== null ? { lat: d.originLat, lng: d.originLng } : null;
   return (
-    <Section title="Last shared location">
+    <Section title={tr("Last shared location")}>
       {q.isLoading ? (
         <div className="h-24 animate-pulse rounded bg-muted" />
       ) : !l ? (
-        <p className="text-[13px] text-muted-foreground">Not shared yet. Ask for it from an order page (“Request location”).</p>
+        <p className="text-[13px] text-muted-foreground">{tr("Not shared yet. Ask for it from an order page (“Request location”).")}</p>
       ) : (
         <div className="space-y-2">
           <div className="overflow-hidden rounded-md border border-border">
@@ -36,7 +37,7 @@ export function LastLocationCard({ userId }: { userId: string }) {
           <p className="text-xs text-muted-foreground">
             {l.quote.distanceKm !== null ? `${l.quote.distanceKm} km` : ""}{l.quote.available ? ` · delivery ${money(l.quote.cost)}` : l.quote.block === "OUT_OF_AREA" ? " · outside the delivery area" : ""} · {dateTime(l.capturedAt)}
           </p>
-          <Button size="xs" variant="outline" asChild><a href={`https://www.google.com/maps/dir/?api=1&destination=${l.lat},${l.lng}`} target="_blank" rel="noopener noreferrer"><Navigation /> Navigate</a></Button>
+          <Button size="xs" variant="outline" asChild><a href={`https://www.google.com/maps/dir/?api=1&destination=${l.lat},${l.lng}`} target="_blank" rel="noopener noreferrer"><Navigation />{" "}{tr("Navigate")}</a></Button>
         </div>
       )}
     </Section>

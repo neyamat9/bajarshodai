@@ -11,6 +11,7 @@ import { Field } from "@/components/shared/Field";
 import { PageLoader } from "@/components/shared/PageLoader";
 import { api, errorMessage } from "@/api/client";
 import { AuthInput, AuthShell, authButton } from "./AuthShell";
+import { tr } from "@/i18n";
 
 const passwordRule = z
   .string()
@@ -42,9 +43,9 @@ export default function ResetPassword() {
 
   if (!token || check.isError) {
     return (
-      <AuthShell title="Link expired" subtitle="This reset link is invalid or has expired.">
+      <AuthShell title={tr("Link expired")} subtitle={tr("This reset link is invalid or has expired.")}>
         <Button asChild className={`w-full ${authButton}`}>
-          <Link to="/forgot-password">Request a new link</Link>
+          <Link to="/forgot-password">{tr("Request a new link")}</Link>
         </Button>
       </AuthShell>
     );
@@ -52,7 +53,7 @@ export default function ResetPassword() {
   if (check.isLoading) return <PageLoader />;
 
   return (
-    <AuthShell title="Set a new password" subtitle="Choose a strong password you don't use elsewhere.">
+    <AuthShell title={tr("Set a new password")} subtitle={tr("Choose a strong password you don't use elsewhere.")}>
       <form
         noValidate
         className="space-y-4"
@@ -60,7 +61,7 @@ export default function ResetPassword() {
           setError(null);
           try {
             await api.post("/admin/auth/reset-password", { token, newPassword: v.newPassword });
-            toast.success("Password updated. Please sign in.");
+            toast.success(tr("Password updated. Please sign in."));
             navigate("/login", { replace: true });
           } catch (e) {
             setError(errorMessage(e));
@@ -69,13 +70,13 @@ export default function ResetPassword() {
       >
         {error && <div role="alert" className="flex items-start gap-2 rounded border border-destructive/30 bg-red-50 px-3 py-2.5 text-sm text-destructive dark:bg-red-500/10"><TriangleAlert className="mt-0.5 size-4 shrink-0" /><span>{error}</span></div>}
         <Field error={errors.newPassword?.message} hint="8–128 characters with at least one letter and one number">
-          <AuthInput id="newPassword" type="password" autoComplete="new-password" autoFocus label="New password" icon={<KeyRound />} aria-invalid={!!errors.newPassword} {...register("newPassword")} />
+          <AuthInput id="newPassword" type="password" autoComplete="new-password" autoFocus label={tr("New password")} icon={<KeyRound />} aria-invalid={!!errors.newPassword} {...register("newPassword")} />
         </Field>
         <Field error={errors.confirm?.message}>
-          <AuthInput id="confirm" type="password" autoComplete="new-password" label="Confirm password" icon={<KeyRound />} aria-invalid={!!errors.confirm} {...register("confirm")} />
+          <AuthInput id="confirm" type="password" autoComplete="new-password" label={tr("Confirm password")} icon={<KeyRound />} aria-invalid={!!errors.confirm} {...register("confirm")} />
         </Field>
         <Button type="submit" className={`w-full ${authButton}`} loading={isSubmitting}>
-          Update password
+          {tr("Update password")}
         </Button>
       </form>
     </AuthShell>

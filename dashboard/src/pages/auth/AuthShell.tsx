@@ -2,6 +2,7 @@ import { forwardRef, type ComponentProps, type ReactNode } from "react";
 import { Outlet } from "react-router";
 import { ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { tr } from "@/i18n";
 
 /** The one button of the sign-in forms: wide, softly rounded, gradient with a lift on hover. */
 export const authButton =
@@ -101,16 +102,16 @@ export function AuthLayout() {
               <img src="/logo-mark.png" alt="" className="size-full object-contain" />
             </span>
             <span className="font-heading text-lg font-bold tracking-tight">
-              Bazar <span className="text-fresh-300">Shodai</span>
-              <span className="ml-1.5 rounded border border-white/30 bg-white/15 px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-widest">Admin</span>
+              Bazar <span className="text-fresh-300">{tr("Shodai")}</span>
+              <span className="ml-1.5 rounded border border-white/30 bg-white/15 px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-widest">{tr("Admin")}</span>
             </span>
           </div>
           <h2 className="font-heading text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
-            Welcome to
+            {tr("Welcome to")}
             <br />
-            <span className="text-fresh-300">Bazar Shodai</span>
+            <span className="text-fresh-300">{tr("Bazar Shodai")}</span>
           </h2>
-          <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/85 sm:text-base">Sign in to manage orders, stock, customers and everything your shop needs.</p>
+          <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/85 sm:text-base">{tr("Sign in to manage orders, stock, customers and everything your shop needs.")}</p>
         </section>
 
         {/* ------------------------------ form side ------------------------------ */}
@@ -131,7 +132,7 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
   return (
     <div className={cn("auth-form mx-auto w-full max-w-sm", !native && "auth-swap")}>
       <span className="inline-flex items-center gap-1.5 rounded bg-forest-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-primary dark:bg-secondary dark:text-fresh-400">
-        <ShieldCheck className="size-3.5" /> Admin portal
+        <ShieldCheck className="size-3.5" />{" "}{tr("Admin portal")}
       </span>
       <h1 className="mt-4 font-heading text-3xl font-bold tracking-tight">{title}</h1>
       {subtitle && <p className="mt-1.5 text-sm text-muted-foreground">{subtitle}</p>}

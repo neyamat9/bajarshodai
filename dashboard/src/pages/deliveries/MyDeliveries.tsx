@@ -13,19 +13,20 @@ import { Input, Select, Textarea } from "@/components/ui/input";
 import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAct } from "@/hooks/useAct";
-import { dateTime, money, timeAgo } from "@/lib/format";
+import { dateTime, money, num, timeAgo } from "@/lib/format";
+import { tr } from "@/i18n";
 
 const digits = (p: string) => p.replace(/[^\d]/g, "");
 const wa = (p: string) => (digits(p).startsWith("88") ? digits(p) : `88${digits(p).replace(/^0*/, "0")}`);
 const qty = (n: number) => (Number.isInteger(n) ? String(n) : String(Number(n.toFixed(3))));
 
 const STATUS: Record<string, { label: string; variant: "neutral" | "info" | "fresh" | "success" | "danger" | "warning" }> = {
-  ASSIGNED: { label: "New: accept it", variant: "warning" },
-  ACCEPTED: { label: "Accepted", variant: "info" },
-  PICKED_UP: { label: "Picked up", variant: "info" },
-  ON_THE_WAY: { label: "On the way", variant: "fresh" },
-  DELIVERED: { label: "Delivered", variant: "success" },
-  FAILED: { label: "Not delivered", variant: "danger" },
+  ASSIGNED: { label: tr("New: accept it"), variant: "warning" },
+  ACCEPTED: { label: tr("Accepted"), variant: "info" },
+  PICKED_UP: { label: tr("Picked up"), variant: "info" },
+  ON_THE_WAY: { label: tr("On the way"), variant: "fresh" },
+  DELIVERED: { label: tr("Delivered"), variant: "success" },
+  FAILED: { label: tr("Not delivered"), variant: "danger" },
 };
 
 function DeliveredDialog({ d, onClose }: { d: MyDelivery; onClose: () => void }) {
@@ -33,7 +34,7 @@ function DeliveredDialog({ d, onClose }: { d: MyDelivery; onClose: () => void })
   const [cash, setCash] = useState(String(d.cashToCollect));
   const [note, setNote] = useState("");
   const run = useAct(() => deliveriesApi.delivered(d.id, { cashCollected: cod ? Number(cash) : undefined, note: note || undefined }), {
-    success: "Delivered. Well done!",
+    success: tr("Delivered. Well done!"),
     invalidate: [["my-deliveries"]],
     onSuccess: onClose,
   });
@@ -47,18 +48,18 @@ function DeliveredDialog({ d, onClose }: { d: MyDelivery; onClose: () => void })
         </DialogHeader>
         <DialogBody className="space-y-3">
           {cod ? (
-            <Field label="Cash you took from the customer ৳" hint={`The order says ${money(d.cashToCollect)}`}>
+            <Field label={tr("Cash you took from the customer ৳")} hint={tr("The order says {{amount}}", { amount: money(d.cashToCollect) })}>
               <Input type="number" inputMode="decimal" min={0} value={cash} onChange={(e) => setCash(e.target.value)} className="h-12 text-xl font-bold" />
             </Field>
           ) : (
-            <p className="rounded bg-emerald-50 px-3 py-2 text-[13px] font-medium text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300">Already paid: no cash to take.</p>
+            <p className="rounded bg-emerald-50 px-3 py-2 text-[13px] font-medium text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300">{tr("Already paid: no cash to take.")}</p>
           )}
-          {diff && <p className="rounded bg-amber-50 px-3 py-2 text-[13px] text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">This is not the amount on the order. Say why below, so the shop understands.</p>}
-          <Field label="Note (optional)"><Textarea rows={2} maxLength={300} value={note} onChange={(e) => setNote(e.target.value)} /></Field>
+          {diff && <p className="rounded bg-amber-50 px-3 py-2 text-[13px] text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">{tr("This is not the amount on the order. Say why below, so the shop understands.")}</p>}
+          <Field label={tr("Note (optional)")}><Textarea rows={2} maxLength={300} value={note} onChange={(e) => setNote(e.target.value)} /></Field>
         </DialogBody>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Not yet</Button>
-          <Button size="lg" loading={run.isPending} disabled={cod && (cash === "" || Number(cash) < 0)} onClick={() => run.mutate()}><CheckCircle2 /> Yes, delivered</Button>
+          <Button variant="outline" onClick={onClose}>{tr("Not yet")}</Button>
+          <Button size="lg" loading={run.isPending} disabled={cod && (cash === "" || Number(cash) < 0)} onClick={() => run.mutate()}><CheckCircle2 />{" "}{tr("Yes, delivered")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -69,7 +70,7 @@ function FailedDialog({ d, onClose }: { d: MyDelivery; onClose: () => void }) {
   const [reason, setReason] = useState<string>(FAIL_REASONS[0].value);
   const [note, setNote] = useState("");
   const run = useAct(() => deliveriesApi.failed(d.id, { reason, note: note || undefined }), {
-    success: "Saved. The shop will decide what to do.",
+    success: tr("Saved. The shop will decide what to do."),
     invalidate: [["my-deliveries"]],
     onSuccess: onClose,
   });
@@ -78,19 +79,19 @@ function FailedDialog({ d, onClose }: { d: MyDelivery; onClose: () => void }) {
       <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle>Could not deliver {d.order.orderNumber}</DialogTitle>
-          <DialogDescription>The order goes on hold and the shop is told.</DialogDescription>
+          <DialogDescription>{tr("The order goes on hold and the shop is told.")}</DialogDescription>
         </DialogHeader>
         <DialogBody className="space-y-3">
-          <Field label="Why?" required>
+          <Field label={tr("Why?")} required>
             <Select value={reason} onChange={(e) => setReason(e.target.value)} className="h-11">
-              {FAIL_REASONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+              {FAIL_REASONS.map((r) => <option key={r.value} value={r.value}>{tr(r.label)}</option>)}
             </Select>
           </Field>
-          <Field label="Note" hint={reason === "OTHER" ? "Please say what happened" : "Optional"}><Textarea rows={2} maxLength={300} value={note} onChange={(e) => setNote(e.target.value)} /></Field>
+          <Field label={tr("Note")} hint={reason === "OTHER" ? tr("Please say what happened") : tr("Optional")}><Textarea rows={2} maxLength={300} value={note} onChange={(e) => setNote(e.target.value)} /></Field>
         </DialogBody>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Back</Button>
-          <Button variant="destructive" loading={run.isPending} disabled={reason === "OTHER" && !note.trim()} onClick={() => run.mutate()}><XCircle /> Could not deliver</Button>
+          <Button variant="outline" onClick={onClose}>{tr("Back")}</Button>
+          <Button variant="destructive" loading={run.isPending} disabled={reason === "OTHER" && !note.trim()} onClick={() => run.mutate()}><XCircle />{" "}{tr("Could not deliver")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -108,13 +109,13 @@ function DeliveryCard({ d, onDelivered, onFailed }: { d: MyDelivery; onDelivered
       <div className="flex items-start justify-between gap-2 border-b border-border bg-muted/40 px-4 py-2.5">
         <div>
           <p className="font-heading text-base font-bold">{o.orderNumber}</p>
-          <p className="text-xs text-muted-foreground">{d.attempts > 1 ? `Attempt ${d.attempts} · ` : ""}given {timeAgo(d.assignedAt)}</p>
+          <p className="text-xs text-muted-foreground">{d.attempts > 1 ? `${tr("Attempt {{n}}", { n: num(d.attempts) })} · ` : ""}{tr("given {{when}}", { when: timeAgo(d.assignedAt) })}</p>
         </div>
-        <Badge variant={st.variant}>{st.label}</Badge>
+        <Badge variant={st.variant}>{tr(st.label)}</Badge>
       </div>
 
       <div className="space-y-3 px-4 py-3 text-[14px]">
-        {d.note && <p className="rounded bg-amber-50 px-3 py-2 text-[13px] text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">From the shop: {d.note}</p>}
+        {d.note && <p className="rounded bg-amber-50 px-3 py-2 text-[13px] text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">{tr("From the shop:")} {d.note}</p>}
 
         <div>
           <p className="text-[15px] font-semibold">{o.customerName}</p>
@@ -125,15 +126,15 @@ function DeliveryCard({ d, onDelivered, onFailed }: { d: MyDelivery; onDelivered
         {active && (
           <div className="grid grid-cols-3 gap-2">
             {o.lat !== null && o.lng !== null ? (
-              <Button asChild className="h-11 bg-sky-600 text-white hover:bg-sky-700"><a href={`https://www.google.com/maps/dir/?api=1&destination=${o.lat},${o.lng}`} target="_blank" rel="noopener noreferrer"><Navigation /> Map</a></Button>
-            ) : <Button disabled className="h-11"><Navigation /> Map</Button>}
-            {o.phone ? <Button asChild variant="outline" className="h-11"><a href={`tel:${digits(o.phone)}`}><Phone /> Call</a></Button> : <Button disabled variant="outline" className="h-11"><Phone /> Call</Button>}
-            {o.phone ? <Button asChild variant="outline" className="h-11"><a href={`https://wa.me/${wa(o.phone)}`} target="_blank" rel="noopener noreferrer"><MessageCircle /> WhatsApp</a></Button> : <Button disabled variant="outline" className="h-11"><MessageCircle /> Chat</Button>}
+              <Button asChild className="h-11 bg-sky-600 text-white hover:bg-sky-700"><a href={`https://www.google.com/maps/dir/?api=1&destination=${o.lat},${o.lng}`} target="_blank" rel="noopener noreferrer"><Navigation />{" "}{tr("Map")}</a></Button>
+            ) : <Button disabled className="h-11"><Navigation />{" "}{tr("Map")}</Button>}
+            {o.phone ? <Button asChild variant="outline" className="h-11"><a href={`tel:${digits(o.phone)}`}><Phone />{" "}{tr("Call")}</a></Button> : <Button disabled variant="outline" className="h-11"><Phone />{" "}{tr("Call")}</Button>}
+            {o.phone ? <Button asChild variant="outline" className="h-11"><a href={`https://wa.me/${wa(o.phone)}`} target="_blank" rel="noopener noreferrer"><MessageCircle />{" "}{tr("WhatsApp")}</a></Button> : <Button disabled variant="outline" className="h-11"><MessageCircle />{" "}{tr("Chat")}</Button>}
           </div>
         )}
 
         <div>
-          <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground"><Package className="size-3.5" /> {o.items.length} {o.items.length === 1 ? "item" : "items"}</p>
+          <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground"><Package className="size-3.5" /> {tr("{{n}} items", { n: num(o.items.length) })}</p>
           <ul className="divide-y divide-border rounded border border-border text-[13px]">
             {o.items.map((i) => <li key={i.id} className="flex justify-between gap-3 px-3 py-1.5"><span className="min-w-0 truncate">{i.name}</span><b className="shrink-0">{qty(i.quantity)} {i.unit ?? ""}</b></li>)}
           </ul>
@@ -142,11 +143,11 @@ function DeliveryCard({ d, onDelivered, onFailed }: { d: MyDelivery; onDelivered
 
         {d.cashToCollect > 0 ? (
           <div className="flex items-center justify-between rounded border-2 border-amber-400 bg-amber-50 px-4 py-2.5 dark:bg-amber-500/10">
-            <span className="flex items-center gap-2 font-semibold"><Banknote className="size-5" /> Take cash</span>
+            <span className="flex items-center gap-2 font-semibold"><Banknote className="size-5" />{" "}{tr("Take cash")}</span>
             <span className="font-heading text-2xl font-bold">{money(d.cashToCollect)}</span>
           </div>
         ) : (
-          <div className="flex items-center gap-2 rounded bg-emerald-50 px-4 py-2 text-[13px] font-medium text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300"><CheckCircle2 className="size-4" /> Already paid: no cash to take</div>
+          <div className="flex items-center gap-2 rounded bg-emerald-50 px-4 py-2 text-[13px] font-medium text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300"><CheckCircle2 className="size-4" />{" "}{tr("Already paid: no cash to take")}</div>
         )}
 
         {d.status === "DELIVERED" && <p className="text-[13px] text-muted-foreground">Delivered {dateTime(d.deliveredAt)}{d.cashCollected ? ` · you took ${money(d.cashCollected)}${d.cashHandedOverAt ? ", received by the shop" : ", give it to the shop"}` : ""}</p>}
@@ -155,13 +156,13 @@ function DeliveryCard({ d, onDelivered, onFailed }: { d: MyDelivery; onDelivered
 
       {active && (
         <div className="space-y-2 border-t border-border bg-muted/30 px-4 py-3">
-          {d.status === "ASSIGNED" && <Button size="lg" className="h-12 w-full text-base" loading={busy} onClick={() => step.mutate("accept")}><CheckCircle2 /> Accept this delivery</Button>}
-          {(d.status === "ASSIGNED" || d.status === "ACCEPTED") && <Button size="lg" variant="outline" className="h-12 w-full text-base" loading={busy} onClick={() => step.mutate("picked-up")}><Package /> I picked it up</Button>}
-          {d.status !== "ON_THE_WAY" && d.status !== "ASSIGNED" && <Button size="lg" className="h-12 w-full text-base" loading={busy} onClick={() => step.mutate("on-the-way")}><Truck /> I am on the way</Button>}
-          {d.status === "ON_THE_WAY" && <Button size="lg" variant="brand" className="h-12 w-full text-base" onClick={onDelivered}><CheckCircle2 /> Delivered</Button>}
+          {d.status === "ASSIGNED" && <Button size="lg" className="h-12 w-full text-base" loading={busy} onClick={() => step.mutate("accept")}><CheckCircle2 />{" "}{tr("Accept this delivery")}</Button>}
+          {(d.status === "ASSIGNED" || d.status === "ACCEPTED") && <Button size="lg" variant="outline" className="h-12 w-full text-base" loading={busy} onClick={() => step.mutate("picked-up")}><Package />{" "}{tr("I picked it up")}</Button>}
+          {d.status !== "ON_THE_WAY" && d.status !== "ASSIGNED" && <Button size="lg" className="h-12 w-full text-base" loading={busy} onClick={() => step.mutate("on-the-way")}><Truck />{" "}{tr("I am on the way")}</Button>}
+          {d.status === "ON_THE_WAY" && <Button size="lg" variant="brand" className="h-12 w-full text-base" onClick={onDelivered}><CheckCircle2 />{" "}{tr("Delivered")}</Button>}
           <div className="grid grid-cols-2 gap-2">
-            {d.status !== "ON_THE_WAY" && <Button variant="outline" className="h-10" onClick={onDelivered}><CheckCircle2 /> Delivered</Button>}
-            <Button variant="ghost" className={`h-10 text-destructive ${d.status === "ON_THE_WAY" ? "col-span-2" : ""}`} onClick={onFailed}><ThumbsDown /> Could not deliver</Button>
+            {d.status !== "ON_THE_WAY" && <Button variant="outline" className="h-10" onClick={onDelivered}><CheckCircle2 />{" "}{tr("Delivered")}</Button>}
+            <Button variant="ghost" className={`h-10 text-destructive ${d.status === "ON_THE_WAY" ? "col-span-2" : ""}`} onClick={onFailed}><ThumbsDown />{" "}{tr("Could not deliver")}</Button>
           </div>
         </div>
       )}
@@ -176,7 +177,7 @@ function List({ scope }: { scope: "active" | "done" }) {
   if (q.isLoading) return <div className="space-y-3">{[0, 1].map((i) => <div key={i} className="h-72 animate-pulse rounded border border-border bg-muted" />)}</div>;
   const rows = q.data ?? [];
   if (rows.length === 0) {
-    return <EmptyState title={scope === "active" ? "Nothing to deliver right now" : "Nothing finished in the last 7 days"} description={scope === "active" ? "When the shop gives you an order it appears here." : undefined} icon={<Bike />} />;
+    return <EmptyState title={scope === "active" ? tr("Nothing to deliver right now") : tr("Nothing finished in the last 7 days")} description={scope === "active" ? tr("When the shop gives you an order it appears here.") : undefined} icon={<Bike />} />;
   }
   return (
     <>
@@ -194,13 +195,13 @@ export default function MyDeliveries() {
   const s = sum.data;
   return (
     <div>
-      <PageHeader title="My deliveries" description="What the shop gave you. Do each step as you go: the customer is told." />
+      <PageHeader title={tr("My deliveries")} description={tr("What the shop gave you. Do each step as you go: the customer is told.")} />
       <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {[
-          ["To do", String(s?.active ?? "–"), "text-foreground"],
-          ["Delivered today", String(s?.deliveredToday ?? "–"), "text-emerald-600"],
-          ["Not delivered today", String(s?.failedToday ?? "–"), "text-destructive"],
-          ["Cash with me", money(s?.cashInHand ?? 0), "text-amber-600"],
+          [tr("To do"), s ? num(s.active) : "–", "text-foreground"],
+          [tr("Delivered today"), s ? num(s.deliveredToday) : "–", "text-emerald-600"],
+          [tr("Not delivered today"), s ? num(s.failedToday) : "–", "text-destructive"],
+          [tr("Cash with me"), money(s?.cashInHand ?? 0), "text-amber-600"],
         ].map(([k, v, c]) => (
           <div key={k} className="rounded border border-border bg-card px-3 py-2.5"><p className="text-[11px] text-muted-foreground">{k}</p><p className={`font-heading text-xl font-bold ${c}`}>{v}</p></div>
         ))}
@@ -208,8 +209,8 @@ export default function MyDeliveries() {
       {s && s.cashInHand > 0 && <p className="mb-4 rounded bg-amber-50 px-3 py-2 text-[13px] text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">You are holding {money(s.cashInHand)} from deliveries. Give it to the shop and ask them to mark it received.</p>}
       <Tabs defaultValue="active">
         <TabsList>
-          <TabsTrigger value="active">To do</TabsTrigger>
-          <TabsTrigger value="done">Done (7 days)</TabsTrigger>
+          <TabsTrigger value="active">{tr("To do")}</TabsTrigger>
+          <TabsTrigger value="done">{tr("Done (7 days)")}</TabsTrigger>
         </TabsList>
         <TabsContent value="active"><List scope="active" /></TabsContent>
         <TabsContent value="done"><List scope="done" /></TabsContent>

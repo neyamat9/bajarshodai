@@ -1,16 +1,17 @@
 import { api, clean } from "./client";
+import { tr } from "@/i18n";
 
 export type DeliveryStatus = "ASSIGNED" | "ACCEPTED" | "PICKED_UP" | "ON_THE_WAY" | "DELIVERED" | "FAILED" | "CANCELLED";
 
 export const FAIL_REASONS = [
-  { value: "CUSTOMER_NOT_REACHABLE", label: "Customer not reachable" },
-  { value: "CUSTOMER_REFUSED", label: "Customer refused the order" },
-  { value: "WRONG_ADDRESS", label: "Wrong address" },
-  { value: "NOBODY_HOME", label: "Nobody at the address" },
-  { value: "PAYMENT_PROBLEM", label: "Payment problem" },
-  { value: "OTHER", label: "Other" },
+  { value: "CUSTOMER_NOT_REACHABLE", label: tr("Customer not reachable") },
+  { value: "CUSTOMER_REFUSED", label: tr("Customer refused the order") },
+  { value: "WRONG_ADDRESS", label: tr("Wrong address") },
+  { value: "NOBODY_HOME", label: tr("Nobody at the address") },
+  { value: "PAYMENT_PROBLEM", label: tr("Payment problem") },
+  { value: "OTHER", label: tr("Other") },
 ] as const;
-export const failReasonLabel = (v: string | null) => FAIL_REASONS.find((r) => r.value === v)?.label ?? v ?? "";
+export const failReasonLabel = (v: string | null) => tr(FAIL_REASONS.find((r) => r.value === v)?.label ?? v ?? "");
 
 export interface DeliveryOrder {
   id: string;

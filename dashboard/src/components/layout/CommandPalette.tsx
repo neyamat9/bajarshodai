@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/store/auth";
 import { menuFor } from "./menu";
+import { tr } from "@/i18n";
 
 interface Cmd {
   id: string;
@@ -32,7 +33,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
   }, [onOpenChange]);
 
   const user = useAuth((s) => s.user);
-  const pages = useMemo<Cmd[]>(() => menuFor(user).flatMap((s) => s.items.map((i) => ({ id: i.to, label: i.label, hint: s.title, icon: i.icon, to: i.to }))), [user]);
+  const pages = useMemo<Cmd[]>(() => menuFor(user).flatMap((s) => s.items.map((i) => ({ id: i.to, label: tr(i.label), hint: tr(s.title), icon: i.icon, to: i.to }))), [user]);
 
   const text = q.trim();
   const list = useMemo<Cmd[]>(() => {
@@ -66,7 +67,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
       }}
     >
       <DialogContent size="md" className="top-[12%] translate-y-0 gap-0 overflow-hidden p-0 max-sm:top-0 max-sm:!rounded-none" aria-describedby={undefined}>
-        <DialogTitle className="sr-only">Quick search</DialogTitle>
+        <DialogTitle className="sr-only">{tr("Quick search")}</DialogTitle>
         <div className="flex items-center gap-2 border-b border-border px-4">
           <Search className="size-4 shrink-0 text-muted-foreground" />
           <input
@@ -88,13 +89,13 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
                 go(list[active]);
               }
             }}
-            placeholder="Go to a page, or search orders, products, customers…"
+            placeholder={tr("Go to a page, or search orders, products, customers…")}
             className="h-12 min-w-0 flex-1 bg-transparent pr-8 text-sm outline-none placeholder:text-muted-foreground"
-            aria-label="Quick search"
+            aria-label={tr("Quick search")}
           />
         </div>
         <ul className="custom-scrollbar max-h-[55vh] overflow-y-auto p-1.5" role="listbox">
-          {list.length === 0 && <li className="px-3 py-8 text-center text-xs text-muted-foreground">Nothing matches.</li>}
+          {list.length === 0 && <li className="px-3 py-8 text-center text-xs text-muted-foreground">{tr("Nothing matches.")}</li>}
           {list.map((c, i) => (
             <li key={c.id} role="option" aria-selected={i === active}>
               <button
@@ -112,9 +113,9 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
           ))}
         </ul>
         <div className="hidden items-center gap-3 border-t border-border bg-muted/50 px-4 py-2 text-[11px] text-muted-foreground sm:flex">
-          <span><kbd className="rounded border border-border bg-card px-1">↑↓</kbd> move</span>
-          <span><kbd className="rounded border border-border bg-card px-1">Enter</kbd> open</span>
-          <span><kbd className="rounded border border-border bg-card px-1">Esc</kbd> close</span>
+          <span><kbd className="rounded border border-border bg-card px-1">↑↓</kbd>{" "}{tr("move")}</span>
+          <span><kbd className="rounded border border-border bg-card px-1">{tr("Enter")}</kbd>{" "}{tr("open")}</span>
+          <span><kbd className="rounded border border-border bg-card px-1">{tr("Esc")}</kbd>{" "}{tr("close")}</span>
         </div>
       </DialogContent>
     </Dialog>

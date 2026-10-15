@@ -7,6 +7,7 @@ import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@/
 import { assetUrl, errorMessage } from "@/api/client";
 import { mediaApi, type MediaFolder } from "@/api/catalog";
 import { Label } from "@/components/ui/input";
+import { tr } from "@/i18n";
 
 // Upload a new image, or pick one from the media library. Value is the stored URL.
 export function ImageField({ label, value, onChange, folder = "general", className }: { label?: string; value: string | null | undefined; onChange: (url: string | null) => void; folder?: MediaFolder; className?: string }) {
@@ -35,9 +36,9 @@ export function ImageField({ label, value, onChange, folder = "general", classNa
           {value ? <img src={assetUrl(value)} alt="" className="size-full object-cover" /> : <ImagePlus className="size-6 text-muted-foreground" />}
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button type="button" size="sm" variant="outline" loading={busy} onClick={() => input.current?.click()}><ImagePlus /> {value ? "Replace" : "Upload"}</Button>
-          <Button type="button" size="sm" variant="outline" onClick={() => setLib(true)}><Images /> Library</Button>
-          {value && <Button type="button" size="sm" variant="ghost" onClick={() => onChange(null)}><Trash2 className="text-destructive" /> Remove</Button>}
+          <Button type="button" size="sm" variant="outline" loading={busy} onClick={() => input.current?.click()}><ImagePlus /> {value ? tr("Replace") : tr("Upload")}</Button>
+          <Button type="button" size="sm" variant="outline" onClick={() => setLib(true)}><Images />{" "}{tr("Library")}</Button>
+          {value && <Button type="button" size="sm" variant="ghost" onClick={() => onChange(null)}><Trash2 className="text-destructive" />{" "}{tr("Remove")}</Button>}
         </div>
       </div>
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden onChange={(e) => void upload(e.target.files)} />
@@ -51,9 +52,9 @@ function LibraryDialog({ onPick, onClose }: { onPick: (url: string) => void; onC
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent size="xl">
-        <DialogHeader><DialogTitle>Media library</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{tr("Media library")}</DialogTitle></DialogHeader>
         <DialogBody>
-          {q.isLoading ? <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p> : (q.data?.data.length ?? 0) === 0 ? <p className="py-8 text-center text-sm text-muted-foreground">No images uploaded yet.</p> : (
+          {q.isLoading ? <p className="py-8 text-center text-sm text-muted-foreground">{tr("Loading…")}</p> : (q.data?.data.length ?? 0) === 0 ? <p className="py-8 text-center text-sm text-muted-foreground">{tr("No images uploaded yet.")}</p> : (
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-5 lg:grid-cols-6">
               {q.data?.data.map((m) => (
                 <button key={m.id} type="button" onClick={() => onPick(m.url)} className="cursor-pointer overflow-hidden rounded border border-border hover:ring-2 hover:ring-fresh-400">

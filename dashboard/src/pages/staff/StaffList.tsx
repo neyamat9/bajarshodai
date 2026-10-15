@@ -17,10 +17,11 @@ import { Checkbox, Input, Select, Switch } from "@/components/ui/input";
 import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAct } from "@/hooks/useAct";
 import { useAuth } from "@/store/auth";
-import { dateTime, money, timeAgo } from "@/lib/format";
+import { dateTime, money, num, timeAgo } from "@/lib/format";
 import { isAdminRole } from "@/lib/access";
+import { tr, trMap } from "@/i18n";
 
-const ROLE_LABEL: Record<string, string> = { STAFF: "Staff", ADMIN: "Admin", SUPER_ADMIN: "Super admin" };
+const ROLE_LABEL: Record<string, string> = trMap({ STAFF: "Staff", ADMIN: "Admin", SUPER_ADMIN: "Super admin" });
 
 function PasswordShown({ name, password, onClose }: { name: string; password: string; onClose: () => void }) {
   return (
@@ -28,15 +29,15 @@ function PasswordShown({ name, password, onClose }: { name: string; password: st
       <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle>Temporary password for {name}</DialogTitle>
-          <DialogDescription>Tell it to them in person or by phone. It is shown only now. They can change it from their profile after signing in.</DialogDescription>
+          <DialogDescription>{tr("Tell it to them in person or by phone. It is shown only now. They can change it from their profile after signing in.")}</DialogDescription>
         </DialogHeader>
         <DialogBody>
           <div className="flex items-center gap-2 rounded border border-border bg-muted px-3 py-2.5">
             <code className="flex-1 select-all font-mono text-lg font-bold tracking-wider">{password}</code>
-            <Button variant="outline" size="xs" onClick={() => navigator.clipboard.writeText(password).then(() => toast.success("Copied"), () => toast.error("Copy failed"))}><Copy /> Copy</Button>
+            <Button variant="outline" size="xs" onClick={() => navigator.clipboard.writeText(password).then(() => toast.success(tr("Copied")), () => toast.error(tr("Copy failed")))}><Copy />{" "}{tr("Copy")}</Button>
           </div>
         </DialogBody>
-        <DialogFooter><Button onClick={onClose}>Done</Button></DialogFooter>
+        <DialogFooter><Button onClick={onClose}>{tr("Done")}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -79,7 +80,7 @@ function StaffDialog({ person, onClose, onPassword }: { person: StaffRow | null;
       return { saved: created, temp: created.temporaryPassword };
     },
     {
-      success: editing ? "Saved" : "Staff member added",
+      success: editing ? tr("Saved") : "Staff member added",
       invalidate: [["staff"]],
       onSuccess: (r) => {
         onClose();
@@ -98,10 +99,10 @@ function StaffDialog({ person, onClose, onPassword }: { person: StaffRow | null;
   const toggle = (key: string) => setF((s) => ({ ...s, permissions: s.permissions.includes(key) ? s.permissions.filter((k) => k !== key) : [...s.permissions, key] }));
 
   const submit = () => {
-    if (f.name.trim().length < 2) return setErr("Enter the name");
-    if (!editing && !/^(\+?88)?01[3-9]\d{8}$/.test(f.phone.replace(/[\s-]/g, ""))) return setErr("Enter a valid Bangladesh mobile number");
-    if (f.email.trim() && !/^\S+@\S+\.\S+$/.test(f.email.trim())) return setErr("Enter a valid email, or leave it empty");
-    if (f.password && f.password.length < 6) return setErr("The password needs at least 6 characters, or leave it empty to get a temporary one");
+    if (f.name.trim().length < 2) return setErr(tr("Enter the name"));
+    if (!editing && !/^(\+?88)?01[3-9]\d{8}$/.test(f.phone.replace(/[\s-]/g, ""))) return setErr(tr("Enter a valid Bangladesh mobile number"));
+    if (f.email.trim() && !/^\S+@\S+\.\S+$/.test(f.email.trim())) return setErr(tr("Enter a valid email, or leave it empty"));
+    if (f.password && f.password.length < 6) return setErr(tr("The password needs at least 6 characters, or leave it empty to get a temporary one"));
     setErr(null);
     save.mutate();
   };
@@ -112,15 +113,15 @@ function StaffDialog({ person, onClose, onPassword }: { person: StaffRow | null;
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent size="lg">
         <DialogHeader>
-          <DialogTitle>{editing ? `Edit ${person.name}` : "Add staff"}</DialogTitle>
-          <DialogDescription>Choose what this person may do. They sign in to the same dashboard with their phone number.</DialogDescription>
+          <DialogTitle>{editing ? tr("Edit {{name}}", { name: person.name }) : tr("Add staff")}</DialogTitle>
+          <DialogDescription>{tr("Choose what this person may do. They sign in to the same dashboard with their phone number.")}</DialogDescription>
         </DialogHeader>
         <DialogBody className="space-y-4">
           {err && <p role="alert" className="rounded bg-red-50 px-3 py-2 text-xs font-medium text-destructive dark:bg-red-500/10">{err}</p>}
 
           {!lockAccess && (
             <div>
-              <p className="mb-1.5 text-xs font-medium text-muted-foreground">Start from</p>
+              <p className="mb-1.5 text-xs font-medium text-muted-foreground">{tr("Start from")}</p>
               <div className="flex flex-wrap gap-1.5">
                 {(meta.data?.presets ?? []).filter((p) => p.key !== "admin" || mayMakeAdmin).map((p) => (
                   <Button key={p.key} type="button" size="xs" variant="outline" onClick={() => applyPreset(p)}>{p.label}</Button>
@@ -130,39 +131,39 @@ function StaffDialog({ person, onClose, onPassword }: { person: StaffRow | null;
           )}
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Name" required><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
-            <Field label="Job title" hint="Shown in lists, e.g. Rider, Packer"><Input value={f.staffTitle} onChange={(e) => setF({ ...f, staffTitle: e.target.value })} /></Field>
-            <Field label="Phone (sign-in)" required={!editing}><Input value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} disabled={editing} placeholder="01XXXXXXXXX" inputMode="tel" /></Field>
-            <Field label="Email" hint="Optional"><Input type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></Field>
+            <Field label={tr("Name")} required><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
+            <Field label={tr("Job title")} hint={tr("Shown in lists, e.g. Rider, Packer")}><Input value={f.staffTitle} onChange={(e) => setF({ ...f, staffTitle: e.target.value })} /></Field>
+            <Field label={tr("Phone (sign-in)")} required={!editing}><Input value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} disabled={editing} placeholder="01XXXXXXXXX" inputMode="tel" /></Field>
+            <Field label={tr("Email")} hint={tr("Optional")}><Input type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></Field>
             {!editing && (
-              <Field label="Password" hint="Leave empty to get a temporary one to give them"><Input type="text" autoComplete="off" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} /></Field>
+              <Field label={tr("Password")} hint={tr("Leave empty to get a temporary one to give them")}><Input type="text" autoComplete="off" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} /></Field>
             )}
           </div>
 
           {needsCustomerTick && (
             <label className="flex items-start gap-2 rounded border border-amber-300 bg-amber-50 p-3 text-[13px] dark:border-amber-500/40 dark:bg-amber-500/10">
               <Checkbox checked={f.useExistingCustomer} onChange={(e) => setF({ ...f, useExistingCustomer: e.target.checked })} />
-              <span><b>Use the existing customer account.</b> This number already belongs to a customer. They keep their orders and become staff; their password is replaced.</span>
+              <span><b>{tr("Use the existing customer account.")}</b> This number already belongs to a customer. They keep their orders and become staff; their password is replaced.</span>
             </label>
           )}
 
           {readOnlyRole ? (
-            <p className="rounded bg-muted px-3 py-2 text-[13px] text-muted-foreground">A super admin can do everything. Their access cannot be changed here.</p>
+            <p className="rounded bg-muted px-3 py-2 text-[13px] text-muted-foreground">{tr("A super admin can do everything. Their access cannot be changed here.")}</p>
           ) : (
             <>
               {!self && mayMakeAdmin && (
-                <Field label="Role">
+                <Field label={tr("Role")}>
                   <Select value={f.role} onChange={(e) => setF({ ...f, role: e.target.value as "STAFF" | "ADMIN" })} className="max-w-xs">
-                    <option value="STAFF">Staff: only what is ticked below</option>
-                    <option value="ADMIN">Admin: everything</option>
+                    <option value="STAFF">{tr("Staff: only what is ticked below")}</option>
+                    <option value="ADMIN">{tr("Admin: everything")}</option>
                   </Select>
                 </Field>
               )}
-              {self && <p className="rounded bg-muted px-3 py-2 text-[13px] text-muted-foreground">You cannot change your own role or permissions.</p>}
+              {self && <p className="rounded bg-muted px-3 py-2 text-[13px] text-muted-foreground">{tr("You cannot change your own role or permissions.")}</p>}
 
               {f.role === "STAFF" && !self && (
                 <div className="space-y-3">
-                  <p className="text-xs font-medium text-muted-foreground">What they may do</p>
+                  <p className="text-xs font-medium text-muted-foreground">{tr("What they may do")}</p>
                   {groups.map((g) => (
                     <fieldset key={g} className="rounded border border-border p-3">
                       <legend className="px-1 text-xs font-semibold">{g}</legend>
@@ -183,15 +184,15 @@ function StaffDialog({ person, onClose, onPassword }: { person: StaffRow | null;
 
           <label className="flex cursor-pointer items-start justify-between gap-4 rounded border border-border p-3">
             <span>
-              <span className="flex items-center gap-1.5 text-[13px] font-medium"><Bike className="size-4" /> Can deliver orders</span>
-              <span className="block text-xs text-muted-foreground">They appear in the “give to” list and get the My deliveries screen. Works for any role, an admin can deliver too.</span>
+              <span className="flex items-center gap-1.5 text-[13px] font-medium"><Bike className="size-4" />{" "}{tr("Can deliver orders")}</span>
+              <span className="block text-xs text-muted-foreground">{tr("They appear in the “give to” list and get the My deliveries screen. Works for any role, an admin can deliver too.")}</span>
             </span>
             <Switch checked={f.canDeliver} onCheckedChange={(canDeliver) => setF({ ...f, canDeliver })} />
           </label>
         </DialogBody>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button loading={save.isPending} onClick={submit}>{editing ? "Save" : "Add staff member"}</Button>
+          <Button variant="outline" onClick={onClose}>{tr("Cancel")}</Button>
+          <Button loading={save.isPending} onClick={submit}>{editing ? tr("Save") : tr("Add staff member")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -205,28 +206,28 @@ function DetailDialog({ id, onClose }: { id: string; onClose: () => void }) {
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent size="lg">
         <DialogHeader>
-          <DialogTitle>{d?.name ?? "Staff member"}</DialogTitle>
-          <DialogDescription>{d ? `${d.staffTitle ?? ROLE_LABEL[d.role]} · ${d.phone}` : "Loading…"}</DialogDescription>
+          <DialogTitle>{d?.name ?? tr("Staff member")}</DialogTitle>
+          <DialogDescription>{d ? `${d.staffTitle ?? ROLE_LABEL[d.role]} · ${d.phone}` : tr("Loading…")}</DialogDescription>
         </DialogHeader>
         <DialogBody className="space-y-4">
           {q.isError && <ErrorState message={errorMessage(q.error)} onRetry={() => q.refetch()} />}
           {d && (
             <>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {[["Delivered", String(d.deliveries.delivered)], ["On now", String(d.deliveries.active)], ["Cash held", money(d.cashInHand)], ["Last sign-in", d.lastLoginAt ? timeAgo(d.lastLoginAt) : "never"]].map(([k, v]) => (
+                {[[tr("Delivered"), num(d.deliveries.delivered)], [tr("On now"), num(d.deliveries.active)], [tr("Cash held"), money(d.cashInHand)], [tr("Last sign-in"), d.lastLoginAt ? timeAgo(d.lastLoginAt) : tr("never")]].map(([k, v]) => (
                   <div key={k} className="rounded border border-border bg-muted/40 px-3 py-2"><p className="text-[11px] text-muted-foreground">{k}</p><p className="text-[15px] font-semibold">{v}</p></div>
                 ))}
               </div>
               <div>
-                <p className="mb-1 text-xs font-medium text-muted-foreground">Access</p>
-                {isAdminRole(d) ? <Badge variant="brand">Everything</Badge> : d.permissions.length ? <div className="flex flex-wrap gap-1">{d.permissions.map((p) => <Badge key={p} variant="outline">{p}</Badge>)}</div> : <span className="text-[13px] text-muted-foreground">No dashboard pages{d.canDeliver ? " (rider screen only)" : ""}</span>}
+                <p className="mb-1 text-xs font-medium text-muted-foreground">{tr("Access")}</p>
+                {isAdminRole(d) ? <Badge variant="brand">{tr("Everything")}</Badge> : d.permissions.length ? <div className="flex flex-wrap gap-1">{d.permissions.map((p) => <Badge key={p} variant="outline">{p}</Badge>)}</div> : <span className="text-[13px] text-muted-foreground">No dashboard pages{d.canDeliver ? " (rider screen only)" : ""}</span>}
               </div>
               <div>
                 <div className="mb-1 flex items-center justify-between">
-                  <p className="text-xs font-medium text-muted-foreground">What they did lately</p>
-                  <Link to={`/activity?actorId=${d.id}`} className="text-xs font-medium text-primary hover:underline dark:text-fresh-400" onClick={onClose}>Open in the activity log</Link>
+                  <p className="text-xs font-medium text-muted-foreground">{tr("What they did lately")}</p>
+                  <Link to={`/activity?actorId=${d.id}`} className="text-xs font-medium text-primary hover:underline dark:text-fresh-400" onClick={onClose}>{tr("Open in the activity log")}</Link>
                 </div>
-                {d.activity.length === 0 ? <p className="text-[13px] text-muted-foreground">Nothing yet.</p> : (
+                {d.activity.length === 0 ? <p className="text-[13px] text-muted-foreground">{tr("Nothing yet.")}</p> : (
                   <ol className="relative max-h-72 space-y-3 overflow-y-auto border-l border-border pl-5">
                     {d.activity.map((a) => (
                       <li key={a.id} className="relative">
@@ -241,7 +242,7 @@ function DetailDialog({ id, onClose }: { id: string; onClose: () => void }) {
             </>
           )}
         </DialogBody>
-        <DialogFooter><Button variant="outline" onClick={onClose}>Close</Button></DialogFooter>
+        <DialogFooter><Button variant="outline" onClick={onClose}>{tr("Close")}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -259,7 +260,7 @@ export default function StaffList() {
 
   const q = useQuery({ queryKey: ["staff", search, status], queryFn: () => staffApi.list({ search: search || undefined, status: status || undefined }) });
   const toggle = useAct((p: StaffRow) => staffApi.update(p.id, { status: p.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE" }), {
-    success: (_d, p) => (p.status === "ACTIVE" ? "Deactivated: they can no longer sign in" : "Reactivated"),
+    success: (_d, p) => (p.status === "ACTIVE" ? tr("Deactivated: they can no longer sign in") : tr("Reactivated")),
     invalidate: [["staff"]],
     onSuccess: () => setToggling(null),
   });
@@ -277,16 +278,16 @@ export default function StaffList() {
   return (
     <div>
       <PageHeader
-        title="Staff"
-        description="Everyone who signs in to this dashboard: what they may do, and who can deliver. Nobody is ever deleted, so their history stays."
-        actions={<Button onClick={() => setEdit("new")}><Plus /> Add staff</Button>}
+        title={tr("Staff")}
+        description={tr("Everyone who signs in to this dashboard: what they may do, and who can deliver. Nobody is ever deleted, so their history stays.")}
+        actions={<Button onClick={() => setEdit("new")}><Plus />{" "}{tr("Add staff")}</Button>}
       />
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <SearchInput value={search} onChange={setSearch} placeholder="Search name, phone, email…" className="w-full sm:w-72" />
-        <Select value={status} onChange={(e) => setStatus(e.target.value)} className="w-40" aria-label="Status">
-          <option value="">Everyone</option>
-          <option value="ACTIVE">Active</option>
-          <option value="SUSPENDED">Deactivated</option>
+        <SearchInput value={search} onChange={setSearch} placeholder={tr("Search name, phone, email…")} className="w-full sm:w-72" />
+        <Select value={status} onChange={(e) => setStatus(e.target.value)} className="w-40" aria-label={tr("Status")}>
+          <option value="">{tr("Everyone")}</option>
+          <option value="ACTIVE">{tr("Active")}</option>
+          <option value="SUSPENDED">{tr("Deactivated")}</option>
         </Select>
       </div>
 
@@ -295,42 +296,42 @@ export default function StaffList() {
       ) : q.isLoading ? (
         <div className="space-y-2">{[0, 1, 2].map((i) => <div key={i} className="h-20 animate-pulse rounded border border-border bg-muted" />)}</div>
       ) : rows.length === 0 ? (
-        <EmptyState title="No staff found" description="Add the people who work with you: packers, riders, order takers." />
+        <EmptyState title={tr("No staff found")} description={tr("Add the people who work with you: packers, riders, order takers.")} />
       ) : (
         <div className="grid gap-2.5 lg:grid-cols-2">
           {rows.map((p) => (
             <Card key={p.id} className={`p-3.5 ${p.status !== "ACTIVE" ? "opacity-60" : ""}`}>
               <div className="flex items-start justify-between gap-3">
                 <button type="button" onClick={() => setView(p.id)} className="min-w-0 cursor-pointer text-left">
-                  <p className="truncate text-[14px] font-semibold hover:text-primary dark:hover:text-fresh-400">{p.name}{p.id === me?.id && <span className="ml-1.5 text-xs font-normal text-muted-foreground">(you)</span>}</p>
+                  <p className="truncate text-[14px] font-semibold hover:text-primary dark:hover:text-fresh-400">{p.name}{p.id === me?.id && <span className="ml-1.5 text-xs font-normal text-muted-foreground">{tr("(you)")}</span>}</p>
                   <p className="truncate text-xs text-muted-foreground">{p.staffTitle ?? ROLE_LABEL[p.role]} · {p.phone}</p>
                 </button>
                 <div className="flex shrink-0 flex-wrap justify-end gap-1">
                   <Badge variant={p.role === "STAFF" ? "neutral" : "brand"}>{ROLE_LABEL[p.role]}</Badge>
-                  {p.canDeliver && <Badge variant="fresh"><Bike className="mr-0.5 size-3" /> Rider</Badge>}
-                  {p.status !== "ACTIVE" && <Badge variant="danger">Deactivated</Badge>}
+                  {p.canDeliver && <Badge variant="fresh"><Bike className="mr-0.5 size-3" />{" "}{tr("Rider")}</Badge>}
+                  {p.status !== "ACTIVE" && <Badge variant="danger">{tr("Deactivated")}</Badge>}
                 </div>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                {p.role === "STAFF" ? (p.permissions.length ? `${p.permissions.length} permissions` : "No dashboard pages") : (
-                  <span className="inline-flex items-center gap-1"><ShieldCheck className="size-3.5" /> Everything</span>
+                {p.role === "STAFF" ? (p.permissions.length ? tr("{{n}} permissions", { n: num(p.permissions.length) }) : tr("No dashboard pages")) : (
+                  <span className="inline-flex items-center gap-1"><ShieldCheck className="size-3.5" />{" "}{tr("Everything")}</span>
                 )}
                 {" · "}
-                {p.deliveries.delivered} delivered{p.deliveries.active ? `, ${p.deliveries.active} on now` : ""}
+                {tr("{{n}} delivered", { n: num(p.deliveries.delivered) })}{p.deliveries.active ? `, ${tr("{{n}} on now", { n: num(p.deliveries.active) })}` : ""}
                 {" · "}
-                {p.lastLoginAt ? `signed in ${timeAgo(p.lastLoginAt)}` : "never signed in"}
+                {p.lastLoginAt ? tr("signed in {{when}}", { when: timeAgo(p.lastLoginAt) }) : tr("never signed in")}
               </p>
               {mayEdit(p) && p.role !== "SUPER_ADMIN" && (
                 <div className="mt-2.5 flex flex-wrap gap-1.5">
-                  <Button size="xs" variant="outline" onClick={() => setEdit(p)}><Pencil /> Edit</Button>
-                  {p.id !== me?.id && <Button size="xs" variant="outline" onClick={() => setResetting(p)}><KeyRound /> Temporary password</Button>}
+                  <Button size="xs" variant="outline" onClick={() => setEdit(p)}><Pencil />{" "}{tr("Edit")}</Button>
+                  {p.id !== me?.id && <Button size="xs" variant="outline" onClick={() => setResetting(p)}><KeyRound />{" "}{tr("Temporary password")}</Button>}
                   {p.id !== me?.id && (
-                    <Button size="xs" variant="outline" onClick={() => setToggling(p)}>{p.status === "ACTIVE" ? <><UserX /> Deactivate</> : <><UserCheck /> Reactivate</>}</Button>
+                    <Button size="xs" variant="outline" onClick={() => setToggling(p)}>{p.status === "ACTIVE" ? <><UserX />{" "}{tr("Deactivate")}</> : <><UserCheck />{" "}{tr("Reactivate")}</>}</Button>
                   )}
                 </div>
               )}
               {mayEdit(p) && p.role === "SUPER_ADMIN" && p.id === me?.id && (
-                <div className="mt-2.5"><Button size="xs" variant="outline" onClick={() => setEdit(p)}><Pencil /> Edit</Button></div>
+                <div className="mt-2.5"><Button size="xs" variant="outline" onClick={() => setEdit(p)}><Pencil />{" "}{tr("Edit")}</Button></div>
               )}
             </Card>
           ))}
@@ -343,9 +344,9 @@ export default function StaffList() {
       <ConfirmDialog
         open={!!toggling}
         onOpenChange={(o) => !o && setToggling(null)}
-        title={toggling?.status === "ACTIVE" ? `Deactivate ${toggling.name}?` : `Reactivate ${toggling?.name}?`}
-        description={toggling?.status === "ACTIVE" ? "They are signed out now and cannot sign in again until you reactivate them. Their history stays." : "They can sign in again."}
-        confirmLabel={toggling?.status === "ACTIVE" ? "Deactivate" : "Reactivate"}
+        title={toggling?.status === "ACTIVE" ? tr("Deactivate {{name}}?", { name: toggling.name }) : tr("Reactivate {{name}}?", { name: toggling?.name ?? "" })}
+        description={toggling?.status === "ACTIVE" ? tr("They are signed out now and cannot sign in again until you reactivate them. Their history stays.") : tr("They can sign in again.")}
+        confirmLabel={toggling?.status === "ACTIVE" ? tr("Deactivate") : tr("Reactivate")}
         destructive={toggling?.status === "ACTIVE"}
         loading={toggle.isPending}
         onConfirm={() => toggling && toggle.mutate(toggling)}
@@ -353,9 +354,9 @@ export default function StaffList() {
       <ConfirmDialog
         open={!!resetting}
         onOpenChange={(o) => !o && setResetting(null)}
-        title={`Set a temporary password for ${resetting?.name}?`}
-        description="They are signed out everywhere and their old password stops working. You will see the new one once, to tell them."
-        confirmLabel="Set temporary password"
+        title={tr("Set a temporary password for {{name}}?", { name: resetting?.name ?? "" })}
+        description={tr("They are signed out everywhere and their old password stops working. You will see the new one once, to tell them.")}
+        confirmLabel={tr("Set temporary password")}
         loading={reset.isPending}
         onConfirm={() => resetting && reset.mutate(resetting)}
       />

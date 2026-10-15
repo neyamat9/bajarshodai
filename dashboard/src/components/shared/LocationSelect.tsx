@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Select } from "@/components/ui/input";
 import { Field } from "./Field";
 import { locationsApi } from "@/api/locations";
+import { tr } from "@/i18n";
 
 export interface LocationValue {
   division: string; // division name
@@ -20,21 +21,21 @@ export function LocationSelect({ value, onChange, error }: { value: LocationValu
 
   return (
     <div className="grid gap-3 sm:grid-cols-3">
-      <Field label="Division">
+      <Field label={tr("Division")}>
         <Select value={value.division} onChange={(e) => onChange({ division: e.target.value, district: "", upazila: "" })}>
-          <option value="">Select…</option>
+          <option value="">{tr("Select…")}</option>
           {divisions.data?.map((d) => <option key={d.id} value={d.name}>{d.name}</option>)}
         </Select>
       </Field>
-      <Field label="District" required error={error}>
+      <Field label={tr("District")} required error={error}>
         <Select value={value.district} disabled={!divId} onChange={(e) => onChange({ ...value, district: e.target.value, upazila: "" })}>
-          <option value="">Select…</option>
+          <option value="">{tr("Select…")}</option>
           {districts.data?.map((d) => <option key={d.id} value={d.name}>{d.name}</option>)}
         </Select>
       </Field>
-      <Field label="Upazila / thana">
+      <Field label={tr("Upazila / thana")}>
         <Select value={value.upazila} disabled={!distId} onChange={(e) => onChange({ ...value, upazila: e.target.value })}>
-          <option value="">Optional</option>
+          <option value="">{tr("Optional")}</option>
           {areas.data?.map((a) => <option key={a.id} value={a.name}>{a.name}</option>)}
         </Select>
       </Field>

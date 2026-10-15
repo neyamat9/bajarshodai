@@ -4,6 +4,7 @@ import { RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { tr } from "@/i18n";
 
 /**
  * Reloads everything on the page from the server (the list, the top cards, the counts), keeping filters,
@@ -25,18 +26,18 @@ export function RefreshButton({ className }: { className?: string }) {
       // never flash: keep the spin visible for a moment so the click clearly did something
       const wait = 450 - (Date.now() - t0);
       if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-      toast.success("Updated", { duration: 1500 });
+      toast.success(tr("Updated"), { duration: 1500 });
     } catch {
-      toast.error("Could not refresh. Check your connection.");
+      toast.error(tr("Could not refresh. Check your connection."));
     } finally {
       setMine(false);
     }
   };
 
   return (
-    <Button type="button" variant="outline" size="sm" onClick={run} aria-label="Refresh" title="Refresh" disabled={mine} className={cn("px-2.5 sm:px-3", className)}>
+    <Button type="button" variant="outline" size="sm" onClick={run} aria-label={tr("Refresh")} title={tr("Refresh")} disabled={mine} className={cn("px-2.5 sm:px-3", className)}>
       <RefreshCw className={cn(spinning && "animate-spin")} />
-      <span className="max-sm:hidden">Refresh</span>
+      <span className="max-sm:hidden">{tr("Refresh")}</span>
     </Button>
   );
 }

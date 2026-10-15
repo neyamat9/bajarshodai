@@ -13,6 +13,7 @@ import { useInfiniteList } from "@/hooks/useInfiniteList";
 import { useUrlState } from "@/hooks/useUrlState";
 import { assetUrl } from "@/api/client";
 import { dateOnly, initials, money, timeAgo } from "@/lib/format";
+import { tr } from "@/i18n";
 
 const D = { search: "", status: "", hasOrdered: "", registeredFrom: "", registeredTo: "", sortBy: "newest", page: "1" };
 
@@ -26,7 +27,7 @@ export default function CustomersList() {
 
   const cols: Column<CustomerRow>[] = [
     {
-      key: "c", header: "Customer", sk: "lines2",
+      key: "c", header: tr("Customer"), sk: "lines2",
       cell: (c) => (
         <div className="flex items-center gap-3">
           <Avatar className="size-9">{c.avatarUrl && <AvatarImage src={assetUrl(c.avatarUrl)} />}<AvatarFallback>{initials(c.name)}</AvatarFallback></Avatar>
@@ -34,30 +35,30 @@ export default function CustomersList() {
         </div>
       ),
     },
-    { key: "phone", header: "Phone", sk: "text", cell: (c) => c.phone ?? "—" },
-    { key: "status", header: "Status", sk: "badge", cell: (c) => <StatusBadge status={c.status} /> },
-    { key: "orders", header: "Orders", align: "right", sk: "num", cell: (c) => c.totalOrders },
-    { key: "spent", header: "Spent", align: "right", sk: "num", cell: (c) => <b>{money(c.totalSpent)}</b> },
-    { key: "joined", header: "Joined", sk: "text", cell: (c) => dateOnly(c.createdAt) },
-    { key: "login", header: "Last seen", sk: "text", cell: (c) => (c.lastLoginAt ? timeAgo(c.lastLoginAt) : "never") },
+    { key: "phone", header: tr("Phone"), sk: "text", cell: (c) => c.phone ?? "—" },
+    { key: "status", header: tr("Status"), sk: "badge", cell: (c) => <StatusBadge status={c.status} /> },
+    { key: "orders", header: tr("Orders"), align: "right", sk: "num", cell: (c) => c.totalOrders },
+    { key: "spent", header: tr("Spent"), align: "right", sk: "num", cell: (c) => <b>{money(c.totalSpent)}</b> },
+    { key: "joined", header: tr("Joined"), sk: "text", cell: (c) => dateOnly(c.createdAt) },
+    { key: "login", header: tr("Last seen"), sk: "text", cell: (c) => (c.lastLoginAt ? timeAgo(c.lastLoginAt) : "never") },
   ];
   return (
     <div>
-      <PageHeader title="Customers" description="Everyone who has an account." actions={<><SavedViews storageKey="customers" builtIns={[{ name: "Never ordered", query: "hasOrdered=false" }, { name: "Have ordered", query: "hasOrdered=true" }, { name: "Suspended", query: "status=SUSPENDED" }]} /><DownloadButton path="/admin/users/export" params={{ search, status: f.status, role: "USER", hasOrdered: f.hasOrdered, registeredFrom: f.registeredFrom, registeredTo: f.registeredTo }} filename="customers.csv" /></>} />
+      <PageHeader title={tr("Customers")} description={tr("Everyone who has an account.")} actions={<><SavedViews storageKey="customers" builtIns={[{ name: "Never ordered", query: "hasOrdered=false" }, { name: "Have ordered", query: "hasOrdered=true" }, { name: "Suspended", query: "status=SUSPENDED" }]} /><DownloadButton path="/admin/users/export" params={{ search, status: f.status, role: "USER", hasOrdered: f.hasOrdered, registeredFrom: f.registeredFrom, registeredTo: f.registeredTo }} filename="customers.csv" /></>} />
       <DataTable
         infinite={q}
         columns={cols}
         onRowClick={(c) => nav(`/customers/${c.id}`)}
-        empty={{ title: filtered ? "No customers match" : "No customers yet" }}
+        empty={{ title: filtered ? tr("No customers match") : tr("No customers yet") }}
         toolbar={
           <FilterBar>
-            <SearchInput value={f.search} onChange={(v) => setF({ search: v })} placeholder="Name, email, phone…" />
-            <FilterSelect value={f.status} onChange={(v) => setF({ status: v })} all="Any status" options={["ACTIVE", "SUSPENDED", "BANNED"].map((s) => ({ value: s, label: s[0] + s.slice(1).toLowerCase() }))} />
-            <FilterSelect value={f.hasOrdered} onChange={(v) => setF({ hasOrdered: v })} all="Ordered or not" options={[{ value: "true", label: "Has ordered" }, { value: "false", label: "Never ordered" }]} />
-            <FilterSelect value={f.sortBy} onChange={(v) => setF({ sortBy: v })} all={null} options={[{ value: "newest", label: "Newest" }, { value: "oldest", label: "Oldest" }, { value: "name", label: "Name A–Z" }, { value: "spent", label: "Top spenders" }, { value: "orders", label: "Most orders" }, { value: "last-login", label: "Recently active" }]} />
-            <DateInput label="Joined from" value={f.registeredFrom} onChange={(v) => setF({ registeredFrom: v })} />
-            <DateInput label="to" value={f.registeredTo} onChange={(v) => setF({ registeredTo: v })} />
-            {filtered && <Button size="sm" variant="ghost" onClick={() => { setF({ search: "", status: "", hasOrdered: "", registeredFrom: "", registeredTo: "" }); }}><X /> Clear</Button>}
+            <SearchInput value={f.search} onChange={(v) => setF({ search: v })} placeholder={tr("Name, email, phone…")} />
+            <FilterSelect value={f.status} onChange={(v) => setF({ status: v })} all={tr("Any status")} options={["ACTIVE", "SUSPENDED", "BANNED"].map((s) => ({ value: s, label: s[0] + s.slice(1).toLowerCase() }))} />
+            <FilterSelect value={f.hasOrdered} onChange={(v) => setF({ hasOrdered: v })} all={tr("Ordered or not")} options={[{ value: "true", label: tr("Has ordered") }, { value: "false", label: tr("Never ordered") }]} />
+            <FilterSelect value={f.sortBy} onChange={(v) => setF({ sortBy: v })} all={null} options={[{ value: "newest", label: tr("Newest") }, { value: "oldest", label: tr("Oldest") }, { value: "name", label: tr("Name A–Z") }, { value: "spent", label: tr("Top spenders") }, { value: "orders", label: tr("Most orders") }, { value: "last-login", label: tr("Recently active") }]} />
+            <DateInput label={tr("Joined from")} value={f.registeredFrom} onChange={(v) => setF({ registeredFrom: v })} />
+            <DateInput label={tr("to")} value={f.registeredTo} onChange={(v) => setF({ registeredTo: v })} />
+            {filtered && <Button size="sm" variant="ghost" onClick={() => { setF({ search: "", status: "", hasOrdered: "", registeredFrom: "", registeredTo: "" }); }}><X />{" "}{tr("Clear")}</Button>}
           </FilterBar>
         }
       />

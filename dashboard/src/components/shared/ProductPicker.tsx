@@ -9,6 +9,7 @@ import { money } from "@/lib/format";
 import { errorMessage } from "@/api/client";
 import { toast } from "sonner";
 import { LoadMore } from "./DataTable";
+import { tr } from "@/i18n";
 
 // Search the catalog and pick a product (loads its variants too). Opens with the whole list; more load as you scroll.
 export function ProductPicker({ onPick, placeholder = "Search products by name, code or SKU…", onlyActive = true }: { onPick: (p: ProductDetail) => void; placeholder?: string; onlyActive?: boolean }) {
@@ -45,7 +46,7 @@ export function ProductPicker({ onPick, placeholder = "Search products by name, 
       {products.isFetching && !products.isFetchingNextPage && <Loader2 className="absolute right-2.5 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />}
       {open && (
         <div ref={setList} className="custom-scrollbar absolute z-30 mt-1 max-h-80 w-full overflow-y-auto rounded border border-border bg-popover shadow-lg">
-          {products.rows.length === 0 && !products.isFetching && <p className="px-3 py-4 text-center text-xs text-muted-foreground">No products found</p>}
+          {products.rows.length === 0 && !products.isFetching && <p className="px-3 py-4 text-center text-xs text-muted-foreground">{tr("No products found")}</p>}
           {products.rows.map((p) => (
             <button
               key={p.id}
@@ -78,7 +79,7 @@ export function ProductPicker({ onPick, placeholder = "Search products by name, 
           {products.rows.length > 0 && (
             <>
               <LoadMore list={products} root={list} />
-              {products.isFetchingNextPage && <p className="px-3 py-2 text-center text-[11px] text-muted-foreground">Loading more…</p>}
+              {products.isFetchingNextPage && <p className="px-3 py-2 text-center text-[11px] text-muted-foreground">{tr("Loading more…")}</p>}
             </>
           )}
         </div>

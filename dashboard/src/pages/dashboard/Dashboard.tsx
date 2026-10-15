@@ -20,13 +20,14 @@ import { Select } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { dateOnly, isoDay, money, num, timeAgo, titleCase } from "@/lib/format";
 import { useUi } from "@/store/ui";
+import { tr } from "@/i18n";
 
 const RANGES = [
-  { value: "1", label: "Today" },
-  { value: "7", label: "Last 7 days" },
-  { value: "30", label: "Last 30 days" },
-  { value: "90", label: "Last 90 days" },
-  { value: "365", label: "Last 12 months" },
+  { value: "1", label: tr("Today") },
+  { value: "7", label: tr("Last 7 days") },
+  { value: "30", label: tr("Last 30 days") },
+  { value: "90", label: tr("Last 90 days") },
+  { value: "365", label: tr("Last 12 months") },
 ];
 const PIE = ["#0b6234", "#45a22c", "#1e88b5", "#f57c00", "#8bc34a", "#78bc93"];
 
@@ -61,12 +62,12 @@ export default function Dashboard() {
   const tip = { background: dark ? "#0e1f15" : "#fff", border: `1px solid ${grid}`, borderRadius: 8, fontSize: 12 };
 
   const attentionItems = [
-    { label: "Orders to confirm", value: attention.data?.pendingOrders, to: "/orders?status=PENDING", icon: <Clock size={15} /> },
-    { label: "Mobile payments to verify", value: attention.data?.pendingBkashPayments, to: "/orders?paymentStatus=PENDING", icon: <Wallet size={15} /> },
-    { label: "Open support tickets", value: attention.data?.openTickets, to: "/support?status=OPEN", icon: <PackageCheck size={15} /> },
-    { label: "Return requests", value: attention.data?.pendingReturns, to: "/returns?status=REQUESTED", icon: <PackageCheck size={15} /> },
-    { label: "Low / out of stock items", value: (attention.data?.lowStockItems ?? 0) + (attention.data?.outOfStockItems ?? 0), to: "/inventory?state=low", icon: <AlertTriangle size={15} /> },
-    { label: "Unanswered questions", value: attention.data?.unansweredQuestions, to: "/questions?answered=false", icon: <PackageCheck size={15} /> },
+    { label: tr("Orders to confirm"), value: attention.data?.pendingOrders, to: "/orders?status=PENDING", icon: <Clock size={15} /> },
+    { label: tr("Mobile payments to verify"), value: attention.data?.pendingBkashPayments, to: "/orders?paymentStatus=PENDING", icon: <Wallet size={15} /> },
+    { label: tr("Open support tickets"), value: attention.data?.openTickets, to: "/support?status=OPEN", icon: <PackageCheck size={15} /> },
+    { label: tr("Return requests"), value: attention.data?.pendingReturns, to: "/returns?status=REQUESTED", icon: <PackageCheck size={15} /> },
+    { label: tr("Low / out of stock items"), value: (attention.data?.lowStockItems ?? 0) + (attention.data?.outOfStockItems ?? 0), to: "/inventory?state=low", icon: <AlertTriangle size={15} /> },
+    { label: tr("Unanswered questions"), value: attention.data?.unansweredQuestions, to: "/questions?answered=false", icon: <PackageCheck size={15} /> },
   ];
 
   if (q.isError) return <ErrorState message={errorMessage(q.error)} onRetry={() => void q.refetch()} />;
@@ -74,17 +75,17 @@ export default function Dashboard() {
   return (
     <div className="space-y-5 pb-8">
       <PageHeader
-        title="Dashboard"
-        description={d ? `${dateOnly(d.range.from)} – ${dateOnly(d.range.to)} · compared with the previous ${days} days` : <div className="flex h-10 flex-col justify-center gap-1.5 min-[480px]:h-5"><Skeleton className="h-3.5 w-64 max-w-full" /><Skeleton className="h-3.5 w-28 min-[480px]:hidden" /></div>}
+        title={tr("Dashboard")}
+        description={d ? `${dateOnly(d.range.from)} – ${dateOnly(d.range.to)} · ${tr("compared with the previous {{n}} days", { n: num(days) })}` : <div className="flex h-10 flex-col justify-center gap-1.5 min-[480px]:h-5"><Skeleton className="h-3.5 w-64 max-w-full" /><Skeleton className="h-3.5 w-28 min-[480px]:hidden" /></div>}
         actions={
           <>
-            <Select value={gran} onChange={(e) => setGran(e.target.value as typeof gran)} className="w-[120px]" aria-label="Group by">
-              <option value="auto">Auto</option>
-              <option value="day">By day</option>
-              <option value="week">By week</option>
-              <option value="month">By month</option>
+            <Select value={gran} onChange={(e) => setGran(e.target.value as typeof gran)} className="w-[120px]" aria-label={tr("Group by")}>
+              <option value="auto">{tr("Auto")}</option>
+              <option value="day">{tr("By day")}</option>
+              <option value="week">{tr("By week")}</option>
+              <option value="month">{tr("By month")}</option>
             </Select>
-            <Select value={days} onChange={(e) => setDays(e.target.value)} className="w-[150px]" aria-label="Date range">
+            <Select value={days} onChange={(e) => setDays(e.target.value)} className="w-[150px]" aria-label={tr("Date range")}>
               {RANGES.map((r) => (
                 <option key={r.value} value={r.value}>{r.label}</option>
               ))}
@@ -94,18 +95,18 @@ export default function Dashboard() {
       />
 
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <StatCard hintSk label="Revenue" value={money(cur?.revenue)} change={chg?.revenue} hint="vs previous period" icon={<Banknote size={18} />} tone="fresh" loading={q.isLoading} spark={series.revenue} />
-        <StatCard hintSk label="Orders" value={num(cur?.orders)} change={chg?.orders} hint={cur ? `${cur.cancelledOrders} cancelled` : undefined} icon={<ShoppingBag size={18} />} loading={q.isLoading} spark={series.orders} />
-        <StatCard hintSk label="Average order" value={money(Math.round(cur?.avgOrderValue ?? 0))} change={chg?.avgOrderValue} hint={cur ? `${num(cur.unitsSold)} units sold` : undefined} icon={<TrendingUp size={18} />} tone="sky" spark={series.avg} loading={q.isLoading} />
-        <StatCard hintSk label="New customers" value={num(cur?.newCustomers)} change={chg?.newCustomers} hint={cur ? `${num(cur.customers)} bought` : undefined} icon={<UserPlus size={18} />} tone="green" loading={q.isLoading} />
+        <StatCard hintSk label={tr("Revenue")} value={money(cur?.revenue)} change={chg?.revenue} hint={tr("vs previous period")} icon={<Banknote size={18} />} tone="fresh" loading={q.isLoading} spark={series.revenue} />
+        <StatCard hintSk label={tr("Orders")} value={num(cur?.orders)} change={chg?.orders} hint={cur ? tr("{{n}} cancelled", { n: num(cur.cancelledOrders) }) : undefined} icon={<ShoppingBag size={18} />} loading={q.isLoading} spark={series.orders} />
+        <StatCard hintSk label={tr("Average order")} value={money(Math.round(cur?.avgOrderValue ?? 0))} change={chg?.avgOrderValue} hint={cur ? tr("{{n}} units sold", { n: num(cur.unitsSold) }) : undefined} icon={<TrendingUp size={18} />} tone="sky" spark={series.avg} loading={q.isLoading} />
+        <StatCard hintSk label={tr("New customers")} value={num(cur?.newCustomers)} change={chg?.newCustomers} hint={cur ? tr("{{n}} bought", { n: num(cur.customers) }) : undefined} icon={<UserPlus size={18} />} tone="green" loading={q.isLoading} />
       </div>
 
       {canSeeDeliveries && (
         <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-          <StatCard label="Deliveries done" value={num(ds?.totals.deliveries)} hint="all time" icon={<Truck size={18} />} tone="fresh" loading={deliveryStats.isLoading} onClick={() => navigate("/deliveries?tab=stats")} />
-          <StatCard label="Different customers" value={num(ds?.totals.uniqueCustomers)} hint="delivered to, all time" icon={<Users size={18} />} tone="forest" loading={deliveryStats.isLoading} onClick={() => navigate("/deliveries?tab=stats")} />
-          <StatCard label="Came back" value={ds?.range.repeatCustomerPct == null ? "—" : `${ds.range.repeatCustomerPct}%`} hint="of customers, last 30 days" icon={<Repeat size={18} />} tone="green" loading={deliveryStats.isLoading} onClick={() => navigate("/deliveries?tab=stats")} />
-          <StatCard label="Cash with riders" value={money(ds?.now.cashWithRiders ?? 0)} hint={ds ? `${ds.now.withRiders} deliveries on now` : undefined} icon={<Banknote size={18} />} tone="red" loading={deliveryStats.isLoading} onClick={() => navigate("/deliveries?tab=cash")} />
+          <StatCard label={tr("Deliveries done")} value={num(ds?.totals.deliveries)} hint={tr("all time")} icon={<Truck size={18} />} tone="fresh" loading={deliveryStats.isLoading} onClick={() => navigate("/deliveries?tab=stats")} />
+          <StatCard label={tr("Different customers")} value={num(ds?.totals.uniqueCustomers)} hint={tr("delivered to, all time")} icon={<Users size={18} />} tone="forest" loading={deliveryStats.isLoading} onClick={() => navigate("/deliveries?tab=stats")} />
+          <StatCard label={tr("Came back")} value={ds?.range.repeatCustomerPct == null ? "—" : `${ds.range.repeatCustomerPct}%`} hint={tr("of customers, last 30 days")} icon={<Repeat size={18} />} tone="green" loading={deliveryStats.isLoading} onClick={() => navigate("/deliveries?tab=stats")} />
+          <StatCard label={tr("Cash with riders")} value={money(ds?.now.cashWithRiders ?? 0)} hint={ds ? tr("{{n}} deliveries on now", { n: num(ds.now.withRiders) }) : undefined} icon={<Banknote size={18} />} tone="red" loading={deliveryStats.isLoading} onClick={() => navigate("/deliveries?tab=cash")} />
         </div>
       )}
 
@@ -113,8 +114,8 @@ export default function Dashboard() {
         <Card className="lg:col-span-2">
           <CardHeader>
             <div>
-              <CardTitle>Sales over time</CardTitle>
-              <CardDescription>Revenue per {d?.granularity ?? "day"} (cancelled and refunded orders excluded)</CardDescription>
+              <CardTitle>{tr("Sales over time")}</CardTitle>
+              <CardDescription>{tr("Revenue per {{unit}} (cancelled and refunded orders excluded)", { unit: tr(d?.granularity ?? "day") })}</CardDescription>
             </div>
           </CardHeader>
           <CardContent>
@@ -142,7 +143,7 @@ export default function Dashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Needs your attention</CardTitle>
+            <CardTitle>{tr("Needs your attention")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-1">
             {attentionItems.map((a) => (
@@ -161,12 +162,12 @@ export default function Dashboard() {
       <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-3 [&>*]:min-w-0">
         <Card>
           <CardHeader>
-            <CardTitle>Top products</CardTitle>
-            <Link to="/reports?tab=product-performance" className="text-xs font-medium text-primary hover:underline">Full report</Link>
+            <CardTitle>{tr("Top products")}</CardTitle>
+            <Link to="/reports?tab=product-performance" className="text-xs font-medium text-primary hover:underline">{tr("Full report")}</Link>
           </CardHeader>
           <CardContent className="space-y-2">
             {q.isLoading && <Skeleton className="h-40 w-full" />}
-            {d?.topProducts.length === 0 && <p className="py-8 text-center text-xs text-muted-foreground">No sales in this period.</p>}
+            {d?.topProducts.length === 0 && <p className="py-8 text-center text-xs text-muted-foreground">{tr("No sales in this period.")}</p>}
             {d?.topProducts.slice(0, 6).map((p) => (
               <div key={p.productId} className="flex items-center gap-3">
                 <Thumb src={p.image} className="size-9" />
@@ -182,7 +183,7 @@ export default function Dashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Top categories</CardTitle>
+            <CardTitle>{tr("Top categories")}</CardTitle>
           </CardHeader>
           <CardContent>
             {q.isLoading ? (
@@ -197,7 +198,7 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <p className="py-8 text-center text-xs text-muted-foreground">No sales in this period.</p>
+              <p className="py-8 text-center text-xs text-muted-foreground">{tr("No sales in this period.")}</p>
             )}
           </CardContent>
         </Card>
@@ -208,8 +209,8 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent className="space-y-3">
             {[
-              { title: "Payment method", rows: d?.revenueByPaymentMethod },
-              { title: "Delivery zone", rows: d?.revenueByZone },
+              { title: tr("Payment method"), rows: d?.revenueByPaymentMethod },
+              { title: tr("Delivery zone"), rows: d?.revenueByZone },
             ].map((g) => (
               <div key={g.title}>
                 <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{g.title}</p>
@@ -223,7 +224,7 @@ export default function Dashboard() {
                       </PieChart>
                     </ResponsiveContainer>
                     <ul className="min-w-0 flex-1 space-y-1 text-xs">
-                      {(g.rows ?? []).length === 0 && <li className="text-muted-foreground">No data</li>}
+                      {(g.rows ?? []).length === 0 && <li className="text-muted-foreground">{tr("No data")}</li>}
                       {(g.rows ?? []).map((r, i) => (
                         <li key={r.key} className="flex items-center justify-between gap-2">
                           <span className="flex min-w-0 items-center gap-1.5">
@@ -245,18 +246,18 @@ export default function Dashboard() {
       <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-3 [&>*]:min-w-0">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Latest orders</CardTitle>
-            <Link to="/orders" className="text-xs font-medium text-primary hover:underline">View all</Link>
+            <CardTitle>{tr("Latest orders")}</CardTitle>
+            <Link to="/orders" className="text-xs font-medium text-primary hover:underline">{tr("View all")}</Link>
           </CardHeader>
           <CardContent className="px-0">
             <ul className="divide-y divide-border text-sm">
               {home.isLoading && Array.from({ length: 5 }).map((_, i) => <li key={i} className="px-4 py-3"><Skeleton className="h-4 w-full" /></li>)}
-              {home.data?.recentOrders.length === 0 && <li className="px-4 py-8 text-center text-xs text-muted-foreground">No orders yet.</li>}
+              {home.data?.recentOrders.length === 0 && <li className="px-4 py-8 text-center text-xs text-muted-foreground">{tr("No orders yet.")}</li>}
               {home.data?.recentOrders.map((o) => (
                 <li key={o.id} className="row-enter flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-2.5 transition-colors hover:bg-muted/40" onClick={() => navigate(`/orders/${o.id}`)}>
                   <div className="min-w-0 flex-1 basis-40">
                     <p className="font-semibold">{o.orderNumber}</p>
-                    <p className="truncate text-[11px] text-muted-foreground">{o.user?.name ?? o.guestName ?? "Guest"} · {timeAgo(o.placedAt)}</p>
+                    <p className="truncate text-[11px] text-muted-foreground">{o.user?.name ?? o.guestName ?? tr("Guest")} · {timeAgo(o.placedAt)}</p>
                   </div>
                   <div className="flex items-center gap-1.5"><StatusBadge status={o.paymentMethod} /><StatusBadge status={o.status} /></div>
                   <span className="ml-auto font-semibold sm:ml-0 sm:w-24 sm:text-right">{money(o.total)}</span>
@@ -268,12 +269,12 @@ export default function Dashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Low stock</CardTitle>
-            <Link to="/inventory?state=low" className="text-xs font-medium text-primary hover:underline">Manage</Link>
+            <CardTitle>{tr("Low stock")}</CardTitle>
+            <Link to="/inventory?state=low" className="text-xs font-medium text-primary hover:underline">{tr("Manage")}</Link>
           </CardHeader>
           <CardContent className="space-y-2">
             {home.isLoading && <Skeleton className="h-40 w-full" />}
-            {home.data?.lowStock.length === 0 && <p className="py-8 text-center text-xs text-muted-foreground">Nothing is running low.</p>}
+            {home.data?.lowStock.length === 0 && <p className="py-8 text-center text-xs text-muted-foreground">{tr("Nothing is running low.")}</p>}
             {home.data?.lowStock.map((r) => (
               <Link key={`${r.productId}-${r.variantId}`} to={`/products/${r.productId}/edit`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between gap-2 rounded px-2 py-1.5 hover:bg-muted">
                 <span className="min-w-0">

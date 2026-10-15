@@ -8,6 +8,7 @@ import { useIsDesktop } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/store/auth";
 import { menuFor } from "./menu";
+import { tr } from "@/i18n";
 
 export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { collapsed: collapsedPref, toggleCollapsed } = useUi();
@@ -48,7 +49,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
       {/* on desktop this spacer keeps the page's column width; the sidebar itself floats above it so peeking never shoves the page */}
       <div className={cn("hidden shrink-0 transition-[width] duration-300 ease-out lg:block", collapsed ? "w-[68px]" : "w-64")} aria-hidden="true" />
       <aside
-        aria-label="Main menu"
+        aria-label={tr("Main menu")}
         onMouseEnter={() => collapsed && peekSoon(true)}
         onMouseLeave={() => collapsed && peekSoon(false)}
         onFocusCapture={() => collapsed && peekSoon(true)}
@@ -63,16 +64,16 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
         )}
       >
         <div className={cn("flex shrink-0 border-b border-sidebar-border", compact ? "flex-col items-center gap-1 py-2" : "h-14 items-center justify-between gap-2 px-3")}>
-          <NavLink to="/" className="flex min-w-0 items-center gap-2" onClick={onClose} title="Dashboard">
+          <NavLink to="/" className="flex min-w-0 items-center gap-2" onClick={onClose} title={tr("Dashboard")}>
             <span className="flex size-10 shrink-0 items-center justify-center rounded bg-white p-0.5">
-              <img src="/logo-mark.png" alt="Bazar Shodai" className="size-9 object-contain" />
+              <img src="/logo-mark.png" alt={tr("Bazar Shodai")} className="size-9 object-contain" />
             </span>
             {!compact && (
               <span className="min-w-0 leading-tight">
                 <span className="block truncate font-heading text-[15px] font-bold text-white">
-                  Bazar <span className="text-fresh-400">Shodai</span>
+                  Bazar <span className="text-fresh-400">{tr("Shodai")}</span>
                 </span>
-                <span className="block text-[10px] uppercase tracking-widest text-forest-300">Admin</span>
+                <span className="block text-[10px] uppercase tracking-widest text-forest-300">{tr("Admin")}</span>
               </span>
             )}
           </NavLink>
@@ -81,7 +82,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
             type="button"
             className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded text-forest-200 transition-colors hover:bg-white/10 hover:text-white active:scale-95 lg:hidden"
             onClick={onClose}
-            aria-label="Close menu"
+            aria-label={tr("Close menu")}
           >
             <X size={18} />
           </button>
@@ -106,7 +107,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
         <nav className="custom-scrollbar flex-1 space-y-4 overflow-y-auto px-2 py-3">
           {menu.map((section) => (
             <div key={section.title}>
-              {!compact && <p className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-widest text-forest-300/70">{section.title}</p>}
+              {!compact && <p className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-widest text-forest-300/70">{tr(section.title)}</p>}
               <ul className="space-y-0.5">
                 {section.items.map((item) => {
                   const count = summary && item.badge ? item.badge(summary) : 0;
@@ -116,7 +117,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
                         to={item.to}
                         end={item.end ?? item.to === "/"}
                         onClick={onClose}
-                        title={compact ? item.label : undefined}
+                        title={compact ? tr(item.label) : undefined}
                         className={({ isActive }) =>
                           cn(
                             "group relative flex items-center gap-3 rounded px-2.5 py-2 text-[13px] font-medium transition-colors",
@@ -129,7 +130,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
                           <>
                             {isActive && <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r bg-brand" />}
                             <span className={cn("shrink-0", isActive && "text-fresh-400")}>{item.icon}</span>
-                            {!compact && <span className="flex-1 truncate whitespace-nowrap">{item.label}</span>}
+                            {!compact && <span className="flex-1 truncate whitespace-nowrap">{tr(item.label)}</span>}
                             {count > 0 && (
                               <span
                                 className={cn(

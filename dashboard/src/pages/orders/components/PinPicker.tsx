@@ -8,6 +8,7 @@ import { api } from "@/api/client";
 import { ordersApi } from "@/api/orders";
 import { settingsApi } from "@/api/system";
 import { DEFAULT_CENTER, type GeoPoint } from "@/components/map/types";
+import { tr } from "@/i18n";
 
 const AdminMap = lazy(() => import("@/components/map/AdminMap"));
 
@@ -65,7 +66,7 @@ export function PinPicker({ value, onChange, placeName, onPlaceName, phone, name
     if (got && got.lat !== null && got.lng !== null) {
       onChange({ lat: got.lat, lng: got.lng });
       if (got.placeName) onPlaceName(got.placeName);
-      toast.success("The customer shared their location");
+      toast.success(tr("The customer shared their location"));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [got?.lat, got?.lng]);
@@ -76,7 +77,7 @@ export function PinPicker({ value, onChange, placeName, onPlaceName, phone, name
       const r = await ordersApi.requestLocation({ phone: phoneOk ? phone.replace(/[\s-]/g, "") : undefined, name: name.trim() || undefined });
       setLink({ id: r.id, url: r.url });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not make the link");
+      toast.error(e instanceof Error ? e.message : tr("Could not make the link"));
     } finally {
       setMaking(false);
     }
@@ -87,7 +88,7 @@ export function PinPicker({ value, onChange, placeName, onPlaceName, phone, name
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
         <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><MapPin className="size-3.5" /> Delivery pin {value ? <Check className="size-3.5 text-success" /> : null}</span>
-        <button type="button" onClick={() => setSatellite((s) => !s)} className="cursor-pointer text-[11px] font-medium text-primary hover:underline dark:text-fresh-400">{satellite ? "Street map" : "Satellite"}</button>
+        <button type="button" onClick={() => setSatellite((s) => !s)} className="cursor-pointer text-[11px] font-medium text-primary hover:underline dark:text-fresh-400">{satellite ? tr("Street map") : tr("Satellite")}</button>
       </div>
       <div className="overflow-hidden rounded-md border border-border">
         <Suspense fallback={<div className="h-52 animate-pulse bg-muted" />}>
@@ -108,18 +109,18 @@ export function PinPicker({ value, onChange, placeName, onPlaceName, phone, name
           />
         </Suspense>
       </div>
-      <p className="text-[11px] text-muted-foreground">{value ? placeName || "Drag the pin to adjust it." : "Click the map where the customer lives, or send them a link."}</p>
-      <Input value={placeName} onChange={(e) => onPlaceName(e.target.value)} placeholder="Place name (filled in from the map)" aria-label="Place name" className="h-8 text-[13px]" />
+      <p className="text-[11px] text-muted-foreground">{value ? placeName || "Drag the pin to adjust it." : tr("Click the map where the customer lives, or send them a link.")}</p>
+      <Input value={placeName} onChange={(e) => onPlaceName(e.target.value)} placeholder={tr("Place name (filled in from the map)")} aria-label={tr("Place name")} className="h-8 text-[13px]" />
 
       <div className="rounded border border-dashed border-border p-2">
         {!link ? (
-          <Button type="button" size="xs" variant="outline" loading={making} onClick={() => void makeLink()}><Link2 /> Ask the customer to share their location</Button>
+          <Button type="button" size="xs" variant="outline" loading={making} onClick={() => void makeLink()}><Link2 />{" "}{tr("Ask the customer to share their location")}</Button>
         ) : (
           <div className="space-y-1.5">
-            <p className="text-[11px] text-muted-foreground">{got ? "Shared. The pin was set from it." : "Waiting for the customer to open the link…"}</p>
+            <p className="text-[11px] text-muted-foreground">{got ? tr("Shared. The pin was set from it.") : tr("Waiting for the customer to open the link…")}</p>
             <div className="flex flex-wrap gap-1.5">
-              <Button type="button" size="xs" variant="outline" onClick={() => navigator.clipboard.writeText(text).then(() => toast.success("Message copied"), () => toast.error("Copy failed"))}><Copy /> Copy message</Button>
-              {phoneOk && <Button type="button" size="xs" variant="outline" asChild><a href={`https://wa.me/${waNumber(phone)}?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer"><MessageCircle /> WhatsApp</a></Button>}
+              <Button type="button" size="xs" variant="outline" onClick={() => navigator.clipboard.writeText(text).then(() => toast.success(tr("Message copied")), () => toast.error(tr("Copy failed")))}><Copy />{" "}{tr("Copy message")}</Button>
+              {phoneOk && <Button type="button" size="xs" variant="outline" asChild><a href={`https://wa.me/${waNumber(phone)}?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer"><MessageCircle />{" "}{tr("WhatsApp")}</a></Button>}
             </div>
           </div>
         )}

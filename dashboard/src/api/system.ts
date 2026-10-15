@@ -1,4 +1,5 @@
 import { api, clean, type Paged } from "./client";
+import { tr } from "@/i18n";
 
 // ---------- reports ----------
 export interface ReportTable {
@@ -9,11 +10,14 @@ export interface ReportTable {
   totals?: Record<string, unknown>;
 }
 export const REPORTS = [
-  { id: "sales", label: "Sales", hint: "Orders and revenue over time", path: "/admin/reports/sales", range: true, gran: true },
-  { id: "products", label: "Product performance", hint: "Units, revenue and profit per product", path: "/admin/reports/product-performance", range: true },
-  { id: "stock", label: "Stock valuation", hint: "What your stock on hand is worth", path: "/admin/reports/stock-valuation", range: false },
-  { id: "coupons", label: "Coupon performance", hint: "Uses and discount per coupon", path: "/admin/reports/coupon-performance", range: true },
-  { id: "customers", label: "Customers", hint: "Who ordered and how much they spent", path: "/admin/reports/customers", range: true },
+  { id: "sales", label: tr("Sales"), hint: tr("Orders and revenue over time"), path: "/admin/reports/sales", range: true, gran: true },
+  { id: "products", label: tr("Product performance"), hint: tr("Units, revenue and profit per product"), path: "/admin/reports/product-performance", range: true },
+  { id: "stock", label: tr("Stock valuation"), hint: tr("What your stock on hand is worth"), path: "/admin/reports/stock-valuation", range: false },
+  { id: "coupons", label: tr("Coupon performance"), hint: tr("Uses and discount per coupon"), path: "/admin/reports/coupon-performance", range: true },
+  { id: "customers", label: tr("Customers"), hint: tr("Who ordered and how much they spent"), path: "/admin/reports/customers", range: true },
+  { id: "deliveries-rider", label: tr("Deliveries per rider"), hint: tr("Delivered, not delivered, time and cash for each rider"), path: "/admin/reports/deliveries-by-rider", range: true },
+  { id: "deliveries-day", label: tr("Deliveries per day"), hint: tr("How many orders reached customers each day"), path: "/admin/reports/deliveries-by-day", range: true },
+  { id: "cod", label: tr("Cash on delivery"), hint: tr("Cash the order said, cash the rider took, cash handed to the shop"), path: "/admin/reports/cod-reconciliation", range: true },
 ] as const;
 export const reportsApi = {
   run: (path: string, params: Record<string, unknown>) => api.get<ReportTable>(path, { params: clean({ ...params, format: "json" }) }).then((r) => r.data),
