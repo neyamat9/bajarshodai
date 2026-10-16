@@ -250,14 +250,14 @@ export function OrdersSkeleton() {
         </FilterBar>
       }
       columns={[
-        { key: "order", header: "Order", mobile: "title", sk: "lines2" },
-        { key: "customer", header: "Customer", sk: "lines2" },
-        { key: "items", header: "Items", sk: "lines2" },
-        { key: "payment", header: "Payment", mobile: "end", sk: "badge2" },
-        { key: "status", header: "Status", mobile: "badge", sk: "badge" },
+        { key: "order", header: tr("Order"), mobile: "title", sk: "lines2" },
+        { key: "customer", header: tr("Customer"), sk: "lines2" },
+        { key: "items", header: tr("Items"), sk: "lines2" },
+        { key: "payment", header: tr("Payment"), mobile: "end", sk: "badge2" },
+        { key: "status", header: tr("Status"), mobile: "badge", sk: "badge" },
         {
           key: "total",
-          header: "Total",
+          header: tr("Total"),
           align: "right",
           mobile: "end",
           sk: "num",
@@ -362,12 +362,12 @@ export function ProductsSkeleton() {
         </FilterBar>
       }
       columns={[
-        { key: "product", header: "Product", sk: "thumb2" },
-        { key: "status", header: "Status", sk: "badge" },
-        { key: "price", header: "Price", align: "right", sk: "num" },
-        { key: "stock", header: "Stock", align: "right", sk: "stock" },
-        { key: "variants", header: "Variants", align: "center", sk: "badge" },
-        { key: "sold", header: "Sold", align: "right", sk: "num" },
+        { key: "product", header: tr("Product"), sk: "thumb2" },
+        { key: "status", header: tr("Status"), sk: "badge" },
+        { key: "price", header: tr("Price"), align: "right", sk: "num" },
+        { key: "stock", header: tr("Stock"), align: "right", sk: "stock" },
+        { key: "variants", header: tr("Variants"), align: "center", sk: "badge" },
+        { key: "sold", header: tr("Sold"), align: "right", sk: "num" },
         { key: "actions", header: "", align: "right", sk: "icon" },
       ]}
     />
@@ -400,13 +400,13 @@ export function CustomersSkeleton() {
         </FilterBar>
       }
       columns={[
-        { key: "c", header: "Customer", sk: "lines2" },
-        { key: "phone", header: "Phone", sk: "text" },
-        { key: "status", header: "Status", sk: "badge" },
-        { key: "orders", header: "Orders", align: "right", sk: "num" },
-        { key: "spent", header: "Spent", align: "right", sk: "num" },
-        { key: "joined", header: "Joined", sk: "text" },
-        { key: "login", header: "Last seen", sk: "text" },
+        { key: "c", header: tr("Customer"), sk: "lines2" },
+        { key: "phone", header: tr("Phone"), sk: "text" },
+        { key: "status", header: tr("Status"), sk: "badge" },
+        { key: "orders", header: tr("Orders"), align: "right", sk: "num" },
+        { key: "spent", header: tr("Spent"), align: "right", sk: "num" },
+        { key: "joined", header: tr("Joined"), sk: "text" },
+        { key: "login", header: tr("Last seen"), sk: "text" },
       ]}
     />
   );
@@ -468,11 +468,11 @@ export function InventorySkeleton() {
         </FilterBar>
       }
       columns={[
-        { key: "item", header: "Item", sk: "lines2" },
-        { key: "status", header: "Status", sk: "badge" },
-        { key: "stock", header: "In stock", align: "right", sk: "num" },
-        { key: "state", header: "Level", sk: "badge" },
-        { key: "cost", header: "Value (cost)", align: "right", sk: "num" },
+        { key: "item", header: tr("Item"), sk: "lines2" },
+        { key: "status", header: tr("Status"), sk: "badge" },
+        { key: "stock", header: tr("In stock"), align: "right", sk: "num" },
+        { key: "state", header: tr("Level"), sk: "badge" },
+        { key: "cost", header: tr("Value (cost)"), align: "right", sk: "num" },
         { key: "act", header: "", align: "right", sk: "btn" },
       ]}
     />
@@ -514,10 +514,10 @@ export const ReviewsSkeleton = () =>
     "Text, product, customer…",
     ["All statuses", "Any rating"],
     [
-      { key: "r", header: "Review", sk: "lines2" },
-      { key: "p", header: "Product", sk: "text" },
-      { key: "u", header: "Customer", sk: "lines2" },
-      { key: "s", header: "Status", sk: "badge" },
+      { key: "r", header: tr("Review"), sk: "lines2" },
+      { key: "p", header: tr("Product"), sk: "text" },
+      { key: "u", header: tr("Customer"), sk: "lines2" },
+      { key: "s", header: tr("Status"), sk: "badge" },
       { key: "a", header: "", align: "right", sk: "icon" },
     ],
     { selectable: true, actions: <HBtn label={tr("Views")} icon={<Bookmark />} /> },
@@ -530,10 +530,10 @@ export const QuestionsSkeleton = () =>
     "Question, product…",
     ["All"],
     [
-      { key: "q", header: "Question", sk: "lines2" },
-      { key: "p", header: "Product", sk: "text" },
-      { key: "u", header: "Asked by", sk: "lines2" },
-      { key: "s", header: "Status", sk: "badge" },
+      { key: "q", header: tr("Question"), sk: "lines2" },
+      { key: "p", header: tr("Product"), sk: "text" },
+      { key: "u", header: tr("Asked by"), sk: "lines2" },
+      { key: "s", header: tr("Status"), sk: "badge" },
       { key: "a", header: "", align: "right", sk: "icon" },
     ],
   );
@@ -545,12 +545,12 @@ export const ReturnsSkeleton = () =>
     null,
     ["All statuses"],
     [
-      { key: "o", header: "Order", sk: "lines2" },
-      { key: "c", header: "Customer", sk: "lines2" },
-      { key: "i", header: "Items", sk: "text" },
-      { key: "r", header: "Reason", sk: "text" },
-      { key: "v", header: "Refund value", align: "right", sk: "num" },
-      { key: "s", header: "Status", sk: "badge" },
+      { key: "o", header: tr("Order"), sk: "lines2" },
+      { key: "c", header: tr("Customer"), sk: "lines2" },
+      { key: "i", header: tr("Items"), sk: "text" },
+      { key: "r", header: tr("Reason"), sk: "text" },
+      { key: "v", header: tr("Refund value"), align: "right", sk: "num" },
+      { key: "s", header: tr("Status"), sk: "badge" },
     ],
   );
 
@@ -561,13 +561,13 @@ export const SupportSkeleton = () =>
     "Ticket #, subject, customer…",
     ["All statuses", "Any priority", "Any category"],
     [
-      { key: "t", header: "Ticket", sk: "lines2" },
-      { key: "c", header: "Customer", sk: "lines2" },
-      { key: "cat", header: "Category", sk: "text" },
-      { key: "p", header: "Priority", sk: "badge" },
-      { key: "s", header: "Status", sk: "badge" },
-      { key: "m", header: "Msgs", align: "right", sk: "num" },
-      { key: "l", header: "Last activity", sk: "text" },
+      { key: "t", header: tr("Ticket"), sk: "lines2" },
+      { key: "c", header: tr("Customer"), sk: "lines2" },
+      { key: "cat", header: tr("Category"), sk: "text" },
+      { key: "p", header: tr("Priority"), sk: "badge" },
+      { key: "s", header: tr("Status"), sk: "badge" },
+      { key: "m", header: tr("Msgs"), align: "right", sk: "num" },
+      { key: "l", header: tr("Last activity"), sk: "text" },
     ],
   );
 
@@ -578,10 +578,10 @@ export const ContactSkeleton = () =>
     "Name, email, subject…",
     ["All"],
     [
-      { key: "f", header: "From", sk: "lines2" },
-      { key: "s", header: "Message", sk: "lines2" },
-      { key: "st", header: "Status", sk: "badge" },
-      { key: "d", header: "Received", sk: "text" },
+      { key: "f", header: tr("From"), sk: "lines2" },
+      { key: "s", header: tr("Message"), sk: "lines2" },
+      { key: "st", header: tr("Status"), sk: "badge" },
+      { key: "d", header: tr("Received"), sk: "text" },
       { key: "a", header: "", align: "right", sk: "icon" },
     ],
   );
@@ -593,11 +593,11 @@ export const NewsletterSkeleton = () =>
     "Email…",
     ["All"],
     [
-      { key: "e", header: "Email", sk: "text" },
-      { key: "s", header: "Status", sk: "badge" },
-      { key: "src", header: "Source", sk: "text" },
-      { key: "d", header: "Subscribed", sk: "text" },
-      { key: "u", header: "Unsubscribed", sk: "text" },
+      { key: "e", header: tr("Email"), sk: "text" },
+      { key: "s", header: tr("Status"), sk: "badge" },
+      { key: "src", header: tr("Source"), sk: "text" },
+      { key: "d", header: tr("Subscribed"), sk: "text" },
+      { key: "u", header: tr("Unsubscribed"), sk: "text" },
       { key: "a", header: "", align: "right", sk: "icon" },
     ],
     {
@@ -618,12 +618,12 @@ export const CouponsSkeleton = () =>
     "Code…",
     ["All"],
     [
-      { key: "code", header: "Code", sk: "lines2" },
-      { key: "d", header: "Discount", sk: "lines2" },
-      { key: "v", header: "Valid", sk: "text" },
-      { key: "u", header: "Used", align: "right", sk: "num" },
-      { key: "s", header: "State", sk: "badge" },
-      { key: "on", header: "Active", sk: "badge" },
+      { key: "code", header: tr("Code"), sk: "lines2" },
+      { key: "d", header: tr("Discount"), sk: "lines2" },
+      { key: "v", header: tr("Valid"), sk: "text" },
+      { key: "u", header: tr("Used"), align: "right", sk: "num" },
+      { key: "s", header: tr("State"), sk: "badge" },
+      { key: "on", header: tr("Active"), sk: "badge" },
       { key: "a", header: "", align: "right", sk: "icon" },
     ],
     {
@@ -643,12 +643,12 @@ export const BackInStockSkeleton = () =>
     "Product, SKU…",
     ["All"],
     [
-      { key: "i", header: "Item", sk: "lines2" },
-      { key: "w", header: "Waiting", align: "right", sk: "num" },
-      { key: "st", header: "Stock now", align: "right", sk: "num" },
-      { key: "s", header: "State", sk: "badge" },
-      { key: "f", header: "Failed", align: "right", sk: "num" },
-      { key: "o", header: "Waiting since", sk: "text" },
+      { key: "i", header: tr("Item"), sk: "lines2" },
+      { key: "w", header: tr("Waiting"), align: "right", sk: "num" },
+      { key: "st", header: tr("Stock now"), align: "right", sk: "num" },
+      { key: "s", header: tr("State"), sk: "badge" },
+      { key: "f", header: tr("Failed"), align: "right", sk: "num" },
+      { key: "o", header: tr("Waiting since"), sk: "text" },
       { key: "a", header: "", align: "right", sk: "icon" },
     ],
     {
@@ -685,7 +685,7 @@ export function ProductEditorSkeleton({ isNew = false }: { isNew?: boolean }) {
   return (
     <div role="status" aria-label={tr("Loading")}>
       <PageHeader
-        back={{ to: "/products", label: "Products" }}
+        back={{ to: "/products", label: tr("Products") }}
         title={
           isNew ? (
             "Add product"
@@ -996,7 +996,7 @@ export function PosSkeleton() {
     >
       <div className="lg:shrink-0">
         <PageHeader
-          back={{ to: "/orders", label: "Orders" }}
+          back={{ to: "/orders", label: tr("Orders") }}
           title={tr("New sale")}
           description={tr("Pick products, choose the customer (or walk-in), and complete the sale. Stock is reduced straight away.")}
         />

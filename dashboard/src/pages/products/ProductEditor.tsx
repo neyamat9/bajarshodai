@@ -15,11 +15,12 @@ import { brandsApi, buildCategoryTree, categoriesApi, flattenCategoryTree, slugi
 import { productsApi, type ProductDetail, type ProductInput, type ProductStatus } from "@/api/products";
 import { errorMessage } from "@/api/client";
 import { useAct } from "@/hooks/useAct";
-import { fromLocalInput, money, toLocalInput, titleCase } from "@/lib/format";
+import { fromLocalInput, money, num as fmtNum, toLocalInput, titleCase } from "@/lib/format";
 import { VariantsEditor } from "./components/VariantsEditor";
 import { draftError, fromVariant, toInput, type VariantDraft } from "./components/variantDraft";
 import { PhotosEditor } from "./components/PhotosEditor";
 import { ProductEditorSkeleton } from "@/components/shared/pageSkeletons";
+import { tr } from "@/i18n";
 
 interface Form {
   name: string; nameBn: string; slug: string; productCode: string; barcode: string; status: ProductStatus;
@@ -106,7 +107,7 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
     if (f.unitId) {
       const step = f.sellStep === "" ? unit?.defaultStep : Number(f.sellStep);
       const min = f.minQty === "" ? unit?.defaultMinQty : Number(f.minQty);
-      if (unit && !unit.allowDecimal && ((step !== undefined && !Number.isInteger(step)) || (min !== undefined && !Number.isInteger(min)))) e.sale = `"${unit.name}" is sold in whole numbers: use a whole-number step and minimum`;
+      if (unit && !unit.allowDecimal && ((step !== undefined && !Number.isInteger(step)) || (min !== undefined && !Number.isInteger(min)))) e.sale = tr("\"{{unit}}\" is sold in whole numbers: use a whole-number step and minimum", { unit: unit.name });
       if ((f.sellStep !== "" && !(Number(f.sellStep) > 0)) || (f.minQty !== "" && !(Number(f.minQty) > 0))) e.sale = "Step and minimum must be above zero";
     } else if (f.sellStep !== "" || f.minQty !== "") e.sale = "Choose a unit first";
     if (f.slug && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(f.slug)) e.slug = "Lowercase letters, numbers and single dashes";
@@ -124,7 +125,7 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
     if (new Set(skus).size !== skus.length) e.variants = "Two variants share the same SKU";
     setErrs(e);
     if (Object.keys(e).length) {
-      toast.error("Please fix the highlighted fields");
+      toast.error(tr("Please fix the highlighted fields"));
       setTab(e.variants ? "variants" : e.buyingPrice || e.regularPrice || e.sellingPrice || e.discountPrice || e.discountEnd ? "pricing" : "basics");
     }
     return Object.keys(e).length === 0;
@@ -165,73 +166,73 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
       return productsApi.update(id!, build());
     },
     {
-      success: isNew ? "Product created" : "Product saved",
+      success: isNew ? tr("Product created") : "Product saved",
       invalidate: [["products"], ["product", id], ["inventory"]],
       onSuccess: (p) => { if (isNew) nav(`/products/${p.id}/edit`, { replace: true }); },
       silentError: (e) => e instanceof Error && e.message === "Validation",
     },
   );
-  const dup = useAct(() => productsApi.duplicate(id!), { success: "Copy created as a draft", invalidate: [["products"]], onSuccess: (p) => nav(`/products/${p.id}/edit`) });
-  const del = useAct(() => productsApi.remove(id!), { success: "Product removed", invalidate: [["products"]], onSuccess: () => nav("/products") });
+  const dup = useAct(() => productsApi.duplicate(id!), { success: tr("Copy created as a draft"), invalidate: [["products"]], onSuccess: (p) => nav(`/products/${p.id}/edit`) });
+  const del = useAct(() => productsApi.remove(id!), { success: tr("Product removed"), invalidate: [["products"]], onSuccess: () => nav("/products") });
 
   const margin = Number(f.sellingPrice) > 0 && f.buyingPrice !== "" ? ((Number(f.sellingPrice) - Number(f.buyingPrice)) / Number(f.sellingPrice)) * 100 : null;
 
   return (
     <div>
       <PageHeader
-        back={{ to: "/products", label: "Products" }}
-        title={<span className="flex items-center gap-2">{isNew ? "Add product" : f.name || "Edit product"}{p && <StatusBadge status={p.status} />}</span>}
-        description={p ? `${p._count.orderItems} sold orders · ${p._count.reviews} reviews · ${p._count.questions} questions` : "Fill in the details, then add photos and variants."}
+        back={{ to: "/products", label: tr("Products") }}
+        title={<span className="flex items-center gap-2">{isNew ? tr("Add product") : f.name || "Edit product"}{p && <StatusBadge status={p.status} />}</span>}
+        description={p ? `${p._count.orderItems} sold orders · ${p._count.reviews} reviews · ${p._count.questions} questions` : tr("Fill in the details, then add photos and variants.")}
         actions={
           <>
-            {!isNew && <Button variant="outline" size="sm" loading={dup.isPending} onClick={() => dup.mutate()}><Copy /> Duplicate</Button>}
-            {!isNew && <Button variant="outline" size="sm" onClick={() => setDelOpen(true)}><Trash2 className="text-destructive" /> Delete</Button>}
-            <Button variant="brand" size="sm" loading={save.isPending} onClick={() => save.mutate()}>{isNew ? "Create product" : "Save changes"}</Button>
+            {!isNew && <Button variant="outline" size="sm" loading={dup.isPending} onClick={() => dup.mutate()}><Copy />{" "}{tr("Duplicate")}</Button>}
+            {!isNew && <Button variant="outline" size="sm" onClick={() => setDelOpen(true)}><Trash2 className="text-destructive" />{" "}{tr("Delete")}</Button>}
+            <Button variant="brand" size="sm" loading={save.isPending} onClick={() => save.mutate()}>{isNew ? tr("Create product") : tr("Save changes")}</Button>
           </>
         }
       />
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="mb-4">
-          <TabsTrigger value="basics">Basics</TabsTrigger>
-          <TabsTrigger value="pricing">Pricing</TabsTrigger>
-          <TabsTrigger value="inventory">Inventory & shipping</TabsTrigger>
-          <TabsTrigger value="photos">Photos{p ? ` (${p.images.length})` : staged.length ? ` (${staged.length})` : ""}</TabsTrigger>
-          <TabsTrigger value="variants">Variants{variants.length ? ` (${variants.length})` : ""}</TabsTrigger>
-          <TabsTrigger value="details">Details & tags</TabsTrigger>
-          <TabsTrigger value="seo">SEO</TabsTrigger>
+          <TabsTrigger value="basics">{tr("Basics")}</TabsTrigger>
+          <TabsTrigger value="pricing">{tr("Pricing")}</TabsTrigger>
+          <TabsTrigger value="inventory">{tr("Inventory & shipping")}</TabsTrigger>
+          <TabsTrigger value="photos">{tr("Photos")}{p ? ` (${fmtNum(p.images.length)})` : staged.length ? ` (${fmtNum(staged.length)})` : ""}</TabsTrigger>
+          <TabsTrigger value="variants">{tr("Variants")}{variants.length ? ` (${fmtNum(variants.length)})` : ""}</TabsTrigger>
+          <TabsTrigger value="details">{tr("Details & tags")}</TabsTrigger>
+          <TabsTrigger value="seo">{tr("SEO")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="basics" className="space-y-4">
-          <Section title="General">
+          <Section title={tr("General")}>
             <div className="space-y-3">
               <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Product name (Bangla)" required error={errs.nameBn}>
+                <Field label={tr("Product name (Bangla)")} required error={errs.nameBn}>
                   <Input value={f.nameBn} maxLength={200} onChange={(e) => set("nameBn", e.target.value)} placeholder="রুই মাছ" />
                 </Field>
-                <Field label="Product name (English)" required error={errs.name} hint="Makes the web address">
-                  <Input value={f.name} maxLength={200} onChange={(e) => { set("name", e.target.value); if (!slugTouched) set("slug", slugify(e.target.value)); }} placeholder="Rui fish" />
+                <Field label={tr("Product name (English)")} required error={errs.name} hint={tr("Makes the web address")}>
+                  <Input value={f.name} maxLength={200} onChange={(e) => { set("name", e.target.value); if (!slugTouched) set("slug", slugify(e.target.value)); }} placeholder={tr("Rui fish")} />
                 </Field>
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
-                <Field label="URL slug" error={errs.slug} hint="Auto-made from the name"><Input value={f.slug} onChange={(e) => { setSlugTouched(true); set("slug", e.target.value); }} /></Field>
-                <Field label="Product code / SKU"><Input value={f.productCode} onChange={(e) => set("productCode", e.target.value)} /></Field>
-                <Field label="Barcode"><Input value={f.barcode} onChange={(e) => set("barcode", e.target.value)} /></Field>
+                <Field label={tr("URL slug")} error={errs.slug} hint={tr("Auto-made from the name")}><Input value={f.slug} onChange={(e) => { setSlugTouched(true); set("slug", e.target.value); }} /></Field>
+                <Field label={tr("Product code / SKU")}><Input value={f.productCode} onChange={(e) => set("productCode", e.target.value)} /></Field>
+                <Field label={tr("Barcode")}><Input value={f.barcode} onChange={(e) => set("barcode", e.target.value)} /></Field>
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
-                <Field label="Category" required error={errs.categoryId} hint="Pick the most exact one">
+                <Field label={tr("Category")} required error={errs.categoryId} hint={tr("Pick the most exact one")}>
                   <Select value={f.categoryId} onChange={(e) => set("categoryId", e.target.value)}>
-                    <option value="">Choose…</option>
+                    <option value="">{tr("Choose…")}</option>
                     {catOptions.map((o) => <option key={o.node.id} value={o.node.id}>{o.path}</option>)}
                   </Select>
                 </Field>
-                <Field label="Brand (optional)">
+                <Field label={tr("Brand (optional)")}>
                   <Select value={f.brandId} onChange={(e) => set("brandId", e.target.value)}>
-                    <option value="">No brand</option>
+                    <option value="">{tr("No brand")}</option>
                     {brands.data?.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
                   </Select>
                 </Field>
-                <Field label="Status" hint="Draft / inactive are hidden from the shop">
+                <Field label={tr("Status")} hint={tr("Draft / inactive are hidden from the shop")}>
                   <Select value={f.status} onChange={(e) => set("status", e.target.value as ProductStatus)}>
                     {["ACTIVE", "DRAFT", "INACTIVE", "OUT_OF_STOCK", "DISCONTINUED"].map((s) => <option key={s} value={s}>{titleCase(s)}</option>)}
                   </Select>
@@ -239,36 +240,36 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
               </div>
             </div>
           </Section>
-          <Section title="How it is sold" description="The unit shows on the product card (৳380 / kg). The + and − buttons move by the step.">
+          <Section title={tr("How it is sold")} description={tr("The unit shows on the product card (৳380 / kg). The + and − buttons move by the step.")}>
             {errs.sale && <p className="mb-3 rounded bg-red-50 px-3 py-2 text-xs font-medium text-destructive dark:bg-red-500/10">{errs.sale}</p>}
             <div className="grid gap-3 sm:grid-cols-4">
-              <Field label="Unit" hint={<Link to="/units" className="underline">Manage units</Link>}>
+              <Field label={tr("Unit")} hint={<Link to="/units" className="underline">{tr("Manage units")}</Link>}>
                 <Select value={f.unitId} onChange={(e) => set("unitId", e.target.value)}>
-                  <option value="">None (whole pieces)</option>
+                  <option value="">{tr("None (whole pieces)")}</option>
                   {unitOptions.map((u) => <option key={u.id} value={u.id}>{u.name} · {u.nameBn}{u.isActive ? "" : " (off)"}</option>)}
                 </Select>
               </Field>
-              <Field label="Pack size" hint="Optional, e.g. 500 g"><Input value={f.packSize} maxLength={40} onChange={(e) => set("packSize", e.target.value)} /></Field>
-              <Field label="Step" hint={unit ? `Empty = unit step (${unit.defaultStep})` : "Choose a unit first"}><Input type="number" min={0} step="0.001" value={f.sellStep} disabled={!f.unitId} onChange={(e) => set("sellStep", e.target.value)} placeholder={unit ? String(unit.defaultStep) : ""} /></Field>
-              <Field label="Smallest quantity" hint={unit ? `Empty = unit minimum (${unit.defaultMinQty})` : "Choose a unit first"}><Input type="number" min={0} step="0.001" value={f.minQty} disabled={!f.unitId} onChange={(e) => set("minQty", e.target.value)} placeholder={unit ? String(unit.defaultMinQty) : ""} /></Field>
+              <Field label={tr("Pack size")} hint={tr("Optional, e.g. 500 g")}><Input value={f.packSize} maxLength={40} onChange={(e) => set("packSize", e.target.value)} /></Field>
+              <Field label={tr("Step")} hint={unit ? `Empty = unit step (${unit.defaultStep})` : tr("Choose a unit first")}><Input type="number" min={0} step="0.001" value={f.sellStep} disabled={!f.unitId} onChange={(e) => set("sellStep", e.target.value)} placeholder={unit ? String(unit.defaultStep) : ""} /></Field>
+              <Field label={tr("Smallest quantity")} hint={unit ? `Empty = unit minimum (${unit.defaultMinQty})` : tr("Choose a unit first")}><Input type="number" min={0} step="0.001" value={f.minQty} disabled={!f.unitId} onChange={(e) => set("minQty", e.target.value)} placeholder={unit ? String(unit.defaultMinQty) : ""} /></Field>
             </div>
-            <label className="mt-3 flex cursor-pointer items-center gap-2 text-[13px]"><Checkbox checked={f.isWeighed} onChange={(e) => set("isWeighed", e.target.checked)} />Weighed when packed: the final weight (and bill) can differ a little from what was ordered</label>
+            <label className="mt-3 flex cursor-pointer items-center gap-2 text-[13px]"><Checkbox checked={f.isWeighed} onChange={(e) => set("isWeighed", e.target.checked)} />{tr("Weighed when packed: the final weight (and bill) can differ a little from what was ordered")}</label>
           </Section>
-          <Section title="Description">
+          <Section title={tr("Description")}>
             <div className="space-y-3">
               <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Short description (Bangla)" hint="One or two lines, shown near the price"><Textarea rows={2} maxLength={1000} value={f.shortDescriptionBn} onChange={(e) => set("shortDescriptionBn", e.target.value)} /></Field>
-                <Field label="Short description (English)"><Textarea rows={2} maxLength={1000} value={f.shortDescription} onChange={(e) => set("shortDescription", e.target.value)} /></Field>
+                <Field label={tr("Short description (Bangla)")} hint={tr("One or two lines, shown near the price")}><Textarea rows={2} maxLength={1000} value={f.shortDescriptionBn} onChange={(e) => set("shortDescriptionBn", e.target.value)} /></Field>
+                <Field label={tr("Short description (English)")}><Textarea rows={2} maxLength={1000} value={f.shortDescription} onChange={(e) => set("shortDescription", e.target.value)} /></Field>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Full description (Bangla)"><Textarea rows={6} value={f.descriptionBn} onChange={(e) => set("descriptionBn", e.target.value)} /></Field>
-                <Field label="Full description (English)" error={errs.description}><Textarea rows={6} value={f.description} onChange={(e) => set("description", e.target.value)} /></Field>
+                <Field label={tr("Full description (Bangla)")}><Textarea rows={6} value={f.descriptionBn} onChange={(e) => set("descriptionBn", e.target.value)} /></Field>
+                <Field label={tr("Full description (English)")} error={errs.description}><Textarea rows={6} value={f.description} onChange={(e) => set("description", e.target.value)} /></Field>
               </div>
             </div>
           </Section>
-          <Section title="Badges & shop sections" description="Where the product is highlighted on the website.">
+          <Section title={tr("Badges & shop sections")} description={tr("Where the product is highlighted on the website.")}>
             <div className="flex flex-wrap gap-x-6 gap-y-2">
-              {([["isFeatured", "Featured"], ["isNew", "New arrival"], ["isHot", "Hot"], ["isBestSeller", "Best seller"], ["isLimitedStock", "Limited stock"]] as const).map(([k, label]) => (
+              {([["isFeatured", tr("Featured")], ["isNew", tr("New arrival")], ["isHot", tr("Hot")], ["isBestSeller", tr("Best seller")], ["isLimitedStock", tr("Limited stock")]] as const).map(([k, label]) => (
                 <label key={k} className="flex cursor-pointer items-center gap-2 text-[13px]"><Checkbox checked={f[k]} onChange={(e) => set(k, e.target.checked)} />{label}</label>
               ))}
             </div>
@@ -276,25 +277,25 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
         </TabsContent>
 
         <TabsContent value="pricing" className="space-y-4">
-          <Section title="Prices (৳)">
+          <Section title={tr("Prices (৳)")}>
             <div className="grid gap-3 sm:grid-cols-3">
-              <Field label="Cost price (what you pay)" required error={errs.buyingPrice}><Input type="number" min={0} step="0.01" value={f.buyingPrice} onChange={(e) => set("buyingPrice", e.target.value)} /></Field>
-              <Field label="Regular price (MRP)" required error={errs.regularPrice} hint="The crossed-out 'was' price"><Input type="number" min={0} step="0.01" value={f.regularPrice} onChange={(e) => set("regularPrice", e.target.value)} /></Field>
-              <Field label="Selling price" required error={errs.sellingPrice}><Input type="number" min={0} step="0.01" value={f.sellingPrice} onChange={(e) => set("sellingPrice", e.target.value)} /></Field>
+              <Field label={tr("Cost price (what you pay)")} required error={errs.buyingPrice}><Input type="number" min={0} step="0.01" value={f.buyingPrice} onChange={(e) => set("buyingPrice", e.target.value)} /></Field>
+              <Field label={tr("Regular price (MRP)")} required error={errs.regularPrice} hint={tr("The crossed-out 'was' price")}><Input type="number" min={0} step="0.01" value={f.regularPrice} onChange={(e) => set("regularPrice", e.target.value)} /></Field>
+              <Field label={tr("Selling price")} required error={errs.sellingPrice}><Input type="number" min={0} step="0.01" value={f.sellingPrice} onChange={(e) => set("sellingPrice", e.target.value)} /></Field>
             </div>
-            {margin !== null && <p className="mt-3 text-xs text-muted-foreground">Margin at the selling price: <b className={margin < 0 ? "text-destructive" : "text-foreground"}>{margin.toFixed(1)}%</b> · profit {money(Number(f.sellingPrice) - Number(f.buyingPrice))} per unit</p>}
+            {margin !== null && <p className="mt-3 text-xs text-muted-foreground">{tr("Margin at the selling price:")}{" "}<b className={margin < 0 ? "text-destructive" : "text-foreground"}>{margin.toFixed(1)}%</b> · profit {money(Number(f.sellingPrice) - Number(f.buyingPrice))} per unit</p>}
           </Section>
-          <Section title="Scheduled discount" description="The promo price switches on and off by itself between the two dates. Leave the price empty for no discount.">
+          <Section title={tr("Scheduled discount")} description={tr("The promo price switches on and off by itself between the two dates. Leave the price empty for no discount.")}>
             <div className="grid gap-3 sm:grid-cols-4">
-              <Field label="Promo price ৳" error={errs.discountPrice}><Input type="number" min={0} step="0.01" value={f.discountPrice} onChange={(e) => set("discountPrice", e.target.value)} /></Field>
-              <Field label="Starts" hint="Empty = now"><Input type="datetime-local" value={f.discountStart} onChange={(e) => set("discountStart", e.target.value)} disabled={f.discountPrice === ""} /></Field>
-              <Field label="Ends" error={errs.discountEnd} hint="Empty = until removed"><Input type="datetime-local" value={f.discountEnd} onChange={(e) => set("discountEnd", e.target.value)} disabled={f.discountPrice === ""} /></Field>
-              <Field label="Label"><Input value={f.discountLabel} maxLength={60} onChange={(e) => set("discountLabel", e.target.value)} placeholder="Eid offer" disabled={f.discountPrice === ""} /></Field>
+              <Field label={tr("Promo price ৳")} error={errs.discountPrice}><Input type="number" min={0} step="0.01" value={f.discountPrice} onChange={(e) => set("discountPrice", e.target.value)} /></Field>
+              <Field label={tr("Starts")} hint={tr("Empty = now")}><Input type="datetime-local" value={f.discountStart} onChange={(e) => set("discountStart", e.target.value)} disabled={f.discountPrice === ""} /></Field>
+              <Field label={tr("Ends")} error={errs.discountEnd} hint={tr("Empty = until removed")}><Input type="datetime-local" value={f.discountEnd} onChange={(e) => set("discountEnd", e.target.value)} disabled={f.discountPrice === ""} /></Field>
+              <Field label={tr("Label")}><Input value={f.discountLabel} maxLength={60} onChange={(e) => set("discountLabel", e.target.value)} placeholder={tr("Eid offer")} disabled={f.discountPrice === ""} /></Field>
             </div>
             {p?.isDiscounted && <p className="mt-3 text-xs font-medium text-emerald-700 dark:text-emerald-400">Discount is live now: customers pay {money(p.sellingPrice)}.</p>}
           </Section>
           {p && p.priceHistory.length > 0 && (
-            <Section title="Price history">
+            <Section title={tr("Price history")}>
               <ul className="space-y-1 text-[13px]">
                 {p.priceHistory.slice(0, 8).map((h) => <li key={h.id} className="flex justify-between"><span className="text-muted-foreground">{new Date(h.recordedAt).toLocaleString()}</span><b>{money(h.price)}</b></li>)}
               </ul>
@@ -303,62 +304,62 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
         </TabsContent>
 
         <TabsContent value="inventory" className="space-y-4">
-          <Section title="Stock">
+          <Section title={tr("Stock")}>
             <div className="grid gap-3 sm:grid-cols-3">
-              <Field label="Quantity in stock" hint={hasVariants ? "Total of the variants — change each variant's stock instead" : isNew ? "Opening stock" : "Use Inventory → Adjust to change stock with a record"}>
+              <Field label={tr("Quantity in stock")} hint={hasVariants ? tr("Total of the variants — change each variant's stock instead") : isNew ? tr("Opening stock") : tr("Use Inventory → Adjust to change stock with a record")}>
                 <Input type="number" min={0} step="0.001" value={hasVariants ? String(variants.reduce((s, v) => s + Number(v.stock || 0), 0)) : f.stock} onChange={(e) => set("stock", e.target.value)} disabled={hasVariants || !isNew} />
               </Field>
-              <Field label="Low-stock alert at" hint="You get a bell alert when stock drops to this"><Input type="number" min={0} value={f.lowStockThreshold} onChange={(e) => set("lowStockThreshold", e.target.value)} /></Field>
+              <Field label={tr("Low-stock alert at")} hint={tr("You get a bell alert when stock drops to this")}><Input type="number" min={0} value={f.lowStockThreshold} onChange={(e) => set("lowStockThreshold", e.target.value)} /></Field>
             </div>
           </Section>
-          <Section title="Shipping">
+          <Section title={tr("Shipping")}>
             <div className="space-y-3">
-              <label className="flex cursor-pointer items-center gap-2 text-[13px]"><Checkbox checked={f.freeShipping} onChange={(e) => set("freeShipping", e.target.checked)} />Free shipping for this product</label>
+              <label className="flex cursor-pointer items-center gap-2 text-[13px]"><Checkbox checked={f.freeShipping} onChange={(e) => set("freeShipping", e.target.checked)} />{tr("Free shipping for this product")}</label>
               <div className="grid gap-3 sm:grid-cols-4">
-                <Field label="Weight (kg)"><Input type="number" min={0} step="0.01" value={f.weight} onChange={(e) => set("weight", e.target.value)} /></Field>
-                <Field label="Length (cm)"><Input type="number" min={0} value={f.length} onChange={(e) => set("length", e.target.value)} /></Field>
-                <Field label="Width (cm)"><Input type="number" min={0} value={f.width} onChange={(e) => set("width", e.target.value)} /></Field>
-                <Field label="Height (cm)"><Input type="number" min={0} value={f.height} onChange={(e) => set("height", e.target.value)} /></Field>
+                <Field label={tr("Weight (kg)")}><Input type="number" min={0} step="0.01" value={f.weight} onChange={(e) => set("weight", e.target.value)} /></Field>
+                <Field label={tr("Length (cm)")}><Input type="number" min={0} value={f.length} onChange={(e) => set("length", e.target.value)} /></Field>
+                <Field label={tr("Width (cm)")}><Input type="number" min={0} value={f.width} onChange={(e) => set("width", e.target.value)} /></Field>
+                <Field label={tr("Height (cm)")}><Input type="number" min={0} value={f.height} onChange={(e) => set("height", e.target.value)} /></Field>
               </div>
             </div>
           </Section>
         </TabsContent>
 
         <TabsContent value="photos">
-          <Section title="Photos"><PhotosEditor productId={id} images={p?.images} staged={staged} onStage={setStaged} /></Section>
+          <Section title={tr("Photos")}><PhotosEditor productId={id} images={p?.images} staged={staged} onStage={setStaged} /></Section>
         </TabsContent>
 
         <TabsContent value="variants">
-          <Section title="Variants">
+          <Section title={tr("Variants")}>
             {errs.variants && <p className="mb-3 rounded bg-red-50 px-3 py-2 text-xs font-medium text-destructive dark:bg-red-500/10">{errs.variants}</p>}
             <VariantsEditor productId={id} value={variants} onChange={setVariants} saved={p?.variants} />
           </Section>
         </TabsContent>
 
         <TabsContent value="details" className="space-y-4">
-          <Section title="Filter attributes" description="Used by the shop's filters and shown as product details, e.g. Origin = Local, Type = Organic.">
+          <Section title={tr("Filter attributes")} description={tr("Used by the shop's filters and shown as product details, e.g. Origin = Local, Type = Organic.")}>
             <div className="space-y-2">
               {f.attrs.map((a, i) => (
                 <div key={i} className="flex gap-2">
-                  <Input value={a.name} placeholder="Name" onChange={(e) => set("attrs", f.attrs.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} />
-                  <Input value={a.value} placeholder="Value" onChange={(e) => set("attrs", f.attrs.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)))} />
-                  <Button size="icon-sm" variant="ghost" aria-label="Remove" onClick={() => set("attrs", f.attrs.filter((_, j) => j !== i))}><Trash2 /></Button>
+                  <Input value={a.name} placeholder={tr("Name")} onChange={(e) => set("attrs", f.attrs.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} />
+                  <Input value={a.value} placeholder={tr("Value")} onChange={(e) => set("attrs", f.attrs.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)))} />
+                  <Button size="icon-sm" variant="ghost" aria-label={tr("Remove")} onClick={() => set("attrs", f.attrs.filter((_, j) => j !== i))}><Trash2 /></Button>
                 </div>
               ))}
-              <Button size="sm" variant="outline" onClick={() => set("attrs", [...f.attrs, { name: "", value: "" }])}><Plus /> Add attribute</Button>
+              <Button size="sm" variant="outline" onClick={() => set("attrs", [...f.attrs, { name: "", value: "" }])}><Plus />{" "}{tr("Add attribute")}</Button>
             </div>
           </Section>
-          <Section title="Tags">
-            <Field label="Tags" hint="Separate with commas"><Input value={f.tags} onChange={(e) => set("tags", e.target.value)} placeholder="organic, fresh, local" /></Field>
+          <Section title={tr("Tags")}>
+            <Field label={tr("Tags")} hint={tr("Separate with commas")}><Input value={f.tags} onChange={(e) => set("tags", e.target.value)} placeholder={tr("organic, fresh, local")} /></Field>
           </Section>
         </TabsContent>
 
         <TabsContent value="seo">
-          <Section title="Search engines" description="Shown in Google results. Leave empty to use the product name and description.">
+          <Section title={tr("Search engines")} description={tr("Shown in Google results. Leave empty to use the product name and description.")}>
             <div className="space-y-3">
-              <Field label="Meta title" hint={`${f.metaTitle.length}/70`}><Input value={f.metaTitle} maxLength={70} onChange={(e) => set("metaTitle", e.target.value)} /></Field>
-              <Field label="Meta description" hint={`${f.metaDescription.length}/160`}><Textarea rows={3} maxLength={160} value={f.metaDescription} onChange={(e) => set("metaDescription", e.target.value)} /></Field>
-              <Field label="Keywords"><Input value={f.metaKeywords} onChange={(e) => set("metaKeywords", e.target.value)} /></Field>
+              <Field label={tr("Meta title")} hint={`${f.metaTitle.length}/70`}><Input value={f.metaTitle} maxLength={70} onChange={(e) => set("metaTitle", e.target.value)} /></Field>
+              <Field label={tr("Meta description")} hint={`${f.metaDescription.length}/160`}><Textarea rows={3} maxLength={160} value={f.metaDescription} onChange={(e) => set("metaDescription", e.target.value)} /></Field>
+              <Field label={tr("Keywords")}><Input value={f.metaKeywords} onChange={(e) => set("metaKeywords", e.target.value)} /></Field>
               <div className="rounded border border-border p-3">
                 <p className="text-[13px] font-medium text-blue-700 dark:text-blue-400">{f.metaTitle || f.name || "Product title"}</p>
                 <p className="text-xs text-emerald-700 dark:text-emerald-400">bazarshodai.com/products/{f.slug || "product-slug"}</p>
@@ -370,11 +371,11 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
       </Tabs>
 
       <div className="mt-6 flex justify-end gap-2 border-t border-border pt-4">
-        <Button variant="outline" onClick={() => nav("/products")}>Back to list</Button>
-        <Button variant="brand" loading={save.isPending} onClick={() => save.mutate()}>{isNew ? "Create product" : "Save changes"}</Button>
+        <Button variant="outline" onClick={() => nav("/products")}>{tr("Back to list")}</Button>
+        <Button variant="brand" loading={save.isPending} onClick={() => save.mutate()}>{isNew ? tr("Create product") : tr("Save changes")}</Button>
       </div>
 
-      <ConfirmDialog open={delOpen} onOpenChange={setDelOpen} title={`Delete "${f.name}"?`} description={p && p._count.orderItems > 0 ? "It has been ordered before, so it is hidden instead of erased. Order history stays intact." : "This cannot be undone."} confirmLabel="Delete" destructive loading={del.isPending} onConfirm={() => del.mutate()} />
+      <ConfirmDialog open={delOpen} onOpenChange={setDelOpen} title={`Delete "${f.name}"?`} description={p && p._count.orderItems > 0 ? tr("It has been ordered before, so it is hidden instead of erased. Order history stays intact.") : tr("This cannot be undone.")} confirmLabel={tr("Delete")} destructive loading={del.isPending} onConfirm={() => del.mutate()} />
     </div>
   );
 }

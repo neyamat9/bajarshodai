@@ -22,35 +22,36 @@ import { useAct } from "@/hooks/useAct";
 import { useInfiniteList } from "@/hooks/useInfiniteList";
 import { useUrlState } from "@/hooks/useUrlState";
 import { dateOnly, dateTime, fromLocalInput, money, toLocalInput, titleCase } from "@/lib/format";
+import { tr } from "@/i18n";
 
 const label = (c: Pick<Coupon, "discountType" | "discountValue">) =>
-  c.discountType === "PERCENTAGE" ? `${Number(c.discountValue)}% off` : c.discountType === "FREE_SHIPPING" ? "Free shipping" : `${money(c.discountValue)} off`;
+  c.discountType === "PERCENTAGE" ? `${Number(c.discountValue)}% off` : c.discountType === "FREE_SHIPPING" ? tr("Free shipping") : `${money(c.discountValue)} off`;
 
 function Rules({ f, set }: { f: Form; set: (p: Partial<Form>) => void }) {
   const cats = useQuery({ queryKey: ["categories"], queryFn: categoriesApi.list });
   return (
     <div className="space-y-3">
       <div className="grid gap-3 sm:grid-cols-3">
-        <Field label="Discount type">
+        <Field label={tr("Discount type")}>
           <Select value={f.discountType} onChange={(e) => set({ discountType: e.target.value as DiscountType })}>
-            <option value="PERCENTAGE">Percentage</option><option value="FIXED_AMOUNT">Fixed amount (৳)</option><option value="FREE_SHIPPING">Free shipping</option>
+            <option value="PERCENTAGE">{tr("Percentage")}</option><option value="FIXED_AMOUNT">{tr("Fixed amount (৳)")}</option><option value="FREE_SHIPPING">{tr("Free shipping")}</option>
           </Select>
         </Field>
-        {f.discountType !== "FREE_SHIPPING" && <Field label={f.discountType === "PERCENTAGE" ? "Percent" : "Amount ৳"} required><Input type="number" min={0} value={f.discountValue} onChange={(e) => set({ discountValue: e.target.value })} /></Field>}
-        {f.discountType === "PERCENTAGE" && <Field label="Max discount ৳" hint="Optional cap"><Input type="number" min={0} value={f.maxDiscount} onChange={(e) => set({ maxDiscount: e.target.value })} /></Field>}
+        {f.discountType !== "FREE_SHIPPING" && <Field label={f.discountType === "PERCENTAGE" ? tr("Percent") : tr("Amount ৳")} required><Input type="number" min={0} value={f.discountValue} onChange={(e) => set({ discountValue: e.target.value })} /></Field>}
+        {f.discountType === "PERCENTAGE" && <Field label={tr("Max discount ৳")} hint={tr("Optional cap")}><Input type="number" min={0} value={f.maxDiscount} onChange={(e) => set({ maxDiscount: e.target.value })} /></Field>}
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
-        <Field label="Minimum order ৳"><Input type="number" min={0} value={f.minOrderAmount} onChange={(e) => set({ minOrderAmount: e.target.value })} /></Field>
-        <Field label="Valid from" required><Input type="datetime-local" value={f.validFrom} onChange={(e) => set({ validFrom: e.target.value })} /></Field>
-        <Field label="Valid until" required><Input type="datetime-local" value={f.validTo} onChange={(e) => set({ validTo: e.target.value })} /></Field>
+        <Field label={tr("Minimum order ৳")}><Input type="number" min={0} value={f.minOrderAmount} onChange={(e) => set({ minOrderAmount: e.target.value })} /></Field>
+        <Field label={tr("Valid from")} required><Input type="datetime-local" value={f.validFrom} onChange={(e) => set({ validFrom: e.target.value })} /></Field>
+        <Field label={tr("Valid until")} required><Input type="datetime-local" value={f.validTo} onChange={(e) => set({ validTo: e.target.value })} /></Field>
       </div>
-      <label className="flex cursor-pointer items-center gap-2 text-[13px]"><Checkbox checked={f.firstOrderOnly} onChange={(e) => set({ firstOrderOnly: e.target.checked })} />First order of a customer only</label>
+      <label className="flex cursor-pointer items-center gap-2 text-[13px]"><Checkbox checked={f.firstOrderOnly} onChange={(e) => set({ firstOrderOnly: e.target.checked })} />{tr("First order of a customer only")}</label>
       <div className="rounded border border-border p-3">
-        <label className="flex cursor-pointer items-center gap-2 text-[13px] font-medium"><Checkbox checked={f.all} onChange={(e) => set({ all: e.target.checked })} />Applies to every product</label>
+        <label className="flex cursor-pointer items-center gap-2 text-[13px] font-medium"><Checkbox checked={f.all} onChange={(e) => set({ all: e.target.checked })} />{tr("Applies to every product")}</label>
         {!f.all && (
           <div className="mt-3 space-y-3">
             <div>
-              <p className="mb-1 text-xs font-medium text-muted-foreground">Only these categories</p>
+              <p className="mb-1 text-xs font-medium text-muted-foreground">{tr("Only these categories")}</p>
               <div className="flex flex-wrap gap-2">
                 {cats.data?.map((c) => {
                   const on = f.categories.includes(c.id);
@@ -59,10 +60,10 @@ function Rules({ f, set }: { f: Form; set: (p: Partial<Form>) => void }) {
               </div>
             </div>
             <div>
-              <p className="mb-1 text-xs font-medium text-muted-foreground">Or these products</p>
+              <p className="mb-1 text-xs font-medium text-muted-foreground">{tr("Or these products")}</p>
               <ProductPicker onlyActive={false} onPick={(p) => !f.products.some((x) => x.id === p.id) && set({ products: [...f.products, { id: p.id, name: p.name }] })} />
               <div className="mt-2 flex flex-wrap gap-2">
-                {f.products.map((p) => <Badge key={p.id} variant="brand" className="gap-1">{p.name}<button type="button" aria-label="Remove" onClick={() => set({ products: f.products.filter((x) => x.id !== p.id) })}><X className="size-3" /></button></Badge>)}
+                {f.products.map((p) => <Badge key={p.id} variant="brand" className="gap-1">{p.name}<button type="button" aria-label={tr("Remove")} onClick={() => set({ products: f.products.filter((x) => x.id !== p.id) })}><X className="size-3" /></button></Badge>)}
               </div>
             </div>
           </div>
@@ -111,10 +112,10 @@ function CouponDialog({ coupon, onClose }: { coupon: Coupon | null; onClose: () 
       const b: CouponInput = { ...rules(f), description: f.description || undefined, maxUsageCount: f.maxUsageCount ? Number(f.maxUsageCount) : null, maxUsagePerUser: f.maxUsagePerUser ? Number(f.maxUsagePerUser) : null, isActive: f.isActive };
       return coupon ? couponsApi.update(coupon.id, { ...b, code: f.code.trim() }) : couponsApi.create({ ...b, code: f.code.trim().toUpperCase() });
     },
-    { success: "Coupon saved", invalidate: [["coupons"]], onSuccess: onClose },
+    { success: tr("Coupon saved"), invalidate: [["coupons"]], onSuccess: onClose },
   );
   const submit = () => {
-    if (!/^[A-Za-z0-9_-]{2,50}$/.test(f.code.trim())) return setErr("Code: letters, numbers, - and _");
+    if (!/^[A-Za-z0-9_-]{2,50}$/.test(f.code.trim())) return setErr(tr("Code: letters, numbers, - and _"));
     const e = rulesError(f);
     if (e) return setErr(e);
     setErr(null);
@@ -123,21 +124,21 @@ function CouponDialog({ coupon, onClose }: { coupon: Coupon | null; onClose: () 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent size="lg">
-        <DialogHeader><DialogTitle>{coupon ? `Edit ${coupon.code}` : "New coupon"}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{coupon ? `Edit ${coupon.code}` : tr("New coupon")}</DialogTitle></DialogHeader>
         <DialogBody className="space-y-3">
           {err && <p className="rounded bg-red-50 px-3 py-2 text-xs font-medium text-destructive dark:bg-red-500/10">{err}</p>}
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Code" required><Input value={f.code} onChange={(e) => set({ code: e.target.value.toUpperCase() })} placeholder="EID200" /></Field>
-            <Field label="Description"><Input value={f.description} onChange={(e) => set({ description: e.target.value })} /></Field>
+            <Field label={tr("Code")} required><Input value={f.code} onChange={(e) => set({ code: e.target.value.toUpperCase() })} placeholder={tr("EID200")} /></Field>
+            <Field label={tr("Description")}><Input value={f.description} onChange={(e) => set({ description: e.target.value })} /></Field>
           </div>
           <Rules f={f} set={set} />
           <div className="grid gap-3 sm:grid-cols-3">
-            <Field label="Total uses allowed" hint="Empty = unlimited"><Input type="number" min={1} value={f.maxUsageCount} onChange={(e) => set({ maxUsageCount: e.target.value })} /></Field>
-            <Field label="Uses per customer" hint="Empty = unlimited"><Input type="number" min={1} value={f.maxUsagePerUser} onChange={(e) => set({ maxUsagePerUser: e.target.value })} /></Field>
-            <label className="mt-6 flex cursor-pointer items-center gap-2 text-[13px]"><Switch checked={f.isActive} onCheckedChange={(isActive) => set({ isActive })} />Active</label>
+            <Field label={tr("Total uses allowed")} hint={tr("Empty = unlimited")}><Input type="number" min={1} value={f.maxUsageCount} onChange={(e) => set({ maxUsageCount: e.target.value })} /></Field>
+            <Field label={tr("Uses per customer")} hint={tr("Empty = unlimited")}><Input type="number" min={1} value={f.maxUsagePerUser} onChange={(e) => set({ maxUsagePerUser: e.target.value })} /></Field>
+            <label className="mt-6 flex cursor-pointer items-center gap-2 text-[13px]"><Switch checked={f.isActive} onCheckedChange={(isActive) => set({ isActive })} />{tr("Active")}</label>
           </div>
         </DialogBody>
-        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button loading={save.isPending} onClick={submit}>Save coupon</Button></DialogFooter>
+        <DialogFooter><Button variant="outline" onClick={onClose}>{tr("Cancel")}</Button><Button loading={save.isPending} onClick={submit}>{tr("Save coupon")}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -161,36 +162,36 @@ function BulkDialog({ onClose }: { onClose: () => void }) {
   const submit = () => {
     const e = rulesError(f);
     if (e) return setErr(e);
-    if (!(Number(count) >= 1 && Number(count) <= 1000)) return setErr("Count must be 1–1000");
-    if (prefix && !/^[A-Za-z0-9]{1,12}$/.test(prefix)) return setErr("Prefix: letters and numbers, up to 12");
+    if (!(Number(count) >= 1 && Number(count) <= 1000)) return setErr(tr("Count must be 1–1000"));
+    if (prefix && !/^[A-Za-z0-9]{1,12}$/.test(prefix)) return setErr(tr("Prefix: letters and numbers, up to 12"));
     setErr(null);
     run.mutate();
   };
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent size="lg">
-        <DialogHeader><DialogTitle>Generate many single-use codes</DialogTitle><DialogDescription>Each code works once. Good for giveaways and vouchers.</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>{tr("Generate many single-use codes")}</DialogTitle><DialogDescription>{tr("Each code works once. Good for giveaways and vouchers.")}</DialogDescription></DialogHeader>
         <DialogBody className="space-y-3">
           {codes ? (
             <>
-              <p className="text-[13px]"><b>{codes.length}</b> codes were created.</p>
+              <p className="text-[13px]"><b>{codes.length}</b>{" "}{tr("codes were created.")}</p>
               <textarea readOnly className="h-48 w-full rounded border border-border bg-muted p-2 font-mono text-xs" value={codes.join("\n")} />
-              <div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => { void navigator.clipboard.writeText(codes.join("\n")); toast.success("Copied"); }}><Copy /> Copy all</Button><Button size="sm" variant="outline" onClick={csv}><Download /> Download CSV</Button></div>
+              <div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => { void navigator.clipboard.writeText(codes.join("\n")); toast.success(tr("Copied")); }}><Copy />{" "}{tr("Copy all")}</Button><Button size="sm" variant="outline" onClick={csv}><Download />{" "}{tr("Download CSV")}</Button></div>
             </>
           ) : (
             <>
               {err && <p className="rounded bg-red-50 px-3 py-2 text-xs font-medium text-destructive dark:bg-red-500/10">{err}</p>}
               <div className="grid gap-3 sm:grid-cols-4">
-                <Field label="How many" required><Input type="number" min={1} max={1000} value={count} onChange={(e) => setCount(e.target.value)} /></Field>
-                <Field label="Prefix"><Input value={prefix} onChange={(e) => setPrefix(e.target.value.toUpperCase())} placeholder="EID" /></Field>
-                <Field label="Code length"><Input type="number" min={6} max={16} value={len} onChange={(e) => setLen(e.target.value)} /></Field>
-                <Field label="Note"><Input value={f.description} onChange={(e) => set({ description: e.target.value })} /></Field>
+                <Field label={tr("How many")} required><Input type="number" min={1} max={1000} value={count} onChange={(e) => setCount(e.target.value)} /></Field>
+                <Field label={tr("Prefix")}><Input value={prefix} onChange={(e) => setPrefix(e.target.value.toUpperCase())} placeholder={tr("EID")} /></Field>
+                <Field label={tr("Code length")}><Input type="number" min={6} max={16} value={len} onChange={(e) => setLen(e.target.value)} /></Field>
+                <Field label={tr("Note")}><Input value={f.description} onChange={(e) => set({ description: e.target.value })} /></Field>
               </div>
               <Rules f={f} set={set} />
             </>
           )}
         </DialogBody>
-        <DialogFooter><Button variant="outline" onClick={onClose}>{codes ? "Done" : "Cancel"}</Button>{!codes && <Button loading={run.isPending} onClick={submit}>Generate</Button>}</DialogFooter>
+        <DialogFooter><Button variant="outline" onClick={onClose}>{codes ? tr("Done") : tr("Cancel")}</Button>{!codes && <Button loading={run.isPending} onClick={submit}>{tr("Generate")}</Button>}</DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -209,21 +210,21 @@ function UsageDialog({ coupon, onClose }: { coupon: Coupon; onClose: () => void 
         <DialogHeader><DialogTitle>{coupon.code} — usage</DialogTitle><DialogDescription>{label(coupon)} · {dateOnly(coupon.validFrom)} → {dateOnly(coupon.validTo)}</DialogDescription></DialogHeader>
         <DialogBody className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-4">
-            <StatCard label="Uses" value={s?.uses ?? "—"} hint={s?.remainingUses != null ? `${s.remainingUses} left` : "No limit"} />
-            <StatCard label="Discount given" value={s ? money(s.totalDiscountGiven) : "—"} tone="fresh" />
-            <StatCard label="Customers" value={s?.uniqueCustomers ?? "—"} tone="sky" />
-            <StatCard label="Order revenue" value={s ? money(s.orderRevenue) : "—"} tone="green" />
+            <StatCard label={tr("Uses")} value={s?.uses ?? "—"} hint={s?.remainingUses != null ? `${s.remainingUses} left` : tr("No limit")} />
+            <StatCard label={tr("Discount given")} value={s ? money(s.totalDiscountGiven) : "—"} tone="fresh" />
+            <StatCard label={tr("Customers")} value={s?.uniqueCustomers ?? "—"} tone="sky" />
+            <StatCard label={tr("Order revenue")} value={s ? money(s.orderRevenue) : "—"} tone="green" />
           </div>
           <Tabs value={tab} onValueChange={(t) => { setTab(t); setPage(1); }}>
-            <div className="flex items-center justify-between"><TabsList><TabsTrigger value="uses">Every use</TabsTrigger><TabsTrigger value="users">By customer</TabsTrigger></TabsList><DownloadButton path={`/admin/coupons/${coupon.id}/usage/export`} filename={`${coupon.code}-usage.csv`} /></div>
+            <div className="flex items-center justify-between"><TabsList><TabsTrigger value="uses">{tr("Every use")}</TabsTrigger><TabsTrigger value="users">{tr("By customer")}</TabsTrigger></TabsList><DownloadButton path={`/admin/coupons/${coupon.id}/usage/export`} filename={`${coupon.code}-usage.csv`} /></div>
             <TabsContent value="uses">
-              <ul className="divide-y divide-border text-[13px]">{u.data?.data.map((r) => <li key={r.id} className="flex justify-between py-2"><span>{who(r.customer)} · {r.order?.orderNumber ?? "—"} · {dateTime(r.usedAt)}</span><b>− {money(r.discountAmount)}</b></li>)}{u.data?.data.length === 0 && <li className="py-6 text-center text-muted-foreground">Not used yet.</li>}</ul>
+              <ul className="divide-y divide-border text-[13px]">{u.data?.data.map((r) => <li key={r.id} className="flex justify-between py-2"><span>{who(r.customer)} · {r.order?.orderNumber ?? "—"} · {dateTime(r.usedAt)}</span><b>− {money(r.discountAmount)}</b></li>)}{u.data?.data.length === 0 && <li className="py-6 text-center text-muted-foreground">{tr("Not used yet.")}</li>}</ul>
             </TabsContent>
             <TabsContent value="users">
-              <ul className="divide-y divide-border text-[13px]">{us.data?.data.map((r, i) => <li key={i} className="flex justify-between py-2"><span>{who(r.customer)} · {r.uses}×</span><span>− {money(r.discount)} · last {dateOnly(r.lastUsedAt)}</span></li>)}{us.data?.data.length === 0 && <li className="py-6 text-center text-muted-foreground">Not used yet.</li>}</ul>
+              <ul className="divide-y divide-border text-[13px]">{us.data?.data.map((r, i) => <li key={i} className="flex justify-between py-2"><span>{who(r.customer)} · {r.uses}×</span><span>− {money(r.discount)} · last {dateOnly(r.lastUsedAt)}</span></li>)}{us.data?.data.length === 0 && <li className="py-6 text-center text-muted-foreground">{tr("Not used yet.")}</li>}</ul>
             </TabsContent>
           </Tabs>
-          {(() => { const m = (tab === "uses" ? u.data : us.data)?.meta; return m && m.totalPages > 1 ? <div className="flex justify-end gap-2"><Button size="xs" variant="outline" disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</Button><Button size="xs" variant="outline" disabled={page >= m.totalPages} onClick={() => setPage(page + 1)}>Next</Button></div> : null; })()}
+          {(() => { const m = (tab === "uses" ? u.data : us.data)?.meta; return m && m.totalPages > 1 ? <div className="flex justify-end gap-2"><Button size="xs" variant="outline" disabled={page <= 1} onClick={() => setPage(page - 1)}>{tr("Previous")}</Button><Button size="xs" variant="outline" disabled={page >= m.totalPages} onClick={() => setPage(page + 1)}>{tr("Next")}</Button></div> : null; })()}
         </DialogBody>
       </DialogContent>
     </Dialog>
@@ -240,39 +241,39 @@ export default function Coupons() {
   const [del, setDel] = useState<Coupon | null>(null);
   const q = useInfiniteList(["coupons", search, f.state], (page) => couponsApi.list({ search, state: f.state, page, limit: 20 }));
   const toggle = useAct((c: Coupon) => couponsApi.update(c.id, { isActive: !c.isActive }), { invalidate: [["coupons"]] });
-  const remove = useAct(() => couponsApi.remove(del!.id), { success: "Coupon deleted", invalidate: [["coupons"]], onSuccess: () => setDel(null) });
+  const remove = useAct(() => couponsApi.remove(del!.id), { success: tr("Coupon deleted"), invalidate: [["coupons"]], onSuccess: () => setDel(null) });
 
   const cols: Column<Coupon>[] = [
-    { key: "code", header: "Code", sk: "lines2", cell: (c) => (<div><p className="font-mono text-[13px] font-bold">{c.code}</p>{c.description && <p className="max-w-[200px] truncate text-[11px] text-muted-foreground">{c.description}</p>}</div>) },
-    { key: "d", header: "Discount", sk: "lines2", cell: (c) => <div><p className="font-medium">{label(c)}</p><p className="text-[11px] text-muted-foreground">{c.minOrderAmount ? `min ${money(c.minOrderAmount)}` : "no minimum"}{c.firstOrderOnly ? " · first order" : ""}</p></div> },
-    { key: "v", header: "Valid", sk: "text", cell: (c) => <span className="text-[13px]">{dateOnly(c.validFrom)} → {dateOnly(c.validTo)}</span> },
-    { key: "u", header: "Used", align: "right", sk: "num", cell: (c) => `${c.usageCount}${c.maxUsageCount ? ` / ${c.maxUsageCount}` : ""}` },
-    { key: "s", header: "State", sk: "badge", cell: (c) => <StatusBadge status={c.state} label={titleCase(c.state)} /> },
-    { key: "on", header: "Active", sk: "badge", cell: (c) => <div onClick={(e) => e.stopPropagation()}><Switch checked={c.isActive} onCheckedChange={() => toggle.mutate(c)} aria-label="Active" /></div> },
+    { key: "code", header: tr("Code"), sk: "lines2", cell: (c) => (<div><p className="font-mono text-[13px] font-bold">{c.code}</p>{c.description && <p className="max-w-[200px] truncate text-[11px] text-muted-foreground">{c.description}</p>}</div>) },
+    { key: "d", header: tr("Discount"), sk: "lines2", cell: (c) => <div><p className="font-medium">{label(c)}</p><p className="text-[11px] text-muted-foreground">{c.minOrderAmount ? `min ${money(c.minOrderAmount)}` : "no minimum"}{c.firstOrderOnly ? " · first order" : ""}</p></div> },
+    { key: "v", header: tr("Valid"), sk: "text", cell: (c) => <span className="text-[13px]">{dateOnly(c.validFrom)} → {dateOnly(c.validTo)}</span> },
+    { key: "u", header: tr("Used"), align: "right", sk: "num", cell: (c) => `${c.usageCount}${c.maxUsageCount ? ` / ${c.maxUsageCount}` : ""}` },
+    { key: "s", header: tr("State"), sk: "badge", cell: (c) => <StatusBadge status={c.state} label={titleCase(c.state)} /> },
+    { key: "on", header: tr("Active"), sk: "badge", cell: (c) => <div onClick={(e) => e.stopPropagation()}><Switch checked={c.isActive} onCheckedChange={() => toggle.mutate(c)} aria-label={tr("Active")} /></div> },
     { key: "a", header: "", align: "right", sk: "icon", cell: (c) => (
       <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-        <Button size="icon-sm" variant="ghost" aria-label="Usage" onClick={() => setUsage(c)}><BarChart3 /></Button>
-        <Button size="icon-sm" variant="ghost" aria-label="Edit" onClick={() => setEdit(c)}><Pencil /></Button>
-        <Button size="icon-sm" variant="ghost" aria-label="Delete" onClick={() => setDel(c)}><Trash2 className="text-destructive" /></Button>
+        <Button size="icon-sm" variant="ghost" aria-label={tr("Usage")} onClick={() => setUsage(c)}><BarChart3 /></Button>
+        <Button size="icon-sm" variant="ghost" aria-label={tr("Edit")} onClick={() => setEdit(c)}><Pencil /></Button>
+        <Button size="icon-sm" variant="ghost" aria-label={tr("Delete")} onClick={() => setDel(c)}><Trash2 className="text-destructive" /></Button>
       </div>
     ) },
   ];
   return (
     <div>
-      <PageHeader title="Coupons" description="Discount codes customers type at checkout." actions={<><Button variant="outline" size="sm" onClick={() => setBulk(true)}><Layers /> Bulk generate</Button><Button variant="brand" size="sm" onClick={() => setEdit("new")}><Plus /> New coupon</Button></>} />
+      <PageHeader title={tr("Coupons")} description={tr("Discount codes customers type at checkout.")} actions={<><Button variant="outline" size="sm" onClick={() => setBulk(true)}><Layers />{" "}{tr("Bulk generate")}</Button><Button variant="brand" size="sm" onClick={() => setEdit("new")}><Plus />{" "}{tr("New coupon")}</Button></>} />
       <DataTable infinite={q}
         columns={cols}
         onRowClick={(c) => setUsage(c)}
-        empty={{ title: "No coupons", description: "Create a code to offer discounts." }}
+        empty={{ title: tr("No coupons"), description: tr("Create a code to offer discounts.") }}
         toolbar={<FilterBar>
-          <SearchInput value={f.search} onChange={(v) => setF({ search: v })} placeholder="Code…" />
-          <FilterSelect value={f.state} onChange={(v) => setF({ state: v })} all="Any state" options={["active", "scheduled", "expired", "inactive", "used-up"].map((s) => ({ value: s, label: titleCase(s) }))} />
+          <SearchInput value={f.search} onChange={(v) => setF({ search: v })} placeholder={tr("Code…")} />
+          <FilterSelect value={f.state} onChange={(v) => setF({ state: v })} all={tr("Any state")} options={["active", "scheduled", "expired", "inactive", "used-up"].map((s) => ({ value: s, label: titleCase(s) }))} />
         </FilterBar>}
       />
       {edit && <CouponDialog coupon={edit === "new" ? null : edit} onClose={() => setEdit(null)} />}
       {bulk && <BulkDialog onClose={() => setBulk(false)} />}
       {usage && <UsageDialog coupon={usage} onClose={() => setUsage(null)} />}
-      <ConfirmDialog open={!!del} onOpenChange={(o) => !o && setDel(null)} title={`Delete ${del?.code}?`} description="A coupon that was already used can't be erased — switch it off instead." confirmLabel="Delete" destructive loading={remove.isPending} onConfirm={() => remove.mutate()} />
+      <ConfirmDialog open={!!del} onOpenChange={(o) => !o && setDel(null)} title={`Delete ${del?.code}?`} description={tr("A coupon that was already used can't be erased — switch it off instead.")} confirmLabel={tr("Delete")} destructive loading={remove.isPending} onConfirm={() => remove.mutate()} />
     </div>
   );
 }

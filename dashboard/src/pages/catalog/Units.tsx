@@ -16,8 +16,10 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { EmptyState, ErrorState } from "@/components/shared/EmptyState";
 import { useAct } from "@/hooks/useAct";
 import { CardListSkeleton } from "@/components/shared/skeletons";
+import { tr } from "@/i18n";
+import { num } from "@/lib/format";
 
-const TEXT = "How products are sold: kg, piece, packet… Add any unit you need. Drag to change the order in the product form.";
+const TEXT = tr("How products are sold: kg, piece, packet… Add any unit you need. Drag to change the order in the product form.");
 
 function UnitDialog({ unit, onClose }: { unit: Unit | null; onClose: () => void }) {
   const [f, setF] = useState({
@@ -41,41 +43,41 @@ function UnitDialog({ unit, onClose }: { unit: Unit | null; onClose: () => void 
       };
       return unit ? unitsApi.update(unit.id, b) : unitsApi.create({ ...b, code: f.code.trim() });
     },
-    { success: "Unit saved", invalidate: [["units"]], onSuccess: onClose },
+    { success: tr("Unit saved"), invalidate: [["units"]], onSuccess: onClose },
   );
   const submit = () => {
-    if (!unit && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(f.code)) return setErr("Code: lowercase English letters, numbers and dashes");
-    if (!f.name.trim() || !f.nameBn.trim()) return setErr("Give the unit a name in English and in Bangla");
-    if (!f.shortLabel.trim() || !f.shortLabelBn.trim()) return setErr("Give the short label (shown on product cards) in both languages");
+    if (!unit && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(f.code)) return setErr(tr("Code: lowercase English letters, numbers and dashes"));
+    if (!f.name.trim() || !f.nameBn.trim()) return setErr(tr("Give the unit a name in English and in Bangla"));
+    if (!f.shortLabel.trim() || !f.shortLabelBn.trim()) return setErr(tr("Give the short label (shown on product cards) in both languages"));
     const step = Number(f.defaultStep);
     const min = Number(f.defaultMinQty);
-    if (!(step > 0) || !(min > 0)) return setErr("Step and minimum must be above zero");
-    if (!f.allowDecimal && (!Number.isInteger(step) || !Number.isInteger(min))) return setErr("A unit sold in whole numbers needs a whole-number step and minimum");
+    if (!(step > 0) || !(min > 0)) return setErr(tr("Step and minimum must be above zero"));
+    if (!f.allowDecimal && (!Number.isInteger(step) || !Number.isInteger(min))) return setErr(tr("A unit sold in whole numbers needs a whole-number step and minimum"));
     setErr(null);
     save.mutate();
   };
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent size="md">
-        <DialogHeader><DialogTitle>{unit ? "Edit unit" : "New unit"}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{unit ? tr("Edit unit") : tr("New unit")}</DialogTitle></DialogHeader>
         <DialogBody className="space-y-3">
           {err && <p className="rounded bg-red-50 px-3 py-2 text-xs font-medium text-destructive dark:bg-red-500/10">{err}</p>}
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Name (English)" required><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value, code: codeTouched ? f.code : slugify(e.target.value) })} placeholder="Bottle" /></Field>
-            <Field label="Name (Bangla)" required><Input value={f.nameBn} onChange={(e) => setF({ ...f, nameBn: e.target.value })} placeholder="বোতল" /></Field>
-            <Field label="Short label (English)" required hint="Shown next to the price, e.g. kg"><Input value={f.shortLabel} onChange={(e) => setF({ ...f, shortLabel: e.target.value })} placeholder="btl" /></Field>
-            <Field label="Short label (Bangla)" required><Input value={f.shortLabelBn} onChange={(e) => setF({ ...f, shortLabelBn: e.target.value })} placeholder="বোতল" /></Field>
+            <Field label={tr("Name (English)")} required><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value, code: codeTouched ? f.code : slugify(e.target.value) })} placeholder={tr("Bottle")} /></Field>
+            <Field label={tr("Name (Bangla)")} required><Input value={f.nameBn} onChange={(e) => setF({ ...f, nameBn: e.target.value })} placeholder="বোতল" /></Field>
+            <Field label={tr("Short label (English)")} required hint={tr("Shown next to the price, e.g. kg")}><Input value={f.shortLabel} onChange={(e) => setF({ ...f, shortLabel: e.target.value })} placeholder={tr("btl")} /></Field>
+            <Field label={tr("Short label (Bangla)")} required><Input value={f.shortLabelBn} onChange={(e) => setF({ ...f, shortLabelBn: e.target.value })} placeholder="বোতল" /></Field>
           </div>
-          <Field label="Code" hint={unit ? "The code cannot be changed" : "English letters, numbers and dashes. It cannot be changed later."}>
+          <Field label={tr("Code")} hint={unit ? tr("The code cannot be changed") : tr("English letters, numbers and dashes. It cannot be changed later.")}>
             <Input value={f.code} disabled={!!unit} onChange={(e) => { setCodeTouched(true); setF({ ...f, code: e.target.value }); }} />
           </Field>
           <label className="flex cursor-pointer items-center gap-2 text-[13px]">
             <Checkbox checked={f.allowDecimal} onChange={(e) => setF({ ...f, allowDecimal: e.target.checked })} />
-            Can be sold in parts (0.5 kg). Off = whole numbers only (1, 2, 3).
+            {tr("Can be sold in parts (0.5 kg). Off = whole numbers only (1, 2, 3).")}
           </label>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Step of the + / − buttons" hint="e.g. 0.5 for kg, 1 for pieces"><Input type="number" min={0} step="0.001" value={f.defaultStep} onChange={(e) => setF({ ...f, defaultStep: e.target.value })} /></Field>
-            <Field label="Smallest quantity" hint="A product can use its own step and minimum instead"><Input type="number" min={0} step="0.001" value={f.defaultMinQty} onChange={(e) => setF({ ...f, defaultMinQty: e.target.value })} /></Field>
+            <Field label={tr("Step of the + / − buttons")} hint={tr("e.g. 0.5 for kg, 1 for pieces")}><Input type="number" min={0} step="0.001" value={f.defaultStep} onChange={(e) => setF({ ...f, defaultStep: e.target.value })} /></Field>
+            <Field label={tr("Smallest quantity")} hint={tr("A product can use its own step and minimum instead")}><Input type="number" min={0} step="0.001" value={f.defaultMinQty} onChange={(e) => setF({ ...f, defaultMinQty: e.target.value })} /></Field>
           </div>
           <label className="flex cursor-pointer items-center gap-2 text-[13px]">
             <Checkbox checked={f.isActive} onChange={(e) => setF({ ...f, isActive: e.target.checked })} />
@@ -83,8 +85,8 @@ function UnitDialog({ unit, onClose }: { unit: Unit | null; onClose: () => void 
           </label>
         </DialogBody>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button loading={save.isPending} onClick={submit}>Save</Button>
+          <Button variant="outline" onClick={onClose}>{tr("Cancel")}</Button>
+          <Button loading={save.isPending} onClick={submit}>{tr("Save")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -107,38 +109,38 @@ export default function Units() {
       qc.setQueryData(["units"], prev);
     }
   };
-  const toggle = useAct((u: Unit) => unitsApi.update(u.id, { isActive: !u.isActive }), { success: (_d, u) => (u.isActive ? "Unit switched off" : "Unit switched on"), invalidate: [["units"]] });
-  const remove = useAct(() => unitsApi.remove(del!.id), { success: "Unit deleted", invalidate: [["units"]], onSuccess: () => setDel(null) });
+  const toggle = useAct((u: Unit) => unitsApi.update(u.id, { isActive: !u.isActive }), { success: (_d, u) => (u.isActive ? tr("Unit switched off") : tr("Unit switched on")), invalidate: [["units"]] });
+  const remove = useAct(() => unitsApi.remove(del!.id), { success: tr("Unit deleted"), invalidate: [["units"]], onSuccess: () => setDel(null) });
 
-  if (q.isLoading) return <CardListSkeleton title="Units" text={TEXT} action="New unit" />;
+  if (q.isLoading) return <CardListSkeleton title={tr("Units")} text={TEXT} action={tr("New unit")} />;
   if (q.isError) return <ErrorState message={errorMessage(q.error)} onRetry={() => q.refetch()} />;
   const units = q.data ?? [];
 
   return (
     <div>
-      <PageHeader title="Units" description={TEXT} actions={<Button variant="brand" size="sm" onClick={() => setEdit("new")}><Plus /> New unit</Button>} />
-      {units.length === 0 ? <Card><EmptyState title="No units yet" description="Add kg, piece, packet… so products can be sold by weight or count." /></Card> : (
+      <PageHeader title={tr("Units")} description={TEXT} actions={<Button variant="brand" size="sm" onClick={() => setEdit("new")}><Plus />{" "}{tr("New unit")}</Button>} />
+      {units.length === 0 ? <Card><EmptyState title={tr("No units yet")} description={tr("Add kg, piece, packet… so products can be sold by weight or count.")} /></Card> : (
         <SortableList items={units} onReorder={(ids) => void reorder(ids)}>
           {(u) => (
             <div className="flex flex-wrap items-center gap-3 py-2 pr-3">
               <div className="min-w-0 flex-1">
                 <p className="break-words text-[13px] font-semibold">
                   {u.name} <span className="font-normal text-muted-foreground">· {u.nameBn}</span>
-                  {!u.isActive && <Badge variant="neutral" className="ml-2">Off</Badge>}
+                  {!u.isActive && <Badge variant="neutral" className="ml-2">{tr("Off")}</Badge>}
                 </p>
                 <p className="text-[11px] text-muted-foreground">
-                  Shown as “{u.shortLabel}” / “{u.shortLabelBn}” · code {u.code} · {u.allowDecimal ? `parts allowed, step ${u.defaultStep}` : "whole numbers"}, minimum {u.defaultMinQty} · {u.productCount} product{u.productCount === 1 ? "" : "s"}
+                  {tr("Shown as “{{en}}” / “{{bn}}” · code {{code}} · {{sold}}, minimum {{min}} · {{n}} products", { en: u.shortLabel, bn: u.shortLabelBn, code: u.code, sold: u.allowDecimal ? tr("parts allowed, step {{n}}", { n: num(u.defaultStep) }) : tr("whole numbers"), min: num(u.defaultMinQty), n: num(u.productCount) })}
                 </p>
               </div>
-              <Button size="xs" variant="outline" loading={toggle.isPending && toggle.variables?.id === u.id} onClick={() => toggle.mutate(u)}>{u.isActive ? "Switch off" : "Switch on"}</Button>
-              <Button size="icon-sm" variant="ghost" aria-label="Edit" onClick={() => setEdit(u)}><Pencil /></Button>
-              <Button size="icon-sm" variant="ghost" aria-label="Delete" disabled={u.productCount > 0} title={u.productCount > 0 ? "In use: switch it off instead" : "Delete"} onClick={() => setDel(u)}><Trash2 className="text-destructive" /></Button>
+              <Button size="xs" variant="outline" loading={toggle.isPending && toggle.variables?.id === u.id} onClick={() => toggle.mutate(u)}>{u.isActive ? tr("Switch off") : tr("Switch on")}</Button>
+              <Button size="icon-sm" variant="ghost" aria-label={tr("Edit")} onClick={() => setEdit(u)}><Pencil /></Button>
+              <Button size="icon-sm" variant="ghost" aria-label={tr("Delete")} disabled={u.productCount > 0} title={u.productCount > 0 ? tr("In use: switch it off instead") : tr("Delete")} onClick={() => setDel(u)}><Trash2 className="text-destructive" /></Button>
             </div>
           )}
         </SortableList>
       )}
       {edit && <UnitDialog unit={edit === "new" ? null : edit} onClose={() => setEdit(null)} />}
-      <ConfirmDialog open={!!del} onOpenChange={(o) => !o && setDel(null)} title={`Delete "${del?.name}"?`} description="Only a unit that no product uses can be deleted." confirmLabel="Delete" destructive loading={remove.isPending} onConfirm={() => remove.mutate()} />
+      <ConfirmDialog open={!!del} onOpenChange={(o) => !o && setDel(null)} title={`Delete "${del?.name}"?`} description={tr("Only a unit that no product uses can be deleted.")} confirmLabel={tr("Delete")} destructive loading={remove.isPending} onConfirm={() => remove.mutate()} />
     </div>
   );
 }

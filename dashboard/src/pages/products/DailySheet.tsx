@@ -16,7 +16,8 @@ import { Thumb } from "@/components/shared/Thumb";
 import { ListPageSkeleton } from "@/components/shared/skeletons";
 import { useUrlState } from "@/hooks/useUrlState";
 import { useAct } from "@/hooks/useAct";
-import { money } from "@/lib/format";
+import { money, num } from "@/lib/format";
+import { tr } from "@/i18n";
 
 interface Edit {
   price?: string;
@@ -25,7 +26,7 @@ interface Edit {
 }
 
 const DEFAULTS = { search: "", categoryId: "" };
-const TEXT = "Fish and vegetable prices change every day. Type the new price or stock, then save all the changes at once.";
+const TEXT = tr("Fish and vegetable prices change every day. Type the new price or stock, then save all the changes at once.");
 
 /** The daily sheet: one table to update the price, the stock and the on/off state of many products in one go. */
 export default function DailySheet() {
@@ -73,21 +74,21 @@ export default function DailySheet() {
   return (
     <div>
       <PageHeader
-        title="Daily prices & stock"
+        title={tr("Daily prices & stock")}
         description={TEXT}
         actions={
           <Button variant="brand" size="sm" disabled={changes.length === 0} loading={save.isPending} onClick={() => save.mutate()}>
-            <Save /> Save {changes.length > 0 ? `${changes.length} change${changes.length === 1 ? "" : "s"}` : "changes"}
+            <Save /> {changes.length > 0 ? tr("Save {{n}} changes", { n: num(changes.length) }) : tr("Save changes")}
           </Button>
         }
       />
       <Card>
         <FilterBar>
-          <SearchInput value={f.search} onChange={(v) => setF({ search: v })} placeholder="Search by name…" />
+          <SearchInput value={f.search} onChange={(v) => setF({ search: v })} placeholder={tr("Search by name…")} />
           <FilterSelect
             value={f.categoryId}
             onChange={(v) => setF({ categoryId: v })}
-            all="All categories"
+            all={tr("All categories")}
             options={flattenCategoryTree(buildCategoryTree(cats.data ?? [])).map((o) => ({ value: o.node.id, label: `${"— ".repeat(o.depth)}${o.node.name}` }))}
           />
         </FilterBar>
@@ -97,18 +98,18 @@ export default function DailySheet() {
         ) : q.isError ? (
           <ErrorState message={errorMessage(q.error)} onRetry={() => q.refetch()} />
         ) : rows.length === 0 ? (
-          <EmptyState title="No products found" description="Change the search or the category." />
+          <EmptyState title={tr("No products found")} description={tr("Change the search or the category.")} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-[13px]">
               <thead>
                 <tr className="border-b border-border text-left text-[11px] uppercase tracking-wide text-muted-foreground">
-                  <th className="px-3 py-2 font-medium">Product</th>
-                  <th className="px-3 py-2 font-medium">Price now</th>
-                  <th className="px-3 py-2 font-medium">New price ৳</th>
-                  <th className="px-3 py-2 font-medium">Stock now</th>
-                  <th className="px-3 py-2 font-medium">New stock</th>
-                  <th className="px-3 py-2 font-medium">On the shop</th>
+                  <th className="px-3 py-2 font-medium">{tr("Product")}</th>
+                  <th className="px-3 py-2 font-medium">{tr("Price now")}</th>
+                  <th className="px-3 py-2 font-medium">{tr("New price ৳")}</th>
+                  <th className="px-3 py-2 font-medium">{tr("Stock now")}</th>
+                  <th className="px-3 py-2 font-medium">{tr("New stock")}</th>
+                  <th className="px-3 py-2 font-medium">{tr("On the shop")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -133,20 +134,20 @@ export default function DailySheet() {
                       </td>
                       <td className="px-3 py-2 tabular-nums">
                         {Number(p.stock)}{unitLabel(p) && <span className="text-[11px] text-muted-foreground"> {unitLabel(p)}</span>}
-                        {p.stockState === "low" && <Badge variant="warning" className="ml-1">low</Badge>}
-                        {p.stockState === "out" && <Badge variant="danger" className="ml-1">out</Badge>}
+                        {p.stockState === "low" && <Badge variant="warning" className="ml-1">{tr("low")}</Badge>}
+                        {p.stockState === "out" && <Badge variant="danger" className="ml-1">{tr("out")}</Badge>}
                       </td>
                       <td className="px-3 py-2">
                         {hasVariants ? (
-                          <span className="text-[11px] text-muted-foreground">Has variants: set stock on each</span>
+                          <span className="text-[11px] text-muted-foreground">{tr("Has variants: set stock on each")}</span>
                         ) : (
                           <Input className="h-8 w-28" type="number" min={0} step="0.001" value={e.stock ?? ""} placeholder={String(Number(p.stock))} onChange={(ev) => patch(p.id, { stock: ev.target.value })} aria-label={`New stock of ${p.name}`} />
                         )}
                       </td>
                       <td className="px-3 py-2">
                         <label className="flex cursor-pointer items-center gap-2">
-                          <Checkbox checked={e.active ?? p.status === "ACTIVE"} onChange={(ev) => patch(p.id, { active: ev.target.checked })} aria-label={`Show ${p.name} on the shop`} />
-                          <span className="text-[11px] text-muted-foreground">{(e.active ?? p.status === "ACTIVE") ? "Live" : "Hidden"}</span>
+                          <Checkbox checked={e.active ?? p.status === "ACTIVE"} onChange={(ev) => patch(p.id, { active: ev.target.checked })} aria-label={tr("Show {{name}} on the shop", { name: p.name })} />
+                          <span className="text-[11px] text-muted-foreground">{(e.active ?? p.status === "ACTIVE") ? tr("Live") : tr("Hidden")}</span>
                         </label>
                       </td>
                     </tr>
@@ -157,7 +158,7 @@ export default function DailySheet() {
           </div>
         )}
       </Card>
-      {rows.length === 100 && <p className="mt-2 text-xs text-muted-foreground">Showing the first 100: use the search or a category to narrow the list.</p>}
+      {rows.length === 100 && <p className="mt-2 text-xs text-muted-foreground">{tr("Showing the first 100: use the search or a category to narrow the list.")}</p>}
     </div>
   );
 }

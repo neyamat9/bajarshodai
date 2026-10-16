@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAct } from "@/hooks/useAct";
-import { dateOnly } from "@/lib/format";
+import { dateOnly, titleCase } from "@/lib/format";
 import { ProfileSkeleton } from "@/components/shared/pageSkeletons";
 import { tr } from "@/i18n";
 
@@ -44,7 +44,7 @@ export default function Profile() {
         <Section title={tr("Profile")}>
           <div className="mb-4 flex items-center gap-3">
             <Avatar className="size-14"><AvatarFallback className="text-lg">{me.name.split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase()}</AvatarFallback></Avatar>
-            <div><p className="font-semibold">{me.email}</p><p className="text-xs text-muted-foreground">{me.role.replace("_", " ")} · since {dateOnly(me.createdAt)}</p></div>
+            <div><p className="font-semibold">{me.email}</p><p className="text-xs text-muted-foreground">{titleCase(me.role)} · {tr("since {{date}}", { date: dateOnly(me.createdAt) })}</p></div>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label={tr("Name")} required><Input value={name ?? me.name} onChange={(e) => setName(e.target.value)} /></Field>

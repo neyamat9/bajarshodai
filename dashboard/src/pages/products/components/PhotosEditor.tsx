@@ -5,16 +5,17 @@ import { assetUrl } from "@/api/client";
 import { productsApi, type ProductImage } from "@/api/products";
 import { useAct } from "@/hooks/useAct";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { tr } from "@/i18n";
 
 // create mode: files are only collected (`staged`) and uploaded after the product exists.
 export function PhotosEditor({ productId, images, staged, onStage }: { productId?: string; images?: ProductImage[]; staged: File[]; onStage: (f: File[]) => void }) {
   const input = useRef<HTMLInputElement>(null);
   const [del, setDel] = useState<ProductImage | null>(null);
   const inv = [["product", productId], ["products"]];
-  const upload = useAct((files: File[]) => productsApi.uploadImages(productId!, files), { success: "Photos added", invalidate: inv });
+  const upload = useAct((files: File[]) => productsApi.uploadImages(productId!, files), { success: tr("Photos added"), invalidate: inv });
   const main = useAct((id: string) => productsApi.updateImage(productId!, id, { isMain: true }), { invalidate: inv });
   const order = useAct((ids: string[]) => productsApi.reorderImages(productId!, ids), { invalidate: inv });
-  const remove = useAct((id: string) => productsApi.removeImage(productId!, id), { success: "Photo removed", invalidate: inv, onSuccess: () => setDel(null) });
+  const remove = useAct((id: string) => productsApi.removeImage(productId!, id), { success: tr("Photo removed"), invalidate: inv, onSuccess: () => setDel(null) });
 
   const pick = (list: FileList | null) => {
     const files = Array.from(list ?? []);
@@ -33,20 +34,20 @@ export function PhotosEditor({ productId, images, staged, onStage }: { productId
 
   return (
     <div className="space-y-3">
-      <p className="text-[13px] text-muted-foreground">JPG, PNG, WebP or GIF, up to 10 MB each. The first (starred) photo is the one shown in lists.</p>
+      <p className="text-[13px] text-muted-foreground">{tr("JPG, PNG, WebP or GIF, up to 10 MB each. The first (starred) photo is the one shown in lists.")}</p>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-5">
         {(images ?? []).map((im, i) => (
           <div key={im.id} className="group relative overflow-hidden rounded border border-border bg-muted">
             <img src={assetUrl(im.url)} alt={im.alt ?? ""} className="aspect-square w-full object-cover" />
-            {im.isMain && <span className="absolute left-1.5 top-1.5 rounded bg-fresh-500 px-1.5 py-0.5 text-[10px] font-bold text-white">MAIN</span>}
+            {im.isMain && <span className="absolute left-1.5 top-1.5 rounded bg-fresh-500 px-1.5 py-0.5 text-[10px] font-bold text-white">{tr("MAIN")}</span>}
             <div className="absolute inset-x-0 bottom-0 flex justify-between gap-1 bg-gradient-to-t from-black/70 p-1.5 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
               <div className="flex gap-1">
-                <Button size="icon-xs" variant="secondary" aria-label="Move left" disabled={i === 0} onClick={() => move(i, -1)}><ArrowLeft /></Button>
-                <Button size="icon-xs" variant="secondary" aria-label="Move right" disabled={i === (images?.length ?? 0) - 1} onClick={() => move(i, 1)}><ArrowRight /></Button>
+                <Button size="icon-xs" variant="secondary" aria-label={tr("Move left")} disabled={i === 0} onClick={() => move(i, -1)}><ArrowLeft /></Button>
+                <Button size="icon-xs" variant="secondary" aria-label={tr("Move right")} disabled={i === (images?.length ?? 0) - 1} onClick={() => move(i, 1)}><ArrowRight /></Button>
               </div>
               <div className="flex gap-1">
-                {!im.isMain && <Button size="icon-xs" variant="secondary" aria-label="Make main" onClick={() => main.mutate(im.id)}><Star /></Button>}
-                <Button size="icon-xs" variant="destructive" aria-label="Delete" onClick={() => setDel(im)}><Trash2 /></Button>
+                {!im.isMain && <Button size="icon-xs" variant="secondary" aria-label={tr("Make main")} onClick={() => main.mutate(im.id)}><Star /></Button>}
+                <Button size="icon-xs" variant="destructive" aria-label={tr("Delete")} onClick={() => setDel(im)}><Trash2 /></Button>
               </div>
             </div>
           </div>
@@ -55,16 +56,16 @@ export function PhotosEditor({ productId, images, staged, onStage }: { productId
           <div key={f.name + i} className="relative overflow-hidden rounded border border-dashed border-fresh-400 bg-muted">
             <img src={URL.createObjectURL(f)} alt="" className="aspect-square w-full object-cover" />
             <span className="absolute left-1.5 top-1.5 rounded bg-forest-800 px-1.5 py-0.5 text-[10px] font-bold text-white">{i === 0 ? "MAIN · " : ""}uploads on save</span>
-            <Button size="icon-xs" variant="destructive" className="absolute right-1.5 top-1.5" aria-label="Remove" onClick={() => onStage(staged.filter((_, j) => j !== i))}><Trash2 /></Button>
+            <Button size="icon-xs" variant="destructive" className="absolute right-1.5 top-1.5" aria-label={tr("Remove")} onClick={() => onStage(staged.filter((_, j) => j !== i))}><Trash2 /></Button>
           </div>
         ))}
         <button type="button" onClick={() => input.current?.click()} className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded border-2 border-dashed border-border text-xs font-medium text-muted-foreground hover:border-fresh-400 hover:text-fresh-600">
           <ImagePlus className="size-6" />
-          {upload.isPending ? "Uploading…" : "Add photos"}
+          {upload.isPending ? tr("Uploading…") : tr("Add photos")}
         </button>
       </div>
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden onChange={(e) => pick(e.target.files)} />
-      <ConfirmDialog open={!!del} onOpenChange={(o) => !o && setDel(null)} title="Delete this photo?" confirmLabel="Delete" destructive loading={remove.isPending} onConfirm={() => del && remove.mutate(del.id)} />
+      <ConfirmDialog open={!!del} onOpenChange={(o) => !o && setDel(null)} title={tr("Delete this photo?")} confirmLabel={tr("Delete")} destructive loading={remove.isPending} onConfirm={() => del && remove.mutate(del.id)} />
     </div>
   );
 }

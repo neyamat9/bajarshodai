@@ -33,7 +33,12 @@ document.documentElement.lang = i18next.language;
 export const lang = (): Lang => (i18next.language === "en" ? "en" : "bn");
 
 /** Translate an English text (with {{values}} if needed). Safe outside React; the page is rebuilt when the language changes. */
-export const tr = (text: string, values?: Record<string, string | number>): string => i18next.t(text, values);
+export const tr = (text: string, values?: Record<string, string | number>): string => {
+  // a text written with a space at the end ("Done: ") is looked up without it and keeps the space
+  const trimmed = text.trim();
+  if (trimmed !== text) return text.replace(trimmed, i18next.t(trimmed, values));
+  return i18next.t(text, values);
+};
 
 export function setLang(next: Lang) {
   try {

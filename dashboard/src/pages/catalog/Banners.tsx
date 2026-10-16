@@ -18,6 +18,7 @@ import { EmptyState, ErrorState } from "@/components/shared/EmptyState";
 import { useAct } from "@/hooks/useAct";
 import { dateOnly, fromLocalInput, titleCase, toLocalInput } from "@/lib/format";
 import { CardListSkeleton } from "@/components/shared/skeletons";
+import { tr } from "@/i18n";
 
 const SIZE_HINT: Record<BannerPosition, string> = {
   HERO_MAIN: "Big slider on top, about 1200×400", HERO_SIDE: "Beside the slider", HERO_BOTTOM: "Under the slider", CATEGORY_TOP: "Top of category pages",
@@ -40,52 +41,52 @@ function BannerDialog({ banner, defaultPosition, onClose }: { banner: Banner | n
       };
       return banner ? bannersApi.update(banner.id, b) : bannersApi.create(b);
     },
-    { success: "Banner saved", invalidate: [["banners"]], onSuccess: onClose },
+    { success: tr("Banner saved"), invalidate: [["banners"]], onSuccess: onClose },
   );
   const submit = () => {
-    if (!f.imageUrl) return setErr("Add the banner image");
-    if (f.startDate && f.endDate && new Date(f.endDate) <= new Date(f.startDate)) return setErr("The end must be after the start");
+    if (!f.imageUrl) return setErr(tr("Add the banner image"));
+    if (f.startDate && f.endDate && new Date(f.endDate) <= new Date(f.startDate)) return setErr(tr("The end must be after the start"));
     setErr(null);
     save.mutate();
   };
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent size="lg">
-        <DialogHeader><DialogTitle>{banner ? "Edit banner" : "New banner"}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{banner ? tr("Edit banner") : tr("New banner")}</DialogTitle></DialogHeader>
         <DialogBody className="space-y-3">
           {err && <p className="rounded bg-red-50 px-3 py-2 text-xs font-medium text-destructive dark:bg-red-500/10">{err}</p>}
           <div className="grid gap-3 sm:grid-cols-2">
-            <ImageField label="Image *" folder="banners" value={f.imageUrl} onChange={(imageUrl) => setF({ ...f, imageUrl })} />
-            <ImageField label="Mobile image (optional)" folder="banners" value={f.mobileImageUrl} onChange={(mobileImageUrl) => setF({ ...f, mobileImageUrl })} />
+            <ImageField label={tr("Image *")} folder="banners" value={f.imageUrl} onChange={(imageUrl) => setF({ ...f, imageUrl })} />
+            <ImageField label={tr("Mobile image (optional)")} folder="banners" value={f.mobileImageUrl} onChange={(mobileImageUrl) => setF({ ...f, mobileImageUrl })} />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Title"><Input value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} /></Field>
-            <Field label="Subtitle"><Input value={f.subtitle} onChange={(e) => setF({ ...f, subtitle: e.target.value })} /></Field>
+            <Field label={tr("Title")}><Input value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} /></Field>
+            <Field label={tr("Subtitle")}><Input value={f.subtitle} onChange={(e) => setF({ ...f, subtitle: e.target.value })} /></Field>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
-            <Field label="Where it shows" hint={SIZE_HINT[f.position]}>
+            <Field label={tr("Where it shows")} hint={SIZE_HINT[f.position]}>
               <Select value={f.position} onChange={(e) => setF({ ...f, position: e.target.value as BannerPosition })}>{BANNER_POSITIONS.map((p) => <option key={p} value={p}>{titleCase(p)}</option>)}</Select>
             </Field>
-            <Field label="Link to">
+            <Field label={tr("Link to")}>
               <Select value={f.linkType} onChange={(e) => setF({ ...f, linkType: e.target.value as typeof f.linkType })}>{BANNER_LINKS.map((p) => <option key={p} value={p}>{titleCase(p)}</option>)}</Select>
             </Field>
             {f.linkType === "CUSTOM" ? (
-              <Field label="Link address"><Input value={f.linkUrl} onChange={(e) => setF({ ...f, linkUrl: e.target.value })} placeholder="/shop or https://…" /></Field>
+              <Field label={tr("Link address")}><Input value={f.linkUrl} onChange={(e) => setF({ ...f, linkUrl: e.target.value })} placeholder="/shop or https://…" /></Field>
             ) : (
               <Field label={`${titleCase(f.linkType)} ID`}><Input value={f.linkResourceId} onChange={(e) => setF({ ...f, linkResourceId: e.target.value })} /></Field>
             )}
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Show from" hint="Empty = right away"><Input type="datetime-local" value={f.startDate} onChange={(e) => setF({ ...f, startDate: e.target.value })} /></Field>
-            <Field label="Show until" hint="Empty = no end"><Input type="datetime-local" value={f.endDate} onChange={(e) => setF({ ...f, endDate: e.target.value })} /></Field>
+            <Field label={tr("Show from")} hint={tr("Empty = right away")}><Input type="datetime-local" value={f.startDate} onChange={(e) => setF({ ...f, startDate: e.target.value })} /></Field>
+            <Field label={tr("Show until")} hint={tr("Empty = no end")}><Input type="datetime-local" value={f.endDate} onChange={(e) => setF({ ...f, endDate: e.target.value })} /></Field>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
-            <Field label="Background colour"><Input value={f.bgColor} onChange={(e) => setF({ ...f, bgColor: e.target.value })} placeholder="#0b6234" /></Field>
-            <Field label="Text colour"><Input value={f.textColor} onChange={(e) => setF({ ...f, textColor: e.target.value })} placeholder="#ffffff" /></Field>
-            <label className="mt-6 flex cursor-pointer items-center gap-2 text-[13px]"><Switch checked={f.isActive} onCheckedChange={(isActive) => setF({ ...f, isActive })} />Active</label>
+            <Field label={tr("Background colour")}><Input value={f.bgColor} onChange={(e) => setF({ ...f, bgColor: e.target.value })} placeholder="#0b6234" /></Field>
+            <Field label={tr("Text colour")}><Input value={f.textColor} onChange={(e) => setF({ ...f, textColor: e.target.value })} placeholder="#ffffff" /></Field>
+            <label className="mt-6 flex cursor-pointer items-center gap-2 text-[13px]"><Switch checked={f.isActive} onCheckedChange={(isActive) => setF({ ...f, isActive })} />{tr("Active")}</label>
           </div>
         </DialogBody>
-        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button loading={save.isPending} onClick={submit}>Save</Button></DialogFooter>
+        <DialogFooter><Button variant="outline" onClick={onClose}>{tr("Cancel")}</Button><Button loading={save.isPending} onClick={submit}>{tr("Save")}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -97,7 +98,7 @@ export default function Banners() {
   const [edit, setEdit] = useState<{ banner: Banner | null; position: BannerPosition } | null>(null);
   const [del, setDel] = useState<Banner | null>(null);
   const toggle = useAct((b: Banner) => bannersApi.update(b.id, { isActive: !b.isActive }), { invalidate: [["banners"]] });
-  const remove = useAct(() => bannersApi.remove(del!.id), { success: "Banner deleted", invalidate: [["banners"]], onSuccess: () => setDel(null) });
+  const remove = useAct(() => bannersApi.remove(del!.id), { success: tr("Banner deleted"), invalidate: [["banners"]], onSuccess: () => setDel(null) });
 
   const reorder = async (position: BannerPosition, ids: string[]) => {
     const prev = qc.getQueryData<Banner[]>(["banners"]);
@@ -108,15 +109,15 @@ export default function Banners() {
     try { await bannersApi.reorder(position, ids); } catch (e) { toast.error(errorMessage(e)); qc.setQueryData(["banners"], prev); }
   };
 
-  if (q.isLoading) return <CardListSkeleton title="Banners" text="Home page sliders and promotions. Drag inside a group to change the order." action="New banner" />;
+  if (q.isLoading) return <CardListSkeleton title={tr("Banners")} text={tr("Home page sliders and promotions. Drag inside a group to change the order.")} action={tr("New banner")} />;
   if (q.isError) return <ErrorState message={errorMessage(q.error)} onRetry={() => q.refetch()} />;
   const all = q.data ?? [];
   const positions = BANNER_POSITIONS.filter((p) => all.some((b) => b.position === p));
 
   return (
     <div>
-      <PageHeader title="Banners" description="Home page sliders and promotions. Drag inside a group to change the order." actions={<Button variant="brand" size="sm" onClick={() => setEdit({ banner: null, position: "HERO_MAIN" })}><Plus /> New banner</Button>} />
-      {all.length === 0 ? <Card><EmptyState title="No banners yet" description="Add a banner to show on the home page." /></Card> : (
+      <PageHeader title={tr("Banners")} description={tr("Home page sliders and promotions. Drag inside a group to change the order.")} actions={<Button variant="brand" size="sm" onClick={() => setEdit({ banner: null, position: "HERO_MAIN" })}><Plus />{" "}{tr("New banner")}</Button>} />
+      {all.length === 0 ? <Card><EmptyState title={tr("No banners yet")} description={tr("Add a banner to show on the home page.")} /></Card> : (
         <div className="space-y-6">
           {positions.map((pos) => {
             const list = all.filter((b) => b.position === pos).sort((a, b) => a.displayOrder - b.displayOrder);
@@ -124,7 +125,7 @@ export default function Banners() {
               <section key={pos}>
                 <div className="mb-2 flex items-center justify-between">
                   <div><h2 className="text-sm font-semibold">{titleCase(pos)}</h2><p className="text-xs text-muted-foreground">{SIZE_HINT[pos]}</p></div>
-                  <Button size="xs" variant="outline" onClick={() => setEdit({ banner: null, position: pos })}><Plus /> Add</Button>
+                  <Button size="xs" variant="outline" onClick={() => setEdit({ banner: null, position: pos })}><Plus />{" "}{tr("Add")}</Button>
                 </div>
                 <SortableList items={list} onReorder={(ids) => void reorder(pos, ids)}>
                   {(b) => (
@@ -134,10 +135,10 @@ export default function Banners() {
                         <p className="truncate text-[13px] font-semibold">{b.title || "(no title)"}</p>
                         <p className="truncate text-[11px] text-muted-foreground">{b.linkUrl || b.linkResourceId || "No link"}{(b.startDate || b.endDate) && ` · ${b.startDate ? dateOnly(b.startDate) : "…"} → ${b.endDate ? dateOnly(b.endDate) : "…"}`}</p>
                       </div>
-                      {b.endDate && new Date(b.endDate) < new Date() && <Badge variant="neutral">Expired</Badge>}
-                      <Switch checked={b.isActive} onCheckedChange={() => toggle.mutate(b)} aria-label="Active" />
-                      <Button size="icon-sm" variant="ghost" aria-label="Edit" onClick={() => setEdit({ banner: b, position: b.position })}><Pencil /></Button>
-                      <Button size="icon-sm" variant="ghost" aria-label="Delete" onClick={() => setDel(b)}><Trash2 className="text-destructive" /></Button>
+                      {b.endDate && new Date(b.endDate) < new Date() && <Badge variant="neutral">{tr("Expired")}</Badge>}
+                      <Switch checked={b.isActive} onCheckedChange={() => toggle.mutate(b)} aria-label={tr("Active")} />
+                      <Button size="icon-sm" variant="ghost" aria-label={tr("Edit")} onClick={() => setEdit({ banner: b, position: b.position })}><Pencil /></Button>
+                      <Button size="icon-sm" variant="ghost" aria-label={tr("Delete")} onClick={() => setDel(b)}><Trash2 className="text-destructive" /></Button>
                     </div>
                   )}
                 </SortableList>
@@ -147,7 +148,7 @@ export default function Banners() {
         </div>
       )}
       {edit && <BannerDialog banner={edit.banner} defaultPosition={edit.position} onClose={() => setEdit(null)} />}
-      <ConfirmDialog open={!!del} onOpenChange={(o) => !o && setDel(null)} title="Delete this banner?" confirmLabel="Delete" destructive loading={remove.isPending} onConfirm={() => remove.mutate()} />
+      <ConfirmDialog open={!!del} onOpenChange={(o) => !o && setDel(null)} title={tr("Delete this banner?")} confirmLabel={tr("Delete")} destructive loading={remove.isPending} onConfirm={() => remove.mutate()} />
     </div>
   );
 }

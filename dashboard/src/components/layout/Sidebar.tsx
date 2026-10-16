@@ -97,8 +97,8 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
               }
               toggleCollapsed();
             }}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={collapsed ? tr("Expand sidebar") : tr("Collapse sidebar")}
+            title={collapsed ? tr("Expand sidebar") : tr("Collapse sidebar")}
           >
             {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
           </button>

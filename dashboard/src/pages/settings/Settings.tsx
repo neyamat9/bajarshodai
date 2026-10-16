@@ -95,12 +95,12 @@ function PaymentForm({ v }: { v: S["payment"] }) {
   };
   return (
     <div className="grid items-start gap-4 xl:grid-cols-2 [&>button]:justify-self-start xl:[&>button]:col-span-2">
-      <Section title={tr("Payment methods")} description="Customers choose one at checkout. Mobile banking: they send money to your number and type the transaction ID; you verify it on the order.">
+      <Section title={tr("Payment methods")} description={tr("Customers choose one at checkout. Mobile banking: they send money to your number and type the transaction ID; you verify it on the order.")}>
         <div className="divide-y divide-border">
           <Toggle label={tr("Cash on delivery")} hint={tr("Customers pay the courier.")} checked={f.codEnabled} onChange={(codEnabled) => setF({ ...f, codEnabled })} />
           {MOBILE.map((m) => (
             <div key={m.key}>
-              <Toggle label={`${m.label} (send money)`} hint={m.hint} checked={f[`${m.key}Enabled`]} onChange={(on) => setF({ ...f, [`${m.key}Enabled`]: on })} />
+              <Toggle label={tr("{{method}} (send money)", { method: m.label })} hint={m.hint} checked={f[`${m.key}Enabled`]} onChange={(on) => setF({ ...f, [`${m.key}Enabled`]: on })} />
               {f[`${m.key}Enabled`] && (
                 <div className="mb-3 grid gap-3 sm:grid-cols-2">
                   <Field label={`${m.label} number`} required><Input value={f[`${m.key}Number`]} onChange={(e) => setF({ ...f, [`${m.key}Number`]: e.target.value })} placeholder="01XXXXXXXXX" /></Field>

@@ -13,15 +13,16 @@ import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, Dia
 import { useAct } from "@/hooks/useAct";
 import { useInfiniteList } from "@/hooks/useInfiniteList";
 import { useUrlState } from "@/hooks/useUrlState";
-import { dateTime } from "@/lib/format";
+import { dateTime, num } from "@/lib/format";
+import { tr } from "@/i18n";
 
 function Detail({ m, onClose }: { m: ContactMessage; onClose: () => void }) {
   const [reply, setReply] = useState("");
   const [note, setNote] = useState(m.adminNote ?? "");
   const [status, setStatus] = useState<ContactStatus>(m.status);
   const inv = [["contact"], ["attention-summary"]];
-  const send = useAct(() => contactApi.reply(m.id, reply.trim()), { success: "Reply emailed", invalidate: inv, onSuccess: onClose });
-  const save = useAct(() => contactApi.update(m.id, { status, adminNote: note.trim() || null }), { success: "Saved", invalidate: inv, onSuccess: onClose });
+  const send = useAct(() => contactApi.reply(m.id, reply.trim()), { success: tr("Reply emailed"), invalidate: inv, onSuccess: onClose });
+  const save = useAct(() => contactApi.update(m.id, { status, adminNote: note.trim() || null }), { success: tr("Saved"), invalidate: inv, onSuccess: onClose });
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent size="lg">
@@ -29,23 +30,23 @@ function Detail({ m, onClose }: { m: ContactMessage; onClose: () => void }) {
         <DialogBody className="space-y-3">
           <p className="whitespace-pre-wrap rounded bg-muted p-3 text-[13px]">{m.message}</p>
           {m.reply && <div className="rounded border-l-2 border-fresh-400 bg-fresh-50 p-3 text-[13px] dark:bg-fresh-500/10"><p className="mb-1 text-xs text-muted-foreground">You replied {m.repliedAt && dateTime(m.repliedAt)}</p><p className="whitespace-pre-wrap">{m.reply}</p></div>}
-          <Field label={m.reply ? "Send another reply" : "Reply by email"}><Textarea rows={4} value={reply} maxLength={10000} onChange={(e) => setReply(e.target.value)} /></Field>
+          <Field label={m.reply ? tr("Send another reply") : tr("Reply by email")}><Textarea rows={4} value={reply} maxLength={10000} onChange={(e) => setReply(e.target.value)} /></Field>
           <div className="grid gap-3 sm:grid-cols-3">
-            <Field label="Status"><Select value={status} onChange={(e) => setStatus(e.target.value as ContactStatus)}>{(["NEW", "READ", "REPLIED", "ARCHIVED"] as const).map((s) => <option key={s} value={s}>{s[0] + s.slice(1).toLowerCase()}</option>)}</Select></Field>
-            <Field label="Private note" className="sm:col-span-2"><Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} /></Field>
+            <Field label={tr("Status")}><Select value={status} onChange={(e) => setStatus(e.target.value as ContactStatus)}>{(["NEW", "READ", "REPLIED", "ARCHIVED"] as const).map((s) => <option key={s} value={s}>{s[0] + s.slice(1).toLowerCase()}</option>)}</Select></Field>
+            <Field label={tr("Private note")} className="sm:col-span-2"><Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} /></Field>
           </div>
         </DialogBody>
-        <DialogFooter><Button variant="outline" onClick={onClose}>Close</Button><Button variant="outline" loading={save.isPending} onClick={() => save.mutate()}>Save status & note</Button><Button disabled={reply.trim().length < 2} loading={send.isPending} onClick={() => send.mutate()}><Mail /> Send reply</Button></DialogFooter>
+        <DialogFooter><Button variant="outline" onClick={onClose}>{tr("Close")}</Button><Button variant="outline" loading={save.isPending} onClick={() => save.mutate()}>Save status & note</Button><Button disabled={reply.trim().length < 2} loading={send.isPending} onClick={() => send.mutate()}><Mail />{" "}{tr("Send reply")}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 
 const CONTACT_STATUSES: QuickOption<ContactStatus>[] = [
-  { value: "NEW", label: "Mark as new" },
-  { value: "READ", label: "Mark as read" },
-  { value: "REPLIED", label: "Mark as replied" },
-  { value: "ARCHIVED", label: "Archive" },
+  { value: "NEW", label: tr("Mark as new") },
+  { value: "READ", label: tr("Mark as read") },
+  { value: "REPLIED", label: tr("Mark as replied") },
+  { value: "ARCHIVED", label: tr("Archive") },
 ];
 
 export default function Contact() {
@@ -55,22 +56,22 @@ export default function Contact() {
   const [del, setDel] = useState<ContactMessage | null>(null);
   const q = useInfiniteList(["contact", search, f.status], (page) => contactApi.list({ search, status: f.status, page, limit: 20 }));
   const mark = useAct((m: ContactMessage) => contactApi.update(m.id, { status: "READ" }), { invalidate: [["contact"], ["attention-summary"]] });
-  const move = useAct((v: { id: string; status: ContactStatus }) => contactApi.update(v.id, { status: v.status }), { success: "Message updated", invalidate: [["contact"], ["attention-summary"]] });
-  const remove = useAct(() => contactApi.remove(del!.id), { success: "Message deleted", invalidate: [["contact"], ["attention-summary"]], onSuccess: () => setDel(null) });
+  const move = useAct((v: { id: string; status: ContactStatus }) => contactApi.update(v.id, { status: v.status }), { success: tr("Message updated"), invalidate: [["contact"], ["attention-summary"]] });
+  const remove = useAct(() => contactApi.remove(del!.id), { success: tr("Message deleted"), invalidate: [["contact"], ["attention-summary"]], onSuccess: () => setDel(null) });
   const cols: Column<ContactMessage>[] = [
-    { key: "f", header: "From", sk: "lines2", cell: (m) => <div><p className={m.status === "NEW" ? "font-bold" : "font-medium"}>{m.name}</p><p className="text-[11px] text-muted-foreground">{m.email}</p></div> },
-    { key: "s", header: "Message", sk: "lines2", cell: (m) => <div className="max-w-[420px]"><p className={`truncate ${m.status === "NEW" ? "font-semibold" : ""}`}>{m.subject}</p><p className="truncate text-[12px] text-muted-foreground">{m.message}</p></div> },
-    { key: "st", header: "Status", sk: "badge", cell: (m) => <QuickStatus current={m.status} options={CONTACT_STATUSES} pending={move.isPending && move.variables?.id === m.id} onPick={(status) => move.mutate({ id: m.id, status })} /> },
-    { key: "d", header: "Received", sk: "text", cell: (m) => dateTime(m.createdAt) },
-    { key: "a", header: "", align: "right", sk: "icon", cell: (m) => <div onClick={(e) => e.stopPropagation()}><Button size="icon-sm" variant="ghost" aria-label="Delete" onClick={() => setDel(m)}><Trash2 className="text-destructive" /></Button></div> },
+    { key: "f", header: tr("From"), sk: "lines2", cell: (m) => <div><p className={m.status === "NEW" ? "font-bold" : "font-medium"}>{m.name}</p><p className="text-[11px] text-muted-foreground">{m.email}</p></div> },
+    { key: "s", header: tr("Message"), sk: "lines2", cell: (m) => <div className="max-w-[420px]"><p className={`truncate ${m.status === "NEW" ? "font-semibold" : ""}`}>{m.subject}</p><p className="truncate text-[12px] text-muted-foreground">{m.message}</p></div> },
+    { key: "st", header: tr("Status"), sk: "badge", cell: (m) => <QuickStatus current={m.status} options={CONTACT_STATUSES} pending={move.isPending && move.variables?.id === m.id} onPick={(status) => move.mutate({ id: m.id, status })} /> },
+    { key: "d", header: tr("Received"), sk: "text", cell: (m) => dateTime(m.createdAt) },
+    { key: "a", header: "", align: "right", sk: "icon", cell: (m) => <div onClick={(e) => e.stopPropagation()}><Button size="icon-sm" variant="ghost" aria-label={tr("Delete")} onClick={() => setDel(m)}><Trash2 className="text-destructive" /></Button></div> },
   ];
   return (
     <div>
-      <PageHeader title="Contact messages" description={q.first ? `${q.first.unread} unread` : "Messages from the website contact form."} />
-      <DataTable infinite={q} columns={cols} onRowClick={(m) => { setOpen(m); if (m.status === "NEW") mark.mutate(m); }} empty={{ title: "No messages" }}
-        toolbar={<FilterBar><SearchInput value={f.search} onChange={(v) => setF({ search: v })} placeholder="Name, email, subject…" /><FilterSelect value={f.status} onChange={(v) => setF({ status: v })} all="All" options={["NEW", "READ", "REPLIED", "ARCHIVED"].map((s) => ({ value: s, label: s[0] + s.slice(1).toLowerCase() }))} /></FilterBar>} />
+      <PageHeader title={tr("Contact messages")} description={q.first ? tr("{{n}} unread", { n: num(q.first.unread) }) : tr("Messages from the website contact form.")} />
+      <DataTable infinite={q} columns={cols} onRowClick={(m) => { setOpen(m); if (m.status === "NEW") mark.mutate(m); }} empty={{ title: tr("No messages") }}
+        toolbar={<FilterBar><SearchInput value={f.search} onChange={(v) => setF({ search: v })} placeholder={tr("Name, email, subject…")} /><FilterSelect value={f.status} onChange={(v) => setF({ status: v })} all={tr("All")} options={["NEW", "READ", "REPLIED", "ARCHIVED"].map((s) => ({ value: s, label: s[0] + s.slice(1).toLowerCase() }))} /></FilterBar>} />
       {open && <Detail m={open} onClose={() => setOpen(null)} />}
-      <ConfirmDialog open={!!del} onOpenChange={(o) => !o && setDel(null)} title="Delete this message?" confirmLabel="Delete" destructive loading={remove.isPending} onConfirm={() => remove.mutate()} />
+      <ConfirmDialog open={!!del} onOpenChange={(o) => !o && setDel(null)} title={tr("Delete this message?")} confirmLabel={tr("Delete")} destructive loading={remove.isPending} onConfirm={() => remove.mutate()} />
     </div>
   );
 }

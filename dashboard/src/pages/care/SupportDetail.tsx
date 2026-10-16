@@ -15,6 +15,7 @@ import { useAct } from "@/hooks/useAct";
 import { dateTime, titleCase } from "@/lib/format";
 import { PRIORITY_VARIANT } from "./Support";
 import { DetailPageSkeleton } from "@/components/shared/skeletons";
+import { tr } from "@/i18n";
 
 export default function SupportDetail() {
   const { id = "" } = useParams();
@@ -23,8 +24,8 @@ export default function SupportDetail() {
   const [internal, setInternal] = useState(false);
   const [after, setAfter] = useState<TicketStatus>("WAITING_CUSTOMER");
   const inv = [["ticket", id], ["tickets"], ["attention-summary"]];
-  const reply = useAct(() => ticketsApi.reply(id, { message: msg.trim(), internal, ...(internal ? {} : { status: after }) }), { success: internal ? "Note saved" : "Reply sent", invalidate: inv, onSuccess: () => setMsg("") });
-  const upd = useAct((b: { status?: TicketStatus; priority?: string }) => ticketsApi.update(id, b), { success: "Ticket updated", invalidate: inv });
+  const reply = useAct(() => ticketsApi.reply(id, { message: msg.trim(), internal, ...(internal ? {} : { status: after }) }), { success: internal ? tr("Note saved") : "Reply sent", invalidate: inv, onSuccess: () => setMsg("") });
+  const upd = useAct((b: { status?: TicketStatus; priority?: string }) => ticketsApi.update(id, b), { success: tr("Ticket updated"), invalidate: inv });
 
   if (q.isLoading) return <DetailPageSkeleton />;
   if (q.isError || !q.data) return <ErrorState message={errorMessage(q.error)} onRetry={() => q.refetch()} />;
@@ -32,15 +33,15 @@ export default function SupportDetail() {
   const closed = t.status === "CLOSED";
   return (
     <div>
-      <PageHeader back={{ to: "/support", label: "Support tickets" }} title={<span className="flex flex-wrap items-center gap-2">{t.ticketNumber} <StatusBadge status={t.status} /><Badge variant={PRIORITY_VARIANT[t.priority]}>{titleCase(t.priority)}</Badge></span>} description={t.subject} />
+      <PageHeader back={{ to: "/support", label: tr("Support tickets") }} title={<span className="flex flex-wrap items-center gap-2">{t.ticketNumber} <StatusBadge status={t.status} /><Badge variant={PRIORITY_VARIANT[t.priority]}>{titleCase(t.priority)}</Badge></span>} description={t.subject} />
       <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-3 [&>*]:min-w-0">
         <div className="space-y-4 lg:col-span-2">
-          <Section title="Conversation">
+          <Section title={tr("Conversation")}>
             <ul className="space-y-3">
               {t.messages.map((m) => (
                 <li key={m.id} className={`flex ${m.isStaff ? "justify-end" : ""}`}>
                   <div className={`max-w-[85%] rounded px-3 py-2 text-[13px] ${m.isInternal ? "border border-dashed border-amber-400 bg-amber-50 dark:bg-amber-500/10" : m.isStaff ? "bg-forest-700 text-white" : "bg-muted"}`}>
-                    <p className="mb-0.5 flex items-center gap-1 text-[11px] opacity-70">{m.isInternal && <Lock className="size-3" />}{m.user?.name ?? (m.isStaff ? "Support" : "Customer")} · {dateTime(m.createdAt)}{m.isInternal && " · internal note"}</p>
+                    <p className="mb-0.5 flex items-center gap-1 text-[11px] opacity-70">{m.isInternal && <Lock className="size-3" />}{m.user?.name ?? (m.isStaff ? tr("Support") : tr("Customer"))} · {dateTime(m.createdAt)}{m.isInternal && " · internal note"}</p>
                     <p className="whitespace-pre-wrap">{m.message}</p>
                   </div>
                 </li>
@@ -48,26 +49,26 @@ export default function SupportDetail() {
             </ul>
           </Section>
           {!closed && (
-            <Section title={internal ? "Add an internal note" : "Reply to the customer"}>
+            <Section title={internal ? tr("Add an internal note") : tr("Reply to the customer")}>
               <div className="space-y-3">
-                <Textarea rows={4} value={msg} maxLength={10000} onChange={(e) => setMsg(e.target.value)} placeholder={internal ? "Only you can see this." : "The customer receives this by email and sees it in their account."} />
+                <Textarea rows={4} value={msg} maxLength={10000} onChange={(e) => setMsg(e.target.value)} placeholder={internal ? tr("Only you can see this.") : tr("The customer receives this by email and sees it in their account.")} />
                 <div className="flex flex-wrap items-center gap-4">
-                  <label className="flex cursor-pointer items-center gap-2 text-[13px]"><Checkbox checked={internal} onChange={(e) => setInternal(e.target.checked)} />Internal note (not sent)</label>
-                  {!internal && <label className="flex items-center gap-2 text-[13px]">Then set status to <Select value={after} onChange={(e) => setAfter(e.target.value as TicketStatus)} className="w-auto">{(["IN_PROGRESS", "WAITING_CUSTOMER", "RESOLVED", "CLOSED"] as const).map((s) => <option key={s} value={s}>{titleCase(s)}</option>)}</Select></label>}
-                  <Button className="ml-auto" disabled={msg.trim().length < 2} loading={reply.isPending} onClick={() => reply.mutate()}>{internal ? "Save note" : "Send reply"}</Button>
+                  <label className="flex cursor-pointer items-center gap-2 text-[13px]"><Checkbox checked={internal} onChange={(e) => setInternal(e.target.checked)} />{tr("Internal note (not sent)")}</label>
+                  {!internal && <label className="flex items-center gap-2 text-[13px]">{tr("Then set status to")}{" "}<Select value={after} onChange={(e) => setAfter(e.target.value as TicketStatus)} className="w-auto">{(["IN_PROGRESS", "WAITING_CUSTOMER", "RESOLVED", "CLOSED"] as const).map((s) => <option key={s} value={s}>{titleCase(s)}</option>)}</Select></label>}
+                  <Button className="ml-auto" disabled={msg.trim().length < 2} loading={reply.isPending} onClick={() => reply.mutate()}>{internal ? tr("Save note") : tr("Send reply")}</Button>
                 </div>
               </div>
             </Section>
           )}
         </div>
         <div className="space-y-4">
-          <Section title="Customer">
+          <Section title={tr("Customer")}>
             <p className="text-[13px] font-semibold"><Link to={`/customers/${t.submittedBy.id}`} className="hover:text-primary">{t.submittedBy.name}</Link></p>
             <p className="text-[13px] text-muted-foreground">{t.submittedBy.email}</p>
             <p className="text-[13px] text-muted-foreground">{t.submittedBy.phone ?? "—"}</p>
             {t.order && <Link to={`/orders/${t.order.id}`} className="mt-2 inline-block text-xs font-medium text-primary hover:underline">Order {t.order.orderNumber} →</Link>}
           </Section>
-          <Section title="Manage">
+          <Section title={tr("Manage")}>
             <div className="space-y-3">
               <label className="block text-xs font-medium text-muted-foreground">Status
                 <Select value={t.status} onChange={(e) => upd.mutate({ status: e.target.value as TicketStatus })} className="mt-1">{(["OPEN", "IN_PROGRESS", "WAITING_CUSTOMER", "RESOLVED", "CLOSED"] as const).map((s) => <option key={s} value={s}>{titleCase(s)}</option>)}</Select>

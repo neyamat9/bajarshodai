@@ -24,11 +24,12 @@ import { money, titleCase } from "@/lib/format";
 import { openInNewTab } from "@/lib/utils";
 import { BulkBar } from "@/components/shared/BulkBar";
 import { SavedViews } from "@/components/shared/SavedViews";
+import { tr } from "@/i18n";
 
 const STATUS_OPTIONS: QuickOption<string>[] = [
-  { value: "ACTIVE", label: "Active (on the shop)" },
-  { value: "DRAFT", label: "Draft (hidden)" },
-  { value: "INACTIVE", label: "Inactive (hidden)" },
+  { value: "ACTIVE", label: tr("Active (on the shop)") },
+  { value: "DRAFT", label: tr("Draft (hidden)") },
+  { value: "INACTIVE", label: tr("Inactive (hidden)") },
 ];
 
 const DEFAULTS = { search: "", status: "", visibility: "", onDiscount: "", categoryId: "", brandId: "", stock: "", sortBy: "newest", page: "1" };
@@ -44,7 +45,7 @@ export default function ProductsList() {
   const cats = useQuery({ queryKey: ["categories"], queryFn: categoriesApi.list });
   const brands = useQuery({ queryKey: ["brands"], queryFn: brandsApi.list });
 
-  const dup = useAct((id: string) => productsApi.duplicate(id), { success: "Copy created as a draft", invalidate: [["products"]], onSuccess: (p) => navigate(`/products/${p.id}/edit`) });
+  const dup = useAct((id: string) => productsApi.duplicate(id), { success: tr("Copy created as a draft"), invalidate: [["products"]], onSuccess: (p) => navigate(`/products/${p.id}/edit`) });
   const qc = useQueryClient();
   // show/hide a product straight from the list; the row changes at once and goes back if the server says no
   const setStatus = useMutation({
@@ -55,7 +56,7 @@ export default function ProductsList() {
       toast.error(errorMessage(e));
     },
     onSuccess: (_d, v) => {
-      toast.success(v.status === "ACTIVE" ? "Product is live on the shop" : "Product is hidden from the shop");
+      toast.success(v.status === "ACTIVE" ? tr("Product is live on the shop") : tr("Product is hidden from the shop"));
       void qc.invalidateQueries({ queryKey: ["inventory"] });
     },
   });
@@ -70,14 +71,14 @@ export default function ProductsList() {
     },
     onError: (e) => toast.error(errorMessage(e)),
   });
-  const remove = useAct((id: string) => productsApi.remove(id), { invalidate: [["products"], ["inventory"]], onSuccess: (r) => { void r; setDel(null); }, success: "Product removed" });
+  const remove = useAct((id: string) => productsApi.remove(id), { invalidate: [["products"], ["inventory"]], onSuccess: (r) => { void r; setDel(null); }, success: tr("Product removed") });
 
   const filtered = !!(f.search || f.status || f.visibility || f.onDiscount || f.categoryId || f.brandId || f.stock);
 
   const columns: Column<ProductRow>[] = [
     {
       key: "product",
-      header: "Product", sk: "thumb2",
+      header: tr("Product"), sk: "thumb2",
       cell: (p) => (
         <div className="flex items-center gap-3">
           <Thumb src={p.mainImage} alt={p.name} className="size-11" />
@@ -90,12 +91,12 @@ export default function ProductsList() {
     },
     {
       key: "status",
-      header: "Status", sk: "badge",
+      header: tr("Status"), sk: "badge",
       cell: (p) => (
         <QuickStatus
           current={p.status as string}
           options={STATUS_OPTIONS}
-          title="Visibility"
+          title={tr("Visibility")}
           pending={setStatus.isPending && setStatus.variables?.id === p.id}
           onPick={(status) => setStatus.mutate({ id: p.id, status: status as ProductStatus })}
         />
@@ -103,7 +104,7 @@ export default function ProductsList() {
     },
     {
       key: "price",
-      header: "Price",
+      header: tr("Price"),
       align: "right", sk: "num",
       cell: (p) => (
         <div>
@@ -114,17 +115,17 @@ export default function ProductsList() {
     },
     {
       key: "stock",
-      header: "Stock",
+      header: tr("Stock"),
       align: "right", sk: "stock",
       cell: (p) => (
         <div className="flex flex-col items-end gap-0.5">
           <span className="font-medium">{p.stock}</span>
-          <StatusBadge status={p.stockState} label={p.stockState === "in" ? "In stock" : p.stockState === "low" ? "Low" : "Out"} />
+          <StatusBadge status={p.stockState} label={p.stockState === "in" ? tr("In stock") : p.stockState === "low" ? tr("Low") : tr("Out")} />
         </div>
       ),
     },
-    { key: "variants", header: "Variants", align: "center", sk: "badge", cell: (p) => (p._count.variants ? <Badge variant="brand">{p._count.variants}</Badge> : <span className="text-muted-foreground">—</span>) },
-    { key: "sold", header: "Sold", align: "right", sk: "num", cell: (p) => p.soldCount },
+    { key: "variants", header: tr("Variants"), align: "center", sk: "badge", cell: (p) => (p._count.variants ? <Badge variant="brand">{p._count.variants}</Badge> : <span className="text-muted-foreground">—</span>) },
+    { key: "sold", header: tr("Sold"), align: "right", sk: "num", cell: (p) => p.soldCount },
     {
       key: "actions",
       header: "",
@@ -133,13 +134,13 @@ export default function ProductsList() {
         <div onClick={(e) => e.stopPropagation()}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm" aria-label="Actions"><MoreHorizontal /></Button>
+              <Button variant="ghost" size="icon-sm" aria-label={tr("Actions")}><MoreHorizontal /></Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => openInNewTab(`/products/${p.id}/edit`)}><Pencil /> Edit</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => dup.mutate(p.id)}><Copy /> Duplicate</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => openInNewTab(`/products/${p.id}/edit`)}><Pencil />{" "}{tr("Edit")}</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => dup.mutate(p.id)}><Copy />{" "}{tr("Duplicate")}</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive" onSelect={() => setDel(p)}><Trash2 /> Delete</DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onSelect={() => setDel(p)}><Trash2 />{" "}{tr("Delete")}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -150,12 +151,12 @@ export default function ProductsList() {
   return (
     <div>
       <PageHeader
-        title="Products"
-        description="Everything you sell. Click a product to edit it."
+        title={tr("Products")}
+        description={tr("Everything you sell. Click a product to edit it.")}
         actions={
           <>
             <SavedViews storageKey="products" builtIns={[{ name: "Low stock", query: "stock=low" }, { name: "Out of stock", query: "stock=out" }, { name: "Hidden", query: "status=INACTIVE" }, { name: "Drafts", query: "status=DRAFT" }]} />
-            <Button asChild variant="brand" size="sm"><Link to="/products/new"><PlusCircle /> Add product</Link></Button>
+            <Button asChild variant="brand" size="sm"><Link to="/products/new"><PlusCircle />{" "}{tr("Add product")}</Link></Button>
           </>
         }
       />
@@ -167,29 +168,29 @@ export default function ProductsList() {
         onSelect={setSel}
         columns={columns}
         onRowClick={(p) => openInNewTab(`/products/${p.id}/edit`)}
-        empty={{ title: filtered ? "No products match these filters" : "No products yet", description: filtered ? "Try clearing a filter." : "Add your first product to start selling.", action: filtered ? undefined : <Button asChild variant="brand" size="sm"><Link to="/products/new">Add product</Link></Button> }}
+        empty={{ title: filtered ? tr("No products match these filters") : "No products yet", description: filtered ? tr("Try clearing a filter.") : "Add your first product to start selling.", action: filtered ? undefined : <Button asChild variant="brand" size="sm"><Link to="/products/new">{tr("Add product")}</Link></Button> }}
         toolbar={
           <FilterBar>
-            <SearchInput value={f.search} onChange={(v) => setF({ search: v })} placeholder="Name, code, SKU, barcode…" />
-            <FilterSelect value={f.status} onChange={(v) => setF({ status: v, visibility: "" })} all="All statuses" options={["ACTIVE", "DRAFT", "INACTIVE", "OUT_OF_STOCK", "DISCONTINUED"].map((s) => ({ value: s, label: titleCase(s) }))} />
-            <FilterSelect value={f.categoryId} onChange={(v) => setF({ categoryId: v })} all="All categories" options={flattenCategoryTree(buildCategoryTree(cats.data ?? [])).map((o) => ({ value: o.node.id, label: `${"— ".repeat(o.depth)}${o.node.name}` }))} />
-            <FilterSelect value={f.brandId} onChange={(v) => setF({ brandId: v })} all="All brands" options={(brands.data ?? []).map((b) => ({ value: b.id, label: b.name }))} />
-            <FilterSelect value={f.stock} onChange={(v) => setF({ stock: v })} all="Any stock" options={[{ value: "low", label: "Low stock" }, { value: "out", label: "Out of stock" }, { value: "in", label: "In stock" }]} />
-            <FilterSelect value={f.sortBy} onChange={(v) => setF({ sortBy: v })} all={null} options={[{ value: "newest", label: "Newest" }, { value: "oldest", label: "Oldest" }, { value: "name", label: "Name A–Z" }, { value: "price-asc", label: "Price: low to high" }, { value: "price-desc", label: "Price: high to low" }, { value: "stock-asc", label: "Stock: low first" }, { value: "sold", label: "Best selling" }]} />
-            {filtered && <Button size="sm" variant="ghost" onClick={() => { setF({ search: "", status: "", visibility: "", onDiscount: "", categoryId: "", brandId: "", stock: "" }); }}><X /> Clear</Button>}
+            <SearchInput value={f.search} onChange={(v) => setF({ search: v })} placeholder={tr("Name, code, SKU, barcode…")} />
+            <FilterSelect value={f.status} onChange={(v) => setF({ status: v, visibility: "" })} all={tr("All statuses")} options={["ACTIVE", "DRAFT", "INACTIVE", "OUT_OF_STOCK", "DISCONTINUED"].map((s) => ({ value: s, label: titleCase(s) }))} />
+            <FilterSelect value={f.categoryId} onChange={(v) => setF({ categoryId: v })} all={tr("All categories")} options={flattenCategoryTree(buildCategoryTree(cats.data ?? [])).map((o) => ({ value: o.node.id, label: `${"— ".repeat(o.depth)}${o.node.name}` }))} />
+            <FilterSelect value={f.brandId} onChange={(v) => setF({ brandId: v })} all={tr("All brands")} options={(brands.data ?? []).map((b) => ({ value: b.id, label: b.name }))} />
+            <FilterSelect value={f.stock} onChange={(v) => setF({ stock: v })} all={tr("Any stock")} options={[{ value: "low", label: tr("Low stock") }, { value: "out", label: tr("Out of stock") }, { value: "in", label: tr("In stock") }]} />
+            <FilterSelect value={f.sortBy} onChange={(v) => setF({ sortBy: v })} all={null} options={[{ value: "newest", label: tr("Newest") }, { value: "oldest", label: tr("Oldest") }, { value: "name", label: tr("Name A–Z") }, { value: "price-asc", label: tr("Price: low to high") }, { value: "price-desc", label: tr("Price: high to low") }, { value: "stock-asc", label: tr("Stock: low first") }, { value: "sold", label: tr("Best selling") }]} />
+            {filtered && <Button size="sm" variant="ghost" onClick={() => { setF({ search: "", status: "", visibility: "", onDiscount: "", categoryId: "", brandId: "", stock: "" }); }}><X />{" "}{tr("Clear")}</Button>}
           </FilterBar>
         }
       />
       <BulkBar count={sel.length} onClear={() => setSel([])} noun={sel.length === 1 ? "product" : "products"}>
-        <Button size="sm" variant="brand" loading={bulkStatus.isPending && bulkStatus.variables === "ACTIVE"} onClick={() => bulkStatus.mutate("ACTIVE")}>Show on shop</Button>
-        <Button size="sm" variant="secondary" loading={bulkStatus.isPending && bulkStatus.variables === "INACTIVE"} onClick={() => bulkStatus.mutate("INACTIVE")}>Hide</Button>
+        <Button size="sm" variant="brand" loading={bulkStatus.isPending && bulkStatus.variables === "ACTIVE"} onClick={() => bulkStatus.mutate("ACTIVE")}>{tr("Show on shop")}</Button>
+        <Button size="sm" variant="secondary" loading={bulkStatus.isPending && bulkStatus.variables === "INACTIVE"} onClick={() => bulkStatus.mutate("INACTIVE")}>{tr("Hide")}</Button>
       </BulkBar>
       <ConfirmDialog
         open={!!del}
         onOpenChange={(o) => !o && setDel(null)}
         title={`Delete "${del?.name}"?`}
-        description={del && del._count.orderItems > 0 ? "This product has been ordered before, so it will be hidden (archived) instead of erased. Order history stays intact." : "This cannot be undone."}
-        confirmLabel="Delete"
+        description={del && del._count.orderItems > 0 ? tr("This product has been ordered before, so it will be hidden (archived) instead of erased. Order history stays intact.") : tr("This cannot be undone.")}
+        confirmLabel={tr("Delete")}
         destructive
         loading={remove.isPending}
         onConfirm={() => del && remove.mutate(del.id)}

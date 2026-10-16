@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { tr } from "@/i18n";
 
 export interface ConfirmOptions {
   title: string;
@@ -12,7 +13,7 @@ type Ask = (o: ConfirmOptions) => Promise<boolean>;
 const Ctx = createContext<Ask | null>(null);
 
 /**
- * One confirmation modal for the whole admin: `const confirm = useConfirm(); if (!(await confirm({ title: "Delete X?", destructive: true }))) return;`
+ * One confirmation modal for the whole admin: `const confirm = useConfirm(); if (!(await confirm({ title: tr("Delete X?"), destructive: true }))) return;`
  * Mounted once in AdminLayout, so every delete asks the same way.
  */
 export function ConfirmProvider({ children }: { children: ReactNode }) {
@@ -41,7 +42,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         onOpenChange={(o) => !o && settle(false)}
         title={opts?.title ?? ""}
         description={opts?.description}
-        confirmLabel={opts?.confirmLabel ?? (opts?.destructive ? "Delete" : "Confirm")}
+        confirmLabel={opts?.confirmLabel ?? (opts?.destructive ? tr("Delete") : tr("Confirm"))}
         destructive={opts?.destructive}
         onConfirm={() => settle(true)}
       />

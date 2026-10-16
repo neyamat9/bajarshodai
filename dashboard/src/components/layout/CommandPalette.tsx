@@ -41,9 +41,9 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
     const enc = encodeURIComponent(text);
     const searches: Cmd[] = text
       ? [
-          { id: "s-orders", label: `Search orders for “${text}”`, hint: "Order #, name, phone", icon: <ShoppingBag size={18} />, to: `/orders?search=${enc}` },
-          { id: "s-products", label: `Search products for “${text}”`, hint: "Name, SKU, code", icon: <Package size={18} />, to: `/products?search=${enc}` },
-          { id: "s-customers", label: `Search customers for “${text}”`, hint: "Name, email, phone", icon: <Users size={18} />, to: `/customers?search=${enc}` },
+          { id: "s-orders", label: `Search orders for “${text}”`, hint: tr("Order #, name, phone"), icon: <ShoppingBag size={18} />, to: `/orders?search=${enc}` },
+          { id: "s-products", label: `Search products for “${text}”`, hint: tr("Name, SKU, code"), icon: <Package size={18} />, to: `/products?search=${enc}` },
+          { id: "s-customers", label: `Search customers for “${text}”`, hint: tr("Name, email, phone"), icon: <Users size={18} />, to: `/customers?search=${enc}` },
         ]
       : [];
     return [...matches, ...searches];
