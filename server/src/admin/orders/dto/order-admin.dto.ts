@@ -672,3 +672,35 @@ export class ShippingQuoteQueryDto {
   @MaxLength(2000)
   productIds?: string;
 }
+
+export class ItemWeightInputDto {
+  @ApiProperty({ description: 'OrderItem ID' })
+  @IsUUID()
+  itemId: string;
+
+  @ApiProperty({ example: 1.15, description: 'Actual scale weight in selling unit' })
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0.001)
+  finalQty: number;
+}
+
+export class UpdatePackerWeightsDto {
+  @ApiProperty({ type: [ItemWeightInputDto], description: 'List of weighed order items with measured scale weight' })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ItemWeightInputDto)
+  items: ItemWeightInputDto[];
+
+  @ApiPropertyOptional({ description: 'Optional internal note' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  note?: string;
+
+  @ApiPropertyOptional({ description: 'Advance order status to PACKING if currently CONFIRMED' })
+  @IsOptional()
+  @IsBoolean()
+  markPacked?: boolean;
+}
+

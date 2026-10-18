@@ -1,7 +1,7 @@
 import { api } from '../api/client';
 
 // contact form + newsletter + back-in-stock + returns + support tickets
-export const sendContactMessage = (b: { name: string; email: string; phone?: string; subject: string; message: string; website?: string }) => api.post('/customer/contact', b);
+export const sendContactMessage = (b: { name: string; email?: string; phone?: string; subject: string; message: string; website?: string }) => api.post('/customer/contact', b);
 
 export const subscribeNewsletter = (email: string, source = 'website') => api.post('/customer/newsletter/subscribe', { email, source });
 

@@ -395,6 +395,69 @@ async function seedStoreName() {
   console.log('  ✓ store name and address');
 }
 
+async function seedDeliverySettings() {
+  await prisma.siteSetting.upsert({
+    where: { key: 'delivery' },
+    update: {
+      value: JSON.stringify({
+        enabled: true,
+        originLat: 23.2452,
+        originLng: 90.9422,
+        originLabel: 'Kalibari Bazar, beside Kalibari High School field / Sonali Bank Kalibari, Shahrasti',
+        originLabelBn: 'কালীবাড়ী বাজার, হাই স্কুল মাঠ সংলগ্ন / সোনালী ব্যাংক কালীবাড়ী, শাহরাস্তি',
+        centerLat: 23.2452,
+        centerLng: 90.9422,
+        serviceRadiusKm: 20,
+        baseKm: 2,
+        baseCharge: 20,
+        perKmRate: 10,
+        stepKm: 1,
+        minOrderAmount: 0,
+        freeDeliveryThreshold: null,
+        slots: [
+          { id: 'morning', label: 'Morning (9am–12pm)', labelBn: 'সকাল (৯টা–১২টা)', from: '09:00', to: '12:00' },
+          { id: 'afternoon', label: 'Afternoon (12pm–4pm)', labelBn: 'দুপুর (১২টা–৪টা)', from: '12:00', to: '16:00' },
+          { id: 'evening', label: 'Evening (4pm–8pm)', labelBn: 'সন্ধ্যা (৪টা–৮টা)', from: '16:00', to: '20:00' },
+        ],
+        openFrom: '08:00',
+        openTo: '22:00',
+        shopOpen: true,
+        routeFactor: 1.3,
+      }),
+    },
+    create: {
+      key: 'delivery',
+      group: 'delivery',
+      value: JSON.stringify({
+        enabled: true,
+        originLat: 23.2452,
+        originLng: 90.9422,
+        originLabel: 'Kalibari Bazar, beside Kalibari High School field / Sonali Bank Kalibari, Shahrasti',
+        originLabelBn: 'কালীবাড়ী বাজার, হাই স্কুল মাঠ সংলগ্ন / সোনালী ব্যাংক কালীবাড়ী, শাহরাস্তি',
+        centerLat: 23.2452,
+        centerLng: 90.9422,
+        serviceRadiusKm: 20,
+        baseKm: 2,
+        baseCharge: 20,
+        perKmRate: 10,
+        stepKm: 1,
+        minOrderAmount: 0,
+        freeDeliveryThreshold: null,
+        slots: [
+          { id: 'morning', label: 'Morning (9am–12pm)', labelBn: 'সকাল (৯টা–১২টা)', from: '09:00', to: '12:00' },
+          { id: 'afternoon', label: 'Afternoon (12pm–4pm)', labelBn: 'দুপুর (১২টা–৪টা)', from: '12:00', to: '16:00' },
+          { id: 'evening', label: 'Evening (4pm–8pm)', labelBn: 'সন্ধ্যা (৪টা–৮টা)', from: '16:00', to: '20:00' },
+        ],
+        openFrom: '08:00',
+        openTo: '22:00',
+        shopOpen: true,
+        routeFactor: 1.3,
+      }),
+    },
+  });
+  console.log('  ✓ Kalibari Bazar origin pin');
+}
+
 async function seedSuperAdmin() {
   const phoneRaw = (process.env.SEED_SUPERADMIN_PHONE || '').trim();
   const password = process.env.SEED_SUPERADMIN_PASSWORD || '';
@@ -449,6 +512,7 @@ async function main() {
     console.log('  - demo products skipped (SEED_DEMO_PRODUCTS=false)');
   }
   await seedStoreName();
+  await seedDeliverySettings();
   await seedSuperAdmin();
   console.log('Seeding complete!');
 }

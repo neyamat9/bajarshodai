@@ -11,6 +11,9 @@ export const isMobileBanking = (m: string) => m === "BKASH" || m === "NAGAD" || 
 export interface OrderItem {
   id: string;
   quantity: number;
+  orderedQty?: number | null;
+  finalQty?: number | null;
+  finalTotal?: string | null;
   price: string;
   total: string;
   productName: string;
@@ -20,6 +23,19 @@ export interface OrderItem {
   variantSku: string | null;
   productId: string;
   variantId: string | null;
+  product?: {
+    id: string;
+    isWeighed: boolean;
+    unit?: {
+      code: string;
+      name: string;
+      nameBn: string;
+      shortLabel: string;
+      shortLabelBn: string;
+      allowDecimal: boolean;
+      defaultStep: number;
+    } | null;
+  } | null;
 }
 export interface Address {
   id: string;
@@ -274,4 +290,6 @@ export const ordersApi = {
   verifyPayment: (id: string, paymentStatus: "PAID" | "FAILED", note?: string) => api.patch<unknown>(`/admin/orders/${id}/verify-payment`, { paymentStatus, note: note || undefined }).then((r) => r.data),
   recordPayment: (id: string, body: { amount: number; method: PaymentMethod; transactionId?: string; note?: string }) => api.post(`/admin/orders/${id}/payments`, body).then((r) => r.data),
   refund: (id: string, body: { paymentId?: string; amount: number; method: "ORIGINAL_PAYMENT" | "STORE_CREDIT" | "BANK_TRANSFER"; reason: string }) => api.post(`/admin/orders/${id}/refunds`, body).then((r) => r.data),
+  updateWeights: (id: string, body: { items: { itemId: string; finalQty: number }[]; note?: string; markPacked?: boolean }) =>
+    api.put<OrderDetail>(`/admin/orders/${id}/weights`, body).then((r) => r.data),
 };

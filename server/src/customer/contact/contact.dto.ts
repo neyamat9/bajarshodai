@@ -20,13 +20,14 @@ export class ContactDto {
   @MaxLength(100)
   name: string;
 
-  @ApiProperty({ example: 'rahim@example.com' })
+  @ApiPropertyOptional({ example: 'rahim@example.com' })
+  @IsOptional()
   @Transform(({ value }: { value: unknown }) =>
-    typeof value === 'string' ? value.trim().toLowerCase() : value,
+    typeof value === 'string' && value.trim() ? value.trim().toLowerCase() : undefined,
   )
   @IsEmail()
   @MaxLength(254)
-  email: string;
+  email?: string;
 
   @ApiPropertyOptional({ example: '01712345678' })
   @IsOptional()

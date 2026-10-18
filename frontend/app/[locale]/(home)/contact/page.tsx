@@ -30,14 +30,24 @@ export default function ContactPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (f.name.trim().length < 2) return setError(t("errName"));
-    if (!/^\S+@\S+\.\S+$/.test(f.email.trim())) return setError(t("errEmail"));
-    if (f.phone && !/^(\+?88)?01[3-9]\d{8}$/.test(latinDigits(f.phone).replace(/[\s-]/g, ""))) return setError(t("errPhone"));
+    const hasEmail = f.email.trim().length > 0;
+    const hasPhone = f.phone.trim().length > 0;
+    if (!hasEmail && !hasPhone) return setError(t("errContact"));
+    if (hasEmail && !/^\S+@\S+\.\S+$/.test(f.email.trim())) return setError(t("errEmail"));
+    if (hasPhone && !/^(\+?88)?01[3-9]\d{8}$/.test(latinDigits(f.phone).replace(/[\s-]/g, ""))) return setError(t("errPhone"));
     if (f.subject.trim().length < 3) return setError(t("errSubject"));
     if (f.message.trim().length < 10) return setError(t("errMessage"));
     setBusy(true);
     setError(null);
     try {
-      await sendContactMessage({ ...f, phone: latinDigits(f.phone).replace(/[\s-]/g, "") || undefined, website: f.website || undefined });
+      await sendContactMessage({
+        name: f.name.trim(),
+        email: hasEmail ? f.email.trim() : undefined,
+        phone: hasPhone ? latinDigits(f.phone).replace(/[\s-]/g, "") : undefined,
+        subject: f.subject.trim(),
+        message: f.message.trim(),
+        website: f.website || undefined,
+      });
       setDone(true);
       toast.success(t("sent"));
     } catch (err) {
@@ -57,15 +67,15 @@ export default function ContactPage() {
           <p className="mt-2 text-sm text-muted-foreground/70">{t("lead")}</p>
 
           {done ? (
-            <p role="status" className="mt-8 rounded border border-emerald-500/30 bg-emerald-500/10 p-6 text-sm text-emerald-200">{t.rich("thanks", { contact: f.email, b: (c) => <b>{c}</b> })}</p>
+            <p role="status" className="mt-8 rounded border border-emerald-500/30 bg-emerald-500/10 p-6 text-sm text-emerald-200">{t.rich("thanks", { contact: f.phone || f.email, b: (c) => <b>{c}</b> })}</p>
           ) : (
             <form onSubmit={submit} noValidate className="mt-8 space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div><label htmlFor="c-name" className="sr-only">{t("name")}</label><input id="c-name" placeholder={t("namePh")} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} className={input} /></div>
-                <div><label htmlFor="c-email" className="sr-only">{t("email")}</label><input id="c-email" type="email" placeholder={t("emailPh")} value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} className={input} /></div>
+                <div><label htmlFor="c-phone" className="sr-only">{t("phone")}</label><input id="c-phone" inputMode="tel" placeholder={t("phonePh")} value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} className={input} /></div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <div><label htmlFor="c-phone" className="sr-only">{t("phone")}</label><input id="c-phone" placeholder={t("phonePh")} value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} className={input} /></div>
+                <div><label htmlFor="c-email" className="sr-only">{t("email")}</label><input id="c-email" type="email" placeholder={t("emailPh")} value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} className={input} /></div>
                 <div><label htmlFor="c-sub" className="sr-only">{t("subject")}</label><input id="c-sub" placeholder={t("subject")} value={f.subject} onChange={(e) => setF({ ...f, subject: e.target.value })} className={input} /></div>
               </div>
               <div><label htmlFor="c-msg" className="sr-only">{t("message")}</label><textarea id="c-msg" rows={6} maxLength={5000} placeholder={t("messagePh")} value={f.message} onChange={(e) => setF({ ...f, message: e.target.value })} className={input} /></div>

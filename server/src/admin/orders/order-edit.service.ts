@@ -21,6 +21,7 @@ import {
   OverrideDeliveryFeeDto,
   SetDeliveryPinDto,
   UpdateOrderItemsDto,
+  UpdatePackerWeightsDto,
 } from './dto/order-admin.dto';
 import { AdminOrdersService } from './orders.service';
 import {
@@ -509,6 +510,105 @@ export class OrderEditService {
 
     const updated = await this.orders.findOne(id);
     return warnings.length ? { ...updated, warnings } : updated;
+  }
+
+  /**
+   * Packer scale weight adjustment: updates finalQty and finalTotal on weighed items and recalculates order total.
+   */
+  async updatePackerWeights(id: string, dto: UpdatePackerWeightsDto, adminId?: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id },
+      include: { items: true },
+    });
+    if (!order) throw new NotFoundException('Order not found');
+    const editableStatuses: string[] = ['PENDING', 'CONFIRMED', 'PROCESSING', 'ON_HOLD'];
+    if (!editableStatuses.includes(order.status)) {
+      throw new BadRequestException(`Cannot adjust weights on an order with status ${order.status}`);
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      for (const input of dto.items) {
+        const item = order.items.find((i) => i.id === input.itemId);
+        if (!item) continue;
+        const finalQty = round3(input.finalQty);
+        const price = Number(item.price);
+        const finalTotal = round2(finalQty * price);
+        const orderedQty = item.orderedQty !== null ? Number(item.orderedQty) : Number(item.quantity);
+
+        const diff = finalQty - Number(item.quantity);
+        if (Math.abs(diff) > 0.0001 && item.productId) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { stock: { decrement: diff } },
+          });
+        }
+
+        await tx.orderItem.update({
+          where: { id: item.id },
+          data: {
+            orderedQty,
+            finalQty,
+            finalTotal,
+            quantity: finalQty,
+            total: finalTotal,
+          },
+        });
+      }
+
+      const updatedLines = await tx.orderItem.findMany({ where: { orderId: id } });
+      const subtotal = round2(updatedLines.reduce((s, l) => s + Number(l.total), 0));
+      const discount = Number(order.discountAmount);
+      const shipping = Number(order.shippingCost);
+      const newTotal = Math.max(0, round2(subtotal - discount + shipping));
+      const paid = Number(order.paidAmount);
+      const newDue = dueFor(newTotal, paid);
+      const newPaymentStatus = paymentStatusAfterTotalChange(order.paymentStatus, newTotal, paid);
+
+      const advanceToProcessing = dto.markPacked && (order.status === 'CONFIRMED' || order.status === 'PENDING');
+      const targetStatus = advanceToProcessing ? 'PROCESSING' : order.status;
+
+      await tx.order.update({
+        where: { id },
+        data: {
+          subtotal,
+          total: newTotal,
+          dueAmount: newDue,
+          paymentStatus: newPaymentStatus,
+          status: targetStatus,
+        },
+      });
+
+      if (advanceToProcessing) {
+        await tx.orderStatusHistory.create({
+          data: {
+            orderId: id,
+            fromStatus: order.status,
+            toStatus: 'PROCESSING',
+            note: dto.note || 'Packer recorded final scale weights',
+            changedBy: adminId || 'packer',
+          },
+        });
+      }
+
+      await writeAudit(tx, {
+        adminId: adminId || 'packer',
+        action: 'ORDER_EDITED',
+        entity: 'Order',
+        entityId: id,
+        oldValue: {
+          total: Number(order.total),
+          subtotal: Number(order.subtotal),
+        },
+        newValue: {
+          total: newTotal,
+          subtotal,
+          weights: dto.items,
+          note: dto.note,
+        },
+      });
+    });
+
+    return this.orders.findOne(id);
   }
 
   // ---------- delivery charge by hand + the delivery pin ----------

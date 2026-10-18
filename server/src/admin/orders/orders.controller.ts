@@ -42,6 +42,7 @@ import {
   RecordRefundDto,
   UpdateOrderAddressDto,
   UpdateOrderItemsDto,
+  UpdatePackerWeightsDto,
   UpdateOrderNotesDto,
   UpdateOrderStatusDto,
   UpdateShippingInfoDto,
@@ -240,6 +241,19 @@ export class AdminOrdersController {
     @CurrentUser() admin: User,
   ) {
     return this.edit.updateItems(id, dto, admin.id);
+  }
+
+  @Put(':id/weights')
+  @ApiOperation({
+    summary:
+      'Packer scale recording: record actual measured weights for weighed items in an order and adjust totals',
+  })
+  weights(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdatePackerWeightsDto,
+    @CurrentUser() admin: User,
+  ) {
+    return this.edit.updatePackerWeights(id, dto, admin.id);
   }
 
   @Patch(':id/verify-payment')

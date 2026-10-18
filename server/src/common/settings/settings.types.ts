@@ -241,13 +241,13 @@ export const DEFAULT_SETTINGS: SettingsMap = {
   },
   delivery: {
     enabled: true,
-    // The exact point is set once from the dashboard (Settings → Delivery), on the map.
-    originLat: null,
-    originLng: null,
+    // Kalibari Bazar, beside Kalibari High School field / Sonali Bank Kalibari, Shahrasti
+    originLat: 23.2452,
+    originLng: 90.9422,
     originLabel: 'Kalibari Bazar, beside Kalibari High School field / Sonali Bank Kalibari, Shahrasti',
     originLabelBn: 'কালীবাড়ী বাজার, হাই স্কুল মাঠ সংলগ্ন / সোনালী ব্যাংক কালীবাড়ী, শাহরাস্তি',
-    centerLat: null,
-    centerLng: null,
+    centerLat: 23.2452,
+    centerLng: 90.9422,
     serviceRadiusKm: 20,
     baseKm: 2,
     baseCharge: 20,

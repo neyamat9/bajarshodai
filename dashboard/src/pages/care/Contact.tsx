@@ -26,17 +26,17 @@ function Detail({ m, onClose }: { m: ContactMessage; onClose: () => void }) {
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent size="lg">
-        <DialogHeader><DialogTitle>{m.subject}</DialogTitle><DialogDescription>{m.name} · {m.email}{m.phone ? ` · ${m.phone}` : ""} · {dateTime(m.createdAt)}</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>{m.subject}</DialogTitle><DialogDescription>{m.name} · {[m.phone, m.email].filter(Boolean).join(" · ")} · {dateTime(m.createdAt)}</DialogDescription></DialogHeader>
         <DialogBody className="space-y-3">
           <p className="whitespace-pre-wrap rounded bg-muted p-3 text-[13px]">{m.message}</p>
           {m.reply && <div className="rounded border-l-2 border-fresh-400 bg-fresh-50 p-3 text-[13px] dark:bg-fresh-500/10"><p className="mb-1 text-xs text-muted-foreground">You replied {m.repliedAt && dateTime(m.repliedAt)}</p><p className="whitespace-pre-wrap">{m.reply}</p></div>}
-          <Field label={m.reply ? tr("Send another reply") : tr("Reply by email")}><Textarea rows={4} value={reply} maxLength={10000} onChange={(e) => setReply(e.target.value)} /></Field>
+          <Field label={m.reply ? tr("Send another reply") : m.email ? tr("Reply by email") : tr("Reply note")}><Textarea rows={4} value={reply} maxLength={10000} onChange={(e) => setReply(e.target.value)} /></Field>
           <div className="grid gap-3 sm:grid-cols-3">
             <Field label={tr("Status")}><Select value={status} onChange={(e) => setStatus(e.target.value as ContactStatus)}>{(["NEW", "READ", "REPLIED", "ARCHIVED"] as const).map((s) => <option key={s} value={s}>{s[0] + s.slice(1).toLowerCase()}</option>)}</Select></Field>
             <Field label={tr("Private note")} className="sm:col-span-2"><Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} /></Field>
           </div>
         </DialogBody>
-        <DialogFooter><Button variant="outline" onClick={onClose}>{tr("Close")}</Button><Button variant="outline" loading={save.isPending} onClick={() => save.mutate()}>Save status & note</Button><Button disabled={reply.trim().length < 2} loading={send.isPending} onClick={() => send.mutate()}><Mail />{" "}{tr("Send reply")}</Button></DialogFooter>
+        <DialogFooter><Button variant="outline" onClick={onClose}>{tr("Close")}</Button><Button variant="outline" loading={save.isPending} onClick={() => save.mutate()}>{tr("Save")}</Button><Button disabled={reply.trim().length < 2} loading={send.isPending} onClick={() => send.mutate()}><Mail />{" "}{m.email ? tr("Send reply") : tr("Save reply")}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -59,7 +59,7 @@ export default function Contact() {
   const move = useAct((v: { id: string; status: ContactStatus }) => contactApi.update(v.id, { status: v.status }), { success: tr("Message updated"), invalidate: [["contact"], ["attention-summary"]] });
   const remove = useAct(() => contactApi.remove(del!.id), { success: tr("Message deleted"), invalidate: [["contact"], ["attention-summary"]], onSuccess: () => setDel(null) });
   const cols: Column<ContactMessage>[] = [
-    { key: "f", header: tr("From"), sk: "lines2", cell: (m) => <div><p className={m.status === "NEW" ? "font-bold" : "font-medium"}>{m.name}</p><p className="text-[11px] text-muted-foreground">{m.email}</p></div> },
+    { key: "f", header: tr("From"), sk: "lines2", cell: (m) => <div><p className={m.status === "NEW" ? "font-bold" : "font-medium"}>{m.name}</p><p className="text-[11px] text-muted-foreground">{[m.phone, m.email].filter(Boolean).join(" · ")}</p></div> },
     { key: "s", header: tr("Message"), sk: "lines2", cell: (m) => <div className="max-w-[420px]"><p className={`truncate ${m.status === "NEW" ? "font-semibold" : ""}`}>{m.subject}</p><p className="truncate text-[12px] text-muted-foreground">{m.message}</p></div> },
     { key: "st", header: tr("Status"), sk: "badge", cell: (m) => <QuickStatus current={m.status} options={CONTACT_STATUSES} pending={move.isPending && move.variables?.id === m.id} onPick={(status) => move.mutate({ id: m.id, status })} /> },
     { key: "d", header: tr("Received"), sk: "text", cell: (m) => dateTime(m.createdAt) },

@@ -116,6 +116,13 @@ export class AdminContactMessagesController {
     @Body() dto: ReplyContactMessageDto,
   ) {
     const msg = await this.ensureExists(id);
+    if (!msg.email) {
+      // Customer provided phone only: save the reply note directly
+      return this.prisma.contactMessage.update({
+        where: { id },
+        data: { status: 'REPLIED', reply: dto.message, repliedAt: new Date() },
+      });
+    }
     const site = await this.settings.get('site');
     const subject = `Re: ${msg.subject}`;
     const result = await this.mail.send({

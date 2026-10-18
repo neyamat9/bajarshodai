@@ -225,7 +225,29 @@ export class AdminOrdersService {
     const order = await this.prisma.order.findUnique({
       where: { id },
       include: {
-        items: { orderBy: { createdAt: 'asc' } },
+        items: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                isWeighed: true,
+                unit: {
+                  select: {
+                    id: true,
+                    code: true,
+                    name: true,
+                    nameBn: true,
+                    shortLabel: true,
+                    shortLabelBn: true,
+                    allowDecimal: true,
+                    defaultStep: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
         statusHistory: { orderBy: { createdAt: 'asc' } },
         shippingAddress: true,
         payments: { include: { refunds: true }, orderBy: { createdAt: 'asc' } },

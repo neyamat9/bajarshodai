@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { AdminFeedService } from '../../common/admin-feed';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SettingsService } from '../../common/settings';
@@ -25,6 +25,12 @@ export class ContactService {
     dto: ContactDto,
     meta: { userId?: string; ip?: string; userAgent?: string },
   ) {
+    if (!dto.email?.trim() && !dto.phone?.trim()) {
+      throw new BadRequestException(
+        'Please provide a mobile number or an email so we can reach you.',
+      );
+    }
+
     // Spam bot filled the hidden field: pretend it worked, store nothing.
     if (dto.website?.trim()) {
       this.logger.warn(
@@ -36,7 +42,7 @@ export class ContactService {
     const saved = await this.prisma.contactMessage.create({
       data: {
         name: dto.name,
-        email: dto.email,
+        email: dto.email?.trim().toLowerCase() || null,
         phone: dto.phone ?? null,
         subject: dto.subject,
         message: dto.message,
@@ -46,10 +52,11 @@ export class ContactService {
       },
     });
 
+    const contactStr = dto.phone ? dto.phone : (dto.email ?? '');
     void this.adminFeed.notify({
       type: 'CONTACT_MESSAGE',
       title: `Contact message: ${dto.subject}`,
-      body: `${dto.name} <${dto.email}>`,
+      body: `${dto.name} (${contactStr})`,
       entityType: 'contact-message',
       entityId: saved.id,
     });
@@ -73,13 +80,13 @@ export class ContactService {
       const subject = `Contact form: ${msg.subject}`;
       await this.mail.send({
         to: email.adminNotificationEmail,
-        replyTo: msg.email,
+        replyTo: msg.email || undefined,
         subject,
-        text: `From: ${msg.name} <${msg.email}>${msg.phone ? `\nPhone: ${msg.phone}` : ''}\n\n${msg.message}`,
+        text: `From: ${msg.name}${msg.email ? ` <${msg.email}>` : ''}${msg.phone ? `\nPhone: ${msg.phone}` : ''}\n\n${msg.message}`,
         html: renderEmailLayout(site, {
           title: subject,
           bodyHtml: `<h2 style="margin:0 0 12px;font-size:18px">New contact message</h2>
-<p style="margin:0 0 4px"><strong>${escapeHtml(msg.name)}</strong> &lt;${escapeHtml(msg.email)}&gt;</p>
+<p style="margin:0 0 4px"><strong>${escapeHtml(msg.name)}</strong>${msg.email ? ` &lt;${escapeHtml(msg.email)}&gt;` : ''}</p>
 ${msg.phone ? `<p style="margin:0 0 4px">Phone: ${escapeHtml(msg.phone)}</p>` : ''}
 <p style="margin:0 0 12px">Subject: ${escapeHtml(msg.subject)}</p>
 <div style="white-space:pre-wrap;padding:12px;background:#fafafa;border-radius:6px">${escapeHtml(msg.message)}</div>

@@ -1,6 +1,6 @@
 import type { AdminUser } from "@/api/client";
 
-/** Every permission the server knows (the list shown in the staff form comes from the servr). */
+/** Every permission the server knows (the list shown in the staff form comes from the server). */
 export type Permission =
   | "orders.view" | "orders.manage" | "orders.assign" | "delivery.manage"
   | "products.view" | "products.manage" | "inventory.manage"

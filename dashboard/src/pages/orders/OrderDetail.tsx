@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CreditCard, FileText, Pencil, RotateCcw, Truck, User } from "lucide-react";
+import { CreditCard, FileText, Pencil, RotateCcw, Scale, Truck, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input, Select, Textarea } from "@/components/ui/input";
@@ -22,6 +22,7 @@ import { DeliveryCard } from "./components/DeliveryCard";
 import { RiderCard } from "./components/RiderCard";
 import { EditAddressDialog } from "./components/EditAddressDialog";
 import { EditItemsDialog } from "./components/EditItemsDialog";
+import { PackerWeightDialog } from "./components/PackerWeightDialog";
 import { RecordPaymentDialog, RefundDialog } from "./components/PaymentDialogs";
 import { DetailPageSkeleton } from "@/components/shared/skeletons";
 import { OrderProgress } from "./components/OrderProgress";
@@ -110,7 +111,7 @@ function NotesCard({ order }: { order: Order }) {
 export default function OrderDetailPage() {
   const { id = "" } = useParams();
   const q = useQuery({ queryKey: ["order", id], queryFn: () => ordersApi.get(id), enabled: !!id });
-  const [dlg, setDlg] = useState<null | "status" | "address" | "items" | "pay" | "refund" | "verifyPaid" | "verifyFailed">(null);
+  const [dlg, setDlg] = useState<null | "status" | "address" | "items" | "weights" | "pay" | "refund" | "verifyPaid" | "verifyFailed">(null);
 
   const advance = useAct((status: OrderStatus) => ordersApi.setStatus(id, status), {
     success: tr("Status updated"),
@@ -178,7 +179,18 @@ export default function OrderDetailPage() {
         <div className="space-y-4 lg:col-span-2">
           <Section
             title={tr("Items")}
-            actions={!locked && <Button variant="outline" size="xs" onClick={() => setDlg("items")}><Pencil />{" "}{tr("Edit items")}</Button>}
+            actions={
+              !locked && (
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="xs" onClick={() => setDlg("weights")}>
+                    <Scale className="h-3.5 w-3.5" />{" "}{tr("Weigh & Pack")}
+                  </Button>
+                  <Button variant="outline" size="xs" onClick={() => setDlg("items")}>
+                    <Pencil className="h-3.5 w-3.5" />{" "}{tr("Edit items")}
+                  </Button>
+                </div>
+              )
+            }
             className="[&>div:last-child]:p-0"
           >
             <ul className="divide-y divide-border">
@@ -190,8 +202,11 @@ export default function OrderDetailPage() {
                     <p className="text-xs text-muted-foreground">{[i.variantName, i.variantSku].filter(Boolean).join(" · ") || "—"}</p>
                   </div>
                   <div className="text-right text-[13px]">
-                    <p className="text-muted-foreground">{money(i.price)} × {i.quantity}</p>
-                    <p className="font-semibold">{money(i.total)}</p>
+                    <p className="text-muted-foreground">{money(i.price)} × {i.finalQty != null ? i.finalQty : i.quantity}</p>
+                    <p className="font-semibold">{money(i.finalTotal != null ? i.finalTotal : i.total)}</p>
+                    {i.finalQty != null && i.orderedQty != null && i.finalQty !== i.orderedQty && (
+                      <p className="text-[11px] text-muted-foreground">{tr("Ordered")}: {i.orderedQty}</p>
+                    )}
                   </div>
                 </li>
               ))}
@@ -286,6 +301,7 @@ export default function OrderDetailPage() {
       {dlg === "status" && <StatusDialog order={o} open onOpenChange={() => setDlg(null)} />}
       {dlg === "address" && <EditAddressDialog order={o} open onOpenChange={() => setDlg(null)} />}
       {dlg === "items" && <EditItemsDialog order={o} open onOpenChange={() => setDlg(null)} />}
+      {dlg === "weights" && <PackerWeightDialog order={o} open onOpenChange={() => setDlg(null)} />}
       {dlg === "pay" && <RecordPaymentDialog order={o} open onOpenChange={() => setDlg(null)} />}
       {dlg === "refund" && <RefundDialog order={o} open onOpenChange={() => setDlg(null)} />}
       <ConfirmDialog

@@ -32,7 +32,7 @@ export interface MapViewProps {
   ariaLabel?: string;
 }
 
-/** Roughly the middle of Shahrasti, only used to open the map when nothing else is known. */
-export const DEFAULT_CENTER: GeoPoint = { lat: 23.2, lng: 90.9 };
+/** Kalibari Bazar, Shahrasti: used to open the map when nothing else is known. */
+export const DEFAULT_CENTER: GeoPoint = { lat: 23.2452, lng: 90.9422 };
 
 export const SATELLITE_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";

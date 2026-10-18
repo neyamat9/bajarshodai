@@ -34,7 +34,10 @@ export class OsmProvider implements MapProvider {
   private headers() {
     // Nominatim's usage policy wants a real contact in the User-Agent
     const contact = this.cfg.contactEmail ? ` (${this.cfg.contactEmail})` : '';
-    return { 'User-Agent': `BazarShodai/1.0${contact}`, Accept: 'application/json' };
+    return {
+      'User-Agent': `BazarShodai/1.0${contact}`,
+      Accept: 'application/json',
+    };
   }
 
   async route(origin: LatLng, dest: LatLng): Promise<RouteResult | null> {
@@ -53,7 +56,10 @@ export class OsmProvider implements MapProvider {
     const f = json.features?.[0];
     const summary = f?.properties?.summary;
     if (!summary?.distance) return null;
-    const path = (f?.geometry?.coordinates ?? []).map(([lng, lat]) => ({ lat, lng }));
+    const path = (f?.geometry?.coordinates ?? []).map(([lng, lat]) => ({
+      lat,
+      lng,
+    }));
     return {
       meters: summary.distance,
       seconds: summary.duration ?? 0,
@@ -65,7 +71,9 @@ export class OsmProvider implements MapProvider {
     const url =
       'https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=17&addressdetails=1' +
       `&lat=${point.lat}&lon=${point.lng}&accept-language=${lang}`;
-    const json = (await nominatimTurn(() => getJson(url, { headers: this.headers() }))) as {
+    const json = (await nominatimTurn(() =>
+      getJson(url, { headers: this.headers() }),
+    )) as {
       name?: string;
       display_name?: string;
       address?: Record<string, string>;
@@ -73,24 +81,38 @@ export class OsmProvider implements MapProvider {
     return shortAddress(json) ?? null;
   }
 
-  async search(query: string, lang: Lang, near?: LatLng): Promise<PlaceResult[]> {
+  async search(
+    query: string,
+    lang: Lang,
+    near?: LatLng,
+  ): Promise<PlaceResult[]> {
     const view = near
       ? `&viewbox=${near.lng - 0.3},${near.lat + 0.3},${near.lng + 0.3},${near.lat - 0.3}`
       : '';
     const url =
       'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&countrycodes=bd' +
       `&accept-language=${lang}&q=${encodeURIComponent(query)}${view}`;
-    const rows = (await nominatimTurn(() => getJson(url, { headers: this.headers() }))) as {
+    const rows = (await nominatimTurn(() =>
+      getJson(url, { headers: this.headers() }),
+    )) as {
       display_name: string;
       lat: string;
       lon: string;
     }[];
-    return rows.map((r) => ({ name: r.display_name, lat: Number(r.lat), lng: Number(r.lon) }));
+    return rows.map((r) => ({
+      name: r.display_name,
+      lat: Number(r.lat),
+      lng: Number(r.lon),
+    }));
   }
 }
 
 /** "Kalibari Bazar, Shahrasti": the useful first parts of an OpenStreetMap address, not the whole country chain. */
-function shortAddress(j: { name?: string; display_name?: string; address?: Record<string, string> }): string | null {
+function shortAddress(j: {
+  name?: string;
+  display_name?: string;
+  address?: Record<string, string>;
+}): string | null {
   const a = j.address ?? {};
   const parts = [
     j.name,
@@ -100,7 +122,11 @@ function shortAddress(j: { name?: string; display_name?: string; address?: Recor
     a.city ?? a.state_district,
   ].filter((p): p is string => !!p);
   const seen = new Set<string>();
-  const unique = parts.filter((p) => (seen.has(p) ? false : (seen.add(p), true)));
+  const unique = parts.filter((p) =>
+    seen.has(p) ? false : (seen.add(p), true),
+  );
   if (unique.length) return unique.slice(0, 3).join(', ');
-  return j.display_name ? j.display_name.split(',').slice(0, 3).join(',').trim() : null;
+  return j.display_name
+    ? j.display_name.split(',').slice(0, 3).join(',').trim()
+    : null;
 }
