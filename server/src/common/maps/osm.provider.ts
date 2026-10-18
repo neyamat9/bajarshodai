@@ -47,7 +47,13 @@ export class OsmProvider implements MapProvider {
       'https://api.openrouteservice.org/v2/directions/driving-car' +
       `?api_key=${encodeURIComponent(key)}` +
       `&start=${origin.lng},${origin.lat}&end=${dest.lng},${dest.lat}`;
-    const json = (await getJson(url, { headers: this.headers() })) as {
+    const json = (await getJson(url, {
+      headers: {
+        ...this.headers(),
+        Accept: 'application/geo+json, application/json, */*',
+        Authorization: key,
+      },
+    })) as {
       features?: {
         properties?: { summary?: { distance?: number; duration?: number } };
         geometry?: { coordinates?: [number, number][] };

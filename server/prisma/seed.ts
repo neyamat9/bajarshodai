@@ -464,14 +464,8 @@ async function seedSuperAdmin() {
   const name = (process.env.SEED_SUPERADMIN_NAME || 'Super Admin').trim();
   const email = (process.env.SEED_SUPERADMIN_EMAIL || '').trim().toLowerCase() || null;
 
-  if (!phoneRaw || !password) {
-    console.log(
-      '  - Super Admin not created: set SEED_SUPERADMIN_PHONE and SEED_SUPERADMIN_PASSWORD in server/.env, then run the seed again.',
-    );
+  if (!phoneRaw) {
     return;
-  }
-  if (password.length < 8) {
-    throw new Error('SEED_SUPERADMIN_PASSWORD must be at least 8 characters');
   }
   const phone = normalizeBdPhone(phoneRaw);
   if (!isBdMobile(phone)) {
@@ -481,11 +475,26 @@ async function seedSuperAdmin() {
   }
 
   const existing = await prisma.user.findFirst({
-    where: { OR: [{ phone }, ...(email ? [{ email }] : [])] },
+    where: { phone },
   });
   if (existing) {
-    console.log(`  - An account with phone ${phone} already exists, left unchanged`);
+    const updateData: Record<string, unknown> = {};
+    if (email && existing.email !== email) updateData.email = email;
+    if (password && password.length >= 8) updateData.passwordHash = await argon2.hash(password);
+    if (Object.keys(updateData).length > 0) {
+      await prisma.user.update({
+        where: { id: existing.id },
+        data: updateData,
+      });
+      console.log(`  ✓ Super Admin updated: ${phone} (${email ?? existing.email})`);
+    } else {
+      console.log(`  - Super Admin (${phone}) already up to date`);
+    }
     return;
+  }
+
+  if (!password || password.length < 8) {
+    throw new Error('SEED_SUPERADMIN_PASSWORD must be at least 8 characters');
   }
   await prisma.user.create({
     data: {
