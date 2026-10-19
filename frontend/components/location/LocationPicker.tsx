@@ -40,8 +40,21 @@ export default function LocationPicker({ value, onChange, subtotal = 0, onQuote,
   const [saved, setSaved] = useState<PickedLocation | null>(null);
   const [query, setQuery] = useState("");
   const [found, setFound] = useState<FoundPlace[] | null>(null);
+  const [searching, setSearching] = useState(false);
   const [fitKey, setFitKey] = useState("start");
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchSeq = useRef(0);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setFound(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // the rules of delivery (fresh: the shop can move its pin), the map to draw, and a place the customer shared before
   useEffect(() => {
@@ -109,8 +122,23 @@ export default function LocationPicker({ value, onChange, subtotal = 0, onQuote,
   function onSearch(text: string) {
     setQuery(text);
     if (searchTimer.current) clearTimeout(searchTimer.current);
-    if (text.trim().length < 3) return setFound(null);
-    searchTimer.current = setTimeout(async () => setFound(await searchPlaces(text.trim(), locale)), 450);
+    if (text.trim().length < 2) {
+      setFound(null);
+      setSearching(false);
+      return;
+    }
+    setSearching(true);
+    const seq = ++searchSeq.current;
+    searchTimer.current = setTimeout(async () => {
+      try {
+        const res = await searchPlaces(text.trim(), locale);
+        if (seq === searchSeq.current) setFound(res);
+      } catch {
+        if (seq === searchSeq.current) setFound([]);
+      } finally {
+        if (seq === searchSeq.current) setSearching(false);
+      }
+    }, 350);
   }
 
   function choose(p: FoundPlace) {
@@ -179,7 +207,7 @@ export default function LocationPicker({ value, onChange, subtotal = 0, onQuote,
       )}
 
       {/* 2. search, when the button is not an option */}
-      <div className="relative">
+      <div ref={searchContainerRef} className="relative z-50">
         <label htmlFor="place-search" className="sr-only">
           {t("searchAria")}
         </label>
@@ -188,26 +216,61 @@ export default function LocationPicker({ value, onChange, subtotal = 0, onQuote,
           id="place-search"
           value={query}
           onChange={(e) => onSearch(e.target.value)}
+          onFocus={() => {
+            if (query.trim().length >= 2 && !found) {
+              onSearch(query);
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              setFound(null);
+            }
+          }}
           placeholder={t("searchPh")}
           autoComplete="off"
           disabled={!!blocked}
-          className="h-11 w-full rounded border-2 border-input bg-background pl-10 pr-9 text-sm outline-none transition-all placeholder:text-muted-foreground/80 focus:border-brand-fresh focus:ring-4 focus:ring-brand-fresh/20 disabled:opacity-60"
+          className="h-11 w-full rounded border-2 border-input bg-background pl-10 pr-12 text-sm outline-none transition-all placeholder:text-muted-foreground/80 focus:border-brand-fresh focus:ring-4 focus:ring-brand-fresh/20 disabled:opacity-60"
         />
-        {query && (
-          <button type="button" onClick={() => onSearch("")} aria-label={t("clearSearch")} className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded text-muted-foreground hover:bg-secondary">
-            <X className="h-4 w-4" aria-hidden="true" />
-          </button>
-        )}
+        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+          {searching && <Loader2 className="h-4 w-4 animate-spin text-brand-fresh" aria-hidden="true" />}
+          {query && !searching && (
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                setFound(null);
+              }}
+              aria-label={t("clearSearch")}
+              className="flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:bg-secondary"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+          )}
+        </div>
         {found && (
-          <ul className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded border border-border bg-popover shadow-lg" role="listbox">
+          <ul
+            className="absolute left-0 right-0 top-full z-50 mt-1.5 max-h-64 w-full overflow-auto rounded-lg border border-border bg-popover text-popover-foreground shadow-2xl ring-1 ring-black/10 dark:ring-white/10"
+            role="listbox"
+          >
             {found.length === 0 ? (
-              <li className="px-3 py-3 text-sm text-muted-foreground">{t("noResults")}</li>
+              <li className="px-4 py-3.5 text-sm text-muted-foreground">
+                <p className="font-semibold text-foreground">{t("noResults")}</p>
+                <p className="mt-1 text-xs">
+                  {locale === "bn"
+                    ? "কাছের থানা বা বাজার (যেমন: শাহরাস্তি, মেহের, কালীবাড়ী) লিখে খুঁজুন অথবা নিচের ম্যাপে পিনটি টেনে আপনার ঠিকানায় বসান।"
+                    : "Try searching for your Upazila or Market (e.g. Shahrasti, Meher, Kalibari), or drag the pin on the map to your address."}
+                </p>
+              </li>
             ) : (
               found.map((p) => (
                 <li key={`${p.lat},${p.lng}`} role="option" aria-selected={false}>
-                  <button type="button" onClick={() => choose(p)} className="flex w-full items-start gap-2 px-3 py-2.5 text-left text-sm hover:bg-accent">
-                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-accent-text" aria-hidden="true" />
-                    <span>{p.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => choose(p)}
+                    className="flex w-full items-start gap-2.5 px-4 py-3 text-left text-sm hover:bg-accent/80 transition-colors border-b last:border-b-0 border-border/50"
+                  >
+                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-fresh" aria-hidden="true" />
+                    <span className="font-medium leading-snug">{p.name}</span>
                   </button>
                 </li>
               ))
@@ -218,7 +281,7 @@ export default function LocationPicker({ value, onChange, subtotal = 0, onQuote,
 
       {/* 3. the map */}
       {maps && (
-        <div className="overflow-hidden rounded border border-border">
+        <div className="relative z-0 isolate overflow-hidden rounded border border-border">
           <MapView
             config={maps}
             center={origin ?? DEFAULT_CENTER}

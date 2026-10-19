@@ -610,7 +610,9 @@
     "outOfArea": "Sorry, we do not deliver to this place. Choose another place.",
     "km": "{km} km",
     "estimated": "estimated",
-    "shippingPending": "Shown once you choose a place"
+    "shippingPending": "Shown once you choose a place",
+    "saveAddress": "Save this address to my saved addresses",
+    "errLocation": "Please choose your delivery location on the map or click Share my location"
   },
   "Auth": {
     "titleLogin": "Sign in",

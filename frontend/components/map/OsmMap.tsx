@@ -150,5 +150,5 @@ export default function OsmMap(p: MapViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p.fitKey]);
 
-  return <div ref={el} className={p.className} role="application" aria-label={p.ariaLabel} />;
+  return <div ref={el} className={`relative z-0 ${p.className ?? ""}`} role="application" aria-label={p.ariaLabel} />;
 }

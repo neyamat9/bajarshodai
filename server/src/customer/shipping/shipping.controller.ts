@@ -60,9 +60,14 @@ export class ShippingController {
 
   @Public()
   @Get('search')
-  @Throttle({ medium: { ttl: 60000, limit: 20 } })
+  @Throttle({ medium: { ttl: 60000, limit: 30 } })
   @ApiOperation({ summary: 'Address search for the "find my street" box' })
   async search(@Query() q: SearchQuery) {
-    return { results: await this.maps.search(q.q, q.lang ?? 'bn') };
+    const opts = await this.shippingService.getOptions();
+    const near =
+      opts.origin && opts.origin.lat !== null && opts.origin.lng !== null
+        ? { lat: opts.origin.lat, lng: opts.origin.lng }
+        : undefined;
+    return { results: await this.maps.search(q.q, q.lang ?? 'bn', near) };
   }
 }

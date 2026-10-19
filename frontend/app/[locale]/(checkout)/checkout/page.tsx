@@ -13,7 +13,7 @@ import { errorMessage } from "@/lib/api/client";
 import { useCart } from "@/lib/hooks/use-cart";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { loadSavedAddresses, peekSavedAddresses, toDeliveryDetails, toPickedLocation } from "@/lib/checkout-prefill";
-import type { SavedAddress } from "@/lib/services/addresses.service";
+import { createAddress, type SavedAddress } from "@/lib/services/addresses.service";
 import { clearStoredCoupon, getStoredCoupon, storeCoupon } from "@/lib/coupon-store";
 import { applyCoupon, getCheckoutSummary, type CheckoutSummary } from "@/lib/services/checkout.service";
 import { getSiteSettings, type SiteSettings } from "@/lib/services/site.service";
@@ -151,9 +151,31 @@ function Checkout() {
             <ShippingForm
               initialData={details ?? (user ? { fullName: user.name, phone: user.phone } : undefined)}
               saved={saved ?? []}
+              location={location}
+              onLocation={setLocation}
               onPickSaved={(pin) => setLocation(pin)}
-              onSubmit={(d) => {
+              subtotal={summary?.subtotal ?? 0}
+              onSubmit={async (d, saveToBook) => {
                 setDetails(d);
+                if (saveToBook && user && location) {
+                  try {
+                    const newAddr = await createAddress({
+                      fullName: d.fullName,
+                      phone: d.phone,
+                      line1: d.address,
+                      landmark: d.landmark || undefined,
+                      latitude: location.lat,
+                      longitude: location.lng,
+                      placeName: location.placeName || undefined,
+                      accuracyM: location.accuracyM ?? undefined,
+                      locationSource: location.source as any,
+                      isDefault: (saved?.length ?? 0) === 0,
+                    });
+                    setSaved((prev) => (prev ? [newAddr, ...prev] : [newAddr]));
+                  } catch {
+                    // continues even if saving address to book fails
+                  }
+                }
                 setStep(2);
               }}
             />

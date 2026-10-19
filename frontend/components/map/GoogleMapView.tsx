@@ -66,7 +66,7 @@ export default function GoogleMapView(p: MapViewProps) {
   const key = p.config.googleBrowserKey ?? "";
   return (
     <APIProvider apiKey={key}>
-      <div className={p.className} role="application" aria-label={p.ariaLabel}>
+      <div className={`relative z-0 ${p.className ?? ""}`} role="application" aria-label={p.ariaLabel}>
         <Map
           mapId="DEMO_MAP_ID"
           defaultCenter={p.center}

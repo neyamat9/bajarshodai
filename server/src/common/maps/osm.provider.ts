@@ -92,8 +92,37 @@ export class OsmProvider implements MapProvider {
     lang: Lang,
     near?: LatLng,
   ): Promise<PlaceResult[]> {
+    // 1. If OpenRouteService API key is available, use ORS Geocoding (Pelias)
+    if (this.cfg.orsApiKey) {
+      try {
+        const focus = near
+          ? `&focus.point.lat=${near.lat}&focus.point.lon=${near.lng}`
+          : '';
+        const url =
+          `https://api.openrouteservice.org/geocode/autocomplete?api_key=${encodeURIComponent(this.cfg.orsApiKey)}` +
+          `&text=${encodeURIComponent(query)}&boundary.country=BGD&size=6${focus}`;
+        const json = (await getJson(url, { headers: { Accept: 'application/json' } })) as {
+          features?: {
+            properties?: { label?: string; name?: string };
+            geometry?: { coordinates?: [number, number] };
+          }[];
+        };
+        const features = json.features ?? [];
+        if (features.length > 0) {
+          return features.map((f) => ({
+            name: f.properties?.label ?? f.properties?.name ?? query,
+            lng: f.geometry?.coordinates?.[0] ?? 0,
+            lat: f.geometry?.coordinates?.[1] ?? 0,
+          }));
+        }
+      } catch {
+        // Fall back to Nominatim below if ORS geocoding errors
+      }
+    }
+
+    // 2. Fall back to OpenStreetMap Nominatim
     const view = near
-      ? `&viewbox=${near.lng - 0.3},${near.lat + 0.3},${near.lng + 0.3},${near.lat - 0.3}`
+      ? `&viewbox=${near.lng - 0.5},${near.lat + 0.5},${near.lng + 0.5},${near.lat - 0.5}`
       : '';
     const url =
       'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&countrycodes=bd' +
