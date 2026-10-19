@@ -45,6 +45,7 @@ export interface DeliverySettings {
   openTo: string;
   shopOpen: boolean;
   routeFactor: number;
+  restrictToZone?: boolean;
 }
 /** Secrets never come back: only a flag saying whether one is stored. */
 export interface MapsSettings {
@@ -55,6 +56,8 @@ export interface MapsSettings {
   orsApiKeySet: boolean;
   contactEmail: string | null;
   dailyRequestCap: number;
+  enableMapSearch?: boolean;
+  dynamicPlaceNames?: boolean;
 }
 export interface MapsTestResult { provider: string; route: { ok: boolean; km?: number; error?: string }; place: { ok: boolean; name?: string; error?: string } }
 export interface MapsUsage { day: string; route: number; geocode: number; search: number; cap: number; provider: string }

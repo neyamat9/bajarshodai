@@ -40,6 +40,7 @@ export function DeliveryForm({ v, tileUrl }: { v: DeliverySettings; tileUrl: str
     minOrderAmount: String(v.minOrderAmount),
     freeDeliveryThreshold: v.freeDeliveryThreshold === null ? "" : String(v.freeDeliveryThreshold),
     routeFactor: String(v.routeFactor),
+    restrictToZone: v.restrictToZone ?? true,
   });
   const [satellite, setSatellite] = useState(true);
   const [previewKm, setPreviewKm] = useState("6");
@@ -82,6 +83,7 @@ export function DeliveryForm({ v, tileUrl }: { v: DeliverySettings; tileUrl: str
       openFrom: f.openFrom,
       openTo: f.openTo,
       routeFactor: num(f.routeFactor) || 1.3,
+      restrictToZone: f.restrictToZone,
       slots: f.slots.map((s) => ({ ...s, id: s.id.trim(), label: s.label.trim(), labelBn: s.labelBn.trim() })),
     });
   };
@@ -189,13 +191,30 @@ export function DeliveryForm({ v, tileUrl }: { v: DeliverySettings; tileUrl: str
         )}
       </Section>
 
+      <Section title={tr("Delivery zone restriction")} description={tr("Enforce boundaries so only orders within your service territory are accepted.")}>
+        <Toggle
+          label={tr("Restrict to Shahrasti Upazila zone")}
+          hint={tr("Block locations outside the full Shahrasti area and display an out-of-zone notice")}
+          checked={f.restrictToZone}
+          onChange={(restrictToZone) => setF({ ...f, restrictToZone })}
+        />
+      </Section>
+
       <Button loading={save.isPending} onClick={submit}>{tr("Save delivery settings")}</Button>
     </div>
   );
 }
 
 export function MapsForm({ v }: { v: MapsSettings }) {
-  const [f, setF] = useState({ provider: v.provider, googleBrowserKey: v.googleBrowserKey ?? "", osmTileUrl: v.osmTileUrl, contactEmail: v.contactEmail ?? "", dailyRequestCap: String(v.dailyRequestCap) });
+  const [f, setF] = useState({
+    provider: v.provider,
+    googleBrowserKey: v.googleBrowserKey ?? "",
+    osmTileUrl: v.osmTileUrl,
+    contactEmail: v.contactEmail ?? "",
+    dailyRequestCap: String(v.dailyRequestCap),
+    enableMapSearch: v.enableMapSearch ?? true,
+    dynamicPlaceNames: v.dynamicPlaceNames ?? false,
+  });
   // secrets are write-only: empty = keep what is stored, "remove" clears it
   const [googleServerKey, setGoogleServerKey] = useState("");
   const [orsApiKey, setOrsApiKey] = useState("");
@@ -213,7 +232,15 @@ export function MapsForm({ v }: { v: MapsSettings }) {
     const cap = Number(f.dailyRequestCap);
     if (!Number.isInteger(cap) || cap < 0) return toast.error(tr("The daily limit must be a whole number"));
     if (f.provider === "google" && !f.googleBrowserKey.trim()) return toast.error(tr("Add the Google browser key before switching to Google Maps"));
-    const body: Record<string, unknown> = { provider: f.provider, googleBrowserKey: f.googleBrowserKey.trim(), osmTileUrl: f.osmTileUrl.trim(), contactEmail: f.contactEmail.trim(), dailyRequestCap: cap };
+    const body: Record<string, unknown> = {
+      provider: f.provider,
+      googleBrowserKey: f.googleBrowserKey.trim(),
+      osmTileUrl: f.osmTileUrl.trim(),
+      contactEmail: f.contactEmail.trim(),
+      dailyRequestCap: cap,
+      enableMapSearch: f.enableMapSearch,
+      dynamicPlaceNames: f.dynamicPlaceNames,
+    };
     if (googleServerKey.trim()) body.googleServerKey = googleServerKey.trim();
     else if (clear.google) body.googleServerKey = "";
     if (orsApiKey.trim()) body.orsApiKey = orsApiKey.trim();
@@ -236,6 +263,23 @@ export function MapsForm({ v }: { v: MapsSettings }) {
         <p className="mt-3 text-xs text-muted-foreground">
           OpenStreetMap is free and needs no card. Its road distances come from OpenRouteService (a free key); without a key distances are an estimate (straight line × the factor in Delivery). Google gives the best village and lane names and exact road distances; the first 10,000 requests a month of each kind are free, then it is billed.
         </p>
+      </Section>
+
+      <Section title={tr("Map options")} description={tr("Control address search and dynamic place name lookup on the customer map.")}>
+        <div className="space-y-3">
+          <Toggle
+            label={tr("Show search option on map")}
+            hint={tr("Allow customers to search addresses and places on the map with autocomplete")}
+            checked={f.enableMapSearch}
+            onChange={(enableMapSearch) => setF({ ...f, enableMapSearch })}
+          />
+          <Toggle
+            label={tr("Dynamic place names from map")}
+            hint={tr("When enabled, place names are fetched dynamically from the map; when disabled, the customer fills in their address name manually")}
+            checked={f.dynamicPlaceNames}
+            onChange={(dynamicPlaceNames) => setF({ ...f, dynamicPlaceNames })}
+          />
+        </div>
       </Section>
 
       <Section title={tr("Today's use")} description={tr("Routes, place names and searches. The limit protects you from a runaway bill.")}>

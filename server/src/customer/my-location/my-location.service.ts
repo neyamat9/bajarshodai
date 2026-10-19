@@ -31,6 +31,10 @@ export class MyLocationService {
 
   /** The place name in both languages (two cached lookups; either can be null). */
   private async names(lat: number, lng: number) {
+    const maps = await this.settings.get('maps');
+    if (!maps.dynamicPlaceNames) {
+      return { placeName: null, placeNameBn: null };
+    }
     const [en, bn] = await Promise.all([this.maps.placeName({ lat, lng }, 'en'), this.maps.placeName({ lat, lng }, 'bn')]);
     return { placeName: en ?? bn ?? null, placeNameBn: bn ?? en ?? null };
   }

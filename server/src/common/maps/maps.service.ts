@@ -116,6 +116,7 @@ export class MapsService {
   /** A readable place name for a point (cached for a month: places do not move). */
   async placeName(point: LatLng, lang: Lang): Promise<string | null> {
     const m = await this.settings.get('maps');
+    if (!m.dynamicPlaceNames) return null;
     const cacheKey = `maps:place:${m.provider}:${lang}:${key5(point)}`;
     const cached = this.cache.get<string>(cacheKey);
     if (cached) return cached;

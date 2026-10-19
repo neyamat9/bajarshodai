@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { SettingsService, DeliverySettings } from '../../common/settings';
 import { MapsService } from '../../common/maps';
-import { feeForDistance, haversineKm, withinRadius, type LatLng } from '../../common/delivery/fee';
+import { feeForDistance, haversineKm, withinRadius, isWithinShahrastiZone, type LatLng } from '../../common/delivery/fee';
 
 export type DeliveryBlock =
   | 'DISABLED' // the shop is not taking delivery orders
@@ -57,6 +57,7 @@ export function publicDelivery(d: DeliverySettings) {
     minOrderAmount: d.minOrderAmount,
     freeDeliveryThreshold: d.freeDeliveryThreshold,
     slots: d.slots,
+    restrictToZone: d.restrictToZone ?? true,
   };
 }
 
@@ -67,13 +68,13 @@ export class ShippingService {
     private maps: MapsService,
   ) {}
 
-  async getOptions() {
-    return publicDelivery(await this.settings.get('delivery'));
-  }
-
   /** The point distances are measured from, or null until the admin sets it. */
   origin(d: DeliverySettings): LatLng | null {
     return d.originLat !== null && d.originLng !== null ? { lat: d.originLat, lng: d.originLng } : null;
+  }
+
+  async getOptions() {
+    return publicDelivery(await this.settings.get('delivery'));
   }
 
   async quote(subtotal: number, input: ShippingInput = {}): Promise<ShippingQuote> {
@@ -102,7 +103,12 @@ export class ShippingService {
     const dest = { lat: input.lat, lng: input.lng };
     const centre = d.centerLat !== null && d.centerLng !== null ? { lat: d.centerLat, lng: d.centerLng } : origin;
     const inside = withinRadius(centre, dest, d.serviceRadiusKm);
-    if (!inside.ok) return { ...base, block: 'OUT_OF_AREA', straightKm: inside.km };
+    const inZone = isWithinShahrastiZone(dest);
+    const enforceZone = d.restrictToZone !== false;
+
+    if (!inside.ok || (enforceZone && !inZone)) {
+      return { ...base, block: 'OUT_OF_AREA', straightKm: inside.km };
+    }
 
     const route = await this.maps.route(origin, dest);
     // never charge for less than the straight line: a route shorter than that is a map error

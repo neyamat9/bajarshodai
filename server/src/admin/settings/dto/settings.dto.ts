@@ -236,6 +236,11 @@ export class UpdateDeliverySettingsDto {
   @Min(1)
   @Max(3)
   routeFactor?: number;
+
+  @ApiPropertyOptional({ description: 'Restrict delivery strictly to Shahrasti Upazila delivery zone' })
+  @IsOptional()
+  @IsBoolean()
+  restrictToZone?: boolean;
 }
 
 export class UpdateMapsSettingsDto {
@@ -284,6 +289,16 @@ export class UpdateMapsSettingsDto {
   @Min(0)
   @Max(1000000)
   dailyRequestCap?: number;
+
+  @ApiPropertyOptional({ description: 'Show search bar on the map picker' })
+  @IsOptional()
+  @IsBoolean()
+  enableMapSearch?: boolean;
+
+  @ApiPropertyOptional({ description: 'Automatically fetch place names from map dynamically' })
+  @IsOptional()
+  @IsBoolean()
+  dynamicPlaceNames?: boolean;
 }
 
 export class UpdateReturnSettingsDto {

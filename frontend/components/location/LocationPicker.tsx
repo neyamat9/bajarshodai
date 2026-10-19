@@ -20,6 +20,7 @@ interface Props {
   /** the distance and charge for the chosen place (null while there is none) */
   onQuote?: (quote: DeliveryQuote | null, loading: boolean) => void;
   className?: string;
+  addressText?: string;
 }
 
 const key5 = (p: GeoPoint) => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`;
@@ -29,7 +30,7 @@ const key5 = (p: GeoPoint) => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`;
  * customer can drag onto their door. Shows the place name and the delivery charge for the chosen point at once.
  * Nothing is tracked in the background: the phone is asked once, when the button is pressed.
  */
-export default function LocationPicker({ value, onChange, subtotal = 0, onQuote, className = "" }: Props) {
+export default function LocationPicker({ value, onChange, subtotal = 0, onQuote, className = "", addressText }: Props) {
   const t = useTranslations("Location");
   const locale = useLocale() as Locale;
   const geo = useGeolocation();
@@ -70,7 +71,7 @@ export default function LocationPicker({ value, onChange, subtotal = 0, onQuote,
 
   // the distance, the charge and the place name for the chosen point (a moment after the pin stops moving)
   const valueKey = value ? key5(value) : null;
-  const needsName = !!value && !value.placeName;
+  const needsName = Boolean(maps?.dynamicPlaceNames && value && !value.placeName);
   useEffect(() => {
     if (!value) {
       setQuote(null);
@@ -110,10 +111,12 @@ export default function LocationPicker({ value, onChange, subtotal = 0, onQuote,
     void shareLocation(picked, subtotal, locale)
       .then((r) => {
         setSaved(r.location);
-        if (r.location.placeName) onChange({ ...picked, placeName: r.location.placeName });
+        if (maps?.dynamicPlaceNames && r.location.placeName) {
+          onChange({ ...picked, placeName: r.location.placeName });
+        }
       })
       .catch(() => undefined);
-  }, [geo, onChange, subtotal, locale]);
+  }, [geo, onChange, subtotal, locale, maps?.dynamicPlaceNames]);
 
   function movePin(p: GeoPoint) {
     onChange({ lat: p.lat, lng: p.lng, accuracyM: null, source: "PIN", landmark: value?.landmark ?? null });
@@ -144,7 +147,13 @@ export default function LocationPicker({ value, onChange, subtotal = 0, onQuote,
   function choose(p: FoundPlace) {
     setFound(null);
     setQuery("");
-    const picked: PickedLocation = { lat: p.lat, lng: p.lng, accuracyM: null, source: "SEARCH", placeName: p.name.split(",").slice(0, 3).join(",").trim() };
+    const picked: PickedLocation = {
+      lat: p.lat,
+      lng: p.lng,
+      accuracyM: null,
+      source: "SEARCH",
+      placeName: maps?.dynamicPlaceNames ? p.name.split(",").slice(0, 3).join(",").trim() : undefined,
+    };
     onChange(picked);
     setFitKey(key5(picked));
   }
@@ -163,7 +172,6 @@ export default function LocationPicker({ value, onChange, subtotal = 0, onQuote,
   const money = (n: number) => formatMoney(n, locale);
   const km = (n: number) => formatNumber(n, locale, 1);
   const blocked = delivery && (!delivery.enabled || !delivery.originSet);
-  const poor = value?.source === "GPS" && (value.accuracyM ?? 0) > 100;
 
   return (
     <div className={`space-y-3 ${className}`}>
@@ -198,7 +206,7 @@ export default function LocationPicker({ value, onChange, subtotal = 0, onQuote,
           <Navigation className="h-4 w-4 shrink-0 text-accent-text" aria-hidden="true" />
           <button type="button" onClick={useSaved} className="min-w-0 flex-1 truncate text-left font-semibold text-foreground hover:text-accent-text">
             {t("useSaved")}
-            {saved.placeName ? <span className="font-normal text-muted-foreground"> · {saved.placeName}</span> : null}
+            {maps?.dynamicPlaceNames && saved.placeName ? <span className="font-normal text-muted-foreground"> · {saved.placeName}</span> : null}
           </button>
           <button type="button" onClick={() => void forget()} className="text-xs font-semibold text-muted-foreground hover:text-destructive">
             {t("forget")}
@@ -206,78 +214,80 @@ export default function LocationPicker({ value, onChange, subtotal = 0, onQuote,
         </div>
       )}
 
-      {/* 2. search, when the button is not an option */}
-      <div ref={searchContainerRef} className="relative z-50">
-        <label htmlFor="place-search" className="sr-only">
-          {t("searchAria")}
-        </label>
-        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-        <input
-          id="place-search"
-          value={query}
-          onChange={(e) => onSearch(e.target.value)}
-          onFocus={() => {
-            if (query.trim().length >= 2 && !found) {
-              onSearch(query);
-            }
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") {
-              setFound(null);
-            }
-          }}
-          placeholder={t("searchPh")}
-          autoComplete="off"
-          disabled={!!blocked}
-          className="h-11 w-full rounded border-2 border-input bg-background pl-10 pr-12 text-sm outline-none transition-all placeholder:text-muted-foreground/80 focus:border-brand-fresh focus:ring-4 focus:ring-brand-fresh/20 disabled:opacity-60"
-        />
-        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
-          {searching && <Loader2 className="h-4 w-4 animate-spin text-brand-fresh" aria-hidden="true" />}
-          {query && !searching && (
-            <button
-              type="button"
-              onClick={() => {
-                setQuery("");
+      {/* 2. search, when the button is not an option and enabled in settings */}
+      {maps?.enableMapSearch !== false && (
+        <div ref={searchContainerRef} className="relative z-50">
+          <label htmlFor="place-search" className="sr-only">
+            {t("searchAria")}
+          </label>
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <input
+            id="place-search"
+            value={query}
+            onChange={(e) => onSearch(e.target.value)}
+            onFocus={() => {
+              if (query.trim().length >= 2 && !found) {
+                onSearch(query);
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
                 setFound(null);
-              }}
-              aria-label={t("clearSearch")}
-              className="flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:bg-secondary"
+              }
+            }}
+            placeholder={t("searchPh")}
+            autoComplete="off"
+            disabled={!!blocked}
+            className="h-11 w-full rounded border-2 border-input bg-background pl-10 pr-12 text-sm outline-none transition-all placeholder:text-muted-foreground/80 focus:border-brand-fresh focus:ring-4 focus:ring-brand-fresh/20 disabled:opacity-60"
+          />
+          <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            {searching && <Loader2 className="h-4 w-4 animate-spin text-brand-fresh" aria-hidden="true" />}
+            {query && !searching && (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setFound(null);
+                }}
+                aria-label={t("clearSearch")}
+                className="flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:bg-secondary"
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
+              </button>
+            )}
+          </div>
+          {found && (
+            <ul
+              className="absolute left-0 right-0 top-full z-50 mt-1.5 max-h-64 w-full overflow-auto rounded-lg border border-border bg-popover text-popover-foreground shadow-2xl ring-1 ring-black/10 dark:ring-white/10"
+              role="listbox"
             >
-              <X className="h-4 w-4" aria-hidden="true" />
-            </button>
+              {found.length === 0 ? (
+                <li className="px-4 py-3.5 text-sm text-muted-foreground">
+                  <p className="font-semibold text-foreground">{t("noResults")}</p>
+                  <p className="mt-1 text-xs">
+                    {locale === "bn"
+                      ? "কাছের থানা বা বাজার (যেমন: শাহরাস্তি, মেহের, কালীবাড়ী) লিখে খুঁজুন অথবা নিচের ম্যাপে পিনটি টেনে আপনার ঠিকানায় বসান।"
+                      : "Try searching for your Upazila or Market (e.g. Shahrasti, Meher, Kalibari), or drag the pin on the map to your address."}
+                  </p>
+                </li>
+              ) : (
+                found.map((p) => (
+                  <li key={`${p.lat},${p.lng}`} role="option" aria-selected={false}>
+                    <button
+                      type="button"
+                      onClick={() => choose(p)}
+                      className="flex w-full items-start gap-2.5 px-4 py-3 text-left text-sm hover:bg-accent/80 transition-colors border-b last:border-b-0 border-border/50"
+                    >
+                      <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-fresh" aria-hidden="true" />
+                      <span className="font-medium leading-snug">{p.name}</span>
+                    </button>
+                  </li>
+                ))
+              )}
+            </ul>
           )}
         </div>
-        {found && (
-          <ul
-            className="absolute left-0 right-0 top-full z-50 mt-1.5 max-h-64 w-full overflow-auto rounded-lg border border-border bg-popover text-popover-foreground shadow-2xl ring-1 ring-black/10 dark:ring-white/10"
-            role="listbox"
-          >
-            {found.length === 0 ? (
-              <li className="px-4 py-3.5 text-sm text-muted-foreground">
-                <p className="font-semibold text-foreground">{t("noResults")}</p>
-                <p className="mt-1 text-xs">
-                  {locale === "bn"
-                    ? "কাছের থানা বা বাজার (যেমন: শাহরাস্তি, মেহের, কালীবাড়ী) লিখে খুঁজুন অথবা নিচের ম্যাপে পিনটি টেনে আপনার ঠিকানায় বসান।"
-                    : "Try searching for your Upazila or Market (e.g. Shahrasti, Meher, Kalibari), or drag the pin on the map to your address."}
-                </p>
-              </li>
-            ) : (
-              found.map((p) => (
-                <li key={`${p.lat},${p.lng}`} role="option" aria-selected={false}>
-                  <button
-                    type="button"
-                    onClick={() => choose(p)}
-                    className="flex w-full items-start gap-2.5 px-4 py-3 text-left text-sm hover:bg-accent/80 transition-colors border-b last:border-b-0 border-border/50"
-                  >
-                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-fresh" aria-hidden="true" />
-                    <span className="font-medium leading-snug">{p.name}</span>
-                  </button>
-                </li>
-              ))
-            )}
-          </ul>
-        )}
-      </div>
+      )}
 
       {/* 3. the map */}
       {maps && (
@@ -306,14 +316,16 @@ export default function LocationPicker({ value, onChange, subtotal = 0, onQuote,
         <div className="space-y-2.5 rounded border border-border bg-card p-4">
           <p className="flex items-start gap-2 text-sm font-bold text-foreground">
             <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-accent-text" aria-hidden="true" />
-            <span>{value.placeName ?? (quoting ? t("placeLooking") : t("placeUnknown"))}</span>
+            <span>
+              {addressText
+                ? addressText
+                : maps?.dynamicPlaceNames && value.placeName
+                  ? value.placeName
+                  : locale === "bn"
+                    ? "ম্যাপে পিন চিহ্নিত করা হয়েছে"
+                    : "Pin placed on map"}
+            </span>
           </p>
-          {poor && (
-            <p className="flex items-start gap-2 text-xs font-medium text-amber-700 dark:text-amber-300">
-              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              {t("poorAccuracy", { m: formatNumber(value.accuracyM ?? 0, locale, 0) })}
-            </p>
-          )}
 
           {quoting && !quote ? (
             <p className="flex items-center gap-2 text-sm text-muted-foreground">

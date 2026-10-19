@@ -132,6 +132,8 @@ export interface DeliverySettings {
   shopOpen: boolean;
   // When no road route can be found: straight-line distance times this
   routeFactor: number;
+  // Restrict delivery strictly to Shahrasti Upazila delivery zone
+  restrictToZone: boolean;
 }
 
 export type MapProviderName = 'osm' | 'google';
@@ -150,6 +152,10 @@ export interface MapsSettings {
   contactEmail: string | null;
   // Stops a bug or a bot from running up the bill: routes and place names per day
   dailyRequestCap: number;
+  // Show or hide address search bar on the map picker
+  enableMapSearch: boolean;
+  // Whether to dynamically reverse geocode place names or let customer fill them manually
+  dynamicPlaceNames: boolean;
 }
 
 export interface ReturnSettings {
@@ -264,6 +270,7 @@ export const DEFAULT_SETTINGS: SettingsMap = {
     openTo: '22:00',
     shopOpen: true,
     routeFactor: 1.3,
+    restrictToZone: true,
   },
   maps: {
     provider: 'osm',
@@ -273,6 +280,8 @@ export const DEFAULT_SETTINGS: SettingsMap = {
     orsApiKey: null,
     contactEmail: null,
     dailyRequestCap: 2000,
+    enableMapSearch: true,
+    dynamicPlaceNames: false,
   },
   returns: {
     returnsEnabled: true,

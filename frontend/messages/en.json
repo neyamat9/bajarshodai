@@ -607,12 +607,13 @@
     "distanceLine": "{km} km from the shop",
     "shopClosed": "The shop is closed right now. Please order a little later.",
     "minOrder": "The minimum order is {amount}.",
-    "outOfArea": "Sorry, we do not deliver to this place. Choose another place.",
+    "outOfArea": "Sorry, this location is outside of our delivery zone. We only deliver within the full Shahrasti area.",
     "km": "{km} km",
     "estimated": "estimated",
     "shippingPending": "Shown once you choose a place",
     "saveAddress": "Save this address to my saved addresses",
-    "errLocation": "Please choose your delivery location on the map or click Share my location"
+    "errLocation": "Please choose your delivery location on the map or click Share my location",
+    "errOutOfArea": "Your selected location is outside of our delivery zone (full Shahrasti area). Please choose another location."
   },
   "Auth": {
     "titleLogin": "Sign in",
@@ -1116,7 +1117,7 @@
     "freeBecause": "Delivery is free on this order.",
     "addForFree": "Add {amount} more for free delivery.",
     "estimatedNote": "The exact road distance could not be checked right now, so an estimate is shown. The shop confirms the final charge.",
-    "outOfArea": "Sorry, this place is about {km} km away. We deliver within {radius} km of {shop}.",
+    "outOfArea": "Sorry, this location is outside of our delivery zone. We only deliver within the full Shahrasti area. Please choose a location within Shahrasti.",
     "chooseAnother": "Choose another place"
   },
   "ShareLocation": {

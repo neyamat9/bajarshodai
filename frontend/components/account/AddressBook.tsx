@@ -82,9 +82,6 @@ function AddressForm({
   const handleLocationChange = (newLoc: PickedLocation | null) => {
     setLoc(newLoc);
     if (newLoc) {
-      if (!f.line1.trim() && newLoc.placeName) {
-        setF((prev) => ({ ...prev, line1: newLoc.placeName ?? "" }));
-      }
       if (!f.landmark.trim() && newLoc.landmark) {
         setF((prev) => ({ ...prev, landmark: newLoc.landmark ?? "" }));
       }
@@ -216,7 +213,7 @@ function AddressForm({
           <MapPin className="h-4 w-4 text-brand-fresh shrink-0" />
           <span className="text-xs font-bold text-foreground">{t("mapLocation")}</span>
         </div>
-        <LocationPicker value={loc} onChange={handleLocationChange} />
+        <LocationPicker value={loc} onChange={handleLocationChange} addressText={f.line1.trim()} />
       </div>
 
       <label className="flex cursor-pointer items-center gap-2.5 text-sm font-medium text-foreground">

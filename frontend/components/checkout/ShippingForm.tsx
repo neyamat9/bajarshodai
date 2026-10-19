@@ -5,7 +5,7 @@ import { latinDigits } from "@/lib/format";
 import type { SavedAddress } from "@/lib/services/addresses.service";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import type { PickedLocation } from "@/lib/types";
+import type { DeliveryQuote, PickedLocation } from "@/lib/types";
 import LocationPicker from "@/components/location/LocationPicker";
 import { MapPin, Plus, CheckCircle2 } from "lucide-react";
 
@@ -72,6 +72,7 @@ export default function ShippingForm({ initialData, saved, location, onLocation,
   });
   const [saveToBook, setSaveToBook] = useState(true);
   const [errors, setErrors] = useState<Errors>({});
+  const [quote, setQuote] = useState<DeliveryQuote | null>(null);
 
   function set<K extends keyof DeliveryDetails>(k: K, v: DeliveryDetails[K]) {
     setF((p) => ({ ...p, [k]: k === "phone" ? latinDigits(v) : v }));
@@ -92,6 +93,7 @@ export default function ShippingForm({ initialData, saved, location, onLocation,
     if (!/^(\+?88)?01[3-9]\d{8}$/.test(latinDigits(f.phone).replace(/[\s-]/g, ""))) e.phone = t("errPhone");
     if (f.address.trim().length < 4) e.address = t("errAddress");
     if (!location) e.location = t("errLocation");
+    else if (quote?.block === "OUT_OF_AREA") e.location = t("errOutOfArea");
     return e;
   }
 
@@ -180,17 +182,17 @@ export default function ShippingForm({ initialData, saved, location, onLocation,
 
       {/* Map & Location Selection (GPS button, search, draggable pin) */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <label className="block text-sm font-semibold text-foreground">
+        <div className="flex items-center justify-between gap-2">
+          <label className="block text-sm font-semibold text-foreground shrink-0">
             {t("stepLocation")}
             <span className="text-accent-text ml-0.5" aria-hidden="true">*</span>
           </label>
-          {location?.placeName && (
-            <span className="text-xs text-brand-fresh font-medium flex items-center gap-1 truncate max-w-[260px]">
+          {f.address.trim() ? (
+            <span className="text-xs text-brand-fresh font-medium flex items-center gap-1 truncate max-w-[280px]">
               <MapPin className="h-3 w-3 shrink-0" />
-              {location.placeName}
+              {f.address.trim()}
             </span>
-          )}
+          ) : null}
         </div>
         <LocationPicker
           value={location}
@@ -199,14 +201,21 @@ export default function ShippingForm({ initialData, saved, location, onLocation,
             if (errors.location) setErrors((e) => ({ ...e, location: undefined }));
             if (loc?.landmark && !f.landmark) {
               set("landmark", loc.landmark);
-            } else if (loc?.placeName && !f.landmark) {
-              set("landmark", loc.placeName);
             }
           }}
+          addressText={f.address.trim()}
           subtotal={subtotal}
+          onQuote={(q) => {
+            setQuote(q);
+            if (q?.block === "OUT_OF_AREA") {
+              setErrors((e) => ({ ...e, location: t("errOutOfArea") }));
+            } else if (errors.location === t("errOutOfArea")) {
+              setErrors((e) => ({ ...e, location: undefined }));
+            }
+          }}
         />
         {errors.location && (
-          <p role="alert" className="mt-1.5 text-xs text-red-400 font-medium">
+          <p role="alert" className="mt-1.5 text-xs text-red-500 dark:text-red-400 font-semibold">
             {errors.location}
           </p>
         )}

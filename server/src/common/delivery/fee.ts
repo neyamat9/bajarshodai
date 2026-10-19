@@ -54,3 +54,18 @@ export function withinRadius(
   const km = haversineKm(centre, point);
   return { ok: km <= radiusKm + 1e-9, km: round(km, 2) };
 }
+
+/**
+ * Is the point within the full Shahrasti Upazila delivery zone?
+ * Shahrasti Upazila covers roughly:
+ * - Latitude: 23°13′ to 23°31′ N (~23.13 to ~23.31)
+ * - Longitude: 90°50′ to 91°05′ E (~90.86 to ~91.07)
+ */
+export function isWithinShahrastiZone(point: LatLng): boolean {
+  return (
+    point.lat >= 23.13 &&
+    point.lat <= 23.31 &&
+    point.lng >= 90.86 &&
+    point.lng <= 91.07
+  );
+}

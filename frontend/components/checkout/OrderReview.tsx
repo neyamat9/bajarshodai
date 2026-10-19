@@ -59,7 +59,7 @@ export default function OrderReview({ summary, address, paymentMethod, deliveryS
           address: address.address,
           latitude: pin.lat,
           longitude: pin.lng,
-          placeName: pin.placeName ?? undefined,
+          placeName: pin.placeName || address.address || undefined,
           landmark: address.landmark || undefined,
           accuracyM: pin.accuracyM ?? undefined,
           locationSource: pin.source,

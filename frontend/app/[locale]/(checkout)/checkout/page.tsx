@@ -166,7 +166,7 @@ function Checkout() {
                       landmark: d.landmark || undefined,
                       latitude: location.lat,
                       longitude: location.lng,
-                      placeName: location.placeName || undefined,
+                      placeName: location.placeName || d.address || undefined,
                       accuracyM: location.accuracyM ?? undefined,
                       locationSource: location.source as any,
                       isDefault: (saved?.length ?? 0) === 0,

@@ -53,6 +53,8 @@ export class SettingsController {
         provider: maps.provider,
         googleBrowserKey: maps.provider === 'google' ? maps.googleBrowserKey : null,
         osmTileUrl: maps.osmTileUrl,
+        enableMapSearch: maps.enableMapSearch ?? true,
+        dynamicPlaceNames: maps.dynamicPlaceNames ?? false,
       },
       returns,
     };

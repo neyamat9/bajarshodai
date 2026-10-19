@@ -193,7 +193,7 @@ export class OrdersService {
       }
       if (block === 'OUT_OF_AREA') {
         throw new BadRequestException(
-          `Sorry, we deliver only within ${quote.shipping.radiusKm} km of our shop. Your location is about ${quote.shipping.straightKm} km away.`,
+          'Sorry, this location is outside of our delivery zone. We only deliver within the full Shahrasti area.',
         );
       }
       if (!quote.shipping.available) {
