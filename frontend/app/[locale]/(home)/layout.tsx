@@ -1,3 +1,4 @@
+import ConditionalFooter from "@/components/layout/ConditionalFooter";
 import SiteFooter from "@/components/layout/SiteFooter";
 import { BrowseProvider } from "@/components/browse/BrowseModals";
 import NavigationGate from "@/components/layout/NavigationGate";
@@ -37,7 +38,9 @@ export default async function HomeLayout({
         <main className="flex-1">
             <NavigationGate>{children}</NavigationGate>
           </main>
-        <SiteFooter settings={settings} categories={categories} />
+        <ConditionalFooter>
+          <SiteFooter settings={settings} categories={categories} />
+        </ConditionalFooter>
       </div>
     </BrowseProvider>
   );

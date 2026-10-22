@@ -12,6 +12,8 @@ interface SortBarProps {
   resultCount: number;
   sortBy: SortOption;
   onSortChange: (sort: SortOption) => void;
+  inStockOnly?: boolean;
+  onInStockChange?: (val: boolean) => void;
   onOpenFilters?: () => void;
   /** How many filters are switched on (shown on the mobile Filters button) */
   activeCount?: number;
@@ -19,14 +21,25 @@ interface SortBarProps {
 
 const SORT_VALUES: SortOption[] = ["popular", "newest", "price-asc", "price-desc", "rating"];
 
-export default function SortBar({ resultCount, sortBy, onSortChange, onOpenFilters, activeCount = 0 }: SortBarProps) {
+export default function SortBar({
+  resultCount,
+  sortBy,
+  onSortChange,
+  inStockOnly = false,
+  onInStockChange,
+  onOpenFilters,
+  activeCount = 0,
+}: SortBarProps) {
   const t = useTranslations("Product");
   const locale = useLocale() as Locale;
   const SORT_OPTIONS = SORT_VALUES.map((value) => ({ value, label: t(`sort.${value}`) }));
   const current = SORT_OPTIONS.find((o) => o.value === sortBy) ?? SORT_OPTIONS[0];
 
   return (
-    <div className="mb-4 flex items-center justify-between gap-3 rounded border border-border bg-card px-3 py-2.5 sm:px-4">
+    <div
+      className="sticky z-20 mb-4 flex flex-wrap items-center justify-between gap-2.5 rounded border border-border bg-card/95 px-3 py-2.5 shadow-sm backdrop-blur-md transition-[top] duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] sm:flex-nowrap sm:gap-3 sm:px-4"
+      style={{ top: "var(--sticky-top, 8rem)" }}
+    >
       <div className="flex min-w-0 items-center gap-3">
         {onOpenFilters && (
           <button
@@ -45,7 +58,30 @@ export default function SortBar({ resultCount, sortBy, onSortChange, onOpenFilte
         </p>
       </div>
 
-      <DropdownMenu>
+      <div className="flex items-center gap-2 sm:gap-2.5">
+        {onInStockChange && (
+          <button
+            type="button"
+            role="switch"
+            aria-checked={inStockOnly}
+            onClick={() => onInStockChange(!inStockOnly)}
+            className={`group flex shrink-0 items-center gap-2 rounded border px-3 py-2 text-xs sm:text-sm font-semibold transition-all ${
+              inStockOnly
+                ? "border-brand-fresh bg-brand-fresh/10 text-accent-text"
+                : "border-border bg-background text-muted-foreground hover:border-brand-fresh/60 hover:text-foreground"
+            }`}
+          >
+            <span
+              className={`h-2.5 w-2.5 rounded-full transition-colors ${
+                inStockOnly ? "bg-brand-fresh shadow-[0_0_8px_rgba(69,162,44,0.6)]" : "bg-muted-foreground/40"
+              }`}
+              aria-hidden="true"
+            />
+            <span>{t("filters.inStockOnly")}</span>
+          </button>
+        )}
+
+        <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
             type="button"
@@ -76,5 +112,6 @@ export default function SortBar({ resultCount, sortBy, onSortChange, onOpenFilte
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
-  );
+  </div>
+);
 }

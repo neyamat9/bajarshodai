@@ -77,23 +77,23 @@ export function HomeSkeleton() {
 /** Product / category / brand / search listings: heading, filter sidebar, product grid */
 export function ListingSkeleton() {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-[1440px] px-4 py-10 md:px-8">
-        <div className="mb-8 space-y-3">
-          <Block className="h-10 w-72 max-w-full md:h-12" />
-          <Block className="h-4 w-44" />
-        </div>
-        <div className="flex items-start gap-8">
-          <div className="hidden w-64 shrink-0 space-y-6 rounded border border-border bg-muted p-6 lg:block">
-            <Block className="h-4 w-24 !bg-card" />
-            <Block className="h-6 w-full !bg-card" />
-            <Block className="h-16 w-full !bg-card" />
-            {Array.from({ length: 7 }).map((_, i) => (
-              <Block key={i} className="h-4 w-4/5 !bg-card" />
+    <div className="bg-background">
+      <div className="mx-auto max-w-[1440px] px-4 pt-4 pb-8 md:px-8">
+        <div className="flex items-start gap-6">
+          <div className="hidden w-72 shrink-0 space-y-6 rounded border border-border bg-card p-5 lg:block">
+            <Block className="h-6 w-24" />
+            <Block className="h-20 w-full" />
+            <Block className="h-32 w-full" />
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Block key={i} className="h-4 w-4/5" />
             ))}
           </div>
           <div className="min-w-0 flex-1">
-            <Block className="mb-5 h-12 w-full" />
+            <div className="mb-4 space-y-2">
+              <Block className="h-8 w-60 max-w-full" />
+              <Block className="h-4 w-40" />
+            </div>
+            <Block className="mb-4 h-12 w-full" />
             <CardsSkeleton count={12} cols="grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5" />
           </div>
         </div>

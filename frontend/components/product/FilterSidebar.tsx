@@ -101,7 +101,7 @@ export default function FilterSidebar({
   const content = (
     <div className="flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
+      <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-border bg-card px-5 py-4">
         <h2 className="flex items-center gap-2.5 font-outfit text-base font-extrabold text-foreground">
           <span className="flex h-8 w-8 items-center justify-center rounded bg-primary text-primary-foreground">
             <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
@@ -133,21 +133,6 @@ export default function FilterSidebar({
         </div>
       </div>
 
-      {/* Availability */}
-      <Section title={t("filters.availability")}>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={filters.inStockOnly}
-          onClick={() => onFiltersChange({ ...filters, inStockOnly: !filters.inStockOnly })}
-          className="group flex w-full items-center justify-between gap-3 rounded border border-border bg-background px-3.5 py-3 text-left transition-colors hover:border-brand-fresh focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-fresh/50"
-        >
-          <span className="text-sm font-medium text-foreground">{t("filters.inStockOnly")}</span>
-          <span className={`relative h-6 w-11 shrink-0 rounded transition-colors duration-200 ${filters.inStockOnly ? "bg-brand-fresh" : "bg-secondary"}`}>
-            <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded bg-card shadow transition-transform duration-200 ${filters.inStockOnly ? "translate-x-5" : ""}`} />
-          </span>
-        </button>
-      </Section>
 
       {/* Price */}
       <Section title={t("filters.priceRange")}>
@@ -236,7 +221,7 @@ export default function FilterSidebar({
       >
         <div
           data-lenis-prevent
-          className="no-scrollbar max-h-[calc(100vh-var(--sticky-top,8rem)-1rem)] overflow-y-auto overscroll-contain rounded border border-border bg-card"
+          className="no-scrollbar max-h-[calc(100vh-var(--sticky-top,8rem)-1rem)] overflow-y-auto overscroll-contain rounded border border-border bg-card shadow-sm"
         >
           {content}
         </div>

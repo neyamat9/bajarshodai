@@ -63,13 +63,22 @@ async function ProductsContent({ sp, locale }: { sp: Search; locale: Locale }) {
       : { lead: t("allProductsLead"), accent: t("allProductsAccent") };
 
   return (
-    <div className="bg-background min-h-screen">
-      <div className="max-w-[1440px] mx-auto px-4 md:px-8 pt-6 pb-20">
-        <h1 className="mb-5 font-outfit text-3xl font-extrabold tracking-tight text-foreground md:text-4xl">
-          {heading.lead} <span className="text-accent-text">{heading.accent}</span>
-        </h1>
+    <div className="bg-background">
+      <div className="max-w-[1440px] mx-auto px-4 md:px-8 pt-4 pb-8">
         <Suspense fallback={<SkeletonGrid count={12} />}>
-          <ProductGrid key={`${start.category ?? ""}|${start.sub ?? ""}|${start.brand ?? ""}`} initial={initial} categories={categories} brands={facetBrands(facets)} priceRange={facets.price} start={start} />
+          <ProductGrid
+            key={`${start.category ?? ""}|${start.sub ?? ""}|${start.brand ?? ""}`}
+            header={
+              <h1 className="mb-4 font-outfit text-2xl font-extrabold tracking-tight text-foreground md:text-3xl">
+                {heading.lead} <span className="text-accent-text">{heading.accent}</span>
+              </h1>
+            }
+            initial={initial}
+            categories={categories}
+            brands={facetBrands(facets)}
+            priceRange={facets.price}
+            start={start}
+          />
         </Suspense>
       </div>
     </div>

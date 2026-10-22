@@ -18,6 +18,8 @@ import SortBar from "./SortBar";
 import { flattenSubs } from "@/lib/utils/categories";
 
 interface ProductGridProps {
+  /** Optional page header / title rendered at the top of the main column */
+  header?: React.ReactNode;
   /** First page, fetched on the server */
   initial: ProductPage;
   categories: Category[];
@@ -40,6 +42,7 @@ interface ProductGridProps {
 const PAGE_SIZE = 24;
 
 export default function ProductGrid({
+  header,
   initial,
   categories,
   brands,
@@ -251,6 +254,8 @@ export default function ProductGrid({
 
       {/* ── Main content ────────────────────────────── */}
       <div className="flex-1 min-w-0">
+        {header}
+
         {/* Sort bar */}
         <SortBar
           resultCount={meta.total}
@@ -258,6 +263,8 @@ export default function ProductGrid({
           onSortChange={setSortBy}
           onOpenFilters={() => setMobileFiltersOpen(true)}
           activeCount={activeFilters.length}
+          inStockOnly={filters.inStockOnly}
+          onInStockChange={(inStockOnly) => setFilters((prev) => ({ ...prev, inStockOnly }))}
         />
 
         {/* Active filter chips */}

@@ -2,6 +2,7 @@
 export { default as SiteHeader } from "./layout/SiteHeader";
 export { default as CategoryNav } from "./layout/CategoryNav";
 export { default as SiteFooter } from "./layout/SiteFooter";
+export { default as ConditionalFooter } from "./layout/ConditionalFooter";
 
 // Home section components
 export { default as HeroSection } from "./home/HeroSection";
