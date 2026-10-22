@@ -64,9 +64,28 @@ function Overlays(p: MapViewProps) {
 /** The map drawn with Google Maps. Used when the admin picks "Google" and has added the browser key. */
 export default function GoogleMapView(p: MapViewProps) {
   const key = p.config.googleBrowserKey ?? "";
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const stopWheel = (e: WheelEvent) => {
+      e.stopPropagation();
+    };
+    el.addEventListener("wheel", stopWheel, { passive: true });
+    return () => el.removeEventListener("wheel", stopWheel);
+  }, []);
+
   return (
     <APIProvider apiKey={key}>
-      <div className={`relative z-0 ${p.className ?? ""}`} role="application" aria-label={p.ariaLabel}>
+      <div
+        ref={containerRef}
+        data-lenis-prevent
+        onWheel={(e) => e.stopPropagation()}
+        className={`relative z-0 ${p.className ?? ""}`}
+        role="application"
+        aria-label={p.ariaLabel}
+      >
         <Map
           mapId="DEMO_MAP_ID"
           defaultCenter={p.center}

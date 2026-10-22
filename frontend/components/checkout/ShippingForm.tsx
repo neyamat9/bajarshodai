@@ -123,11 +123,13 @@ export default function ShippingForm({ initialData, saved, location, onLocation,
       {saved.length > 0 && (
         <div className="space-y-2">
           <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {t("savedAddresses", { defaultMessage: "Saved addresses" })}
+            {t("savedAddresses")}
           </label>
           <div className="flex flex-wrap gap-2.5">
             {saved.map((a) => {
               const active = isPicked(a);
+              const label = a.label || a.fullName;
+              const hasDiffPlace = a.placeName && a.placeName.trim().toLowerCase() !== a.line1.trim().toLowerCase();
               return (
                 <button
                   key={a.id}
@@ -140,11 +142,11 @@ export default function ShippingForm({ initialData, saved, location, onLocation,
                 >
                   <div className="flex items-center gap-1.5 font-bold text-foreground">
                     <MapPin className="h-3.5 w-3.5 text-brand-fresh" />
-                    <span>{a.label || a.fullName}</span>
+                    <span>{label}</span>
                     {active && <CheckCircle2 className="h-3.5 w-3.5 text-brand-fresh ml-auto" />}
                   </div>
                   <p className="mt-0.5 truncate">{a.line1}</p>
-                  {a.placeName ? <p className="text-[11px] text-muted-foreground truncate">{a.placeName}</p> : null}
+                  {hasDiffPlace ? <p className="text-[11px] text-muted-foreground truncate">{a.placeName}</p> : null}
                 </button>
               );
             })}

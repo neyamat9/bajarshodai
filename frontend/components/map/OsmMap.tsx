@@ -150,5 +150,24 @@ export default function OsmMap(p: MapViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p.fitKey]);
 
-  return <div ref={el} className={`relative z-0 ${p.className ?? ""}`} role="application" aria-label={p.ariaLabel} />;
+  useEffect(() => {
+    const elNode = el.current;
+    if (!elNode) return;
+    const stopWheel = (e: WheelEvent) => {
+      e.stopPropagation();
+    };
+    elNode.addEventListener("wheel", stopWheel, { passive: true });
+    return () => elNode.removeEventListener("wheel", stopWheel);
+  }, []);
+
+  return (
+    <div
+      ref={el}
+      data-lenis-prevent
+      onWheel={(e) => e.stopPropagation()}
+      className={`relative z-0 ${p.className ?? ""}`}
+      role="application"
+      aria-label={p.ariaLabel}
+    />
+  );
 }

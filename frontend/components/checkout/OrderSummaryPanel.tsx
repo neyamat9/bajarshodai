@@ -48,7 +48,7 @@ export default function OrderSummaryPanel({ summary, loading, couponCode, onAppl
         <h2 className="text-sm font-black uppercase tracking-widest text-foreground/80">{t("summary")}</h2>
       </div>
 
-      <div className="divide-y divide-border max-h-[320px] overflow-y-auto">
+      <div data-lenis-prevent className="divide-y divide-border max-h-[440px] overflow-y-auto overscroll-contain">
         {(summary?.items ?? []).map((i) => (
           <div key={i.cartItemId} className="flex items-center gap-3 px-5 py-3">
             <div className="relative w-12 h-12 rounded overflow-hidden bg-secondary shrink-0">

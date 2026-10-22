@@ -291,7 +291,11 @@ export default function LocationPicker({ value, onChange, subtotal = 0, onQuote,
 
       {/* 3. the map */}
       {maps && (
-        <div className="relative z-0 isolate overflow-hidden rounded border border-border">
+        <div
+          data-lenis-prevent
+          onWheel={(e) => e.stopPropagation()}
+          className="relative z-0 isolate overflow-hidden rounded border border-border"
+        >
           <MapView
             config={maps}
             center={origin ?? DEFAULT_CENTER}
