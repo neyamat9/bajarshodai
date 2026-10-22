@@ -46,6 +46,7 @@ export interface DeliverySettings {
   shopOpen: boolean;
   routeFactor: number;
   restrictToZone?: boolean;
+  distanceCalculation?: "direct" | "road";
 }
 /** Secrets never come back: only a flag saying whether one is stored. */
 export interface MapsSettings {

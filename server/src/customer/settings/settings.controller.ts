@@ -51,7 +51,11 @@ export class SettingsController {
       // only what the browser needs to draw a map: the secret server keys never leave the server
       maps: {
         provider: maps.provider,
-        googleBrowserKey: maps.provider === 'google' ? maps.googleBrowserKey : null,
+        distanceCalculation: delivery.distanceCalculation ?? 'direct',
+        googleBrowserKey:
+          (delivery.distanceCalculation ?? 'direct') === 'direct' || maps.provider === 'google'
+            ? maps.googleBrowserKey
+            : null,
         osmTileUrl: maps.osmTileUrl,
         enableMapSearch: maps.enableMapSearch ?? true,
         dynamicPlaceNames: maps.dynamicPlaceNames ?? false,

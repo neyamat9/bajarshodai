@@ -47,6 +47,7 @@ export interface DeliveryConfig {
   minOrderAmount: number;
   freeDeliveryThreshold: number | null;
   slots: DeliverySlot[];
+  distanceCalculation?: 'direct' | 'road';
 }
 /** What the browser needs to draw the map (the secret server keys never reach it). */
 export interface MapsConfig {
@@ -55,13 +56,14 @@ export interface MapsConfig {
   osmTileUrl: string;
   enableMapSearch?: boolean;
   dynamicPlaceNames?: boolean;
+  distanceCalculation?: 'direct' | 'road';
 }
 
 const FALLBACK: SiteSettings = {
   site: { storeName: 'Bazar Shodai', tagline: 'Fresh daily needs, delivered to your door', logoUrl: null, contactEmail: null, hotline: null, whatsapp: null, address: null, businessHours: null, socialLinks: {} },
   payment: { methods: ['CASH_ON_DELIVERY'], bkash: null, nagad: null, rocket: null },
-  delivery: { enabled: true, shopOpen: true, openFrom: '08:00', openTo: '22:00', originSet: false, origin: null, serviceRadiusKm: 20, baseKm: 2, baseCharge: 20, perKmRate: 10, stepKm: 1, minOrderAmount: 0, freeDeliveryThreshold: null, slots: [] },
-  maps: { provider: 'osm', googleBrowserKey: null, osmTileUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', enableMapSearch: true, dynamicPlaceNames: false },
+  delivery: { enabled: true, shopOpen: true, openFrom: '08:00', openTo: '22:00', originSet: false, origin: null, serviceRadiusKm: 20, baseKm: 2, baseCharge: 20, perKmRate: 10, stepKm: 1, minOrderAmount: 0, freeDeliveryThreshold: null, slots: [], distanceCalculation: 'direct' },
+  maps: { provider: 'osm', googleBrowserKey: null, osmTileUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', enableMapSearch: true, dynamicPlaceNames: false, distanceCalculation: 'direct' },
   returns: { returnsEnabled: true, returnWindowDays: 7, policyText: null },
 };
 

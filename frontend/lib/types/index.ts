@@ -222,6 +222,9 @@ export interface DeliveryQuote {
   available: boolean;
   block: 'DISABLED' | 'ORIGIN_NOT_SET' | 'NO_LOCATION' | 'OUT_OF_AREA' | null;
   distanceKm: number | null;
+  directDistanceKm?: number | null;
+  roadDistanceKm?: number | null;
+  distanceCalculation?: 'direct' | 'road';
   durationSec: number | null;
   /** no road route was found: the distance is the straight line times a factor */
   estimated: boolean;

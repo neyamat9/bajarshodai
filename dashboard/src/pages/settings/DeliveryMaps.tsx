@@ -41,6 +41,7 @@ export function DeliveryForm({ v, tileUrl }: { v: DeliverySettings; tileUrl: str
     freeDeliveryThreshold: v.freeDeliveryThreshold === null ? "" : String(v.freeDeliveryThreshold),
     routeFactor: String(v.routeFactor),
     restrictToZone: v.restrictToZone ?? true,
+    distanceCalculation: v.distanceCalculation ?? "direct",
   });
   const [satellite, setSatellite] = useState(true);
   const [previewKm, setPreviewKm] = useState("6");
@@ -84,6 +85,7 @@ export function DeliveryForm({ v, tileUrl }: { v: DeliverySettings; tileUrl: str
       openTo: f.openTo,
       routeFactor: num(f.routeFactor) || 1.3,
       restrictToZone: f.restrictToZone,
+      distanceCalculation: f.distanceCalculation ?? "direct",
       slots: f.slots.map((s) => ({ ...s, id: s.id.trim(), label: s.label.trim(), labelBn: s.labelBn.trim() })),
     });
   };
@@ -152,6 +154,43 @@ export function DeliveryForm({ v, tileUrl }: { v: DeliverySettings; tileUrl: str
             </div>
           </div>
         )}
+      </Section>
+
+      <Section title={tr("Distance calculation mode")} description={tr("Choose how delivery distance and fee are calculated from Kalibari Hub.")}>
+        <div className="space-y-3">
+          <label className={`flex items-start gap-3 rounded-md border p-3 cursor-pointer transition-colors ${f.distanceCalculation !== "road" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"}`}>
+            <input
+              type="radio"
+              name="distanceCalculation"
+              value="direct"
+              checked={f.distanceCalculation !== "road"}
+              onChange={() => setF({ ...f, distanceCalculation: "direct" })}
+              className="mt-1 accent-primary"
+            />
+            <div>
+              <p className="text-sm font-semibold">{tr("Direct distance from Kalibari Hub (Default)")}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {tr("Measures straight-line distance directly from Kalibari Bazar. Uses Google Maps for customer pin dropping. 100% Free with 0 routing API costs.")}
+              </p>
+            </div>
+          </label>
+          <label className={`flex items-start gap-3 rounded-md border p-3 cursor-pointer transition-colors ${f.distanceCalculation === "road" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"}`}>
+            <input
+              type="radio"
+              name="distanceCalculation"
+              value="road"
+              checked={f.distanceCalculation === "road"}
+              onChange={() => setF({ ...f, distanceCalculation: "road" })}
+              className="mt-1 accent-primary"
+            />
+            <div>
+              <p className="text-sm font-semibold">{tr("Road distance (Driving route)")}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {tr("Traces actual streets and turns using the active map provider (OpenStreetMap by default or Google Maps).")}
+              </p>
+            </div>
+          </label>
+        </div>
       </Section>
 
       <Section title={tr("Orders")}>

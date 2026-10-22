@@ -4,7 +4,7 @@ import { ShippingService } from './shipping.service';
 const ORIGIN = { lat: 23.2, lng: 90.9 };
 
 function make(overrides: Partial<DeliverySettings> = {}, route = { km: 5, seconds: 900, estimated: false }) {
-  const delivery: DeliverySettings = { ...DEFAULT_SETTINGS.delivery, originLat: ORIGIN.lat, originLng: ORIGIN.lng, ...overrides };
+  const delivery: DeliverySettings = { ...DEFAULT_SETTINGS.delivery, originLat: ORIGIN.lat, originLng: ORIGIN.lng, distanceCalculation: 'road', ...overrides };
   const settings = { get: jest.fn().mockResolvedValue(delivery) };
   const maps = { route: jest.fn().mockResolvedValue({ ...route, meters: route.km * 1000, path: [] }) };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -19,6 +19,14 @@ describe('ShippingService.quote', () => {
     const far = await make().service.quote(500, { lat: 23.5, lng: 90.9 });
     expect(far.block).toBe('OUT_OF_AREA');
     expect(far.available).toBe(false);
+  });
+
+  it('charges by direct distance when distanceCalculation is direct (default)', async () => {
+    const q = await make({ distanceCalculation: 'direct' }, { km: 9, seconds: 1200, estimated: false }).service.quote(500, { lat: 23.25, lng: 90.9 });
+    expect(q.distanceKm).toBe(5.56);
+    expect(q.directDistanceKm).toBe(5.56);
+    expect(q.roadDistanceKm).toBe(9);
+    expect(q.calculatedFee).toBe(60);
   });
 
   it('prices by road distance with the formula', async () => {

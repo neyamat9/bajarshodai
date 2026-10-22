@@ -241,6 +241,11 @@ export class UpdateDeliverySettingsDto {
   @IsOptional()
   @IsBoolean()
   restrictToZone?: boolean;
+
+  @ApiPropertyOptional({ enum: ['direct', 'road'], description: 'Direct straight-line distance from Kalibari Hub or road distance' })
+  @IsOptional()
+  @IsIn(['direct', 'road'])
+  distanceCalculation?: 'direct' | 'road';
 }
 
 export class UpdateMapsSettingsDto {

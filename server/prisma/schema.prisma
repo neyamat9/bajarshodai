@@ -857,6 +857,8 @@ model Order {
   deliveryPlaceName         String?
   deliveryLandmark          String?
   deliveryDistanceKm        Decimal?  @db.Decimal(6, 2)
+  deliveryDirectDistanceKm  Decimal?  @db.Decimal(6, 2)
+  deliveryRoadDistanceKm    Decimal?  @db.Decimal(6, 2)
   deliveryDurationSec       Int?
   // true when the road route could not be found and the distance was estimated from the straight line
   distanceEstimated         Boolean   @default(false)

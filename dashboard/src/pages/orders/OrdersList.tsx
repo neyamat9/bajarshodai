@@ -109,12 +109,23 @@ export default function OrdersList() {
     {
       key: "customer",
       header: tr("Customer"), sk: "lines2",
-      cell: (o) => (
-        <div className="min-w-0">
-          <p className="truncate font-medium">{o.shippingAddress?.fullName ?? o.user?.name ?? o.guestName ?? tr("Guest")}</p>
-          <p className="text-[11px] text-muted-foreground">{o.shippingAddress?.phone ?? o.user?.phone ?? o.guestPhone ?? ""}{!o.user && (o.shippingAddress ? ` · ${tr("guest")}` : tr("walk-in"))}</p>
-        </div>
-      ),
+      cell: (o) => {
+        const direct = o.deliveryDirectDistanceKm != null ? `${Number(o.deliveryDirectDistanceKm)} km` : null;
+        const road = o.deliveryRoadDistanceKm != null ? `${Number(o.deliveryRoadDistanceKm)} km` : o.deliveryDistanceKm != null ? `${Number(o.deliveryDistanceKm)} km` : null;
+        return (
+          <div className="min-w-0">
+            <p className="truncate font-medium">{o.shippingAddress?.fullName ?? o.user?.name ?? o.guestName ?? tr("Guest")}</p>
+            <p className="text-[11px] text-muted-foreground">{o.shippingAddress?.phone ?? o.user?.phone ?? o.guestPhone ?? ""}{!o.user && (o.shippingAddress ? ` · ${tr("guest")}` : tr("walk-in"))}</p>
+            {(direct || road) && (
+              <p className="mt-0.5 text-[10px] font-medium text-muted-foreground/90">
+                {direct && <span className="text-emerald-700 dark:text-emerald-400">Direct: {direct}</span>}
+                {direct && road && <span> · </span>}
+                {road && <span>Road: {road}</span>}
+              </p>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: "items",

@@ -309,6 +309,8 @@ export class OrdersService {
           deliveryPlaceName: dto.shippingAddress.placeName ?? null,
           deliveryLandmark: dto.shippingAddress.landmark ?? null,
           deliveryDistanceKm: quote.shipping.distanceKm,
+          deliveryDirectDistanceKm: quote.shipping.directDistanceKm ?? null,
+          deliveryRoadDistanceKm: quote.shipping.roadDistanceKm ?? null,
           deliveryDurationSec: quote.shipping.durationSec,
           distanceEstimated: quote.shipping.estimated,
           deliveryFee: quote.shipping.calculatedFee,

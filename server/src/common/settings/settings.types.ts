@@ -134,6 +134,8 @@ export interface DeliverySettings {
   routeFactor: number;
   // Restrict delivery strictly to Shahrasti Upazila delivery zone
   restrictToZone: boolean;
+  // Direct distance from Kalibari Hub (free, straight-line) or Road distance (driving route)
+  distanceCalculation: 'direct' | 'road';
 }
 
 export type MapProviderName = 'osm' | 'google';
@@ -271,6 +273,7 @@ export const DEFAULT_SETTINGS: SettingsMap = {
     shopOpen: true,
     routeFactor: 1.3,
     restrictToZone: true,
+    distanceCalculation: 'direct',
   },
   maps: {
     provider: 'osm',

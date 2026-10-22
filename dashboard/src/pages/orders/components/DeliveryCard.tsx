@@ -199,10 +199,21 @@ export function DeliveryCard({ order, locked, phone, name, onEditAddress }: { or
           )}
 
           <dl className="mt-3">
-            <KeyValue label={tr("Distance")}>
+            <KeyValue label={tr("Distance (Charged)")}>
               {km !== null ? `${km} km` : "—"}
               {order.distanceEstimated && <Badge className="ml-2" variant="warning">{tr("estimate")}</Badge>}
             </KeyValue>
+            {order.deliveryDirectDistanceKm != null && (
+              <KeyValue label={tr("Direct distance (Kalibari)")}>
+                <span className="font-semibold text-emerald-700 dark:text-emerald-400">{Number(order.deliveryDirectDistanceKm)} km</span>
+              </KeyValue>
+            )}
+            {order.deliveryRoadDistanceKm != null && (
+              <KeyValue label={tr("Road distance")}>
+                <span>{Number(order.deliveryRoadDistanceKm)} km</span>
+                {order.distanceEstimated && <Badge className="ml-2" variant="warning">{tr("estimate")}</Badge>}
+              </KeyValue>
+            )}
             {order.deliveryDurationSec ? <KeyValue label={tr("Ride")}>{minutes(order.deliveryDurationSec)}</KeyValue> : null}
             <KeyValue label={tr("Delivery charge")}>
               {money(order.shippingCost)}

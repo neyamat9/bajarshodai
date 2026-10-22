@@ -13,8 +13,11 @@ export interface ShippingQuote {
   // false when an order cannot be delivered: see `block`
   available: boolean;
   block: DeliveryBlock | null;
-  // Road distance from the shop's origin to the customer's pin (null until a location is known)
+  // Road or direct distance from the shop's origin to the customer's pin (null until a location is known)
   distanceKm: number | null;
+  directDistanceKm?: number | null;
+  roadDistanceKm?: number | null;
+  distanceCalculation?: 'direct' | 'road';
   durationSec: number | null;
   // true when no road route was found and the distance is the straight line times a factor
   estimated: boolean;
@@ -58,6 +61,7 @@ export function publicDelivery(d: DeliverySettings) {
     freeDeliveryThreshold: d.freeDeliveryThreshold,
     slots: d.slots,
     restrictToZone: d.restrictToZone ?? true,
+    distanceCalculation: d.distanceCalculation ?? 'direct',
   };
 }
 
@@ -84,6 +88,9 @@ export class ShippingService {
       available: false,
       block: null,
       distanceKm: null,
+      directDistanceKm: null,
+      roadDistanceKm: null,
+      distanceCalculation: d.distanceCalculation ?? 'direct',
       durationSec: null,
       estimated: false,
       estimateNote: null,
@@ -110,20 +117,27 @@ export class ShippingService {
       return { ...base, block: 'OUT_OF_AREA', straightKm: inside.km };
     }
 
-    const route = await this.maps.route(origin, dest);
-    // never charge for less than the straight line: a route shorter than that is a map error
     const straight = haversineKm(origin, dest);
-    const km = Math.max(route.km, Math.round(straight * 100) / 100);
-    const fee = feeForDistance(km, d);
+    const directKm = Math.round(straight * 100) / 100;
+
+    const route = await this.maps.route(origin, dest);
+    const roadKm = Math.max(route.km, directKm);
+
+    const isDirect = (d.distanceCalculation ?? 'direct') === 'direct';
+    const chargedKm = isDirect ? directKm : roadKm;
+    const fee = feeForDistance(chargedKm, d);
 
     const qualifiesForFree = !!input.allItemsFreeShipping || (threshold !== null && subtotal >= threshold);
     return {
       ...base,
       available: true,
-      distanceKm: km,
+      distanceKm: chargedKm,
+      directDistanceKm: directKm,
+      roadDistanceKm: roadKm,
+      distanceCalculation: isDirect ? 'direct' : 'road',
       durationSec: route.seconds,
-      estimated: route.estimated,
-      estimateNote: route.note ?? null,
+      estimated: isDirect ? false : route.estimated,
+      estimateNote: isDirect ? null : (route.note ?? null),
       calculatedFee: fee,
       cost: qualifiesForFree ? 0 : fee,
       isFree: qualifiesForFree,

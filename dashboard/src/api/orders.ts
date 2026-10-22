@@ -80,6 +80,9 @@ export interface OrderSummary {
   items: OrderItem[];
   shippingAddress: Address | null;
   delivery?: { id: string; status: string; assignee: { id: string; name: string } } | null;
+  deliveryDistanceKm?: string | null;
+  deliveryDirectDistanceKm?: string | null;
+  deliveryRoadDistanceKm?: string | null;
 }
 export interface Payment {
   id: string;
@@ -122,6 +125,8 @@ export interface OrderDetail extends OrderSummary {
   deliveryPlaceName: string | null;
   deliveryLandmark: string | null;
   deliveryDistanceKm: string | null;
+  deliveryDirectDistanceKm?: string | null;
+  deliveryRoadDistanceKm?: string | null;
   deliveryDurationSec: number | null;
   distanceEstimated: boolean;
   /** the charge the distance gives; shippingCost is what is charged */

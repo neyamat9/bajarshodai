@@ -14,6 +14,9 @@ const GoogleMapView = dynamic(() => import("./GoogleMapView"), { ssr: false, loa
  * and with OpenStreetMap otherwise, so a missing key never leaves an empty box.
  */
 export default function MapView(props: MapViewProps) {
-  const google = props.config.provider === "google" && !!props.config.googleBrowserKey;
-  return google ? <GoogleMapView {...props} /> : <OsmMap {...props} />;
+  const isDirectMode = (props.config.distanceCalculation ?? "direct") === "direct";
+  // Direct distance always uses Google Map (if browser key is set, fallback to OsmMap if no key configured)
+  // Road distance uses the active provider selected by admin (default OSM, or Google)
+  const useGoogle = (isDirectMode || props.config.provider === "google") && !!props.config.googleBrowserKey;
+  return useGoogle ? <GoogleMapView {...props} /> : <OsmMap {...props} />;
 }
