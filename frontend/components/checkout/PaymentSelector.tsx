@@ -50,6 +50,9 @@ export default function PaymentSelector({ methods, accounts, total, selected, on
   const [touched, setTouched] = useState(false);
 
   const isMobile = !!selected && MOBILE_METHODS.includes(selected);
+  const selectedBrand = selected
+    ? BRAND[selected] || { name: selected, dot: "bg-brand-fresh", tint: "bg-brand-fresh/10", border: "border-brand-fresh/50", text: "text-brand-fresh" }
+    : null;
   const account = selected ? accounts[selected] : null;
   const trxOk = TRX_PATTERN.test(transactionId.trim());
   const senderOk = BD_MOBILE.test(senderNumber.replace(/[\s-]/g, ""));
@@ -84,7 +87,7 @@ export default function PaymentSelector({ methods, accounts, total, selected, on
         {methods.map((m) => {
           const on = selected === m;
           const mobile = MOBILE_METHODS.includes(m);
-          const brand = BRAND[m];
+          const brand = BRAND[m] || { name: m, dot: "bg-brand-fresh", tint: "bg-brand-fresh/10", border: "border-brand-fresh/50", text: "text-brand-fresh" };
           return (
             <button
               key={m}
@@ -113,22 +116,22 @@ export default function PaymentSelector({ methods, accounts, total, selected, on
       </div>
 
       {/* mobile banking: where to send, then the transaction details */}
-      {isMobile && selected && (
-        <div className={`animate-fade-slide-up space-y-4 rounded border-2 p-4 sm:p-5 ${BRAND[selected].border} ${BRAND[selected].tint}`}>
+      {isMobile && selected && selectedBrand && (
+        <div className={`animate-fade-slide-up space-y-4 rounded border-2 p-4 sm:p-5 ${selectedBrand.border} ${selectedBrand.tint}`}>
           {account ? (
             <>
               <div>
-                <p className="text-xs font-bold text-muted-foreground">{t.rich("sendStep", { amount: total !== null ? formatMoney(total, locale) : t("sendTotal"), name: BRAND[selected].name })}</p>
+                <p className="text-xs font-bold text-muted-foreground">{t.rich("sendStep", { amount: total !== null ? formatMoney(total, locale) : t("sendTotal"), name: selectedBrand.name })}</p>
                 <div className="mt-2 flex flex-wrap items-center gap-3 rounded border border-border bg-card px-4 py-3">
                   <span className="font-mono text-xl font-black tracking-wide text-foreground">{account.number}</span>
-                  <span className={`rounded px-2 py-0.5 text-[11px] font-bold ${BRAND[selected].tint} ${BRAND[selected].text}`}>{ACCOUNT_TYPE[account.accountType] ? t(ACCOUNT_TYPE[account.accountType]) : account.accountType}</span>
+                  <span className={`rounded px-2 py-0.5 text-[11px] font-bold ${selectedBrand.tint} ${selectedBrand.text}`}>{ACCOUNT_TYPE[account.accountType] ? t(ACCOUNT_TYPE[account.accountType]) : account.accountType}</span>
                   <button type="button" onClick={() => copy(account.number)} className="ml-auto inline-flex h-9 items-center gap-1.5 rounded border border-border px-3 text-xs font-bold text-foreground transition-colors hover:border-brand-fresh hover:text-accent-text">
                     {copied ? <Check className="h-4 w-4 text-emerald-600" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
                     {copied ? t("copied") : t("copy")}
                   </button>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">
-                  {t.rich("inApp", { name: BRAND[selected].name, how: SEND_HOW[account.accountType] ? t(SEND_HOW[account.accountType]) : t("howPersonal"), b: (c) => <b className="text-foreground">{c}</b> })}
+                  {t.rich("inApp", { name: selectedBrand.name, how: SEND_HOW[account.accountType] ? t(SEND_HOW[account.accountType]) : t("howPersonal"), b: (c) => <b className="text-foreground">{c}</b> })}
                 </p>
                 {account.instructions && (
                   <p className="mt-2 flex items-start gap-2 whitespace-pre-line text-xs text-foreground/85">
@@ -150,17 +153,17 @@ export default function PaymentSelector({ methods, accounts, total, selected, on
                   </div>
                   <div>
                     <label htmlFor="trx-sender" className="mb-1.5 block text-xs font-bold text-muted-foreground">
-                      {t("senderLabel", { name: BRAND[selected].name })} <span className="text-accent-text">*</span>
+                      {t("senderLabel", { name: selectedBrand.name })} <span className="text-accent-text">*</span>
                     </label>
                     <input id="trx-sender" type="tel" inputMode="tel" value={senderNumber} onChange={(e) => onSenderNumberChange(e.target.value)} placeholder={t("phonePh")} autoComplete="tel" aria-invalid={touched && !senderOk} className={`${inputBase} ${touched && !senderOk ? "border-destructive/60" : ""}`} />
                     {touched && !senderOk && <p role="alert" className="mt-1 text-xs font-medium text-destructive">{t("senderErr")}</p>}
                   </div>
                 </div>
-                <p className="mt-3 text-xs text-muted-foreground">{t("trxNote", { name: BRAND[selected].name })}</p>
+                <p className="mt-3 text-xs text-muted-foreground">{t("trxNote", { name: selectedBrand.name })}</p>
               </div>
             </>
           ) : (
-            <p role="alert" className="text-sm font-medium text-destructive">{t("unavailable", { name: BRAND[selected].name })}</p>
+            <p role="alert" className="text-sm font-medium text-destructive">{t("unavailable", { name: selectedBrand.name })}</p>
           )}
         </div>
       )}

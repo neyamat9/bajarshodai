@@ -21,7 +21,20 @@ import { MOBILE_METHODS, type CheckoutAddress, type DeliveryQuote, type PaymentM
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
-const LABEL: Record<string, PaymentMethod> = { CASH_ON_DELIVERY: "Cash on Delivery", BKASH: "bKash", NAGAD: "Nagad", ROCKET: "Rocket" };
+const LABEL: Record<string, PaymentMethod> = {
+  CASH_ON_DELIVERY: "Cash on Delivery",
+  cod: "Cash on Delivery",
+  BKASH: "bKash",
+  bkash: "bKash",
+  NAGAD: "Nagad",
+  nagad: "Nagad",
+  ROCKET: "Rocket",
+  rocket: "Rocket",
+  "Cash on Delivery": "Cash on Delivery",
+  bKash: "bKash",
+  Nagad: "Nagad",
+  Rocket: "Rocket",
+};
 
 /**
  * Checkout: 1 who and which house → 2 where on the map (the delivery charge comes from the pin) → 3 payment → 4 review & place order.
@@ -117,7 +130,8 @@ function Checkout() {
     storeCoupon(code);
   }
 
-  const methods = (settings?.payment.methods ?? ["CASH_ON_DELIVERY"]).map((m) => LABEL[m]);
+  const rawMethods = (settings?.payment?.methods?.length ? settings.payment.methods : (summary?.paymentMethods?.length ? summary.paymentMethods : ["CASH_ON_DELIVERY"]));
+  const methods: PaymentMethod[] = Array.from(new Set(rawMethods.map((m) => LABEL[m] || LABEL[m?.toUpperCase?.()] || (m as PaymentMethod)).filter(Boolean)));
   const address: CheckoutAddress | null = details ? { ...details, email: "", location } : null;
 
   const onQuote = useCallback((q: DeliveryQuote | null, loading: boolean) => {
@@ -199,7 +213,11 @@ function Checkout() {
           {step === 3 && (
             <PaymentSelector
               methods={methods}
-              accounts={{ bKash: settings?.payment.bkash ?? null, Nagad: settings?.payment.nagad ?? null, Rocket: settings?.payment.rocket ?? null }}
+              accounts={{
+                bKash: settings?.payment?.bkash ?? (settings?.payment as any)?.bKash ?? null,
+                Nagad: settings?.payment?.nagad ?? (settings?.payment as any)?.Nagad ?? null,
+                Rocket: settings?.payment?.rocket ?? (settings?.payment as any)?.Rocket ?? null,
+              }}
               total={summary?.total ?? null}
               selected={payment}
               onSelect={setPayment}

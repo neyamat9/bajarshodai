@@ -80,15 +80,20 @@ export interface PaymentSettings {
 }
 
 /** The shop's account for one mobile-banking method, or null when it is off / has no number yet. */
-export function mobileAccount(p: PaymentSettings, m: MobileBankingMethod) {
+export function mobileAccount(
+  p: PaymentSettings,
+  m: MobileBankingMethod,
+  fallbackNumber?: string | null,
+) {
   const k = m.toLowerCase() as 'bkash' | 'nagad' | 'rocket';
   const enabled = p[`${k}Enabled`];
-  const number = p[`${k}Number`];
-  if (!enabled || !number) return null;
+  if (!enabled) return null;
+  const number = p[`${k}Number`] || fallbackNumber || null;
+  if (!number) return null;
   return {
     number,
-    accountType: p[`${k}AccountType`],
-    instructions: p[`${k}Instructions`],
+    accountType: p[`${k}AccountType`] || 'personal',
+    instructions: p[`${k}Instructions`] || null,
   };
 }
 
@@ -235,9 +240,10 @@ export const DEFAULT_SETTINGS: SettingsMap = {
   payment: {
     codEnabled: true,
     bkashEnabled: true,
-    bkashNumber: null,
+    bkashNumber: '01834529197',
     bkashAccountType: 'personal',
-    bkashInstructions: null,
+    bkashInstructions:
+      'Send money to this personal bKash number and enter the transaction ID at checkout.',
     nagadEnabled: false,
     nagadNumber: null,
     nagadAccountType: 'personal',

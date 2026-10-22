@@ -254,7 +254,8 @@ export class CheckoutService {
     const methods: string[] = [];
     if (payment.codEnabled) methods.push('CASH_ON_DELIVERY');
     for (const m of MOBILE_BANKING_METHODS) {
-      if (mobileAccount(payment, m)) methods.push(m);
+      const k = m.toLowerCase() as 'bkash' | 'nagad' | 'rocket';
+      if (payment[`${k}Enabled`]) methods.push(m);
     }
     return methods;
   }

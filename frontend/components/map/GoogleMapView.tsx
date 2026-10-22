@@ -76,8 +76,20 @@ export default function GoogleMapView(p: MapViewProps) {
     return () => el.removeEventListener("wheel", stopWheel);
   }, []);
 
+  useEffect(() => {
+    const prevAuthFailure = (window as unknown as { gm_authFailure?: () => void }).gm_authFailure;
+    (window as unknown as { gm_authFailure?: () => void }).gm_authFailure = () => {
+      p.onAuthError?.();
+      document.querySelectorAll(".gm-err-container, .gm-err-content").forEach((el) => el.remove());
+      if (typeof prevAuthFailure === "function") prevAuthFailure();
+    };
+    return () => {
+      (window as unknown as { gm_authFailure?: () => void }).gm_authFailure = prevAuthFailure;
+    };
+  }, [p.onAuthError]);
+
   return (
-    <APIProvider apiKey={key}>
+    <APIProvider apiKey={key} onError={() => p.onAuthError?.()}>
       <div
         ref={containerRef}
         data-lenis-prevent

@@ -28,6 +28,8 @@ export interface MapViewProps {
   fitKey?: string;
   /** screen-reader name of the map */
   ariaLabel?: string;
+  /** called when Google Maps fails authentication/billing so the app can fallback to OSM */
+  onAuthError?: () => void;
 }
 
 /** Kalibari Bazar, Shahrasti: used to open the map when nothing else is known. */

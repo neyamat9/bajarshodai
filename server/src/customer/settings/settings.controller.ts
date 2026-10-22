@@ -34,10 +34,13 @@ export class SettingsController {
     const paymentMethods: string[] = [];
     if (payment.codEnabled) paymentMethods.push('CASH_ON_DELIVERY');
     const accounts: Record<string, ReturnType<typeof mobileAccount>> = {};
+    const fallbackPhone = site.hotline || site.whatsapp || '01834529197';
     for (const m of MOBILE_BANKING_METHODS) {
-      const acc = mobileAccount(payment, m);
-      accounts[m.toLowerCase()] = acc;
-      if (acc) paymentMethods.push(m);
+      const k = m.toLowerCase() as 'bkash' | 'nagad' | 'rocket';
+      const isEnabled = Boolean(payment[`${k}Enabled`]);
+      const acc = isEnabled ? mobileAccount(payment, m, fallbackPhone) : null;
+      accounts[k] = acc;
+      if (isEnabled) paymentMethods.push(m);
     }
 
     return {

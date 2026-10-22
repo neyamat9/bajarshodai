@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Mail } from "lucide-react";
@@ -80,17 +80,27 @@ function PaymentForm({ v }: { v: S["payment"] }) {
     nagadNumber: v.nagadNumber ?? "", nagadInstructions: v.nagadInstructions ?? "",
     rocketNumber: v.rocketNumber ?? "", rocketInstructions: v.rocketInstructions ?? "",
   });
+
+  useEffect(() => {
+    setF({
+      ...v,
+      bkashNumber: v.bkashNumber ?? "", bkashInstructions: v.bkashInstructions ?? "",
+      nagadNumber: v.nagadNumber ?? "", nagadInstructions: v.nagadInstructions ?? "",
+      rocketNumber: v.rocketNumber ?? "", rocketInstructions: v.rocketInstructions ?? "",
+    });
+  }, [v]);
+
   const save = useSave("payment");
   const submit = () => {
     if (!f.codEnabled && !f.bkashEnabled && !f.nagadEnabled && !f.rocketEnabled) return toast.error(tr("Keep at least one payment method on"));
     for (const m of MOBILE) {
-      if (f[`${m.key}Enabled`] && !/^(\+?88)?01[3-9]\d{8}$/.test(f[`${m.key}Number`].replace(/[\s-]/g, ""))) return toast.error(`Enter your ${m.label} number to accept ${m.label}`);
+      if (f[`${m.key}Enabled`] && !/^(\+?88)?01[3-9]\d{8}$/.test((f[`${m.key}Number`] || "").replace(/[\s-]/g, ""))) return toast.error(`Enter a valid Bangladeshi mobile number (01XXXXXXXXX) for ${m.label}`);
     }
     save.mutate({
       codEnabled: f.codEnabled,
-      bkashEnabled: f.bkashEnabled, bkashNumber: nz(f.bkashNumber), bkashAccountType: f.bkashAccountType, bkashInstructions: nz(f.bkashInstructions),
-      nagadEnabled: f.nagadEnabled, nagadNumber: nz(f.nagadNumber), nagadAccountType: f.nagadAccountType, nagadInstructions: nz(f.nagadInstructions),
-      rocketEnabled: f.rocketEnabled, rocketNumber: nz(f.rocketNumber), rocketAccountType: f.rocketAccountType, rocketInstructions: nz(f.rocketInstructions),
+      bkashEnabled: f.bkashEnabled, bkashNumber: nz((f.bkashNumber || "").replace(/[\s-]/g, "")), bkashAccountType: f.bkashAccountType, bkashInstructions: nz(f.bkashInstructions),
+      nagadEnabled: f.nagadEnabled, nagadNumber: nz((f.nagadNumber || "").replace(/[\s-]/g, "")), nagadAccountType: f.nagadAccountType, nagadInstructions: nz(f.nagadInstructions),
+      rocketEnabled: f.rocketEnabled, rocketNumber: nz((f.rocketNumber || "").replace(/[\s-]/g, "")), rocketAccountType: f.rocketAccountType, rocketInstructions: nz(f.rocketInstructions),
     });
   };
   return (
@@ -100,7 +110,18 @@ function PaymentForm({ v }: { v: S["payment"] }) {
           <Toggle label={tr("Cash on delivery")} hint={tr("Customers pay the courier.")} checked={f.codEnabled} onChange={(codEnabled) => setF({ ...f, codEnabled })} />
           {MOBILE.map((m) => (
             <div key={m.key}>
-              <Toggle label={tr("{{method}} (send money)", { method: m.label })} hint={m.hint} checked={f[`${m.key}Enabled`]} onChange={(on) => setF({ ...f, [`${m.key}Enabled`]: on })} />
+              <Toggle
+                label={tr("{{method}} (send money)", { method: m.label })}
+                hint={m.hint}
+                checked={f[`${m.key}Enabled`]}
+                onChange={(on) => {
+                  const patch: Record<string, unknown> = { [`${m.key}Enabled`]: on };
+                  if (on && !f[`${m.key}Number`]) {
+                    patch[`${m.key}Number`] = "01834529197";
+                  }
+                  setF({ ...f, ...patch });
+                }}
+              />
               {f[`${m.key}Enabled`] && (
                 <div className="mb-3 grid gap-3 sm:grid-cols-2">
                   <Field label={`${m.label} number`} required><Input value={f[`${m.key}Number`]} onChange={(e) => setF({ ...f, [`${m.key}Number`]: e.target.value })} placeholder="01XXXXXXXXX" /></Field>

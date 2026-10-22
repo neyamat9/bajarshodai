@@ -458,6 +458,38 @@ async function seedDeliverySettings() {
   console.log('  ✓ Kalibari Bazar origin pin');
 }
 
+async function seedPaymentSettings() {
+  const existing = await prisma.siteSetting.findUnique({
+    where: { key: 'payment' },
+  });
+  if (existing) {
+    console.log('  - payment settings already configured');
+    return;
+  }
+  await prisma.siteSetting.create({
+    data: {
+      key: 'payment',
+      group: 'payment',
+      value: JSON.stringify({
+        codEnabled: true,
+        bkashEnabled: true,
+        bkashNumber: '01834529197',
+        bkashAccountType: 'personal',
+        bkashInstructions: 'Send money to this personal bKash number and enter the transaction ID at checkout.',
+        nagadEnabled: false,
+        nagadNumber: null,
+        nagadAccountType: 'personal',
+        nagadInstructions: null,
+        rocketEnabled: false,
+        rocketNumber: null,
+        rocketAccountType: 'personal',
+        rocketInstructions: null,
+      }),
+    },
+  });
+  console.log('  ✓ Payment settings seeded (COD + bKash)');
+}
+
 async function seedSuperAdmin() {
   const phoneRaw = (process.env.SEED_SUPERADMIN_PHONE || '').trim();
   const password = process.env.SEED_SUPERADMIN_PASSWORD || '';
@@ -522,6 +554,7 @@ async function main() {
   }
   await seedStoreName();
   await seedDeliverySettings();
+  await seedPaymentSettings();
   await seedSuperAdmin();
   console.log('Seeding complete!');
 }
