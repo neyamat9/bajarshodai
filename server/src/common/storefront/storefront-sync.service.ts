@@ -77,7 +77,7 @@ export class StorefrontSyncService implements OnModuleDestroy {
       this.pending = new Set();
       this.timer = null;
       void this.send(batch);
-    }, 400);
+    }, 100);
   }
 
   /** Push now (the admin's "Retry"): refreshes every group. */

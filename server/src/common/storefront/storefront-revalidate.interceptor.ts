@@ -14,7 +14,7 @@ const WRITES = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 /** Which cached storefront data an admin change makes stale (the same names the storefront tags its fetches with). */
 function tagsFor(path: string): string[] {
   // a customer posting a review or question changes what the product page shows
-  if (/\/customer\/products\/[^/]+\/(reviews|questions)/i.test(path))
+  if (/\/customer\/(products\/[^/]+\/)?(reviews|questions)/i.test(path))
     return ['products'];
   // placing or cancelling an order moves stock and the sold counts shown on cards and product pages
   if (/\/customer\/(orders|checkout)/i.test(path)) return ['products', 'home'];

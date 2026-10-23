@@ -4,7 +4,7 @@ import { useRouter } from "@/i18n/navigation";
 import { errorMessage } from "@/lib/api/client";
 import { useAuthModal } from "@/components/auth/AuthModal";
 import { useAuth } from "@/lib/hooks/use-auth";
-import { askQuestion, createReview, getQuestions, voteReview } from "@/lib/services/reviews.service";
+import { askQuestion, createReview, getQuestions, getReviews, voteReview } from "@/lib/services/reviews.service";
 import type { Product, Question, Review } from "@/lib/types";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -113,7 +113,7 @@ function DescriptionTab({ product }: { product: Product }) {
 function ReviewsTab({
   product,
   initialReviews,
-  stats,
+  stats: initialStats,
 }: {
   product: Product;
   initialReviews: Review[];
@@ -124,7 +124,8 @@ function ReviewsTab({
   const { user } = useAuth();
   const { openAuth } = useAuthModal();
   const router = useRouter();
-  const reviews = initialReviews;
+  const [reviews, setReviews] = useState<Review[]>(initialReviews);
+  const [stats, setStats] = useState<ReviewStats>(initialStats);
   const [submitting, setSubmitting] = useState(false);
   const [formTitle, setFormTitle] = useState("");
   const [helpfulVotes, setHelpfulVotes] = useState<Record<string, "helpful" | "not-helpful">>({});
@@ -135,6 +136,34 @@ function ReviewsTab({
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [barsVisible, setBarsVisible] = useState(false);
   const barsRef = useRef<HTMLDivElement>(null);
+
+  // Sync state if props change
+  useEffect(() => {
+    setReviews(initialReviews);
+  }, [initialReviews]);
+
+  useEffect(() => {
+    setStats(initialStats);
+  }, [initialStats]);
+
+  // Keep fresh on mount in case page was served from stale SSR cache
+  useEffect(() => {
+    let alive = true;
+    getReviews(product.id, 1, 10)
+      .then((fresh) => {
+        if (!alive) return;
+        setReviews(fresh.reviews);
+        setStats({
+          average: fresh.averageRating,
+          total: fresh.total,
+          breakdown: fresh.breakdown,
+        });
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [product.id]);
 
   // Animate bars on mount
   useEffect(() => {
@@ -181,6 +210,15 @@ function ReviewsTab({
     setSubmitting(true);
     try {
       await createReview({ productId: product.id, rating: formRating, title: formTitle.trim() || undefined, comment: formComment.trim() });
+      try {
+        const fresh = await getReviews(product.id, 1, 10);
+        setReviews(fresh.reviews);
+        setStats({
+          average: fresh.averageRating,
+          total: fresh.total,
+          breakdown: fresh.breakdown,
+        });
+      } catch {}
       setFormRating(0);
       setFormTitle("");
       setFormComment("");
@@ -437,6 +475,26 @@ function QATab({
   const [questionText, setQuestionText] = useState("");
   const [questionError, setQuestionError] = useState("");
   const [asking, setAsking] = useState(false);
+  const router = useRouter();
+
+  // Sync state if props change
+  useEffect(() => {
+    setQuestions(initialQuestions);
+  }, [initialQuestions]);
+
+  // Keep fresh on mount in case page was served from stale SSR cache
+  useEffect(() => {
+    let alive = true;
+    getQuestions(product.id)
+      .then((fresh) => {
+        if (!alive) return;
+        setQuestions(fresh);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [product.id]);
 
   async function handleSubmitQuestion(e: React.FormEvent) {
     e.preventDefault();
@@ -455,6 +513,7 @@ function QATab({
       setQuestionText("");
       setQuestionError("");
       toast.success(t("qa.thanks"), { duration: 3000 });
+      router.refresh();
     } catch (err) {
       setQuestionError(errorMessage(err));
     } finally {
