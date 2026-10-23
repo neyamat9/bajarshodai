@@ -122,6 +122,50 @@ export async function cancelOrderAndRestore(
   await tx.couponUsage.deleteMany({ where: { orderId } });
 
   if (order.userId) {
+    if (order.pointsRedeemed > 0) {
+      const u = await tx.user.findUnique({
+        where: { id: order.userId },
+        select: { loyaltyPoints: true },
+      });
+      const newBal = (u?.loyaltyPoints ?? 0) + order.pointsRedeemed;
+      await tx.user.update({
+        where: { id: order.userId },
+        data: { loyaltyPoints: newBal },
+      });
+      await tx.loyaltyTransaction.create({
+        data: {
+          userId: order.userId,
+          orderId,
+          points: order.pointsRedeemed,
+          type: 'REFUNDED_ORDER',
+          description: `Refunded ${order.pointsRedeemed} points for cancelled order #${order.orderNumber}`,
+          balanceAfter: newBal,
+        },
+      });
+    }
+
+    if (order.pointsEarned > 0) {
+      const u = await tx.user.findUnique({
+        where: { id: order.userId },
+        select: { loyaltyPoints: true },
+      });
+      const newBal = Math.max(0, (u?.loyaltyPoints ?? 0) - order.pointsEarned);
+      await tx.user.update({
+        where: { id: order.userId },
+        data: { loyaltyPoints: newBal },
+      });
+      await tx.loyaltyTransaction.create({
+        data: {
+          userId: order.userId,
+          orderId,
+          points: -order.pointsEarned,
+          type: 'REFUNDED_ORDER',
+          description: `Reversed ${order.pointsEarned} earned points for cancelled order #${order.orderNumber}`,
+          balanceAfter: newBal,
+        },
+      });
+    }
+
     await tx.user.update({
       where: { id: order.userId },
       data: {

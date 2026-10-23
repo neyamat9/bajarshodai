@@ -23,12 +23,13 @@ export class SettingsController {
       'Public store settings: store info, payment options, delivery rules, the map to draw, return policy',
   })
   async getPublicSettings() {
-    const [site, payment, returns, delivery, maps] = await Promise.all([
+    const [site, payment, returns, delivery, maps, loyalty] = await Promise.all([
       this.settings.get('site'),
       this.settings.get('payment'),
       this.settings.get('returns'),
       this.shippingService.getOptions(),
       this.settings.get('maps'),
+      this.settings.get('loyalty'),
     ]);
 
     const paymentMethods: string[] = [];
@@ -64,6 +65,7 @@ export class SettingsController {
         dynamicPlaceNames: maps.dynamicPlaceNames ?? false,
       },
       returns,
+      loyalty,
     };
   }
 }

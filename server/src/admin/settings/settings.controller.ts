@@ -34,6 +34,7 @@ import {
   UpdateMapsSettingsDto,
   UpdateSiteSettingsDto,
   UpdateEmailSettingsDto,
+  UpdateLoyaltySettingsDto,
   TestEmailDto,
 } from './dto/settings.dto';
 
@@ -263,6 +264,17 @@ export class AdminSettingsController {
     @CurrentUser() admin: User,
   ) {
     return this.save('returns', dto, admin);
+  }
+
+  @Put('loyalty')
+  @ApiOperation({
+    summary: 'Update loyalty points and milestone free shipping settings',
+  })
+  async updateLoyalty(
+    @Body() dto: UpdateLoyaltySettingsDto,
+    @CurrentUser() admin: User,
+  ) {
+    return this.save('loyalty', dto, admin);
   }
 
   @Put('email')

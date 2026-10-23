@@ -5,8 +5,10 @@ import { CartModule } from '../cart/cart.module';
 import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
 
+import { LoyaltyModule } from '../loyalty/loyalty.module';
+
 @Module({
-  imports: [PrismaModule, CheckoutModule, CartModule],
+  imports: [PrismaModule, CheckoutModule, CartModule, LoyaltyModule],
   controllers: [OrdersController],
   providers: [OrdersService],
   exports: [OrdersService],

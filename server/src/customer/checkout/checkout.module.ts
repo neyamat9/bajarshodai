@@ -5,8 +5,10 @@ import { CouponsService } from '../coupons/coupons.service';
 import { CheckoutController } from './checkout.controller';
 import { CheckoutService } from './checkout.service';
 
+import { LoyaltyModule } from '../loyalty/loyalty.module';
+
 @Module({
-  imports: [PrismaModule, ShippingModule],
+  imports: [PrismaModule, ShippingModule, LoyaltyModule],
   controllers: [CheckoutController],
   providers: [CheckoutService, CouponsService],
   exports: [CheckoutService, CouponsService],

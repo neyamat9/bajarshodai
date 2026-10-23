@@ -23,6 +23,7 @@ interface Props {
   bkashTransactionId?: string;
   bkashSenderNumber?: string;
   couponCode?: string;
+  redeemPoints?: number;
   onBack: () => void;
   /** after the order is saved and the cart is gone */
   onOrderPlaced: () => void;
@@ -31,7 +32,7 @@ interface Props {
 const PAYMENT_CODE: Record<PaymentMethod, "CASH_ON_DELIVERY" | "BKASH" | "NAGAD" | "ROCKET"> = { "Cash on Delivery": "CASH_ON_DELIVERY", bKash: "BKASH", Nagad: "NAGAD", Rocket: "ROCKET" };
 
 /** Step 3 — check everything and place the order. */
-export default function OrderReview({ summary, address, paymentMethod, deliverySlot, bkashTransactionId, bkashSenderNumber, couponCode, onBack, onOrderPlaced }: Props) {
+export default function OrderReview({ summary, address, paymentMethod, deliverySlot, bkashTransactionId, bkashSenderNumber, couponCode, redeemPoints, onBack, onOrderPlaced }: Props) {
   const t = useTranslations("Checkout");
   const locale = useLocale() as Locale;
   const router = useRouter();
@@ -69,6 +70,7 @@ export default function OrderReview({ summary, address, paymentMethod, deliveryS
         couponCode: couponCode || undefined,
         deliveryNote: note.trim() || undefined,
         email: !user && address.email ? address.email : undefined,
+        redeemPoints: redeemPoints || undefined,
       });
       onOrderPlaced();
       router.push(`/orders/${order.id}?placed=1`);

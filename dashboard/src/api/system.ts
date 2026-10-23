@@ -62,6 +62,17 @@ export interface MapsSettings {
 }
 export interface MapsTestResult { provider: string; route: { ok: boolean; km?: number; error?: string }; place: { ok: boolean; name?: string; error?: string } }
 export interface MapsUsage { day: string; route: number; geocode: number; search: number; cap: number; provider: string }
+export interface LoyaltySettings {
+  enabled: boolean;
+  pointsPerHundredSpent: number;
+  pointsPerCurrencyUnit: number;
+  minOrderAmountToRedeem: number;
+  minPointsToRedeem: number;
+  maxDiscountPercent: number;
+  freeShippingMilestoneEnabled: boolean;
+  freeShippingOrderInterval: number;
+  freeShippingMaxWeightKg: number;
+}
 export interface Settings {
   site: { storeName: string; tagline: string; logoUrl: string | null; faviconUrl: string | null; contactEmail: string | null; hotline: string | null; whatsapp: string | null; address: string | null; businessHours: string | null; currency: string; currencySymbol: string; metaTitle: string | null; metaDescription: string | null; socialLinks: Record<string, string> };
   payment: { codEnabled: boolean; bkashEnabled: boolean; bkashNumber: string | null; bkashAccountType: "personal" | "merchant" | "agent"; bkashInstructions: string | null; nagadEnabled: boolean; nagadNumber: string | null; nagadAccountType: "personal" | "merchant" | "agent"; nagadInstructions: string | null; rocketEnabled: boolean; rocketNumber: string | null; rocketAccountType: "personal" | "merchant" | "agent"; rocketInstructions: string | null };
@@ -72,6 +83,7 @@ export interface Settings {
     provider: "none" | "smtp" | "resend"; fromName: string; fromEmail: string; replyTo: string | null; smtpHost: string | null; smtpPort: number | null; smtpSecure: boolean; smtpUser: string | null; smtpPassSet: boolean; resendApiKeySet: boolean;
     adminNotificationEmail: string | null; notifyCustomerOrderPlaced: boolean; notifyCustomerOrderStatus: boolean; notifyAdminNewOrder: boolean; notifyAdminContactMessage: boolean; notifyAdminSupportTicket: boolean; notifyCustomerTicketReply: boolean; sendNewsletterWelcome: boolean;
   };
+  loyalty: LoyaltySettings;
 }
 export type SettingsGroup = keyof Settings;
 export const settingsApi = {

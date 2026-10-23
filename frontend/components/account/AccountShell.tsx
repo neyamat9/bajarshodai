@@ -5,7 +5,7 @@ import { card } from "@/components/account/ui";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { useWishlist } from "@/lib/hooks/use-wishlist";
 import { Skeleton } from "@/components/account/ui";
-import { Heart, LayoutDashboard, LogOut, type LucideIcon, Package, RotateCcw, Settings } from "lucide-react";
+import { Award, Heart, LayoutDashboard, LogOut, type LucideIcon, Package, RotateCcw, Settings } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { formatDate } from "@/lib/format";
 import { formatNumber } from "@/lib/format";
@@ -45,6 +45,7 @@ export default function AccountShell({ children }: { children: React.ReactNode }
   const items: NavItem[] = [
     { href: "/account", label: t("overview"), icon: LayoutDashboard, match: (p) => p === "/account" },
     { href: "/orders", label: t("myOrders"), icon: Package, match: (p) => p.startsWith("/orders") },
+    { href: "/account/rewards", label: t("rewards"), icon: Award, match: (p) => p.startsWith("/account/rewards") },
     { href: "/wishlist", label: t("wishlist"), icon: Heart, match: (p) => p.startsWith("/wishlist"), badge: vaultCount },
     { href: "/account/returns", label: t("returns"), icon: RotateCcw, match: (p) => p.startsWith("/account/returns") },
     { href: "/account/settings", label: t("settings"), icon: Settings, match: (p) => p.startsWith("/account/settings") },

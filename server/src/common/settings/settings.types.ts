@@ -9,7 +9,8 @@ export type SettingsGroup =
   | 'delivery'
   | 'maps'
   | 'returns'
-  | 'email';
+  | 'email'
+  | 'loyalty';
 
 export const SETTINGS_GROUPS: SettingsGroup[] = [
   'site',
@@ -18,6 +19,7 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
   'maps',
   'returns',
   'email',
+  'loyalty',
 ];
 
 export interface SocialLinks {
@@ -211,6 +213,21 @@ export const SECRET_FIELDS: { [G in SettingsGroup]?: string[] } = {
   maps: ['googleServerKey', 'orsApiKey'],
 };
 
+export interface LoyaltySettings {
+  // Points & Discount
+  enabled: boolean;
+  pointsPerHundredSpent: number; // e.g. 5 points per 100 BDT spent
+  pointsPerCurrencyUnit: number; // e.g. 10 points = 1 BDT discount (100 pts = 10 BDT)
+  minOrderAmountToRedeem: number; // e.g. 500 BDT minimum order subtotal to redeem points
+  minPointsToRedeem: number; // e.g. 50 points required to be able to redeem
+  maxDiscountPercent: number; // e.g. 30 (max 30% discount of subtotal via points)
+
+  // Milestone Free Shipping (Order Count & Weight limit)
+  freeShippingMilestoneEnabled: boolean;
+  freeShippingOrderInterval: number; // e.g. 5 (every 5th delivered order)
+  freeShippingMaxWeightKg: number; // e.g. 5.0 (free shipping covers orders up to this weight in kg)
+}
+
 export interface SettingsMap {
   site: SiteSettings;
   payment: PaymentSettings;
@@ -218,6 +235,7 @@ export interface SettingsMap {
   maps: MapsSettings;
   returns: ReturnSettings;
   email: EmailSettings;
+  loyalty: LoyaltySettings;
 }
 
 export const DEFAULT_SETTINGS: SettingsMap = {
@@ -316,5 +334,16 @@ export const DEFAULT_SETTINGS: SettingsMap = {
     notifyAdminSupportTicket: true,
     notifyCustomerTicketReply: true,
     sendNewsletterWelcome: true,
+  },
+  loyalty: {
+    enabled: true,
+    pointsPerHundredSpent: 5,
+    pointsPerCurrencyUnit: 10,
+    minOrderAmountToRedeem: 500,
+    minPointsToRedeem: 50,
+    maxDiscountPercent: 30,
+    freeShippingMilestoneEnabled: true,
+    freeShippingOrderInterval: 5,
+    freeShippingMaxWeightKg: 5,
   },
 };

@@ -8,12 +8,13 @@ import { useAuth } from "@/lib/hooks/use-auth";
 import { useWishlist } from "@/lib/hooks/use-wishlist";
 import { getOrders } from "@/lib/services/orders.service";
 import type { Order } from "@/lib/types";
-import { ArrowRight, Clock, Heart, MapPin, Package, RotateCcw, ShoppingBag, Truck, Wallet } from "lucide-react";
+import { ArrowRight, Award, Clock, Heart, MapPin, Package, RotateCcw, ShoppingBag, Sparkles, Truck, Wallet } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { isFinished, isOffTrack } from "@/lib/api/mappers";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { formatNumber } from "@/lib/format";
+import { getLoyaltySummary, type LoyaltySummary } from "@/lib/services/loyalty.service";
 
 function Thumbs({ order, max = 3 }: { order: Order; max?: number }) {
   const shown = order.items.slice(0, max);
@@ -46,15 +47,20 @@ function Stat({ icon: Icon, label, value, tone }: { icon: typeof Package; label:
 
 function Overview() {
   const t = useTranslations("Account");
+  const locale = useLocale();
   const { user } = useAuth();
   const { vaultCount } = useWishlist();
   const [orders, setOrders] = useState<Order[] | null>(null);
+  const [loyalty, setLoyalty] = useState<LoyaltySummary | null>(null);
 
   useEffect(() => {
     let alive = true;
     getOrders()
       .then((o) => alive && setOrders([...o].sort((a, b) => new Date(b.placedAt).getTime() - new Date(a.placedAt).getTime())))
       .catch(() => alive && setOrders([]));
+    getLoyaltySummary()
+      .then((l) => alive && setLoyalty(l))
+      .catch(() => {});
     return () => {
       alive = false;
     };
@@ -107,6 +113,42 @@ function Overview() {
           </>
         )}
       </div>
+
+      {/* loyalty rewards banner */}
+      {loyalty && (
+        <div className={`${card} p-5 sm:p-6 border-l-4 border-l-emerald-500 bg-gradient-to-r from-emerald-500/10 via-brand-fresh/5 to-transparent`}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                <Sparkles className="h-6 w-6" />
+              </span>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="font-outfit text-base font-black text-foreground">
+                    {locale === "bn" ? "লয়্যালটি পয়েন্ট ও রিওয়ার্ডস" : "Loyalty Points & Rewards"}
+                  </h3>
+                  <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                    {loyalty.points} {locale === "bn" ? "পয়েন্ট" : "Points"} (≈ {formatBDT(loyalty.pointsValue)})
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                  {loyalty.milestone.isMilestoneUnlocked
+                    ? (locale === "bn" ? "🎉 পরবর্তী অর্ডারে ১০০% ফ্রি ডেলিভারি আনলক হয়েছে!" : "🎉 100% Free Shipping unlocked for your next order!")
+                    : (locale === "bn"
+                        ? `ফ্রি ডেলিভারি পেতে আর ${loyalty.milestone.ordersUntilNextMilestone}টি অর্ডার সম্পন্ন করুন (সর্বোচ্চ ${loyalty.milestone.maxWeightKg} কেজি)।`
+                        : `${loyalty.milestone.ordersUntilNextMilestone} more completed orders until next 100% Free Shipping (up to ${loyalty.milestone.maxWeightKg} kg).`)}
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/account/rewards"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline shrink-0"
+            >
+              {locale === "bn" ? "রিওয়ার্ডস ও হিস্ট্রি দেখুন" : "View Rewards & Ledger"} <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* live order tracker */}
       {tracking && (
@@ -182,8 +224,9 @@ function Overview() {
       </div>
 
       {/* shortcuts */}
-      <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-3 sm:gap-4">
+      <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-4 sm:gap-4">
         {[
+          { href: "/account/rewards", icon: Award, title: locale === "bn" ? "রিওয়ার্ডস ও পয়েন্ট" : "Rewards & Points", text: locale === "bn" ? "পয়েন্ট ব্যালেন্স ও ফ্রি ডেলিভারি" : "Points balance & free delivery" },
           { href: "/account/settings#addresses", icon: MapPin, title: t("shortAddresses"), text: t("shortAddressesText") },
           { href: "/wishlist", icon: Heart, title: t("shortWishlist"), text: t("shortWishlistText") },
           { href: "/account/returns", icon: RotateCcw, title: t("shortReturns"), text: t("shortReturnsText") },

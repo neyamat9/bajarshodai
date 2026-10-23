@@ -23,6 +23,7 @@ import { CustomerUploadsModule } from './uploads/uploads.module';
 import { RecentlyViewedModule } from './recently-viewed/recently-viewed.module';
 import { SearchHistoryModule } from './search-history/search-history.module';
 import { SupportModule } from './support/support.module';
+import { LoyaltyModule } from './loyalty/loyalty.module';
 
 @Module({
   imports: [
@@ -50,8 +51,10 @@ import { SupportModule } from './support/support.module';
     RecentlyViewedModule,
     SearchHistoryModule,
     SupportModule,
+    LoyaltyModule,
   ],
   exports: [
+    LoyaltyModule,
     ProductsModule,
     CategoriesModule,
     BannersModule,

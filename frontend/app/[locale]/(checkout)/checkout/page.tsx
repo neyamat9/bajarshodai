@@ -58,6 +58,7 @@ function Checkout() {
   const [txn, setTxn] = useState("");
   const [sender, setSender] = useState("");
   const [coupon, setCoupon] = useState(() => getStoredCoupon());
+  const [usePoints, setUsePoints] = useState(false);
   const [summary, setSummary] = useState<CheckoutSummary | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
   const [summaryError, setSummaryError] = useState<string | null>(null);
@@ -103,7 +104,13 @@ function Checkout() {
     setSummaryLoading(true);
     setSummaryError(null);
     try {
-      const s = await getCheckoutSummary({ couponCode: coupon || undefined, lat, lng, phone: phone || undefined });
+      const s = await getCheckoutSummary({
+        couponCode: coupon || undefined,
+        lat,
+        lng,
+        phone: phone || undefined,
+        redeemPoints: usePoints ? 999999 : undefined,
+      });
       if (mine === summarySeq.current) setSummary(s);
     } catch (e) {
       if (mine !== summarySeq.current) return;
@@ -116,7 +123,7 @@ function Checkout() {
     } finally {
       if (mine === summarySeq.current) setSummaryLoading(false);
     }
-  }, [coupon, lat, lng, phone]);
+  }, [coupon, lat, lng, phone, usePoints]);
 
   useEffect(() => {
     if (cartLoading || cartCount === 0) return;
@@ -124,10 +131,34 @@ function Checkout() {
   }, [cartLoading, cartCount, cart.items, refresh]);
 
   async function handleApply(code: string) {
-    const s = await applyCoupon(code, { lat, lng, phone: phone || undefined });
+    const s = await applyCoupon(code, {
+      lat,
+      lng,
+      phone: phone || undefined,
+      redeemPoints: usePoints ? 999999 : undefined,
+    });
     setSummary(s);
     setCoupon(code);
     storeCoupon(code);
+  }
+
+  async function handleTogglePoints(apply: boolean) {
+    setUsePoints(apply);
+    setSummaryLoading(true);
+    try {
+      const s = await getCheckoutSummary({
+        couponCode: coupon || undefined,
+        lat,
+        lng,
+        phone: phone || undefined,
+        redeemPoints: apply ? (summary?.loyalty?.userPoints ?? 999999) : undefined,
+      });
+      setSummary(s);
+    } catch (e) {
+      setSummaryError(errorMessage(e));
+    } finally {
+      setSummaryLoading(false);
+    }
   }
 
   const rawMethods = (settings?.payment?.methods?.length ? settings.payment.methods : (summary?.paymentMethods?.length ? summary.paymentMethods : ["CASH_ON_DELIVERY"]));
@@ -239,6 +270,7 @@ function Checkout() {
               bkashTransactionId={MOBILE_METHODS.includes(payment) ? txn.trim() : undefined}
               bkashSenderNumber={MOBILE_METHODS.includes(payment) ? sender.replace(/[\s-]/g, "") : undefined}
               couponCode={summary.coupon?.applied ? summary.coupon.code : undefined}
+              redeemPoints={usePoints ? summary.loyalty?.pointsRedeemed : undefined}
               onBack={() => setStep(3)}
               onOrderPlaced={() => {
                 placed.current = true;
@@ -259,6 +291,8 @@ function Checkout() {
               setCoupon("");
               clearStoredCoupon();
             }}
+            redeemPointsApplied={usePoints && (summary?.pointsDiscountAmount ?? 0) > 0}
+            onTogglePoints={handleTogglePoints}
           />
         </div>
       </div>

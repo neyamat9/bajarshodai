@@ -439,3 +439,63 @@ export class TestEmailDto extends UpdateEmailSettingsDto {
   @IsEmail()
   to: string;
 }
+
+export class UpdateLoyaltySettingsDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  enabled?: boolean;
+
+  @ApiPropertyOptional({ description: 'Points earned per 100 BDT spent' })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  pointsPerHundredSpent?: number;
+
+  @ApiPropertyOptional({ description: 'Points needed per 1 BDT discount' })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(1000)
+  pointsPerCurrencyUnit?: number;
+
+  @ApiPropertyOptional({ description: 'Minimum order amount to redeem points' })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  minOrderAmountToRedeem?: number;
+
+  @ApiPropertyOptional({ description: 'Minimum points needed to redeem' })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  minPointsToRedeem?: number;
+
+  @ApiPropertyOptional({ description: 'Max % of subtotal that can be discounted by points' })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(100)
+  maxDiscountPercent?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  freeShippingMilestoneEnabled?: boolean;
+
+  @ApiPropertyOptional({ description: 'Free shipping after every N completed orders' })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  freeShippingOrderInterval?: number;
+
+  @ApiPropertyOptional({ description: 'Max weight in KG eligible for milestone free shipping' })
+  @IsOptional()
+  @IsNumber()
+  @Min(0.1)
+  @Max(500)
+  freeShippingMaxWeightKg?: number;
+}
+

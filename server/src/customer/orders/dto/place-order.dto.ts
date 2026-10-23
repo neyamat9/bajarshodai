@@ -180,4 +180,11 @@ export class PlaceOrderDto {
   @IsEmail()
   @MaxLength(254)
   email?: string;
+
+  @ApiPropertyOptional({ description: 'Number of loyalty points to redeem for discount' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  redeemPoints?: number;
 }

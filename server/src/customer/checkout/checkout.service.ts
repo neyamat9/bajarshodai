@@ -17,6 +17,7 @@ import { CheckoutSummaryDto } from './dto/checkout-summary.dto';
 import { CartOwner, cartOwnerWhere } from '../../common/cart/cart-owner';
 import { assertQuantity, saleRuleOf } from '../../common/cart/quantity-rules';
 import { fmtQty, round3, toNum } from '../../common/utils/qty';
+import { LoyaltyService } from '../loyalty/loyalty.service';
 
 type Db = PrismaService | Prisma.TransactionClient;
 
@@ -35,6 +36,7 @@ const cartInclude = {
       sellStep: true,
       minQty: true,
       isWeighed: true,
+      weight: true,
       unit: {
         select: {
           shortLabel: true,
@@ -86,6 +88,31 @@ export interface CheckoutQuote {
     | { applied: false; code: string; message: string }
     | null;
   discountAmount: number;
+  pointsDiscountAmount: number;
+  pointsRedeemed: number;
+  pointsEarned: number;
+  orderWeightKg: number;
+  loyalty: {
+    enabled: boolean;
+    pointsEarned: number;
+    userPoints: number;
+    pointsRedeemed: number;
+    pointsDiscountAmount: number;
+    minOrderAmountToRedeem: number;
+    minPointsToRedeem: number;
+    canRedeem: boolean;
+    redemptionError?: string;
+    milestone: {
+      enabled: boolean;
+      eligible: boolean;
+      freeShippingApplied: boolean;
+      weightExceeded: boolean;
+      orderWeightKg: number;
+      maxWeightKg: number;
+      deliveredCount: number;
+      interval: number;
+    };
+  };
   shippingCost: number;
   taxAmount: number;
   total: number;
@@ -109,6 +136,7 @@ export class CheckoutService {
     private shippingService: ShippingService,
     private couponsService: CouponsService,
     private locations: LocationsService,
+    private loyaltyService: LoyaltyService,
   ) {}
 
   async quote(
@@ -167,12 +195,31 @@ export class CheckoutService {
     if (items.length === 0) issues.push('Your cart is empty');
 
     const subtotal = round2(items.reduce((sum, i) => sum + i.lineTotal, 0));
+
+    const orderWeightKg = round2(
+      cartItems.reduce((sum, ci) => {
+        const qty = toNum(ci.quantity);
+        const unitWeight = ci.product.weight
+          ? Number(ci.product.weight)
+          : ci.product.isWeighed
+            ? 1
+            : 0.5;
+        return sum + unitWeight * qty;
+      }, 0),
+    );
+
+    const milestoneCheck = await this.loyaltyService.checkMilestoneEligibility(
+      owner.userId ?? null,
+      orderWeightKg,
+    );
+
     const shipping = await this.shippingService.quote(subtotal, {
       lat: input.lat,
       lng: input.lng,
       allItemsFreeShipping:
-        cartItems.length > 0 &&
-        cartItems.every((ci) => ci.product.freeShipping),
+        (cartItems.length > 0 &&
+          cartItems.every((ci) => ci.product.freeShipping)) ||
+        milestoneCheck.milestoneFreeShipping,
     });
 
     let couponResult: CouponResult | null = null;
@@ -194,6 +241,42 @@ export class CheckoutService {
       );
     }
 
+    let userPoints = 0;
+    if (owner.userId) {
+      const u = await db.user.findUnique({
+        where: { id: owner.userId },
+        select: { loyaltyPoints: true },
+      });
+      userPoints = u?.loyaltyPoints ?? 0;
+    }
+
+    const loyaltySettings = await this.loyaltyService.getSettings();
+    const pointsEarned = await this.loyaltyService.calculatePointsEarned(subtotal);
+
+    let pointsRedeemed = 0;
+    let pointsDiscountAmount = 0;
+    let redemptionError: string | undefined;
+
+    if (input.redeemPoints && input.redeemPoints > 0 && owner.userId) {
+      const val = await this.loyaltyService.validateRedemption(
+        userPoints,
+        input.redeemPoints,
+        subtotal,
+      );
+      if (val.valid) {
+        pointsRedeemed = val.pointsToRedeem;
+        pointsDiscountAmount = val.discountAmount;
+      } else {
+        redemptionError = val.error;
+      }
+    }
+
+    const canRedeem =
+      loyaltySettings.enabled &&
+      !!owner.userId &&
+      userPoints >= loyaltySettings.minPointsToRedeem &&
+      subtotal >= loyaltySettings.minOrderAmountToRedeem;
+
     const discountAmount = couponResult?.valid
       ? couponResult.discountAmount
       : 0;
@@ -202,7 +285,7 @@ export class CheckoutService {
     );
     const taxAmount = 0;
     const total = round2(
-      Math.max(0, subtotal - discountAmount) + shippingCost + taxAmount,
+      Math.max(0, subtotal - discountAmount - pointsDiscountAmount) + shippingCost + taxAmount,
     );
     const delivery = await this.settings.get('delivery');
     const minOrderOk = subtotal >= delivery.minOrderAmount;
@@ -229,6 +312,31 @@ export class CheckoutService {
             }
         : null,
       discountAmount,
+      pointsDiscountAmount,
+      pointsRedeemed,
+      pointsEarned,
+      orderWeightKg,
+      loyalty: {
+        enabled: loyaltySettings.enabled,
+        pointsEarned,
+        userPoints,
+        pointsRedeemed,
+        pointsDiscountAmount,
+        minOrderAmountToRedeem: loyaltySettings.minOrderAmountToRedeem,
+        minPointsToRedeem: loyaltySettings.minPointsToRedeem,
+        canRedeem,
+        redemptionError,
+        milestone: {
+          enabled: loyaltySettings.freeShippingMilestoneEnabled,
+          eligible: milestoneCheck.isEligible,
+          freeShippingApplied: milestoneCheck.milestoneFreeShipping,
+          weightExceeded: milestoneCheck.weightExceeded,
+          orderWeightKg,
+          maxWeightKg: milestoneCheck.maxWeightKg,
+          deliveredCount: milestoneCheck.deliveredCount,
+          interval: milestoneCheck.interval,
+        },
+      },
       shippingCost,
       taxAmount,
       total,
@@ -236,7 +344,6 @@ export class CheckoutService {
       minOrderAmount: delivery.minOrderAmount,
       minOrderOk,
       shopOpen: delivery.shopOpen,
-      // false while the cart has a problem, no usable delivery location is known, or the order is too small
       canPlaceOrder:
         issues.length === 0 &&
         items.length > 0 &&

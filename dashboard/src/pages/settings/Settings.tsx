@@ -215,6 +215,160 @@ function EmailForm({ v }: { v: S["email"] }) {
   );
 }
 
+function LoyaltyForm({ v }: { v: S["loyalty"] }) {
+  const [f, setF] = useState<S["loyalty"]>({
+    enabled: v?.enabled ?? true,
+    pointsPerHundredSpent: v?.pointsPerHundredSpent ?? 5,
+    pointsPerCurrencyUnit: v?.pointsPerCurrencyUnit ?? 10,
+    minOrderAmountToRedeem: v?.minOrderAmountToRedeem ?? 500,
+    minPointsToRedeem: v?.minPointsToRedeem ?? 50,
+    maxDiscountPercent: v?.maxDiscountPercent ?? 30,
+    freeShippingMilestoneEnabled: v?.freeShippingMilestoneEnabled ?? true,
+    freeShippingOrderInterval: v?.freeShippingOrderInterval ?? 5,
+    freeShippingMaxWeightKg: v?.freeShippingMaxWeightKg ?? 5,
+  });
+
+  const save = useSave("loyalty");
+
+  const submit = () => {
+    if (f.pointsPerHundredSpent < 0) return toast.error(tr("Points per 100 spent must be 0 or more"));
+    if (f.pointsPerCurrencyUnit <= 0) return toast.error(tr("Points per currency unit must be greater than 0"));
+    if (f.minOrderAmountToRedeem < 0) return toast.error(tr("Minimum order amount must be 0 or more"));
+    if (f.freeShippingOrderInterval <= 0) return toast.error(tr("Order interval must be at least 1"));
+    if (f.freeShippingMaxWeightKg <= 0) return toast.error(tr("Max weight cap must be greater than 0"));
+
+    save.mutate({
+      enabled: f.enabled,
+      pointsPerHundredSpent: Number(f.pointsPerHundredSpent),
+      pointsPerCurrencyUnit: Number(f.pointsPerCurrencyUnit),
+      minOrderAmountToRedeem: Number(f.minOrderAmountToRedeem),
+      minPointsToRedeem: Number(f.minPointsToRedeem),
+      maxDiscountPercent: Number(f.maxDiscountPercent),
+      freeShippingMilestoneEnabled: f.freeShippingMilestoneEnabled,
+      freeShippingOrderInterval: Number(f.freeShippingOrderInterval),
+      freeShippingMaxWeightKg: Number(f.freeShippingMaxWeightKg),
+    });
+  };
+
+  return (
+    <div className="grid items-start gap-4 xl:grid-cols-2 [&>button]:justify-self-start xl:[&>button]:col-span-2">
+      <Section
+        title={tr("Loyalty Points (Money Discounts)")}
+        description={tr("Customers earn points on orders and convert them into monetary discounts at checkout.")}
+      >
+        <div className="divide-y divide-border">
+          <Toggle
+            label={tr("Enable loyalty points")}
+            hint={tr("Allow customers to earn and redeem points for order discounts.")}
+            checked={f.enabled}
+            onChange={(enabled) => setF({ ...f, enabled })}
+          />
+          {f.enabled && (
+            <div className="pt-3 space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label={tr("Points earned per ৳100 spent")} hint={tr("e.g. 5 points per ৳100")}>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={f.pointsPerHundredSpent}
+                    onChange={(e) => setF({ ...f, pointsPerHundredSpent: Number(e.target.value) })}
+                  />
+                </Field>
+                <Field label={tr("Points required per ৳1 discount")} hint={tr("e.g. 10 points = ৳1 discount")}>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={f.pointsPerCurrencyUnit}
+                    onChange={(e) => setF({ ...f, pointsPerCurrencyUnit: Number(e.target.value) })}
+                  />
+                </Field>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field
+                  label={tr("Minimum order subtotal to redeem (BDT)")}
+                  hint={tr("Customer must order at least this amount to apply points")}
+                >
+                  <Input
+                    type="number"
+                    min={0}
+                    value={f.minOrderAmountToRedeem}
+                    onChange={(e) => setF({ ...f, minOrderAmountToRedeem: Number(e.target.value) })}
+                  />
+                </Field>
+                <Field label={tr("Minimum points required to redeem")} hint={tr("e.g. at least 50 points")}>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={f.minPointsToRedeem}
+                    onChange={(e) => setF({ ...f, minPointsToRedeem: Number(e.target.value) })}
+                  />
+                </Field>
+              </div>
+
+              <Field label={tr("Max discount cap (% of order subtotal)")} hint={tr("Caps points discount to prevent 100% free orders (e.g. 30%)")}>
+                <Input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={f.maxDiscountPercent}
+                  onChange={(e) => setF({ ...f, maxDiscountPercent: Number(e.target.value) })}
+                  className="max-w-[200px]"
+                />
+              </Field>
+            </div>
+          )}
+        </div>
+      </Section>
+
+      <Section
+        title={tr("Milestone Free Shipping")}
+        description={tr("Reward repeat customers with 100% Free Shipping after completing a specific number of orders, capped by weight.")}
+      >
+        <div className="divide-y divide-border">
+          <Toggle
+            label={tr("Enable milestone free shipping")}
+            hint={tr("Every Nth completed order qualifies for 100% free delivery.")}
+            checked={f.freeShippingMilestoneEnabled}
+            onChange={(freeShippingMilestoneEnabled) => setF({ ...f, freeShippingMilestoneEnabled })}
+          />
+          {f.freeShippingMilestoneEnabled && (
+            <div className="pt-3 space-y-3">
+              <Field
+                label={tr("Order count milestone")}
+                hint={tr("e.g. 5 means the 5th delivered order earns free shipping on the next order (or every 5 orders).")}
+              >
+                <Input
+                  type="number"
+                  min={1}
+                  value={f.freeShippingOrderInterval}
+                  onChange={(e) => setF({ ...f, freeShippingOrderInterval: Number(e.target.value) })}
+                  className="max-w-[200px]"
+                />
+              </Field>
+              <Field
+                label={tr("Maximum weight limit for free shipping (KG)")}
+                hint={tr("Orders weighing more than this cap will not receive milestone free shipping (e.g. 5 kg).")}
+              >
+                <Input
+                  type="number"
+                  min={0.1}
+                  step={0.1}
+                  value={f.freeShippingMaxWeightKg}
+                  onChange={(e) => setF({ ...f, freeShippingMaxWeightKg: Number(e.target.value) })}
+                  className="max-w-[200px]"
+                />
+              </Field>
+            </div>
+          )}
+        </div>
+      </Section>
+
+      <Button loading={save.isPending} onClick={submit}>{tr("Save loyalty & rewards settings")}</Button>
+    </div>
+  );
+}
+
 export default function Settings() {
   const [f, setF] = useUrlState({ tab: "site" });
   const q = useQuery({ queryKey: ["settings"], queryFn: settingsApi.get });
@@ -225,12 +379,21 @@ export default function Settings() {
     <div>
       <PageHeader refresh={false} title={tr("Settings")} description={tr("How your store looks, charges and talks to customers.")} />
       <Tabs value={f.tab} onValueChange={(tab) => setF({ tab })}>
-        <TabsList className="mb-4"><TabsTrigger value="site">{tr("Store")}</TabsTrigger><TabsTrigger value="payment">{tr("Payment")}</TabsTrigger><TabsTrigger value="delivery">{tr("Delivery")}</TabsTrigger><TabsTrigger value="maps">{tr("Maps")}</TabsTrigger><TabsTrigger value="returns">{tr("Returns")}</TabsTrigger><TabsTrigger value="email">{tr("Email")}</TabsTrigger></TabsList>
+        <TabsList className="mb-4">
+          <TabsTrigger value="site">{tr("Store")}</TabsTrigger>
+          <TabsTrigger value="payment">{tr("Payment")}</TabsTrigger>
+          <TabsTrigger value="delivery">{tr("Delivery")}</TabsTrigger>
+          <TabsTrigger value="maps">{tr("Maps")}</TabsTrigger>
+          <TabsTrigger value="loyalty">{tr("Loyalty & Rewards")}</TabsTrigger>
+          <TabsTrigger value="returns">{tr("Returns")}</TabsTrigger>
+          <TabsTrigger value="email">{tr("Email")}</TabsTrigger>
+        </TabsList>
         <div>
           <TabsContent value="site"><SiteForm v={s.site} /></TabsContent>
           <TabsContent value="payment"><PaymentForm v={s.payment} /></TabsContent>
           <TabsContent value="delivery"><DeliveryForm v={s.delivery} tileUrl={s.maps.osmTileUrl} /></TabsContent>
           <TabsContent value="maps"><MapsForm v={s.maps} /></TabsContent>
+          <TabsContent value="loyalty"><LoyaltyForm v={s.loyalty} /></TabsContent>
           <TabsContent value="returns"><ReturnsForm v={s.returns} /></TabsContent>
           <TabsContent value="email"><EmailForm v={s.email} /></TabsContent>
         </div>

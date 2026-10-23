@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsLatitude, IsLongitude, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsLatitude, IsLongitude, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 import { IsBdMobile } from '../../../common/utils/phone';
 
 export class CheckoutSummaryDto {
@@ -29,4 +29,11 @@ export class CheckoutSummaryDto {
   @IsOptional()
   @IsBdMobile()
   phone?: string;
+
+  @ApiPropertyOptional({ description: 'Number of loyalty points to redeem for discount' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  redeemPoints?: number;
 }

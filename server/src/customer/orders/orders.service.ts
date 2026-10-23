@@ -24,6 +24,7 @@ import { InsufficientStockError, StockService } from '../../common/inventory';
 import { normalizeBdPhone } from '../../common/utils/phone';
 import { toNum } from '../../common/utils/qty';
 import { round2 } from '../shipping/shipping.service';
+import { LoyaltyService } from '../loyalty/loyalty.service';
 
 // Customers can cancel until the order has been handed to the courier.
 const CUSTOMER_CANCELLABLE: OrderStatus[] = [
@@ -79,6 +80,7 @@ export class OrdersService {
     private locations: LocationsService,
     private cartService: CartService,
     private stock: StockService,
+    private loyaltyService: LoyaltyService,
   ) {}
 
   async findAll(userId: string) {
@@ -174,6 +176,7 @@ export class OrdersService {
           lat: dto.shippingAddress.latitude,
           lng: dto.shippingAddress.longitude,
           phone,
+          redeemPoints: dto.redeemPoints,
         },
         tx,
       );
@@ -289,6 +292,11 @@ export class OrdersService {
           discountAmount,
           couponCode: quote.coupon?.applied ? quote.coupon.code : null,
           total,
+          pointsEarned: quote.loyalty.pointsEarned,
+          pointsRedeemed: quote.loyalty.pointsRedeemed,
+          pointsDiscountAmount: quote.loyalty.pointsDiscountAmount,
+          isMilestoneFreeShipping: quote.loyalty.milestone.freeShippingApplied,
+          orderWeightKg: quote.orderWeightKg,
           // Nothing is confirmed at placement time for either method:
           // COD is collected on delivery, and a manually submitted bKash
           // transaction ID is only confirmed once an admin verifies it
@@ -362,6 +370,28 @@ export class OrdersService {
           userId ? { userId } : { guestPhone: phone },
           created.id,
         );
+      }
+
+      // Record loyalty points redemption
+      if (userId && quote.loyalty.pointsRedeemed > 0) {
+        await this.loyaltyService.recordTransaction(tx, {
+          userId,
+          orderId: created.id,
+          points: -quote.loyalty.pointsRedeemed,
+          type: 'REDEEMED_DISCOUNT',
+          description: `Redeemed ${quote.loyalty.pointsRedeemed} points for ৳${quote.loyalty.pointsDiscountAmount} discount on order #${orderNumber}`,
+        });
+      }
+
+      // Record loyalty points earned
+      if (userId && quote.loyalty.pointsEarned > 0) {
+        await this.loyaltyService.recordTransaction(tx, {
+          userId,
+          orderId: created.id,
+          points: quote.loyalty.pointsEarned,
+          type: 'EARNED_ORDER',
+          description: `Earned ${quote.loyalty.pointsEarned} points from order #${orderNumber}`,
+        });
       }
 
       // Only the lines that were ordered (an item added in another tab

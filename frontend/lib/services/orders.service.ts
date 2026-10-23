@@ -25,6 +25,7 @@ export interface PlaceOrderInput {
   couponCode?: string;
   deliveryNote?: string;
   email?: string; // guests
+  redeemPoints?: number;
 }
 
 export async function placeOrder(input: PlaceOrderInput): Promise<Order> {

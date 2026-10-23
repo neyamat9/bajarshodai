@@ -2,6 +2,28 @@ import { api } from '../api/client';
 import { assetUrl } from '../api/client';
 import type { DeliveryQuote } from '../types/index';
 
+export interface LoyaltyQuote {
+  enabled: boolean;
+  pointsEarned: number;
+  userPoints: number;
+  pointsRedeemed: number;
+  pointsDiscountAmount: number;
+  minOrderAmountToRedeem: number;
+  minPointsToRedeem: number;
+  canRedeem: boolean;
+  redemptionError?: string;
+  milestone: {
+    enabled: boolean;
+    eligible: boolean;
+    freeShippingApplied: boolean;
+    weightExceeded: boolean;
+    orderWeightKg: number;
+    maxWeightKg: number;
+    deliveredCount: number;
+    interval: number;
+  };
+}
+
 export interface CheckoutSummary {
   items: { cartItemId: string; productId: string; variantId: string | null; name: string; slug: string; image: string | null; variantName: string | null; unitPrice: number; quantity: number; lineTotal: number; availableStock: number; issue: string | null }[];
   itemCount: number;
@@ -9,6 +31,11 @@ export interface CheckoutSummary {
   shipping: DeliveryQuote;
   coupon: { applied: boolean; code: string; description: string | null; discountType: string; discount: number; shippingDiscount: number } | null;
   discountAmount: number;
+  pointsDiscountAmount?: number;
+  pointsRedeemed?: number;
+  pointsEarned?: number;
+  orderWeightKg?: number;
+  loyalty?: LoyaltyQuote;
   shippingCost: number;
   taxAmount: number;
   total: number;
@@ -26,6 +53,7 @@ export interface SummaryInput {
   lat?: number;
   lng?: number;
   phone?: string;
+  redeemPoints?: number;
 }
 
 export async function getCheckoutSummary(input: SummaryInput = {}): Promise<CheckoutSummary> {
