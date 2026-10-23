@@ -223,36 +223,50 @@ export default function ProductCard({ product, animationDelay = 0, entrance = tr
         >
           <Heart className={`h-3.5 w-3.5 ${isAnimating ? "animate-heartbeat" : ""}`} fill={inVault ? "currentColor" : "none"} aria-hidden="true" />
         </button>
-      </div>
 
-      {/* ── Info ────────────────────────────────────── */}
-      <div className="flex flex-1 flex-col gap-1.5 p-2.5 sm:p-3">
-        <Link href={`/products/${product.slug}`}>
-          <h3 className="line-clamp-2 min-h-[2.4rem] font-outfit text-[13px] font-semibold leading-snug text-foreground transition-colors group-hover:text-primary dark:group-hover:text-accent-text sm:text-sm">
-            {product.name}
-          </h3>
-        </Link>
-
-        {sizeText && <span className="w-fit rounded bg-secondary px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">{sizeText}</span>}
-
-        {/* Price + the one button */}
-        <div className="mt-auto flex items-end justify-between gap-2 pt-1">
-          <div className="flex min-w-0 flex-col">
-            <span className="font-outfit text-base font-extrabold leading-none text-primary dark:text-foreground sm:text-lg">{formatBDT(product.price)}</span>
-            {product.originalPrice && <span className="mt-0.5 text-[11px] font-medium text-muted-foreground line-through">{formatBDT(product.originalPrice)}</span>}
-          </div>
-
-          {line ? (
-            <div className="flex shrink-0 items-center overflow-hidden rounded border border-primary bg-primary text-primary-foreground" role="group" aria-label={t("card.qtyOf", { name: product.name })}>
-              <button type="button" onClick={fewer} aria-label={t("card.decrease")} className="flex h-8 w-7 items-center justify-center transition-colors hover:bg-brand-fresh hover:text-on-fresh active:scale-90">
-                <Minus className="h-3.5 w-3.5" aria-hidden="true" />
-              </button>
-              <span className="min-w-[2.2rem] px-0.5 text-center text-[11px] font-bold leading-tight tabular-nums" aria-live="polite">
-                {formatQuantity(line.quantity, locale)}
-                {unit?.label && <span className="block text-[9px] font-medium opacity-80">{unit.label}</span>}
+        {/* Price (bottom-left inside image) */}
+        <div className="pointer-events-none absolute bottom-2 left-2 z-10 flex flex-col items-start">
+          <div className="flex items-baseline gap-1 rounded bg-card/90 px-2 py-0.5 shadow-sm backdrop-blur">
+            <span className="font-outfit text-sm font-extrabold leading-none text-primary dark:text-foreground sm:text-base">
+              {formatBDT(product.price)}
+            </span>
+            {product.originalPrice && (
+              <span className="text-[10px] font-medium text-muted-foreground line-through">
+                {formatBDT(product.originalPrice)}
               </span>
-              <button type="button" onClick={more} aria-label={t("card.increase")} className="flex h-8 w-7 items-center justify-center transition-colors hover:bg-brand-fresh hover:text-on-fresh active:scale-90">
-                <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+            )}
+          </div>
+        </div>
+
+        {/* Cart button / Stepper (bottom-right inside image) */}
+        <div className="absolute bottom-2 right-2 z-10">
+          {line ? (
+            <div
+              className="flex shrink-0 items-center overflow-hidden rounded border border-primary bg-primary text-primary-foreground shadow-sm"
+              role="group"
+              aria-label={t("card.qtyOf", { name: product.name })}
+            >
+              <button
+                type="button"
+                onClick={fewer}
+                aria-label={t("card.decrease")}
+                className="flex h-7 w-6 items-center justify-center transition-colors hover:bg-brand-fresh hover:text-on-fresh active:scale-90"
+              >
+                <Minus className="h-3 w-3" aria-hidden="true" />
+              </button>
+              <span
+                className="min-w-[1.8rem] px-0.5 text-center text-[11px] font-bold leading-tight tabular-nums"
+                aria-live="polite"
+              >
+                {formatQuantity(line.quantity, locale)}
+              </span>
+              <button
+                type="button"
+                onClick={more}
+                aria-label={t("card.increase")}
+                className="flex h-7 w-6 items-center justify-center transition-colors hover:bg-brand-fresh hover:text-on-fresh active:scale-90"
+              >
+                <Plus className="h-3 w-3" aria-hidden="true" />
               </button>
             </div>
           ) : (
@@ -262,12 +276,22 @@ export default function ProductCard({ product, animationDelay = 0, entrance = tr
               disabled={outOfStock}
               aria-label={outOfStock ? t("card.outOfStockNamed", { name: product.name }) : t("card.addNamed", { name: product.name })}
               title={outOfStock ? t("card.stockOut") : t("card.addToCart")}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary text-primary-foreground transition-all hover:bg-brand-fresh hover:text-on-fresh active:scale-90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:opacity-60 disabled:hover:bg-muted disabled:hover:text-muted-foreground"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary text-primary-foreground shadow-sm transition-all hover:bg-brand-fresh hover:text-on-fresh active:scale-90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:opacity-60 disabled:hover:bg-muted disabled:hover:text-muted-foreground"
             >
               <ShoppingCart className="h-4 w-4" aria-hidden="true" />
             </button>
           )}
         </div>
+      </div>
+
+      {/* ── Info (under image) ────────────────────────── */}
+      <div className="flex flex-1 flex-col p-2.5 sm:p-3">
+        <Link href={`/products/${product.slug}`}>
+          <h3 className="line-clamp-2 min-h-[2.4rem] font-outfit text-[13px] font-semibold leading-snug text-foreground transition-colors group-hover:text-primary dark:group-hover:text-accent-text sm:text-sm">
+            {product.name}
+            {sizeText ? ` - ${sizeText}` : ""}
+          </h3>
+        </Link>
       </div>
 
       {/* Option picker — slides up over the card */}
