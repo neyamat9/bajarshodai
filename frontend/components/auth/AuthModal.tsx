@@ -71,7 +71,7 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
   const trigger = useRef<HTMLElement | null>(null);
   const openRef = useRef(false);
   const busyRef = useRef(false);
-  const thenRef = useRef("/account");
+  const thenRef = useRef("stay");
   const loadingAtOpen = useRef(false);
   const bodyRef = useRef<HTMLDivElement>(null); // the card's content: its height animates between forms
   const innerRef = useRef<HTMLDivElement>(null);
@@ -103,7 +103,7 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
       openRef.current = false;
       setOpen(false);
       leaveEntry(() => {
-        if (!dest) return;
+        if (!dest || dest === "stay") return;
         startNavigation(dest);
         router.push(dest);
       });
@@ -123,7 +123,7 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
     (m: Mode = "login", opts: OpenAuthOptions = {}) => {
       if (openRef.current) return; // already open
       if (user && m !== "reset") {
-        const dest = opts.then ?? "/account";
+        const dest = opts.then ?? "stay";
         if (dest !== "stay") {
           startNavigation(dest);
           router.push(dest);
@@ -131,7 +131,7 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       trigger.current = document.activeElement as HTMLElement | null;
-      thenRef.current = opts.then ?? "/account";
+      thenRef.current = opts.then ?? "stay";
       loadingAtOpen.current = isLoading;
       switching.current = false;
       fromHeight.current = null;
@@ -390,7 +390,7 @@ function DeepLink({ openAuth }: { openAuth: AuthModalValue["openAuth"] }) {
     const expired = search.get("session") === "expired";
     strip();
     if (user || !["login", "signup", "forgot"].includes(auth)) return;
-    openAuth(auth as Mode, { then: next ?? "/account", expired });
+    openAuth(auth as Mode, { then: next ?? "stay", expired });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth, isLoading]);
 
