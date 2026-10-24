@@ -1,14 +1,13 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Check, Copy, Link2, Loader2, MapPin, MessageCircle, Search, X } from "lucide-react";
+import { Check, Copy, Link2, MapPin, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/api/client";
 import { ordersApi } from "@/api/orders";
 import { settingsApi } from "@/api/system";
 import { DEFAULT_CENTER, type GeoPoint } from "@/components/map/types";
-import { searchLocalShahrastiPlaces } from "@/components/map/shahrastiPlaces";
 import { tr } from "@/i18n";
 
 const AdminMap = lazy(() => import("@/components/map/AdminMap"));
@@ -38,112 +37,6 @@ export function PinPicker({ value, onChange, placeName, onPlaceName, phone, name
   const [satellite, setSatellite] = useState(false);
   const [link, setLink] = useState<{ id: string; url: string } | null>(null);
   const [making, setMaking] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searching, setSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState<{ name: string; lat: number; lng: number }[]>([]);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const searchBoxRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown on click outside
-  useEffect(() => {
-    const onDocClick = (e: MouseEvent) => {
-      if (searchBoxRef.current && !searchBoxRef.current.contains(e.target as Node)) {
-        setShowDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, []);
-
-  // Debounced search for places / villages
-  useEffect(() => {
-    const q = searchQuery.trim();
-    if (q.length < 2) {
-      setSearchResults([]);
-      setShowDropdown(false);
-      return;
-    }
-
-    let alive = true;
-    const timer = setTimeout(async () => {
-      setSearching(true);
-      setShowDropdown(true);
-
-      const combined: { name: string; lat: number; lng: number }[] = [];
-      const seen = new Set<string>();
-
-      // 1. Check local curated Shahrasti places first (instant & free)
-      const localMatches = searchLocalShahrastiPlaces(q);
-      for (const item of localMatches) {
-        seen.add(item.name.toLowerCase());
-        combined.push(item);
-      }
-
-      // 2. Client-side Google Geocoder if available in browser
-      if (typeof window !== "undefined" && (window as unknown as { google?: { maps?: { Geocoder?: new () => any } } }).google?.maps?.Geocoder) {
-        try {
-          const GeocoderClass = (window as unknown as { google: { maps: { Geocoder: new () => any } } }).google.maps.Geocoder;
-          const geocoder = new GeocoderClass();
-          const gQuery = q.toLowerCase().includes("shahrasti") || q.includes("শাহরাস্তি") ? q : `${q}, Shahrasti, Chandpur`;
-          
-          await new Promise<void>((resolve) => {
-            geocoder.geocode(
-              {
-                address: gQuery,
-                componentRestrictions: { country: "BD" },
-              },
-              (results: any[], status: string) => {
-                if (status === "OK" && results?.length) {
-                  for (const r of results.slice(0, 4)) {
-                    const addr = r.formatted_address;
-                    if (!seen.has(addr.toLowerCase())) {
-                      seen.add(addr.toLowerCase());
-                      combined.push({
-                        name: addr,
-                        lat: r.geometry.location.lat(),
-                        lng: r.geometry.location.lng(),
-                      });
-                    }
-                  }
-                }
-                resolve();
-              }
-            );
-          });
-        } catch {
-          /* ignore geocoder errors */
-        }
-      }
-
-      // 3. Fallback / supplementary backend search
-      if (combined.length < 3) {
-        try {
-          const res = await api.get<{ results: { name: string; lat: number; lng: number }[] }>("/customer/shipping/search", {
-            params: { q, lang: "bn", near: origin ? `${origin.lat},${origin.lng}` : undefined },
-          });
-          for (const item of res.data?.results ?? []) {
-            if (!seen.has(item.name.toLowerCase())) {
-              seen.add(item.name.toLowerCase());
-              combined.push(item);
-            }
-          }
-        } catch {
-          /* ignore backend search errors */
-        }
-      }
-
-      if (alive) {
-        setSearchResults(combined);
-        setSearching(false);
-      }
-    }, 280);
-
-    return () => {
-      alive = false;
-      clearTimeout(timer);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery]);
 
   // a readable name for the pin
   useEffect(() => {
@@ -236,65 +129,6 @@ export function PinPicker({ value, onChange, placeName, onPlaceName, phone, name
         </div>
       </div>
 
-      {/* Quick Search Bar */}
-      <div ref={searchBoxRef} className="relative">
-        <div className="relative flex items-center">
-          {searching ? (
-            <Loader2 className="absolute left-2.5 size-3.5 text-muted-foreground animate-spin pointer-events-none" />
-          ) : (
-            <Search className="absolute left-2.5 size-3.5 text-muted-foreground pointer-events-none" />
-          )}
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => {
-              if (searchQuery.trim().length >= 2) setShowDropdown(true);
-            }}
-            placeholder={tr("Search village / area / road in Shahrasti...")}
-            className="h-7.5 pl-8 pr-7 text-xs bg-card"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => {
-                setSearchQuery("");
-                setSearchResults([]);
-                setShowDropdown(false);
-              }}
-              className="absolute right-2 text-muted-foreground hover:text-foreground"
-            >
-              <X className="size-3.5" />
-            </button>
-          )}
-        </div>
-
-        {showDropdown && searchResults.length > 0 && (
-          <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-popover shadow-md py-1">
-            {searchResults.map((item, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => {
-                  onChange({ lat: item.lat, lng: item.lng });
-                  onPlaceName(item.name);
-                  setShowDropdown(false);
-                  setSearchQuery("");
-                }}
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-foreground hover:bg-muted"
-              >
-                <MapPin className="size-3 text-primary shrink-0" />
-                <span className="truncate">{item.name}</span>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {showDropdown && searchQuery.trim().length >= 2 && !searching && searchResults.length === 0 && (
-          <div className="absolute left-0 right-0 top-full z-30 mt-1 rounded-md border border-border bg-popover shadow-md py-2.5 px-3 text-center text-xs text-muted-foreground">
-            {tr("No match found in Shahrasti. Click on the map directly to drop pin.")}
-          </div>
-        )}
-      </div>
 
       <div className="overflow-hidden rounded-md border border-border">
         <Suspense fallback={<div className="h-56 animate-pulse bg-muted" />}>
