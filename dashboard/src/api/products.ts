@@ -21,6 +21,7 @@ export interface ProductRow {
   discountEnd: string | null;
   isDiscounted: boolean;
   stock: number;
+  trackStock: boolean;
   lowStockThreshold: number;
   soldCount: number;
   isFeatured: boolean;
@@ -148,6 +149,7 @@ export interface ProductInput {
   discountStart?: string | null;
   discountEnd?: string | null;
   discountLabel?: string | null;
+  trackStock?: boolean;
   stock?: number;
   lowStockThreshold?: number;
   freeShipping?: boolean;
@@ -188,7 +190,7 @@ export const productsApi = {
   remove: (id: string) => api.delete<{ deleted: boolean; message: string }>(`/admin/products/${id}`).then((r) => r.data),
   duplicate: (id: string) => api.post<ProductDetail>(`/admin/products/${id}/duplicate`).then((r) => r.data),
   tags: () => api.get<{ tag: string; products: number }[]>("/admin/products/tags").then((r) => r.data),
-  dailySheet: (rows: { id: string; sellingPrice?: number; stock?: number; status?: "ACTIVE" | "INACTIVE" }[]) =>
+  dailySheet: (rows: { id: string; sellingPrice?: number; stock?: number; status?: "ACTIVE" | "INACTIVE"; trackStock?: boolean }[]) =>
     api.put<{ saved: number; failed: number; results: { id: string; name?: string; ok: boolean; error?: string }[] }>("/admin/products/daily-sheet", { rows }).then((r) => r.data),
   // variants
   addVariant: (id: string, body: VariantInput) => api.post<ProductVariant>(`/admin/products/${id}/variants`, body).then((r) => r.data),

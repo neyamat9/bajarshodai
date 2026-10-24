@@ -50,6 +50,7 @@ export const cardSelect = {
   },
   sellingPrice: true,
   regularPrice: true,
+  trackStock: true,
   stock: true,
   avgRating: true,
   reviewCount: true,
@@ -101,7 +102,8 @@ export function toCard(p: CardRow) {
       regular > price && regular > 0
         ? Math.round(((regular - price) / regular) * 100)
         : 0,
-    inStock: Number(p.stock) > 0,
+    inStock: !p.trackStock || Number(p.stock) > 0,
+    trackStock: p.trackStock,
     stock: Number(p.stock),
     avgRating: Number(p.avgRating ?? 0),
     reviewCount: p.reviewCount,

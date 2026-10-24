@@ -140,9 +140,9 @@ export class StockService {
   ) {
     const product = await tx.product.findUnique({
       where: { id: input.productId },
-      select: { name: true, lowStockThreshold: true },
+      select: { name: true, lowStockThreshold: true, trackStock: true },
     });
-    if (!product) return;
+    if (!product || !product.trackStock) return;
     let label = product.name;
     if (r.variantId) {
       const v = await tx.productVariant.findUnique({

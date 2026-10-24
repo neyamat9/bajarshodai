@@ -314,4 +314,13 @@ export const catalog: Record<string, string> = {
   "out": "শেষ",
   "note": "নোট",
   "same": "একই",
+  "Track inventory count": "স্টক গণনা করুন",
+  "Quantity is strictly counted and decremented on orders.": "অর্ডারে স্টক নির্দিষ্টভাবে কাটা হবে ও গণনা করা হবে।",
+  "Daily Fresh / Bazaar items: Stock count is skipped. Product availability is managed daily on the shop.": "কাঁচাবাজার/তাজা পণ্য: স্টক গণনা প্রয়োজন নেই। পণ্যের উপস্থিতি প্রতিদিন দোকান থেকে নিয়ন্ত্রণ করা হয়।",
+  "Daily fresh item: Numerical stock is not required. The product is always in-stock while status is Live/Active.": "তাজা পণ্য: নির্দিষ্ট স্টক সংখ্যা প্রয়োজন নেই। স্ট্যাটাস চালু থাকলে পণ্যটি সর্বদা স্টকে থাকবে।",
+  "Daily Fresh": "তাজা কাঁচাবাজার",
+  "Untracked": "দৈনিক গণনা নেই",
+  "No count needed": "গণনা প্রযোজ্য নয়",
+  "Fresh bazaar": "তাজা কাঁচাবাজার",
+  "Fresh": "তাজা",
 };

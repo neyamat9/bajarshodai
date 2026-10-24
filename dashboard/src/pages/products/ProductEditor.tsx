@@ -29,7 +29,7 @@ interface Form {
   shortDescription: string; shortDescriptionBn: string; description: string; descriptionBn: string;
   buyingPrice: string; regularPrice: string; sellingPrice: string;
   discountPrice: string; discountStart: string; discountEnd: string; discountLabel: string;
-  stock: string; lowStockThreshold: string; freeShipping: boolean;
+  trackStock: boolean; stock: string; lowStockThreshold: string; freeShipping: boolean;
   weight: string; length: string; width: string; height: string;
   isFeatured: boolean; isNew: boolean; isHot: boolean; isBestSeller: boolean; isLimitedStock: boolean;
   metaTitle: string; metaDescription: string; metaKeywords: string;
@@ -41,7 +41,7 @@ const blank: Form = {
   name: "", nameBn: "", slug: "", productCode: "", barcode: "", status: "ACTIVE", categoryId: "", brandId: "",
   unitId: "", packSize: "", sellStep: "", minQty: "", isWeighed: false,
   shortDescription: "", shortDescriptionBn: "", description: "", descriptionBn: "", buyingPrice: "", regularPrice: "", sellingPrice: "",
-  discountPrice: "", discountStart: "", discountEnd: "", discountLabel: "", stock: "0", lowStockThreshold: "5", freeShipping: false,
+  discountPrice: "", discountStart: "", discountEnd: "", discountLabel: "", trackStock: true, stock: "0", lowStockThreshold: "5", freeShipping: false,
   weight: "", length: "", width: "", height: "", isFeatured: false, isNew: false, isHot: false, isBestSeller: false, isLimitedStock: false,
   metaTitle: "", metaDescription: "", metaKeywords: "", tags: "", attrs: [],
 };
@@ -53,7 +53,7 @@ const toForm = (p: ProductDetail): Form => ({
   shortDescription: p.shortDescription ?? "", shortDescriptionBn: p.shortDescriptionBn ?? "", description: p.description, descriptionBn: p.descriptionBn ?? "",
   buyingPrice: n(p.buyingPrice), regularPrice: n(p.regularPrice), sellingPrice: n(p.priceBeforeDiscount ?? p.sellingPrice),
   discountPrice: p.discountPrice ? n(p.discountPrice) : "", discountStart: toLocalInput(p.discountStart), discountEnd: toLocalInput(p.discountEnd), discountLabel: p.discountLabel ?? "",
-  stock: String(p.stock), lowStockThreshold: String(p.lowStockThreshold), freeShipping: p.freeShipping,
+  trackStock: p.trackStock ?? true, stock: String(p.stock), lowStockThreshold: String(p.lowStockThreshold), freeShipping: p.freeShipping,
   weight: n(p.weight), length: n(p.length), width: n(p.width), height: n(p.height),
   isFeatured: p.isFeatured, isNew: p.isNew, isHot: p.isHot, isBestSeller: p.isBestSeller, isLimitedStock: p.isLimitedStock,
   metaTitle: p.metaTitle ?? "", metaDescription: p.metaDescription ?? "", metaKeywords: p.metaKeywords ?? "",
@@ -145,8 +145,9 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
       discountStart: f.discountPrice === "" ? null : fromLocalInput(f.discountStart),
       discountEnd: f.discountPrice === "" ? null : fromLocalInput(f.discountEnd),
       discountLabel: clearOr(f.discountLabel),
-      ...(hasVariants ? {} : { stock: Number(f.stock || 0) }),
-      lowStockThreshold: Number(f.lowStockThreshold || 0), freeShipping: f.freeShipping,
+      trackStock: f.trackStock,
+      ...(hasVariants ? {} : { stock: f.trackStock ? Number(f.stock || 0) : 0 }),
+      lowStockThreshold: f.trackStock ? Number(f.lowStockThreshold || 0) : 0, freeShipping: f.freeShipping,
       weight: num(f.weight), length: num(f.length), width: num(f.width), height: num(f.height),
       isFeatured: f.isFeatured, isNew: f.isNew, isHot: f.isHot, isBestSeller: f.isBestSeller, isLimitedStock: f.isLimitedStock,
       metaTitle: f.metaTitle || undefined, metaDescription: f.metaDescription || undefined, metaKeywords: f.metaKeywords || undefined,
@@ -305,11 +306,31 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
 
         <TabsContent value="inventory" className="space-y-4">
           <Section title={tr("Stock")}>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <Field label={tr("Quantity in stock")} hint={hasVariants ? tr("Total of the variants — change each variant's stock instead") : isNew ? tr("Opening stock") : tr("Use Inventory → Adjust to change stock with a record")}>
-                <Input type="number" min={0} step="0.001" value={hasVariants ? String(variants.reduce((s, v) => s + Number(v.stock || 0), 0)) : f.stock} onChange={(e) => set("stock", e.target.value)} disabled={hasVariants || !isNew} />
-              </Field>
-              <Field label={tr("Low-stock alert at")} hint={tr("You get a bell alert when stock drops to this")}><Input type="number" min={0} value={f.lowStockThreshold} onChange={(e) => set("lowStockThreshold", e.target.value)} /></Field>
+            <div className="space-y-4">
+              <label className="flex cursor-pointer items-start gap-2.5 rounded-md border border-border bg-muted/20 p-3 text-[13px]">
+                <Checkbox checked={f.trackStock} onChange={(e) => set("trackStock", e.target.checked)} className="mt-0.5" />
+                <div className="min-w-0">
+                  <span className="font-semibold text-foreground">{tr("Track inventory count")}</span>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {f.trackStock
+                      ? tr("Quantity is strictly counted and decremented on orders.")
+                      : tr("Daily Fresh / Bazaar items: Stock count is skipped. Product availability is managed daily on the shop.")}
+                  </p>
+                </div>
+              </label>
+
+              {f.trackStock ? (
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <Field label={tr("Quantity in stock")} hint={hasVariants ? tr("Total of the variants — change each variant's stock instead") : isNew ? tr("Opening stock") : tr("Use Inventory → Adjust to change stock with a record")}>
+                    <Input type="number" min={0} step="0.001" value={hasVariants ? String(variants.reduce((s, v) => s + Number(v.stock || 0), 0)) : f.stock} onChange={(e) => set("stock", e.target.value)} disabled={hasVariants || !isNew} />
+                  </Field>
+                  <Field label={tr("Low-stock alert at")} hint={tr("You get a bell alert when stock drops to this")}><Input type="number" min={0} value={f.lowStockThreshold} onChange={(e) => set("lowStockThreshold", e.target.value)} /></Field>
+                </div>
+              ) : (
+                <div className="rounded-md border border-emerald-500/20 bg-emerald-50/50 p-3 text-xs text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-300">
+                  {tr("Daily fresh item: Numerical stock is not required. The product is always in-stock while status is Live/Active.")}
+                </div>
+              )}
             </div>
           </Section>
           <Section title={tr("Shipping")}>

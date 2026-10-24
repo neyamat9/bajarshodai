@@ -129,6 +129,7 @@ export function mapProduct(p: Raw, locale: Locale = clientLocale()): Product {
     unit: mapUnit(p, locale),
     packSize: p.packSize ?? '',
     isWeighed: !!p.isWeighed,
+    trackStock: p.trackStock !== undefined ? !!p.trackStock : undefined,
     price,
     originalPrice,
     discount,

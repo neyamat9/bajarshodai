@@ -12,6 +12,7 @@ export interface InventoryItem {
   cost: string;
   retail: string;
   state: "in" | "low" | "out";
+  trackStock?: boolean;
 }
 export interface InventorySummary {
   skuCount: number;

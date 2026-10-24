@@ -62,7 +62,8 @@ export default function ProductCard({ product, animationDelay = 0, entrance = tr
   const primaryImage = product.images.find((img) => img.isPrimary) ?? product.images[0];
   const inVault = isInVault(product.id);
   const unit = product.unit;
-  const outOfStock = product.stock <= (unit?.minQty ?? 0) - 1e-9 || product.stock <= 0;
+  const isUntracked = product.trackStock === false;
+  const outOfStock = !isUntracked && (product.stock <= (unit?.minQty ?? 0) - 1e-9 || product.stock <= 0);
   const badge = product.badges.find((b) => b !== "HOT");
   // the cart line of this product (products with options are added from the picker, so they have no stepper here)
   const line = product.hasVariants ? undefined : cart.items.find((i) => i.productId === product.id && !i.variantId);
@@ -72,7 +73,7 @@ export default function ProductCard({ product, animationDelay = 0, entrance = tr
     e.stopPropagation();
     if (outOfStock) return;
     playClick();
-    const base = { id: product.id, slug: product.slug, name: product.name, price: product.price, stock: product.stock, imageUrl: primaryImage?.url ?? "", unit };
+    const base = { id: product.id, slug: product.slug, name: product.name, price: product.price, stock: isUntracked ? 9999 : product.stock, imageUrl: primaryImage?.url ?? "", unit };
     if (!product.hasVariants) {
       void quickAdd(base, startQty(unit));
       return;
@@ -117,9 +118,10 @@ export default function ProductCard({ product, animationDelay = 0, entrance = tr
   async function more(e: React.MouseEvent) {
     e.preventDefault();
     if (!line) return;
-    const next = stepUp(line.quantity, unit, line.stock);
+    const maxStock = isUntracked ? 9999 : line.stock;
+    const next = stepUp(line.quantity, unit, maxStock);
     if (next === null) {
-      toast.info(t("card.onlyStock", { count: formatQuantity(line.stock, locale) }), { id: `stock-${product.id}` });
+      toast.info(t("card.onlyStock", { count: formatQuantity(maxStock, locale) }), { id: `stock-${product.id}` });
       return;
     }
     playClick();

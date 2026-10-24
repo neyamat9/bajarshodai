@@ -123,7 +123,14 @@ export default function DailySheet() {
                         <div className="flex items-center gap-3">
                           <Thumb src={p.mainImage} alt={p.name} className="size-9" />
                           <div className="min-w-0">
-                            <p className="truncate font-medium">{p.nameBn || p.name}</p>
+                            <div className="flex items-center gap-1.5">
+                              <p className="truncate font-medium">{p.nameBn || p.name}</p>
+                              {!p.trackStock && (
+                                <span className="inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                  {tr("Fresh")}
+                                </span>
+                              )}
+                            </div>
                             <p className="truncate text-[11px] text-muted-foreground">{p.nameBn ? `${p.name} · ` : ""}{p.categoryName}</p>
                           </div>
                         </div>
@@ -133,12 +140,20 @@ export default function DailySheet() {
                         <Input className="h-8 w-28" type="number" min={0} step="0.01" value={e.price ?? ""} placeholder={String(Number(p.sellingPrice))} onChange={(ev) => patch(p.id, { price: ev.target.value })} aria-label={`New price of ${p.name}`} />
                       </td>
                       <td className="px-3 py-2 tabular-nums">
-                        {Number(p.stock)}{unitLabel(p) && <span className="text-[11px] text-muted-foreground"> {unitLabel(p)}</span>}
-                        {p.stockState === "low" && <Badge variant="warning" className="ml-1">{tr("low")}</Badge>}
-                        {p.stockState === "out" && <Badge variant="danger" className="ml-1">{tr("out")}</Badge>}
+                        {!p.trackStock ? (
+                          <span className="text-[12px] font-medium text-emerald-600 dark:text-emerald-400">{tr("Fresh bazaar")}</span>
+                        ) : (
+                          <>
+                            {Number(p.stock)}{unitLabel(p) && <span className="text-[11px] text-muted-foreground"> {unitLabel(p)}</span>}
+                            {p.stockState === "low" && <Badge variant="warning" className="ml-1">{tr("low")}</Badge>}
+                            {p.stockState === "out" && <Badge variant="danger" className="ml-1">{tr("out")}</Badge>}
+                          </>
+                        )}
                       </td>
                       <td className="px-3 py-2">
-                        {hasVariants ? (
+                        {!p.trackStock ? (
+                          <span className="text-[11px] text-muted-foreground italic">{tr("No count needed")}</span>
+                        ) : hasVariants ? (
                           <span className="text-[11px] text-muted-foreground">{tr("Has variants: set stock on each")}</span>
                         ) : (
                           <Input className="h-8 w-28" type="number" min={0} step="0.001" value={e.stock ?? ""} placeholder={String(Number(p.stock))} onChange={(ev) => patch(p.id, { stock: ev.target.value })} aria-label={`New stock of ${p.name}`} />

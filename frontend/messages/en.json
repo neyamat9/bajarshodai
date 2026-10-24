@@ -248,6 +248,7 @@
       "outOfStock": "Out of Stock",
       "onlyLeft": "Only {count} left",
       "inStock": "In Stock",
+      "freshDaily": "Fresh Bazaar (Available Today)",
       "pid": "PID",
       "brand": "Brand",
       "color": "Color",

@@ -65,7 +65,7 @@ export default function ProductDetailClient({ product: initial, relatedProducts,
   }
 
   const save = product.originalPrice && product.originalPrice > product.price ? product.originalPrice - product.price : 0;
-  const stockLabel = product.stock > 0 ? t("summary.inStock") : t("summary.outOfStock");
+  const stockLabel = product.trackStock === false ? t("summary.freshDaily") : product.stock > 0 ? t("summary.inStock") : t("summary.outOfStock");
 
   return (
     <>

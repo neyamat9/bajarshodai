@@ -45,7 +45,10 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
 
   const price = variant?.price ?? product.price;
   const oldPrice = variant?.originalPrice ?? product.originalPrice;
-  const stock = variant?.stock ?? product.stock;
+  const isUntracked = product.trackStock === false;
+  const rawStock = variant?.stock ?? product.stock;
+  const stock = isUntracked ? 9999 : rawStock;
+  const isOutOfStock = !isUntracked && rawStock <= 0;
   const hasDiscount = !!oldPrice && oldPrice > price;
   const image = product.images.find((i) => i.isPrimary) ?? product.images[0];
   const inVault = isInVault(product.id);
@@ -86,7 +89,7 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
       removeFromVault(product.id);
       toast.info(t("card.removedWish"));
     } else {
-      addToVault({ productId: product.id, slug: product.slug, name: product.name, price: product.price, originalPrice: product.originalPrice, imageUrl: image?.url ?? "", stock: product.stock });
+      addToVault({ productId: product.id, slug: product.slug, name: product.name, price: product.price, originalPrice: product.originalPrice, imageUrl: image?.url ?? "", stock: isUntracked ? 9999 : product.stock });
       toast.success(t("card.addedWish"), { duration: 2000 });
     }
   }
@@ -94,8 +97,20 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
 
   const colors = product.variants.filter((v) => v.type === "color");
   const others = product.variants.filter((v) => v.type !== "color");
-  const stockText = stock <= 0 ? t("summary.outOfStock") : stock < 5 ? t("summary.onlyLeft", { count: `${formatQuantity(stock, locale)}${unit ? ` ${unit.label}` : ""}` }) : t("summary.inStock");
-  const stockTone = stock <= 0 ? "text-destructive" : stock < 5 ? "text-accent-text" : "text-emerald-600 dark:text-emerald-400";
+  const stockText = isUntracked
+    ? t("summary.freshDaily")
+    : rawStock <= 0
+      ? t("summary.outOfStock")
+      : rawStock < 5
+        ? t("summary.onlyLeft", { count: `${formatQuantity(rawStock, locale)}${unit ? ` ${unit.label}` : ""}` })
+        : t("summary.inStock");
+  const stockTone = isUntracked
+    ? "text-emerald-600 dark:text-emerald-400"
+    : rawStock <= 0
+      ? "text-destructive"
+      : rawStock < 5
+        ? "text-accent-text"
+        : "text-emerald-600 dark:text-emerald-400";
   const bullets = product.pinnedSpecs.slice(0, 5).map((s) => `${s.label}: ${s.value}`);
 
   return (
@@ -276,12 +291,12 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
           ref={atcRef}
           type="button"
           onClick={add}
-          disabled={busy || stock <= 0}
+          disabled={busy || isOutOfStock}
           aria-label={t("card.addNamed", { name: product.name })}
           className="flex h-11 min-w-[160px] flex-1 items-center justify-center gap-2 rounded bg-primary px-5 text-sm font-bold text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4" />}
-          {stock <= 0 ? t("summary.outOfStock") : t("summary.addToCart")}
+          {isOutOfStock ? t("summary.outOfStock") : t("summary.addToCart")}
         </button>
 
         <button
@@ -297,7 +312,7 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
         </button>
       </div>
 
-      {stock <= 0 && <BackInStockForm productId={product.id} variantId={variant?.id} />}
+      {isOutOfStock && <BackInStockForm productId={product.id} variantId={variant?.id} />}
     </div>
   );
 }

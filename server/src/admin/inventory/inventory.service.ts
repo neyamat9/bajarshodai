@@ -24,6 +24,7 @@ export interface SkuRow {
   threshold: number;
   cost: string;
   retail: string;
+  trackStock: boolean;
 }
 
 // One row per sellable unit: a product without variants, or each variant.
@@ -31,13 +32,15 @@ export const SKU_ROWS = Prisma.sql`
   SELECT p.id AS "productId", NULL::text AS "variantId", p.name AS "productName",
          NULL::text AS "variantName", p."productCode" AS sku, p.status::text AS status,
          p.stock, p."lowStockThreshold" AS threshold,
-         p."buyingPrice"::text AS cost, p."sellingPrice"::text AS retail
+         p."buyingPrice"::text AS cost, p."sellingPrice"::text AS retail,
+         p."trackStock" AS "trackStock"
   FROM "Product" p
   WHERE NOT EXISTS (SELECT 1 FROM "ProductVariant" v WHERE v."productId" = p.id)
   UNION ALL
   SELECT p.id, v.id, p.name, v.name, v.sku, p.status::text,
          v.stock, p."lowStockThreshold",
-         p."buyingPrice"::text, COALESCE(v.price, p."sellingPrice")::text
+         p."buyingPrice"::text, COALESCE(v.price, p."sellingPrice")::text,
+         p."trackStock" AS "trackStock"
   FROM "ProductVariant" v JOIN "Product" p ON p.id = v."productId"`;
 
 @Injectable()
@@ -61,9 +64,9 @@ export class InventoryService {
       }[]
     >(Prisma.sql`
       SELECT COUNT(*) AS items,
-             COUNT(*) FILTER (WHERE stock > threshold) AS "inStock",
-             COUNT(*) FILTER (WHERE stock > 0 AND stock <= threshold) AS low,
-             COUNT(*) FILTER (WHERE stock <= 0) AS out,
+             COUNT(*) FILTER (WHERE "trackStock" = false OR stock > threshold) AS "inStock",
+             COUNT(*) FILTER (WHERE "trackStock" = true AND stock > 0 AND stock <= threshold) AS low,
+             COUNT(*) FILTER (WHERE "trackStock" = true AND stock <= 0) AS out,
              SUM(GREATEST(stock, 0)) AS units,
              SUM(GREATEST(stock, 0) * cost::numeric)::text AS "costValue",
              SUM(GREATEST(stock, 0) * retail::numeric)::text AS "retailValue"
@@ -82,9 +85,12 @@ export class InventoryService {
 
   private filter(q: Pick<InventoryListDto, 'search' | 'state'>) {
     const parts: Prisma.Sql[] = [Prisma.sql`status NOT IN ('DISCONTINUED')`];
-    if (q.state === 'out') parts.push(Prisma.sql`stock <= 0`);
+    if (q.state === 'out')
+      parts.push(Prisma.sql`"trackStock" = true AND stock <= 0`);
     if (q.state === 'low')
-      parts.push(Prisma.sql`stock > 0 AND stock <= threshold`);
+      parts.push(
+        Prisma.sql`"trackStock" = true AND stock > 0 AND stock <= threshold`,
+      );
     if (q.search) {
       const like = `%${q.search.replace(/[\\%_]/g, '\\$&')}%`;
       parts.push(
@@ -109,7 +115,13 @@ export class InventoryService {
     return {
       data: data.map((r) => ({
         ...r,
-        state: r.stock <= 0 ? 'out' : r.stock <= r.threshold ? 'low' : 'in',
+        state: !r.trackStock
+          ? 'in'
+          : r.stock <= 0
+            ? 'out'
+            : r.stock <= r.threshold
+              ? 'low'
+              : 'in',
       })),
       meta: {
         total,

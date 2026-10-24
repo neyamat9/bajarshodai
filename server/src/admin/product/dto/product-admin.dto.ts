@@ -202,6 +202,11 @@ export class DailySheetRowDto {
   @IsOptional()
   @IsIn(['ACTIVE', 'INACTIVE'])
   status?: 'ACTIVE' | 'INACTIVE';
+
+  @ApiPropertyOptional({ description: 'Track stock count or daily fresh' })
+  @IsOptional()
+  @IsBoolean()
+  trackStock?: boolean;
 }
 
 export class DailySheetDto {

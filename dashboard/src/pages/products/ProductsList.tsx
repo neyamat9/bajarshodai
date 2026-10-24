@@ -119,8 +119,17 @@ export default function ProductsList() {
       align: "right", sk: "stock",
       cell: (p) => (
         <div className="flex flex-col items-end gap-0.5">
-          <span className="font-medium">{p.stock}</span>
-          <StatusBadge status={p.stockState} label={p.stockState === "in" ? tr("In stock") : p.stockState === "low" ? tr("Low") : tr("Out")} />
+          {!p.trackStock ? (
+            <>
+              <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">{tr("Daily Fresh")}</span>
+              <span className="text-[10px] text-muted-foreground">{tr("Untracked")}</span>
+            </>
+          ) : (
+            <>
+              <span className="font-medium">{p.stock}</span>
+              <StatusBadge status={p.stockState} label={p.stockState === "in" ? tr("In stock") : p.stockState === "low" ? tr("Low") : tr("Out")} />
+            </>
+          )}
         </div>
       ),
     },

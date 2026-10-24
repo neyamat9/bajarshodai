@@ -29,6 +29,7 @@ const cartInclude = {
       nameBn: true,
       slug: true,
       status: true,
+      trackStock: true,
       stock: true,
       sellingPrice: true,
       freeShipping: true,
@@ -161,7 +162,7 @@ export class CheckoutService {
       let issue: string | null = null;
       if (ci.product.status !== 'ACTIVE') {
         issue = 'This product is no longer available';
-      } else if (availableStock < quantity) {
+      } else if (ci.product.trackStock && availableStock < quantity) {
         issue =
           availableStock <= 0
             ? 'Out of stock'
@@ -187,7 +188,7 @@ export class CheckoutService {
         unitPrice,
         quantity,
         lineTotal: round2(unitPrice * quantity),
-        availableStock,
+        availableStock: ci.product.trackStock ? availableStock : 9999,
         issue,
       };
     });

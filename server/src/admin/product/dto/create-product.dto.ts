@@ -321,6 +321,15 @@ export class CreateProductDto {
   discountLabel?: string | null;
 
   @ApiPropertyOptional({
+    default: true,
+    description:
+      'false for daily fresh bazaar items (fish, vegetables, meat) where stock is not counted',
+  })
+  @IsOptional()
+  @IsBoolean()
+  trackStock?: boolean;
+
+  @ApiPropertyOptional({
     description:
       'Quantity in stock (products without variants). With variants, set the stock of each variant.',
   })

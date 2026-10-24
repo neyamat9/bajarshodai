@@ -63,8 +63,8 @@ export class ProductService {
       SELECT COUNT(*) AS total,
              COUNT(*) FILTER (WHERE p.status = 'ACTIVE') AS active,
              COUNT(*) FILTER (WHERE p.status IN ('DRAFT', 'INACTIVE')) AS hidden,
-             COUNT(*) FILTER (WHERE p.stock > 0 AND p.stock <= p."lowStockThreshold") AS low,
-             COUNT(*) FILTER (WHERE p.stock <= 0) AS out,
+             COUNT(*) FILTER (WHERE p."trackStock" AND p.stock > 0 AND p.stock <= p."lowStockThreshold") AS low,
+             COUNT(*) FILTER (WHERE p."trackStock" AND p.stock <= 0) AS out,
              SUM(GREATEST(p.stock, 0) * p."buyingPrice")::text AS "costValue",
              SUM(GREATEST(p.stock, 0) * p."sellingPrice")::text AS "retailValue",
              COUNT(*) FILTER (WHERE p."isDiscounted" AND p.status = 'ACTIVE') AS discounted,
@@ -139,7 +139,10 @@ export class ProductService {
       where.categoryId = { in: descendantIds(rows, q.categoryId) };
     }
     if (q.brandId) where.brandId = q.brandId;
-    if (q.stock === 'out') where.stock = { lte: 0 };
+    if (q.stock === 'out') {
+      where.stock = { lte: 0 };
+      where.trackStock = true;
+    }
     if (q.stock === 'low' || q.stock === 'in') {
       // each product is compared with its own low-stock level, which Prisma cannot do across number types
       const ids = await this.stockIds(q.stock);
@@ -168,6 +171,7 @@ export class ProductService {
           discountStart: true,
           discountEnd: true,
           isDiscounted: true,
+          trackStock: true,
           stock: true,
           lowStockThreshold: true,
           soldCount: true,
@@ -190,7 +194,7 @@ export class ProductService {
       ...p,
       mainImage: images[0]?.url ?? null,
       stock: Number(p.stock),
-      stockState: stockState(Number(p.stock), p.lowStockThreshold),
+      stockState: p.trackStock ? stockState(Number(p.stock), p.lowStockThreshold) : 'in',
     }));
     return {
       data,
@@ -297,6 +301,7 @@ export class ProductService {
             discountLabel:
               dto.discountPrice == null ? null : (dto.discountLabel ?? null),
             stock: 0,
+            trackStock: dto.trackStock ?? true,
             lowStockThreshold: dto.lowStockThreshold ?? 5,
             freeShipping: dto.freeShipping ?? false,
             weight: dto.weight,
@@ -495,6 +500,7 @@ export class ProductService {
       'description',
       'shortDescription',
       'isWeighed',
+      'trackStock',
       'status',
       'lowStockThreshold',
       'freeShipping',
@@ -831,6 +837,7 @@ export class ProductService {
         const patch: UpdateProductDto = {};
         if (row.sellingPrice !== undefined) patch.sellingPrice = row.sellingPrice;
         if (row.status !== undefined) patch.status = row.status;
+        if (row.trackStock !== undefined) patch.trackStock = row.trackStock;
         if (row.stock !== undefined && product._count.variants === 0) {
           patch.stock = row.stock;
         }
@@ -920,10 +927,10 @@ export class ProductService {
     const rows =
       kind === 'low'
         ? await this.prisma.$queryRaw<{ id: string }[]>(
-            Prisma.sql`SELECT id FROM "Product" WHERE stock > 0 AND stock <= "lowStockThreshold"`,
+            Prisma.sql`SELECT id FROM "Product" WHERE "trackStock" = true AND stock > 0 AND stock <= "lowStockThreshold"`,
           )
         : await this.prisma.$queryRaw<{ id: string }[]>(
-            Prisma.sql`SELECT id FROM "Product" WHERE stock > "lowStockThreshold"`,
+            Prisma.sql`SELECT id FROM "Product" WHERE "trackStock" = false OR stock > "lowStockThreshold"`,
           );
     return rows.map((r) => r.id);
   }

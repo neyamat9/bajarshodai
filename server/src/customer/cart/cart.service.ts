@@ -99,6 +99,7 @@ const cartItemInclude = {
       },
       sellingPrice: true,
       regularPrice: true,
+      trackStock: true,
       stock: true,
       status: true,
       images: {
@@ -175,7 +176,7 @@ export class CartService implements OnModuleInit, OnModuleDestroy {
     const quantity = round3(dto.quantity);
     assertQuantity(quantity, rule, label);
 
-    if (toNum(product.stock) < rule.min) {
+    if (product.trackStock && toNum(product.stock) < rule.min) {
       throw new BadRequestException('Product is out of stock');
     }
 
@@ -189,7 +190,9 @@ export class CartService implements OnModuleInit, OnModuleDestroy {
       }
       variantStock = toNum(variant.stock);
     }
-    const maxQty = Math.min(floorToStep(variantStock, rule), MAX_QTY_PER_LINE);
+    const maxQty = product.trackStock
+      ? Math.min(floorToStep(variantStock, rule), MAX_QTY_PER_LINE)
+      : MAX_QTY_PER_LINE;
 
     const variantId = dto.variantId || null;
     const ownerWhere = cartOwnerWhere(owner);
@@ -256,10 +259,12 @@ export class CartService implements OnModuleInit, OnModuleDestroy {
     const rule = saleRuleOf(item.product);
     const next = round3(quantity);
     assertQuantity(next, rule, item.product.nameBn ?? item.product.name);
-    const maxStock = Math.min(
-      floorToStep(toNum(item.variant?.stock ?? item.product.stock), rule),
-      MAX_QTY_PER_LINE,
-    );
+    const maxStock = item.product.trackStock
+      ? Math.min(
+          floorToStep(toNum(item.variant?.stock ?? item.product.stock), rule),
+          MAX_QTY_PER_LINE,
+        )
+      : MAX_QTY_PER_LINE;
     if (next > maxStock) {
       throw new BadRequestException(
         `Only ${fmtQty(maxStock)} of this item can be added to the cart`,
@@ -342,8 +347,10 @@ export class CartService implements OnModuleInit, OnModuleDestroy {
           }
           stock = toNum(variant.stock);
         }
-        const cap = Math.min(floorToStep(stock, rule), MAX_QTY_PER_LINE);
-        if (cap < rule.min) {
+        const cap = product.trackStock
+          ? Math.min(floorToStep(stock, rule), MAX_QTY_PER_LINE)
+          : MAX_QTY_PER_LINE;
+        if (product.trackStock && cap < rule.min) {
           fail('Out of stock');
           continue;
         }

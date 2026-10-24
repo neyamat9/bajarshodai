@@ -136,9 +136,9 @@ export default function Inventory() {
   const s = sum.data;
 
   const cols: Column<InventoryItem>[] = [
-    { key: "item", header: tr("Item"), sk: "lines2", cell: (i) => (<div className="max-w-[320px]"><Link to={`/products/${i.productId}/edit`} target="_blank" rel="noopener noreferrer" className="block truncate font-medium hover:text-primary">{i.productName}</Link><p className="truncate text-[11px] text-muted-foreground">{[i.variantName, i.sku].filter(Boolean).join(" · ") || "—"}</p></div>) },
+    { key: "item", header: tr("Item"), sk: "lines2", cell: (i) => (<div className="max-w-[320px]"><div className="flex items-center gap-1.5"><Link to={`/products/${i.productId}/edit`} target="_blank" rel="noopener noreferrer" className="block truncate font-medium hover:text-primary">{i.productName}</Link>{!i.trackStock && <span className="inline-flex items-center rounded bg-emerald-100 px-1 py-0 text-[10px] font-semibold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">{tr("Fresh")}</span>}</div><p className="truncate text-[11px] text-muted-foreground">{[i.variantName, i.sku].filter(Boolean).join(" · ") || "—"}</p></div>) },
     { key: "status", header: tr("Status"), sk: "badge", cell: (i) => <StatusBadge status={i.status} /> },
-    { key: "stock", header: tr("In stock"), align: "right", sk: "num", cell: (i) => <b>{i.stock}</b> },
+    { key: "stock", header: tr("In stock"), align: "right", sk: "num", cell: (i) => !i.trackStock ? <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">{tr("Daily Fresh")}</span> : <b>{i.stock}</b> },
     { key: "state", header: tr("Level"), sk: "badge", cell: (i) => <StatusBadge status={i.state} label={i.state === "in" ? tr("In stock") : i.state === "low" ? tr("Low (≤{{n}})", { n: num(i.threshold) }) : tr("Out")} /> },
     { key: "cost", header: tr("Value (cost)"), align: "right", sk: "num", cell: (i) => money(Number(i.cost) * i.stock) },
     { key: "act", header: "", align: "right", sk: "btn", cell: (i) => <Button size="xs" variant="outline" onClick={() => setAdj(i)}><SlidersHorizontal />{" "}{tr("Adjust")}</Button> },

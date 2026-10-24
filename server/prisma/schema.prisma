@@ -494,6 +494,7 @@ model Product {
   priceBeforeDiscount Decimal?  @db.Decimal(12, 2)
 
   // Inventory
+  trackStock        Boolean @default(true)
   stock             Decimal @default(0) @db.Decimal(10, 3)
   lowStockThreshold Int     @default(5)
   allowBackorder    Boolean @default(false)

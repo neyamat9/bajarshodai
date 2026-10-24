@@ -226,23 +226,25 @@ export class OrdersService {
             `"${cartItem.product.name}" is no longer available`,
           );
         }
-        try {
-          // Conditional decrement, per variant when the item has one, so two
-          // concurrent orders can never oversell.
-          await this.stock.change(tx, {
-            productId: cartItem.productId,
-            variantId: cartItem.variantId,
-            change: -toNum(cartItem.quantity),
-            reason: 'SALE',
-            reference: `Order: ${orderNumber}`,
-          });
-        } catch (error) {
-          if (error instanceof InsufficientStockError) {
-            throw new BadRequestException(
-              `"${cartItem.product.name}" is out of stock or no longer available`,
-            );
+        if (cartItem.product.trackStock) {
+          try {
+            // Conditional decrement, per variant when the item has one, so two
+            // concurrent orders can never oversell.
+            await this.stock.change(tx, {
+              productId: cartItem.productId,
+              variantId: cartItem.variantId,
+              change: -toNum(cartItem.quantity),
+              reason: 'SALE',
+              reference: `Order: ${orderNumber}`,
+            });
+          } catch (error) {
+            if (error instanceof InsufficientStockError) {
+              throw new BadRequestException(
+                `"${cartItem.product.name}" is out of stock or no longer available`,
+              );
+            }
+            throw error;
           }
-          throw error;
         }
       }
 

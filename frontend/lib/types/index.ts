@@ -66,6 +66,7 @@ export interface Product {
   /** e.g. "500 g" */
   packSize: string;
   isWeighed: boolean;
+  trackStock?: boolean;
   price: number;
   originalPrice?: number;
   discount?: number;
