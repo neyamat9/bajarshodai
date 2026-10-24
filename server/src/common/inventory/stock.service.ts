@@ -45,6 +45,16 @@ export class StockService {
     const { productId } = input;
     const variantId = input.variantId ?? null;
 
+    // Daily-fresh products (trackStock = false) have no counted stock: sales,
+    // cancellations, returns and edits must not touch or block on a number.
+    const tracking = await tx.product.findUnique({
+      where: { id: productId },
+      select: { trackStock: true },
+    });
+    if (tracking && !tracking.trackStock) {
+      return { productId, variantId, before: 0, after: 0 };
+    }
+
     let before: number;
     let after: number;
 

@@ -133,8 +133,8 @@ export default function OrderCreatePage() {
       }
       return;
     }
-    if (p.stock <= 0) return toast.error(`${p.name} is out of stock`);
-    addLine({ key: p.id, productId: p.id, name: p.name, image: p.mainImage, price: String(Number(p.sellingPrice)), stock: p.stock, quantity: 1 });
+    if (p.trackStock && p.stock <= 0) return toast.error(`${p.name} is out of stock`);
+    addLine({ key: p.id, productId: p.id, name: p.name, image: p.mainImage, price: String(Number(p.sellingPrice)), stock: p.trackStock ? p.stock : 9999, quantity: 1 });
   };
   const addLine = (l: Line) =>
     setLines((ls) => {
@@ -491,7 +491,7 @@ export default function OrderCreatePage() {
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {products.rows.map((p) => {
                 const inSale = p._count.variants ? lines.filter((l) => l.productId === p.id).reduce((s, l) => s + l.quantity, 0) : qtyIn(p.id);
-                const out = p._count.variants === 0 && p.stock <= 0;
+                const out = p.trackStock && p._count.variants === 0 && p.stock <= 0;
                 return (
                   <button
                     key={p.id}
