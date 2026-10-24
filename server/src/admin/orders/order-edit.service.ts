@@ -535,11 +535,17 @@ export class OrderEditService {
         const finalTotal = round2(finalQty * price);
         const orderedQty = item.orderedQty !== null ? Number(item.orderedQty) : Number(item.quantity);
 
-        const diff = finalQty - Number(item.quantity);
+        const diff = round3(finalQty - Number(item.quantity));
         if (Math.abs(diff) > 0.0001 && item.productId) {
-          await tx.product.update({
-            where: { id: item.productId },
-            data: { stock: { decrement: diff } },
+          await this.stock.change(tx, {
+            productId: item.productId,
+            variantId: item.variantId,
+            change: -diff,
+            reason: 'ADJUSTMENT',
+            reference: `Order: ${order.orderNumber}`,
+            note: dto.note || 'Packer recorded final scale weight',
+            adminId: adminId || null,
+            lenient: true,
           });
         }
 

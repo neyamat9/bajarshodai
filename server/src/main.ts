@@ -33,7 +33,9 @@ async function bootstrap() {
   const corsOrigins = configService.get<string[]>('security.corsOrigins') ?? [
     'http://localhost:3000',
   ];
-  const swaggerEnabled = configService.get<boolean>('swagger.enabled') ?? true;
+  const swaggerEnabled =
+    configService.get<boolean>('swagger.enabled') ??
+    (nodeEnv !== 'production' || process.env.ENABLE_SWAGGER === 'true');
 
   // Behind a reverse proxy / load balancer, TRUST_PROXY is the number of
   // proxies in front of the app (e.g. 1). Without it every visitor shares the
@@ -52,10 +54,10 @@ async function bootstrap() {
       crossOriginEmbedderPolicy: false,
       contentSecurityPolicy: {
         directives: {
-          defaultSrc: [`'self'`, 'http://localhost:8000'],
+          defaultSrc: [`'self'`],
           styleSrc: [`'self'`, `'unsafe-inline'`],
-          imgSrc: [`'self'`, 'data:'],
-          scriptSrc: [`'self'`, `https: 'unsafe-inline'`],
+          imgSrc: [`'self'`, 'data:', 'blob:', 'https:'],
+          scriptSrc: [`'self'`, `'unsafe-inline'`, 'https:'],
         },
       },
     }),

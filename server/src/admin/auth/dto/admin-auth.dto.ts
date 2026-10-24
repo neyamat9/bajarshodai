@@ -115,3 +115,17 @@ export class SeedAdminDto {
   @IsBdMobile()
   phone!: string;
 }
+
+export class VerifyTwoFactorDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  tempToken: string;
+
+  @ApiProperty({ description: '6-digit OTP code sent via email' })
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(6)
+  @MaxLength(6)
+  otp: string;
+}

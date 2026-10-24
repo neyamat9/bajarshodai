@@ -3,6 +3,7 @@ import {
   Get,
   Patch,
   Param,
+  ParseUUIDPipe,
   Query,
   Body,
   UseGuards,
@@ -34,7 +35,7 @@ export class AdminReturnsController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get return request detail' })
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.returnsService.findOne(id);
   }
 
@@ -44,10 +45,11 @@ export class AdminReturnsController {
       'Move a return through REQUESTED → APPROVED → PICKED_UP → RECEIVED (restocks) → REFUNDED/REPLACED, or REJECTED',
   })
   async updateStatus(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateReturnStatusDto,
     @CurrentUser() admin: User,
   ) {
     return this.returnsService.updateStatus(id, dto.status, dto.note, admin.id);
   }
 }
+

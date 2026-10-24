@@ -75,6 +75,7 @@ export const router = createBrowserRouter([
           { path: "banners", element: <Guard adminOnly>{L(() => import("@/pages/catalog/Banners"), <CardListSkeleton title="Banners" text="Home page sliders and promotions. Drag inside a group to change the order." action="New banner" />)}</Guard> },
           { path: "media", element: <Guard needs={["products.view","products.manage"]}>{L(() => import("@/pages/catalog/Media"), <GridPageSkeleton />)}</Guard> },
           { path: "customers", element: <Guard needs={["customers.view"]}>{L(() => import("@/pages/customers/CustomersList"), <CustomersSkeleton />)}</Guard> },
+          { path: "customers/password-reset-requests", element: <Guard needs={["customers.view"]}>{L(() => import("@/pages/customers/PasswordResetRequests"), <CustomersSkeleton />)}</Guard> },
           { path: "customers/:id", element: <Guard needs={["customers.view"]}>{L(() => import("@/pages/customers/CustomerDetail"), <DetailPageSkeleton />)}</Guard> },
           { path: "coupons", element: <Guard adminOnly>{L(() => import("@/pages/coupons/Coupons"), <CouponsSkeleton />)}</Guard> },
           { path: "reviews", element: <Guard adminOnly>{L(() => import("@/pages/care/Reviews"), <ReviewsSkeleton />)}</Guard> },

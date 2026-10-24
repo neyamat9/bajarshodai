@@ -22,10 +22,14 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { sendTable } from '../../common/export/table-export';
 import { AdminUsersService } from './users.service';
 import {
+  AdminDirectResetPasswordDto,
   CreateNoteDto,
   ExportUsersDto,
+  ListPasswordResetRequestsDto,
   ListUsersDto,
   PageDto,
+  UpdateBlacklistDto,
+  UpdatePasswordResetRequestDto,
   UpdateUserRoleDto,
   UpdateUserStatusDto,
 } from './dto/users-admin.dto';
@@ -54,6 +58,22 @@ export class AdminUsersController {
   })
   async export(@Query() q: ExportUsersDto, @Res() res: Response) {
     await sendTable(res, q.format, await this.users.exportTable(q));
+  }
+
+  @Get('password-reset-requests')
+  @ApiOperation({ summary: 'List customer password reset requests' })
+  findPasswordResetRequests(@Query() q: ListPasswordResetRequestsDto) {
+    return this.users.findPasswordResetRequests(q);
+  }
+
+  @Patch('password-reset-requests/:id')
+  @ApiOperation({ summary: 'Update status/notes for a password reset request' })
+  updatePasswordResetRequest(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdatePasswordResetRequestDto,
+    @CurrentUser() admin: User,
+  ) {
+    return this.users.updatePasswordResetRequest(id, dto, admin.id);
   }
 
   @Get(':id')
@@ -137,6 +157,16 @@ export class AdminUsersController {
     return this.users.updateStatus(id, dto.status, admin);
   }
 
+  @Patch(':id/blacklist')
+  @ApiOperation({ summary: 'Update customer COD blacklist status and reason' })
+  updateBlacklist(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateBlacklistDto,
+    @CurrentUser() admin: User,
+  ) {
+    return this.users.updateBlacklist(id, dto.isBlacklisted, dto.reason, admin);
+  }
+
   @Post(':id/reset-password')
   @ApiOperation({
     summary:
@@ -145,8 +175,9 @@ export class AdminUsersController {
   resetPassword(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() admin: User,
+    @Body() dto?: AdminDirectResetPasswordDto,
   ) {
-    return this.users.resetPassword(id, admin);
+    return this.users.resetPassword(id, admin, dto);
   }
 
   @Patch(':id/role')

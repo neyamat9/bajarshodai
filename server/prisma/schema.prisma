@@ -239,8 +239,13 @@ model User {
   name             String
   refreshTokenHash String?
 
-  // Account state
-  status          UserStatus @default(ACTIVE)
+  // Account state & Security Lockout
+  status              UserStatus @default(ACTIVE)
+  failedLoginAttempts Int        @default(0)
+  lockedUntil         DateTime?
+  isBlacklisted       Boolean    @default(false)
+  blacklistReason     String?
+
   emailVerified   Boolean    @default(false)
   emailVerifiedAt DateTime?
   phoneVerified   Boolean    @default(false)
@@ -292,6 +297,10 @@ model User {
   searchHistory        SearchHistory[]
   passwordHistory      PasswordHistory[]
   resetTokens          PasswordResetToken[]
+  sessions             UserSession[]
+  twoFactorOtps        AdminTwoFactorOtp[]
+  passwordResetRequests PasswordResetRequest[]
+  riderSettlements     RiderSettlement[]
   customerNotes        CustomerNote[]          @relation("CustomerNotes")
   notesWritten         CustomerNote[]          @relation("NotesWritten")
 
@@ -325,6 +334,73 @@ model PasswordResetToken {
 
   @@index([token])
   @@index([userId])
+}
+
+model PasswordResetRequest {
+  id         String    @id @default(uuid())
+  userId     String?
+  user       User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  phone      String
+  status     String    @default("PENDING") // PENDING, CONTACTED, RESOLVED, REJECTED
+  notes      String?
+  resolvedBy String?
+  resolvedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([phone])
+  @@index([status])
+}
+
+model UserSession {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokenHash String
+  device           String?
+  ip               String?
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model AdminTwoFactorOtp {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  otpHash   String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model BlacklistedPhone {
+  phone     String   @id
+  reason    String?
+  createdAt DateTime @default(now())
+}
+
+model RiderSettlement {
+  id                 String    @id @default(uuid())
+  riderId            String
+  rider              User      @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  date               DateTime  @default(now())
+  orderCount         Int       @default(0)
+  totalCashCollected Decimal   @default(0) @db.Decimal(12, 2)
+  settledAmount      Decimal   @default(0) @db.Decimal(12, 2)
+  status             String    @default("PENDING") // PENDING, SETTLED
+  receivedByAdminId  String?
+  settledAt          DateTime?
+  notes              String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([riderId])
+  @@index([date])
+  @@index([status])
 }
 
 model Address {
@@ -578,6 +654,7 @@ model Product {
   @@index([createdAt])
   @@index([avgRating])
   @@index([totalSales])
+  @@index([categoryId, status])
 }
 
 model ProductImage {
@@ -919,6 +996,9 @@ model Order {
   @@index([status])
   @@index([paymentStatus])
   @@index([placedAt])
+  @@index([userId, placedAt])
+  @@index([guestPhone, placedAt])
+  @@index([status, placedAt])
 }
 
 // One row per day (Bangladesh time). Incremented atomically inside the order

@@ -24,9 +24,9 @@ import {
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import type { Response } from 'express';
-import { NewsletterStatus, Prisma, Role } from '@prisma/client';
-import { JwtAuthGuard, RolesGuard } from '../../common/guards';
-import { Roles } from '../../common/decorators';
+import { NewsletterStatus, Prisma } from '@prisma/client';
+import { JwtAuthGuard, PermissionsGuard } from '../../common/guards';
+import { RequirePermissions } from '../../common/decorators';
 import { PrismaService } from '../../prisma/prisma.service';
 
 class ListSubscribersDto {
@@ -59,8 +59,8 @@ class ListSubscribersDto {
 
 @ApiTags('Admin - Newsletter')
 @ApiBearerAuth('JWT')
-@Roles(Role.ADMIN, Role.SUPER_ADMIN)
-@UseGuards(JwtAuthGuard, RolesGuard)
+@RequirePermissions('customers.view', 'customers.manage')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('admin/newsletter')
 export class AdminNewsletterController {
   constructor(private readonly prisma: PrismaService) {}

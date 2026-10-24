@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -18,12 +19,15 @@ import { JwtAuthGuard, PermissionsGuard } from '../../common/guards';
 import {
   AssignDto,
   BoardQueryDto,
+  CreateSettlementDto,
   DeliveredDto,
   FailedDto,
   HandoverDto,
+  ListSettlementsDto,
   MyScopeDto,
   NoteDto,
   RangeDto,
+  SettleSettlementDto,
 } from './dto/deliveries.dto';
 import { DeliveriesService } from './deliveries.service';
 
@@ -84,6 +88,33 @@ export class AdminDeliveriesController {
   })
   handover(@Body() dto: HandoverDto, @CurrentUser() actor: User) {
     return this.deliveries.handOver(dto.deliveryIds, actor);
+  }
+
+  @Get('settlements')
+  @RequirePermissions('delivery.manage')
+  @ApiOperation({ summary: 'List rider daily cash settlements' })
+  listSettlements(@Query() q: ListSettlementsDto) {
+    return this.deliveries.listSettlements(q);
+  }
+
+  @Post('settlements')
+  @RequirePermissions('delivery.manage')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Generate or record daily cash settlement for a rider' })
+  createSettlement(@Body() dto: CreateSettlementDto, @CurrentUser() actor: User) {
+    return this.deliveries.createSettlement(dto, actor.id);
+  }
+
+  @Patch('settlements/:id/settle')
+  @RequirePermissions('delivery.manage')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Confirm receipt of cash for a settlement' })
+  settleSettlement(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SettleSettlementDto,
+    @CurrentUser() actor: User,
+  ) {
+    return this.deliveries.settleSettlement(id, dto, actor);
   }
 
   @Post('assign')

@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import {
   isMobileBanking,
@@ -144,29 +145,72 @@ export class OrdersService {
       );
     }
 
-    // A mobile-banking transaction ID can pay for one order only.
-    const sender = isMobileBanking(dto.paymentMethod)
-      ? normalizeBdPhone(dto.bkashSenderNumber ?? '')
-      : null;
-    const trx = isMobileBanking(dto.paymentMethod)
-      ? (dto.bkashTransactionId ?? '').trim().toUpperCase()
-      : null;
-    if (trx) {
-      const used = await this.prisma.order.findFirst({
-        where: {
-          bkashTransactionId: { equals: trx, mode: 'insensitive' },
-          status: { not: 'CANCELLED' },
-        },
-        select: { id: true },
+    // COD blacklist enforcement (account flag and blacklisted phones)
+    if (dto.paymentMethod === 'CASH_ON_DELIVERY') {
+      if (userId) {
+        const user = await this.prisma.user.findUnique({
+          where: { id: userId },
+          select: { isBlacklisted: true },
+        });
+        if (user?.isBlacklisted) {
+          throw new BadRequestException(
+            'Cash on Delivery is unavailable for this account. Please select bKash or Nagad payment.',
+          );
+        }
+      }
+      const blacklistedPhone = await this.prisma.blacklistedPhone.findUnique({
+        where: { phone },
       });
-      if (used) {
+      if (blacklistedPhone) {
         throw new BadRequestException(
-          'This transaction ID was already used for another order. Check it and try again.',
+          'Cash on Delivery is unavailable for this phone number. Please select bKash or Nagad payment.',
         );
       }
     }
 
+    // Debounce rapid duplicate order submission within 15 seconds
+    const recentDuplicate = await this.prisma.order.findFirst({
+      where: {
+        OR: [
+          ...(userId ? [{ userId }] : []),
+          { guestPhone: phone },
+        ],
+        placedAt: { gte: new Date(Date.now() - 15 * 1000) },
+      },
+      select: { id: true, orderNumber: true },
+    });
+    if (recentDuplicate) {
+      throw new ConflictException(
+        'An order was just submitted. Please wait a moment before submitting again.',
+      );
+    }
+
+    // Manual mobile banking payment handling
+    const rawSender = (dto.bkashSenderNumber ?? '').trim();
+    const sender = isMobileBanking(dto.paymentMethod)
+      ? (rawSender.length === 11 ? normalizeBdPhone(rawSender) : rawSender)
+      : null;
+    const trx = isMobileBanking(dto.paymentMethod)
+      ? (dto.bkashTransactionId ?? '').trim().toUpperCase() || null
+      : null;
+
     const order = await this.prisma.$transaction(async (tx) => {
+      // If customer submitted a TrxID, verify uniqueness inside the transaction
+      if (trx) {
+        const used = await tx.order.findFirst({
+          where: {
+            bkashTransactionId: { equals: trx, mode: 'insensitive' },
+            status: { not: 'CANCELLED' },
+          },
+          select: { id: true },
+        });
+        if (used) {
+          throw new BadRequestException(
+            'This transaction ID was already used for another order. Check it and try again.',
+          );
+        }
+      }
+
       // Price everything inside the transaction with the same calculator the
       // checkout summary uses, so the order always matches what was shown.
       const quote = await this.checkoutService.quote(

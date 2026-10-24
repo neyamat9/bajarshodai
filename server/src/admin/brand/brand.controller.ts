@@ -7,6 +7,7 @@ import {
   Body,
   Patch,
   Param,
+  ParseUUIDPipe,
   Delete,
   UseGuards,
 } from '@nestjs/common';
@@ -75,7 +76,7 @@ export class BrandController {
   @ApiParam({ name: 'id', description: 'Unique identifier of the brand' })
   @ApiResponse({ status: 200, description: 'Return the brand object.' })
   @ApiResponse({ status: 404, description: 'Brand not found.' })
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.brandService.findOne(id);
   }
 
@@ -88,7 +89,10 @@ export class BrandController {
     description: 'The brand has been successfully updated.',
   })
   @ApiResponse({ status: 404, description: 'Brand not found.' })
-  update(@Param('id') id: string, @Body() updateBrandDto: UpdateBrandDto) {
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateBrandDto: UpdateBrandDto,
+  ) {
     return this.brandService.update(id, updateBrandDto);
   }
 
@@ -101,7 +105,7 @@ export class BrandController {
     description: 'The brand has been successfully deleted.',
   })
   @ApiResponse({ status: 404, description: 'Brand not found.' })
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.brandService.remove(id);
   }
 }

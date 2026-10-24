@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Copy, KeyRound, Mail, Phone, Trash2 } from "lucide-react";
+import { Copy, KeyRound, Mail, Phone, ShieldAlert, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { customersApi, type CustomerRow } from "@/api/users";
 import { assetUrl, errorMessage } from "@/api/client";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { Section } from "@/components/shared/Field";
+import { Field, Section } from "@/components/shared/Field";
 import { StatCard } from "@/components/shared/StatCard";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ErrorState } from "@/components/shared/EmptyState";
@@ -65,8 +65,15 @@ export default function CustomerDetail() {
   const [pending, setPending] = useState<CustomerRow["status"] | null>(null);
   const [askReset, setAskReset] = useState(false);
   const [tempPw, setTempPw] = useState<string | null>(null);
+  const [askBlacklist, setAskBlacklist] = useState(false);
+  const [blacklistReason, setBlacklistReason] = useState("");
   const reset = useAct(() => customersApi.resetPassword(id), { onSuccess: (r) => { setAskReset(false); setTempPw(r.temporaryPassword); } });
   const status = useAct((s: CustomerRow["status"]) => customersApi.setStatus(id, s), { success: tr("Account status updated"), invalidate: [["customer", id], ["customers"]], onSuccess: () => setPending(null) });
+  const blacklistAct = useAct((isBlacklisted: boolean) => customersApi.updateBlacklist(id, isBlacklisted, blacklistReason.trim() || undefined), {
+    success: tr("Blacklist updated"),
+    invalidate: [["customer", id], ["customers"]],
+    onSuccess: () => { setAskBlacklist(false); setBlacklistReason(""); },
+  });
 
   if (q.isLoading) return <DetailPageSkeleton />;
   if (q.isError || !q.data) return <ErrorState message={errorMessage(q.error)} onRetry={() => q.refetch()} />;
@@ -77,12 +84,28 @@ export default function CustomerDetail() {
     <div>
       <PageHeader
         back={{ to: "/customers", label: tr("Customers") }}
-        title={<span className="flex items-center gap-3"><Avatar className="size-10">{c.avatarUrl && <AvatarImage src={assetUrl(c.avatarUrl)} />}<AvatarFallback>{initials(c.name)}</AvatarFallback></Avatar>{c.name} <StatusBadge status={c.status} /></span>}
-        description={`${tr("Joined {{date}}", { date: dateOnly(c.createdAt) })} · ${tr("{{n}} logins", { n: num(c.loginCount) })}${c.lastLoginAt ? ` · ${tr("last seen {{when}}", { when: dateTime(c.lastLoginAt) })}` : ""}`}
+        title={
+          <span className="flex flex-wrap items-center gap-3">
+            <Avatar className="size-10">{c.avatarUrl && <AvatarImage src={assetUrl(c.avatarUrl)} />}<AvatarFallback>{initials(c.name)}</AvatarFallback></Avatar>
+            {c.name}
+            <StatusBadge status={c.status} />
+            {c.isBlacklisted && <Badge variant="danger">{tr("COD Blacklisted")}</Badge>}
+          </span>
+        }
+        description={`${tr("Joined {{date}}", { date: dateOnly(c.createdAt) })} · ${tr("{{n}} logins", { n: num(c.loginCount) })}${c.lastLoginAt ? ` · ${tr("last seen {{when}}", { when: dateTime(c.lastLoginAt) })}` : ""}${c.blacklistReason ? ` · COD blacklist: ${c.blacklistReason}` : ""}`}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             {c.role === "USER" && (
               <Button size="sm" variant="outline" onClick={() => setAskReset(true)}><KeyRound />{" "}{tr("Set temporary password")}</Button>
+            )}
+            {c.isBlacklisted ? (
+              <Button size="sm" variant="outline" loading={blacklistAct.isPending} onClick={() => blacklistAct.mutate(false)}>
+                {tr("Remove COD Blacklist")}
+              </Button>
+            ) : (
+              <Button size="sm" variant="outline" className="border-destructive/40 text-destructive hover:bg-destructive/10" onClick={() => setAskBlacklist(true)}>
+                <ShieldAlert className="size-4" />{" "}{tr("Blacklist COD")}
+              </Button>
             )}
             <Select value={c.status} onChange={(e) => setPending(e.target.value as CustomerRow["status"])} className="w-auto" aria-label={tr("Account status")}>
               <option value="ACTIVE">{tr("Active")}</option><option value="SUSPENDED">{tr("Suspended")}</option><option value="BANNED">{tr("Banned")}</option>
@@ -176,6 +199,32 @@ export default function CustomerDetail() {
         loading={status.isPending}
         onConfirm={() => pending && status.mutate(pending)}
       />
+      <Dialog open={askBlacklist} onOpenChange={setAskBlacklist}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{tr("Blacklist Customer from COD?")}</DialogTitle>
+            <DialogDescription>
+              {tr("This customer will be prevented from placing Cash on Delivery orders. Mobile banking payment will still be accepted.")}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogBody className="space-y-3">
+            <Field label={tr("Reason (optional)")}>
+              <Textarea
+                rows={2}
+                value={blacklistReason}
+                onChange={(e) => setBlacklistReason(e.target.value)}
+                placeholder={tr("e.g. Repeated delivery refusal or fake order")}
+              />
+            </Field>
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setAskBlacklist(false)}>{tr("Cancel")}</Button>
+            <Button variant="destructive" loading={blacklistAct.isPending} onClick={() => blacklistAct.mutate(true)}>
+              {tr("Confirm Blacklist")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

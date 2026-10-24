@@ -11,7 +11,9 @@ import {
   Logger,
   ConflictException,
   Headers,
+  Req,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from '../../auth/auth.service';
@@ -77,11 +79,13 @@ export class AuthController {
 
   @Public()
   @Post('register')
+  @Throttle({ medium: { ttl: 60000, limit: 5 } })
   @ApiOperation({ summary: 'Register a new customer account' })
-  async register(@Body() dto: RegisterDto) {
+  async register(@Body() dto: RegisterDto, @Req() req: Request) {
     const user = await this.authService.registerUser(dto);
     await this.mergeGuestCart(user.id, dto.guestToken);
-    return this.publicSession(await this.authService.login(user));
+    const meta = { ip: req.ip, device: req.headers['user-agent'] as string | undefined };
+    return this.publicSession(await this.authService.login(user, meta));
   }
 
   @Public()
@@ -89,20 +93,24 @@ export class AuthController {
   @Throttle({ medium: { ttl: 60000, limit: 10 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login with email & password' })
-  async login(@Body() dto: LoginDto) {
+  async login(@Body() dto: LoginDto, @Req() req: Request) {
     const user = await this.authService.validateLocalUser(dto);
     await this.mergeGuestCart(user.id, dto.guestToken);
-    return this.publicSession(await this.authService.login(user));
+    const meta = { ip: req.ip, device: req.headers['user-agent'] as string | undefined };
+    return this.publicSession(await this.authService.login(user, meta));
   }
 
   @Public()
   @Post('refresh')
+  @Throttle({ medium: { ttl: 60000, limit: 30 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Refresh access token' })
-  async refresh(@Body() dto: RefreshDto) {
+  async refresh(@Body() dto: RefreshDto, @Req() req: Request) {
+    const meta = { ip: req.ip, device: req.headers['user-agent'] as string | undefined };
     const tokens = await this.authService.refreshTokens(
-      dto.userId,
       dto.refreshToken,
+      dto.userId,
+      meta,
     );
     return tokens;
   }

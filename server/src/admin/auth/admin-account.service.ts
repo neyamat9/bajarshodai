@@ -13,7 +13,16 @@ import * as argon2 from 'argon2';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthService } from '../../auth/auth.service';
+import { MailService } from '../../common/mail/mail.service';
+import { JwtService } from '@nestjs/jwt';
 import { parseLoginIdentifier } from '../../common/utils/phone';
+
+function maskEmail(email: string): string {
+  const [user, domain] = email.split('@');
+  if (!domain) return email;
+  const maskedUser = user.length <= 2 ? user[0] + '***' : user[0] + '***' + user[user.length - 1];
+  return `${maskedUser}@${domain}`;
+}
 
 // everyone who may sign in to the dashboard (what each can do is decided by permissions)
 const ADMIN_ROLES: Role[] = [Role.STAFF, Role.ADMIN, Role.SUPER_ADMIN];
@@ -38,13 +47,19 @@ export class AdminAccountService {
   constructor(
     private prisma: PrismaService,
     private auth: AuthService,
+    private mail: MailService,
+    private jwt: JwtService,
   ) {}
 
   isAdmin(user: Pick<User, 'role'>) {
     return ADMIN_ROLES.includes(user.role);
   }
 
-  async login(identifier: string, password: string) {
+  async login(
+    identifier: string,
+    password: string,
+    clientMeta?: { ip?: string; userAgent?: string },
+  ) {
     const who = parseLoginIdentifier(identifier);
     const key = who.type === 'email' ? who.email : who.phone;
     this.assertNotLocked(key);
@@ -73,8 +88,60 @@ export class AdminAccountService {
     }
 
     this.failures.delete(key);
-    const session = await this.auth.login(user);
+
+    // If admin has an email configured, trigger 2FA email OTP
+    if (user.email) {
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otpHash = await argon2.hash(otp);
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+      // Invalidate existing OTPs
+      await this.prisma.adminTwoFactorOtp.deleteMany({
+        where: { userId: user.id },
+      });
+
+      await this.prisma.adminTwoFactorOtp.create({
+        data: {
+          userId: user.id,
+          otpHash,
+          expiresAt,
+        },
+      });
+
+      // Send OTP email
+      await this.mail.send({
+        to: user.email,
+        subject: 'Bazar Shodai Admin Security Code',
+        text: `Your security verification code is: ${otp}. It will expire in 10 minutes. If you did not request this, please secure your account immediately.`,
+        html: `
+          <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <h2 style="color: #0f172a; margin-top: 0;">Admin Security Verification</h2>
+            <p style="color: #475569; font-size: 15px;">A login attempt was made for your Bazar Shodai admin account.</p>
+            <div style="background: #f1f5f9; padding: 16px; border-radius: 6px; text-align: center; margin: 24px 0;">
+              <span style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #0f172a;">${otp}</span>
+            </div>
+            <p style="color: #64748b; font-size: 13px;">This code is valid for 10 minutes. If you did not attempt this login, please change your password immediately.</p>
+          </div>
+        `,
+      });
+
+      // Sign short-lived temp token
+      const tempToken = await this.jwt.signAsync(
+        { sub: user.id, is2faPending: true },
+        { expiresIn: '10m' },
+      );
+
+      return {
+        requires2FA: true,
+        tempToken,
+        maskedEmail: maskEmail(user.email),
+      };
+    }
+
+    // Direct login fallback if no email is set
+    const session = await this.auth.login(user, clientMeta);
     return {
+      requires2FA: false,
       userId: session.userId,
       accessToken: session.accessToken,
       refreshToken: session.refreshToken,
@@ -82,11 +149,79 @@ export class AdminAccountService {
     };
   }
 
-  async refresh(userId: string, refreshToken: string) {
+  async verify2FA(
+    tempToken: string,
+    otp: string,
+    clientMeta?: { ip?: string; userAgent?: string },
+  ) {
+    let payload: { sub: string; is2faPending?: boolean };
+    try {
+      payload = await this.jwt.verifyAsync(tempToken);
+    } catch {
+      throw new UnauthorizedException(
+        'Security session expired or invalid. Please log in again.',
+      );
+    }
+
+    if (!payload.sub || !payload.is2faPending) {
+      throw new UnauthorizedException('Invalid security token.');
+    }
+
+    const otpRecord = await this.prisma.adminTwoFactorOtp.findFirst({
+      where: {
+        userId: payload.sub,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!otpRecord) {
+      throw new UnauthorizedException(
+        'Security code has expired. Please log in again to receive a new code.',
+      );
+    }
+
+    const isMatch = await argon2
+      .verify(otpRecord.otpHash, otp.trim())
+      .catch(() => false);
+    if (!isMatch) {
+      throw new UnauthorizedException(
+        'Invalid security code. Please check and try again.',
+      );
+    }
+
+    // Clean up OTP record
+    await this.prisma.adminTwoFactorOtp.deleteMany({
+      where: { userId: payload.sub },
+    });
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+    });
+
+    if (!user || !this.isAdmin(user) || user.status !== 'ACTIVE') {
+      throw new ForbiddenException('Account is not allowed to access admin portal.');
+    }
+
+    const session = await this.auth.login(user, clientMeta);
+    return {
+      requires2FA: false,
+      userId: session.userId,
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken,
+      user: this.auth.toPublicUser(user),
+    };
+  }
+
+  async refresh(
+    userId: string,
+    refreshToken: string,
+    clientMeta?: { ip?: string; userAgent?: string },
+  ) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user || !this.isAdmin(user))
       throw new ForbiddenException('Access Denied');
-    return this.auth.refreshTokens(userId, refreshToken);
+    return this.auth.refreshTokens(userId, refreshToken, clientMeta);
   }
 
   me(user: User) {

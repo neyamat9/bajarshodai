@@ -6,7 +6,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../common/mail';
 import { SettingsService } from '../../common/settings';
 import { normalizeLang, tr } from '../../common/i18n';
-
+import { normalizeBdPhone } from '../../common/utils/phone';
 
 @Injectable()
 export class PasswordResetService {
@@ -19,19 +19,34 @@ export class PasswordResetService {
     private settings: SettingsService,
   ) {}
 
-  // Always returns the same message so the endpoint cannot be used to find
-  // out which emails are registered.
+  // Returns generic confirmation so endpoints cannot be used to probe accounts.
+  // If a phone number has no email attached, submits a PasswordResetRequest for Admin support.
   async requestReset(
-    rawEmail: string,
+    rawIdentifier: string,
     opts: ResetFlow = {},
     langHint?: string,
   ) {
-    const email = rawEmail.trim().toLowerCase();
+    const input = rawIdentifier.trim();
+    const isEmail = input.includes('@');
     const hinted = normalizeLang(langHint);
     const generic = tr(hinted, 'reset.generic');
-    const user = await this.prisma.user.findFirst({
-      where: { email: { equals: email, mode: 'insensitive' } },
-    });
+
+    let user: any = null;
+    let isPhoneUserWithoutEmail = false;
+
+    if (isEmail) {
+      user = await this.prisma.user.findFirst({
+        where: { email: { equals: input.toLowerCase(), mode: 'insensitive' } },
+      });
+    } else {
+      const phone = normalizeBdPhone(input);
+      user = await this.prisma.user.findUnique({
+        where: { phone },
+      });
+      if (user && !user.email) {
+        isPhoneUserWithoutEmail = true;
+      }
+    }
 
     // Admin links only for the admin account and go to the dashboard; the
     // storefront flow never touches admin accounts.
@@ -42,6 +57,40 @@ export class PasswordResetService {
     ) {
       return { success: true, message: generic };
     }
+
+    // Phone-only customer without an email: create PasswordResetRequest for admin assistance
+    if (isPhoneUserWithoutEmail) {
+      const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000);
+      const existingRequest = await this.prisma.passwordResetRequest.findFirst({
+        where: {
+          phone: user.phone,
+          status: 'PENDING',
+          createdAt: { gt: fifteenMinsAgo },
+        },
+      });
+
+      if (!existingRequest) {
+        await this.prisma.passwordResetRequest.create({
+          data: {
+            userId: user.id,
+            phone: user.phone,
+            status: 'PENDING',
+          },
+        });
+      }
+
+      const phoneResetMessage =
+        hinted === 'en'
+          ? 'No email is linked to your account. Your reset request has been submitted to support. Our representative will contact you shortly.'
+          : 'আপনার অ্যাকাউন্টে কোনো ইমেইল যুক্ত নেই। পাসওয়ার্ড রিসেটের অনুরোধ সফলভাবে পাঠানো হয়েছে। আমাদের প্রতিনিধি শীঘ্রই আপনার সাথে যোগাযোগ করবেন।';
+
+      return {
+        success: true,
+        mode: 'PHONE_REQUEST',
+        message: phoneResetMessage,
+      };
+    }
+
     const lang = normalizeLang(user.language ?? langHint);
 
     // Only the newest link should work.

@@ -17,8 +17,8 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import type { User } from '@prisma/client';
 import type { Response } from 'express';
-import { JwtAuthGuard, RolesGuard } from '../../common/guards';
-import { Roles } from '../../common/decorators';
+import { JwtAuthGuard, PermissionsGuard } from '../../common/guards';
+import { RequirePermissions } from '../../common/decorators';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { sendTable } from '../../common/export/table-export';
 import { AdminCouponsService } from './coupons.service';
@@ -33,8 +33,8 @@ import {
 
 @ApiTags('Admin - Coupons')
 @ApiBearerAuth('JWT')
-@Roles(Role.ADMIN, Role.SUPER_ADMIN)
-@UseGuards(JwtAuthGuard, RolesGuard)
+@RequirePermissions('orders.view', 'orders.manage')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('admin/coupons')
 export class AdminCouponsController {
   constructor(private readonly coupons: AdminCouponsService) {}

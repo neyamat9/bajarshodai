@@ -10,7 +10,7 @@ import { MOBILE_METHODS, type CheckoutAddress, type PaymentMethod } from "@/lib/
 import { useState } from "react";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { MapPin } from "lucide-react";
+import { MapPin, Loader2 } from "lucide-react";
 import { formatMoney, formatNumber } from "@/lib/format";
 import type { Locale } from "@/lib/locale";
 
@@ -66,7 +66,12 @@ export default function OrderReview({ summary, address, paymentMethod, deliveryS
           locationSource: pin.source,
         },
         deliverySlot: deliverySlot || undefined,
-        ...(MOBILE_METHODS.includes(paymentMethod) ? { bkashTransactionId, bkashSenderNumber } : {}),
+        ...(MOBILE_METHODS.includes(paymentMethod)
+          ? {
+              bkashTransactionId: bkashTransactionId?.trim() || undefined,
+              bkashSenderNumber: bkashSenderNumber?.trim() || undefined,
+            }
+          : {}),
         couponCode: couponCode || undefined,
         deliveryNote: note.trim() || undefined,
         email: !user && address.email ? address.email : undefined,
@@ -111,7 +116,12 @@ export default function OrderReview({ summary, address, paymentMethod, deliveryS
         <p className="font-semibold text-foreground">{paymentMethod === "Cash on Delivery" ? t("cod") : paymentMethod}</p>
         {MOBILE_METHODS.includes(paymentMethod) && (
           <p className="mt-1 text-xs text-muted-foreground">
-            {t.rich("trxLine", { trx: bkashTransactionId ?? "", sender: bkashSenderNumber ?? "", method: paymentMethod, b: (c) => <b className="text-foreground">{c}</b> })}
+            {t.rich("trxLine", {
+              trx: bkashTransactionId?.trim() ? bkashTransactionId.trim() : (t("optional") || "optional"),
+              sender: bkashSenderNumber ?? "",
+              method: paymentMethod,
+              b: (c) => <b className="text-foreground">{c}</b>,
+            })}
           </p>
         )}
         {paymentMethod === "Cash on Delivery" && <p className="mt-1 text-xs text-muted-foreground">{t("codLine", { amount: formatMoney(summary.total, locale) })}</p>}
@@ -138,8 +148,20 @@ export default function OrderReview({ summary, address, paymentMethod, deliveryS
         <button type="button" onClick={onBack} disabled={placing} className="flex-1 py-3.5 rounded border border-border text-foreground/80 font-semibold text-sm hover:border-input hover:text-foreground disabled:opacity-30">
           {t("backArrow")}
         </button>
-        <button type="button" onClick={place} disabled={placing || !summary.canPlaceOrder} className="flex-[2] py-3.5 rounded bg-brand-fresh text-foreground font-black text-sm hover:bg-brand-fresh/90 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-[0_8px_24px_rgba(69,162,44,0.3)]">
-          {placing ? t("placing") : t("placeOrder", { amount: formatMoney(summary.total, locale) })}
+        <button
+          type="button"
+          onClick={place}
+          disabled={placing || !summary.canPlaceOrder}
+          className="flex-[2] py-3.5 rounded bg-brand-fresh text-foreground font-black text-sm hover:bg-brand-fresh/90 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-[0_8px_24px_rgba(69,162,44,0.3)] inline-flex items-center justify-center gap-2"
+        >
+          {placing ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin text-foreground" />
+              {t("placing")}
+            </>
+          ) : (
+            t("placeOrder", { amount: formatMoney(summary.total, locale) })
+          )}
         </button>
       </div>
     </div>

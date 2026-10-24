@@ -36,12 +36,12 @@ const ACCOUNT_TYPE: Record<string, "accPersonal" | "accMerchant" | "accAgent"> =
 const SEND_HOW: Record<string, "howPersonal" | "howMerchant" | "howAgent"> = { personal: "howPersonal", merchant: "howMerchant", agent: "howAgent" };
 
 export const TRX_PATTERN = /^[A-Za-z0-9]{6,20}$/;
-export const BD_MOBILE = /^(\+?88)?01[3-9]\d{8}$/;
+export const SENDER_PATTERN = /^(\d{4}|(\+?88)?01[3-9]\d{8})$/;
 
 /**
  * Step 2 — how to pay.
  * Cash on delivery needs nothing. bKash / Nagad / Rocket show where to send the money (with a copy button and the amount),
- * then ask for the transaction ID and the number the money was sent from, which the shop checks against its account.
+ * then ask for the transaction ID (optional) and the number (or last 4 digits) the money was sent from, which the shop checks manually.
  */
 export default function PaymentSelector({ methods, accounts, total, selected, onSelect, transactionId, onTransactionIdChange, senderNumber, onSenderNumberChange, onBack, onContinue }: PaymentSelectorProps) {
   const t = useTranslations("Checkout");
@@ -54,9 +54,11 @@ export default function PaymentSelector({ methods, accounts, total, selected, on
     ? BRAND[selected] || { name: selected, dot: "bg-brand-fresh", tint: "bg-brand-fresh/10", border: "border-brand-fresh/50", text: "text-brand-fresh" }
     : null;
   const account = selected ? accounts[selected] : null;
-  const trxOk = TRX_PATTERN.test(transactionId.trim());
-  const senderOk = BD_MOBILE.test(senderNumber.replace(/[\s-]/g, ""));
-  const canContinue = !!selected && (!isMobile || (trxOk && senderOk));
+  const trxTrimmed = transactionId.trim();
+  const trxOk = trxTrimmed.length === 0 || TRX_PATTERN.test(trxTrimmed);
+  const cleanSender = senderNumber.replace(/[\s-]/g, "");
+  const senderOk = SENDER_PATTERN.test(cleanSender);
+  const canContinue = !!selected && (!isMobile || (senderOk && trxOk));
 
   async function copy(n: string) {
     try {
@@ -146,7 +148,7 @@ export default function PaymentSelector({ methods, accounts, total, selected, on
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label htmlFor="trx-id" className="mb-1.5 block text-xs font-bold text-muted-foreground">
-                      {t("trxId")} <span className="text-accent-text">*</span>
+                      {t("trxId")} <span className="font-normal text-muted-foreground/75 text-[11px]">({t("optional")})</span>
                     </label>
                     <input id="trx-id" value={transactionId} onChange={(e) => onTransactionIdChange(e.target.value.replace(/\s/g, "").toUpperCase())} placeholder={t("trxPh")} autoComplete="off" maxLength={20} aria-invalid={touched && !trxOk} className={`${inputBase} font-mono uppercase ${touched && !trxOk ? "border-destructive/60" : ""}`} />
                     {touched && !trxOk && <p role="alert" className="mt-1 text-xs font-medium text-destructive">{t("trxErr")}</p>}
@@ -155,7 +157,7 @@ export default function PaymentSelector({ methods, accounts, total, selected, on
                     <label htmlFor="trx-sender" className="mb-1.5 block text-xs font-bold text-muted-foreground">
                       {t("senderLabel", { name: selectedBrand.name })} <span className="text-accent-text">*</span>
                     </label>
-                    <input id="trx-sender" type="tel" inputMode="tel" value={senderNumber} onChange={(e) => onSenderNumberChange(e.target.value)} placeholder={t("phonePh")} autoComplete="tel" aria-invalid={touched && !senderOk} className={`${inputBase} ${touched && !senderOk ? "border-destructive/60" : ""}`} />
+                    <input id="trx-sender" type="tel" inputMode="tel" value={senderNumber} onChange={(e) => onSenderNumberChange(e.target.value)} placeholder={t("senderPh")} autoComplete="tel" aria-invalid={touched && !senderOk} className={`${inputBase} ${touched && !senderOk ? "border-destructive/60" : ""}`} />
                     {touched && !senderOk && <p role="alert" className="mt-1 text-xs font-medium text-destructive">{t("senderErr")}</p>}
                   </div>
                 </div>

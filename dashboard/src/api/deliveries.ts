@@ -92,6 +92,19 @@ export interface DeliveryDetail {
   events: { id: string; status: DeliveryStatus; actorName: string | null; note: string | null; createdAt: string }[];
 }
 
+export interface RiderSettlementRow {
+  id: string;
+  riderId: string;
+  totalCash: number;
+  deliveryCount: number;
+  status: "PENDING" | "SETTLED" | "CANCELLED";
+  notes: string | null;
+  settledAt: string | null;
+  createdAt: string;
+  rider: { id: string; name: string; phone: string | null };
+  settledBy: { id: string; name: string } | null;
+}
+
 export const deliveriesApi = {
   board: (p: { date?: string; assigneeId?: string } = {}) => api.get<Board>("/admin/deliveries/board", { params: clean(p) }).then((r) => r.data),
   riders: () => api.get<Rider[]>("/admin/deliveries/riders").then((r) => r.data),
@@ -101,6 +114,12 @@ export const deliveriesApi = {
   stats: (p: { from?: string; to?: string } = {}) => api.get<Stats>("/admin/deliveries/stats", { params: clean(p) }).then((r) => r.data),
   cash: () => api.get<CashGroup[]>("/admin/deliveries/cash").then((r) => r.data),
   handOver: (deliveryIds: string[]) => api.post<{ received: number; total: number }>("/admin/deliveries/cash/handover", { deliveryIds }).then((r) => r.data),
+  listSettlements: (params?: { riderId?: string; status?: string; page?: number; limit?: number }) =>
+    api.get<{ data: RiderSettlementRow[]; total: number; page: number; limit: number }>("/admin/deliveries/settlements", { params }).then((r) => r.data),
+  createSettlement: (riderId: string, notes?: string) =>
+    api.post<RiderSettlementRow>("/admin/deliveries/settlements", { riderId, notes }).then((r) => r.data),
+  settleSettlement: (id: string, notes?: string) =>
+    api.patch<RiderSettlementRow>(`/admin/deliveries/settlements/${id}/settle`, { notes }).then((r) => r.data),
   // the rider
   mine: (scope: "active" | "done") => api.get<MyDelivery[]>("/admin/my-deliveries", { params: { scope } }).then((r) => r.data),
   mySummary: () => api.get<MySummary>("/admin/my-deliveries/summary").then((r) => r.data),

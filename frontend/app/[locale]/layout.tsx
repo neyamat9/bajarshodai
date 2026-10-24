@@ -2,6 +2,7 @@ import CartSidebar from "@/components/cart/CartSidebar";
 import FloatingCart from "@/components/cart/FloatingCart";
 import { AuthModalProvider } from "@/components/auth/AuthModal";
 import FreshnessWatcher from "@/components/layout/FreshnessWatcher";
+import WhatsAppWidget from "@/components/layout/WhatsAppWidget";
 import ScrollToTop from "@/components/motion/ScrollToTop";
 import SmoothScroll from "@/components/motion/SmoothScroll";
 import ThemeProvider from "@/components/theme/ThemeProvider";
@@ -93,6 +94,7 @@ export default async function LocaleLayout({
                     {/* Global overlays — rendered once, visibility driven by context */}
                     <CartSidebar />
                     <FloatingCart />
+                    <WhatsAppWidget />
                   </AuthModalProvider>
                 </WishlistProvider>
               </CartProvider>

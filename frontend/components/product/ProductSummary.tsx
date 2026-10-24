@@ -238,6 +238,12 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
             {unit && <span className="text-sm font-semibold text-muted-foreground">/ {unit.label}</span>}
             {hasDiscount && <span className="text-sm text-muted-foreground line-through">{money(oldPrice!)}</span>}
           </p>
+          {(unit?.allowDecimal || (unit?.step != null && unit.step < 1) || /kg|gm|gram|কেজি|গ্রাম/i.test(unit?.label || "")) && (
+            <div className="mt-2.5 flex items-start gap-1.5 rounded bg-amber-500/10 border border-amber-500/20 px-3 py-2 text-[11px] font-medium text-amber-900 dark:text-amber-200">
+              <Info className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+              <span>{t("summary.weighedNotice")}</span>
+            </div>
+          )}
           <button
             type="button"
             onClick={() => setPanel(panel === "payment" ? null : "payment")}

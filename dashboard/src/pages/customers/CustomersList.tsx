@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router";
-import { X } from "lucide-react";
+import { KeyRound, X } from "lucide-react";
 import { usersApi, type CustomerRow } from "@/api/users";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { DataTable, type Column } from "@/components/shared/DataTable";
@@ -44,7 +44,19 @@ export default function CustomersList() {
   ];
   return (
     <div>
-      <PageHeader title={tr("Customers")} description={tr("Everyone who has an account.")} actions={<><SavedViews storageKey="customers" builtIns={[{ name: "Never ordered", query: "hasOrdered=false" }, { name: "Have ordered", query: "hasOrdered=true" }, { name: "Suspended", query: "status=SUSPENDED" }]} /><DownloadButton path="/admin/users/export" params={{ search, status: f.status, role: "USER", hasOrdered: f.hasOrdered, registeredFrom: f.registeredFrom, registeredTo: f.registeredTo }} filename="customers.csv" /></>} />
+      <PageHeader
+        title={tr("Customers")}
+        description={tr("Everyone who has an account.")}
+        actions={
+          <>
+            <Button variant="outline" size="sm" onClick={() => nav("/customers/password-reset-requests")}>
+              <KeyRound className="size-3.5" /> {tr("Password Requests")}
+            </Button>
+            <SavedViews storageKey="customers" builtIns={[{ name: "Never ordered", query: "hasOrdered=false" }, { name: "Have ordered", query: "hasOrdered=true" }, { name: "Suspended", query: "status=SUSPENDED" }]} />
+            <DownloadButton path="/admin/users/export" params={{ search, status: f.status, role: "USER", hasOrdered: f.hasOrdered, registeredFrom: f.registeredFrom, registeredTo: f.registeredTo }} filename="customers.csv" />
+          </>
+        }
+      />
       <DataTable
         infinite={q}
         columns={cols}

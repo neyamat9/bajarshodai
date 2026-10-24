@@ -10,6 +10,7 @@ import {
   Body,
   Patch,
   Param,
+  ParseUUIDPipe,
   Delete,
   UseGuards,
 } from '@nestjs/common';
@@ -82,7 +83,7 @@ export class CategoryController {
   @ApiParam({ name: 'id', description: 'Unique identifier of the category' })
   @ApiResponse({ status: 200, description: 'Return the category object.' })
   @ApiResponse({ status: 404, description: 'Category not found.' })
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.categoryService.findOne(id);
   }
 
@@ -96,7 +97,7 @@ export class CategoryController {
   })
   @ApiResponse({ status: 404, description: 'Category not found.' })
   update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
   ) {
     return this.categoryService.update(id, updateCategoryDto);
@@ -111,7 +112,7 @@ export class CategoryController {
     description: 'The category has been successfully deleted.',
   })
   @ApiResponse({ status: 404, description: 'Category not found.' })
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.categoryService.remove(id);
   }
 }

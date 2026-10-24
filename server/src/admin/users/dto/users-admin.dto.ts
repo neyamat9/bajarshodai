@@ -11,6 +11,7 @@ import {
   Max,
   MaxLength,
   Min,
+  MinLength,
 } from 'class-validator';
 import { Role, UserStatus } from '@prisma/client';
 import type { ExportFormat } from '../../../common/export/table-export';
@@ -150,3 +151,46 @@ export class CreateNoteDto {
   @MaxLength(2000)
   note: string;
 }
+
+export class ListPasswordResetRequestsDto extends PageDto {
+  @ApiPropertyOptional({ enum: ['PENDING', 'CONTACTED', 'RESOLVED', 'REJECTED'] })
+  @IsOptional()
+  @IsString()
+  status?: string;
+}
+
+export class UpdatePasswordResetRequestDto {
+  @ApiProperty({ enum: ['PENDING', 'CONTACTED', 'RESOLVED', 'REJECTED'] })
+  @IsString()
+  @IsNotEmpty()
+  @IsIn(['PENDING', 'CONTACTED', 'RESOLVED', 'REJECTED'])
+  status: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  notes?: string;
+}
+
+export class AdminDirectResetPasswordDto {
+  @ApiPropertyOptional({ description: 'Optional new password. If omitted, a random secure one is generated.' })
+  @IsOptional()
+  @IsString()
+  @MinLength(8)
+  @MaxLength(128)
+  newPassword?: string;
+}
+
+export class UpdateBlacklistDto {
+  @ApiProperty({ description: 'Blacklist customer from placing COD orders' })
+  @IsBoolean()
+  isBlacklisted: boolean;
+
+  @ApiPropertyOptional({ description: 'Reason for blacklisting' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  reason?: string;
+}
+

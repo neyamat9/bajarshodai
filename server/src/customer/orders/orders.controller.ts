@@ -132,7 +132,10 @@ export class OrdersController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get order detail' })
-  async findById(@CurrentUser() user: User, @Param('id') id: string) {
+  async findById(
+    @CurrentUser() user: User,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.ordersService.findById(user.id, id);
   }
 
@@ -188,7 +191,10 @@ export class OrdersController {
   @ApiOperation({
     summary: 'Cancel an order (only PENDING/CONFIRMED/PROCESSING)',
   })
-  async cancelOrder(@CurrentUser() user: User, @Param('id') id: string) {
+  async cancelOrder(
+    @CurrentUser() user: User,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.ordersService.cancelOrder(user.id, id);
   }
 }

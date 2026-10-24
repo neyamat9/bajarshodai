@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Put,
@@ -56,7 +57,7 @@ export class UnitsController {
   @ApiOperation({
     summary: 'Change a unit. Old orders keep the text they were placed with.',
   })
-  update(@Param('id') id: string, @Body() dto: UpdateUnitDto) {
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateUnitDto) {
     return this.units.update(id, dto);
   }
 
@@ -64,7 +65,7 @@ export class UnitsController {
   @ApiOperation({
     summary: 'Delete a unit that no product uses (switch it off otherwise)',
   })
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.units.remove(id);
   }
 }

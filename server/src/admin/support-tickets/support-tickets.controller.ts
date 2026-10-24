@@ -16,8 +16,8 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Prisma, Role } from '@prisma/client';
 import type { User } from '@prisma/client';
-import { JwtAuthGuard, RolesGuard } from '../../common/guards';
-import { Roles } from '../../common/decorators';
+import { JwtAuthGuard, PermissionsGuard } from '../../common/guards';
+import { RequirePermissions } from '../../common/decorators';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TicketNotifierService } from '../../common/notifications';
@@ -39,8 +39,8 @@ const customerSelect = {
 
 @ApiTags('Admin - Support Tickets')
 @ApiBearerAuth('JWT')
-@Roles(Role.ADMIN, Role.SUPER_ADMIN)
-@UseGuards(JwtAuthGuard, RolesGuard)
+@RequirePermissions('customers.view', 'customers.manage')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('admin/support-tickets')
 export class AdminSupportTicketsController {
   constructor(

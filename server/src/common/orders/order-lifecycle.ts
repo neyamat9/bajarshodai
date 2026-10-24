@@ -1,5 +1,6 @@
 import { ConflictException } from '@nestjs/common';
 import { OrderStatus, Prisma } from '@prisma/client';
+import { randomBytes } from 'crypto';
 import { StockService } from '../inventory/stock.service';
 import { toNum } from '../utils/qty';
 
@@ -16,6 +17,16 @@ function bdDate(now: Date) {
     .toISOString()
     .slice(0, 10)
     .replace(/-/g, '');
+}
+
+const SUFFIX_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+function randomOrderSuffix(): string {
+  const bytes = randomBytes(4);
+  let res = '';
+  for (let i = 0; i < 4; i++) {
+    res += SUFFIX_ALPHABET[bytes[i] % SUFFIX_ALPHABET.length];
+  }
+  return res;
 }
 
 // Atomically increments a named counter and returns the new value.
@@ -37,15 +48,15 @@ export async function nextTicketNumber(tx: Tx, now = new Date()) {
   return `TKT-${date}-${String(value).padStart(4, '0')}`;
 }
 
-// Returns the next order number for today, e.g. "BS-20260512-0001".
+// Returns unguessable unique order number for today, e.g. "BS-20260512-0001-K7P2".
 // The counter row is incremented with a single INSERT ... ON CONFLICT DO
 // UPDATE, which takes a row lock until the surrounding transaction ends, so
-// two concurrent orders can never read the same value. If the order
-// transaction rolls back, the increment rolls back with it.
+// two concurrent orders can never read the same value. The 4-character random
+// suffix prevents guessing adjacent customer order details.
 export async function nextOrderNumber(tx: Tx, now = new Date()) {
   const date = bdDate(now);
   const value = await nextCounterValue(tx, date);
-  return `BS-${date}-${String(value).padStart(4, '0')}`;
+  return `BS-${date}-${String(value).padStart(4, '0')}-${randomOrderSuffix()}`;
 }
 
 // Moves an order to CANCELLED and undoes what placing it did: puts the stock

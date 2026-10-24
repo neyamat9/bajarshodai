@@ -10,6 +10,7 @@ import {
   Patch,
   Post,
   Headers,
+  Ip,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -36,6 +37,7 @@ import {
   AdminResetPasswordDto,
   AdminUpdateProfileDto,
   SeedAdminDto,
+  VerifyTwoFactorDto,
 } from './dto/admin-auth.dto';
 
 @ApiTags('Admin - Auth')
@@ -54,8 +56,25 @@ export class AdminAuthController {
   @Throttle({ medium: { ttl: 60000, limit: 10 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Admin login (phone or email + password)' })
-  login(@Body() dto: AdminLoginDto) {
-    return this.account.login(dto.identifier, dto.password);
+  login(
+    @Body() dto: AdminLoginDto,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent?: string,
+  ) {
+    return this.account.login(dto.identifier, dto.password, { ip, userAgent });
+  }
+
+  @Public()
+  @Post('verify-2fa')
+  @Throttle({ medium: { ttl: 60000, limit: 10 } })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify admin 2FA email OTP and obtain full auth tokens' })
+  verify2FA(
+    @Body() dto: VerifyTwoFactorDto,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent?: string,
+  ) {
+    return this.account.verify2FA(dto.tempToken, dto.otp, { ip, userAgent });
   }
 
   @Public()
@@ -63,8 +82,12 @@ export class AdminAuthController {
   @Throttle({ medium: { ttl: 60000, limit: 30 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get a new access token with the refresh token' })
-  refresh(@Body() dto: AdminRefreshDto) {
-    return this.account.refresh(dto.userId, dto.refreshToken);
+  refresh(
+    @Body() dto: AdminRefreshDto,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent?: string,
+  ) {
+    return this.account.refresh(dto.userId, dto.refreshToken, { ip, userAgent });
   }
 
   @Post('logout')

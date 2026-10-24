@@ -5,6 +5,7 @@ import {
   Patch,
   Delete,
   Param,
+  ParseUUIDPipe,
   Body,
   UseGuards,
   HttpCode,
@@ -42,7 +43,7 @@ export class AddressesController {
   @ApiOperation({ summary: 'Update an address' })
   async update(
     @CurrentUser() user: User,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateAddressDto,
   ) {
     return this.addressesService.update(user.id, id, dto);
@@ -51,13 +52,20 @@ export class AddressesController {
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete an address' })
-  async remove(@CurrentUser() user: User, @Param('id') id: string) {
+  async remove(
+    @CurrentUser() user: User,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.addressesService.remove(user.id, id);
   }
 
   @Patch(':id/default')
   @ApiOperation({ summary: 'Set address as default' })
-  async setDefault(@CurrentUser() user: User, @Param('id') id: string) {
+  async setDefault(
+    @CurrentUser() user: User,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.addressesService.setDefault(user.id, id);
   }
 }
+

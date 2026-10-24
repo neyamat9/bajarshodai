@@ -136,30 +136,28 @@ export class PlaceOrderDto {
   @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'deliveryDate must look like 2026-10-15' })
   deliveryDate?: string;
 
-  // Required for bKash / Nagad / Rocket: the transaction ID the customer received
-  // after manually sending the payment. An admin verifies it against the
-  // merchant account before marking the order PAID. (The field keeps its old
-  // "bkash" name but is used for every mobile-banking method.)
+  // Optional for bKash / Nagad / Rocket: customer may provide TrxID if available
   @ApiPropertyOptional({
     description:
-      'Transaction ID of the mobile-banking payment (bKash / Nagad / Rocket).',
+      'Optional transaction ID of the mobile-banking payment (bKash / Nagad / Rocket).',
   })
-  @ValidateIf((dto: PlaceOrderDto) => dto.paymentMethod !== 'CASH_ON_DELIVERY')
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: 'The transaction ID is required for mobile banking' })
-  @Matches(/^[A-Za-z0-9]{6,20}$/, {
-    message: 'The transaction ID must be 6-20 letters or digits',
-  })
+  @MaxLength(40)
   bkashTransactionId?: string;
 
-  // The mobile-banking number the customer sent the payment from, so the
-  // admin can match it against the merchant statement.
+  // The mobile-banking number or last 4 digits the customer sent the payment from.
   @ApiPropertyOptional({
-    description: 'The mobile-banking number the payment was sent from.',
+    description:
+      'The sender mobile-banking phone number (11 digits) or last 4 digits.',
   })
   @ValidateIf((dto: PlaceOrderDto) => dto.paymentMethod !== 'CASH_ON_DELIVERY')
   @IsString()
-  @IsNotEmpty({ message: 'The sender number is required for mobile banking' })
+  @IsNotEmpty({ message: 'The sender number (or last 4 digits) is required for mobile banking' })
+  @Matches(/^(\d{4}|01[3-9]\d{8})$/, {
+    message:
+      'Sender number must be either full 11-digit BD number (e.g. 01712345678) or last 4 digits (e.g. 5678)',
+  })
   bkashSenderNumber?: string;
 
   @ApiPropertyOptional()

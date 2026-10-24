@@ -16,8 +16,8 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Prisma, Role } from '@prisma/client';
-import { JwtAuthGuard, RolesGuard } from '../../common/guards';
-import { Roles } from '../../common/decorators';
+import { JwtAuthGuard, PermissionsGuard } from '../../common/guards';
+import { RequirePermissions } from '../../common/decorators';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SettingsService } from '../../common/settings';
 import { MailService, escapeHtml, renderEmailLayout } from '../../common/mail';
@@ -29,8 +29,8 @@ import {
 
 @ApiTags('Admin - Contact Messages')
 @ApiBearerAuth('JWT')
-@Roles(Role.ADMIN, Role.SUPER_ADMIN)
-@UseGuards(JwtAuthGuard, RolesGuard)
+@RequirePermissions('customers.view', 'customers.manage')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('admin/contact-messages')
 export class AdminContactMessagesController {
   constructor(

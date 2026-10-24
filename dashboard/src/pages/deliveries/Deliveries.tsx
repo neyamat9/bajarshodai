@@ -2,16 +2,17 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Banknote, Bike, Clock, MapPin, Navigation, Phone, Truck, UserCheck, Users, X } from "lucide-react";
-import { deliveriesApi, failReasonLabel, type Board, type BoardCard, type CashGroup, type Stats } from "@/api/deliveries";
+import { deliveriesApi, failReasonLabel, type Board, type BoardCard, type CashGroup, type Stats, type RiderSettlementRow } from "@/api/deliveries";
 import { errorMessage } from "@/api/client";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
 import { EmptyState, ErrorState } from "@/components/shared/EmptyState";
 import { Field } from "@/components/shared/Field";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Checkbox, Input, Select } from "@/components/ui/input";
+import { Checkbox, Input, Select, Textarea } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAct } from "@/hooks/useAct";
@@ -198,6 +199,170 @@ function StatsTab({ from, to }: { from: string; to: string }) {
   );
 }
 
+function SettlementsTab() {
+  const [statusFilter, setStatusFilter] = useState("");
+  const [createRider, setCreateRider] = useState<{ id: string; name: string } | null>(null);
+  const [settling, setSettling] = useState<RiderSettlementRow | null>(null);
+  const [notes, setNotes] = useState("");
+
+  const q = useQuery({
+    queryKey: ["deliveries", "settlements", statusFilter],
+    queryFn: () => deliveriesApi.listSettlements({ status: statusFilter || undefined }),
+  });
+  const riders = useQuery({ queryKey: ["deliveries", "riders"], queryFn: deliveriesApi.riders });
+
+  const createAct = useAct(
+    (riderId: string) => deliveriesApi.createSettlement(riderId, notes.trim() || undefined),
+    {
+      success: tr("Settlement batch created"),
+      invalidate: [["deliveries"]],
+      onSuccess: () => {
+        setCreateRider(null);
+        setNotes("");
+      },
+    }
+  );
+
+  const settleAct = useAct(
+    (id: string) => deliveriesApi.settleSettlement(id, notes.trim() || undefined),
+    {
+      success: tr("Settlement confirmed as settled"),
+      invalidate: [["deliveries"]],
+      onSuccess: () => {
+        setSettling(null);
+        setNotes("");
+      },
+    }
+  );
+
+  if (q.isError) return <ErrorState message={errorMessage(q.error)} onRetry={() => q.refetch()} />;
+  const items = q.data?.data ?? [];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-40">
+            <option value="">{tr("All statuses")}</option>
+            <option value="PENDING">{tr("Pending")}</option>
+            <option value="SETTLED">{tr("Settled")}</option>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <Select
+            value=""
+            onChange={(e) => {
+              const r = riders.data?.find((x) => x.id === e.target.value);
+              if (r) setCreateRider({ id: r.id, name: r.name });
+            }}
+            className="w-56"
+          >
+            <option value="">+ {tr("Create Daily Settlement…")}</option>
+            {(riders.data ?? []).map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name} ({money(r.cashInHand)})
+              </option>
+            ))}
+          </Select>
+        </div>
+      </div>
+
+      {items.length === 0 ? (
+        <EmptyState
+          title={tr("No settlements found")}
+          description={tr("Create a daily settlement when a rider returns with collected Cash on Delivery funds.")}
+          icon={<Banknote />}
+        />
+      ) : (
+        <div className="grid gap-3 lg:grid-cols-2">
+          {items.map((s) => (
+            <Card key={s.id} className="p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-semibold">{s.rider.name}</p>
+                  <p className="text-xs text-muted-foreground">{s.rider.phone ?? "—"} · {s.deliveryCount} deliveries</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-heading text-xl font-bold">{money(s.totalCash)}</p>
+                  <StatusBadge status={s.status} />
+                </div>
+              </div>
+              <div className="mt-2 text-xs text-muted-foreground">
+                <p>{tr("Created")}: {dateTime(s.createdAt)}</p>
+                {s.settledAt && <p>{tr("Settled")}: {dateTime(s.settledAt)} {s.settledBy ? `by ${s.settledBy.name}` : ""}</p>}
+                {s.notes && <p className="mt-1 text-foreground/80 font-medium">{s.notes}</p>}
+              </div>
+              {s.status === "PENDING" && (
+                <div className="mt-3 flex justify-end">
+                  <Button size="sm" onClick={() => { setSettling(s); setNotes(s.notes || ""); }}>
+                    <Banknote className="size-3.5" /> {tr("Settle & Confirm Received")}
+                  </Button>
+                </div>
+              )}
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Create Dialog */}
+      <Dialog open={!!createRider} onOpenChange={(o) => !o && setCreateRider(null)}>
+        <DialogContent size="sm">
+          <DialogHeader>
+            <DialogTitle>{tr("Create Settlement for")} {createRider?.name}</DialogTitle>
+            <DialogDescription>
+              {tr("This compiles all unhanded delivered orders for this rider into a settlement record.")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="p-4 space-y-3">
+            <Field label={tr("Notes (optional)")}>
+              <Textarea
+                rows={2}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder={tr("e.g. Evening cash settlement")}
+              />
+            </Field>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateRider(null)}>{tr("Cancel")}</Button>
+            <Button loading={createAct.isPending} onClick={() => createRider && createAct.mutate(createRider.id)}>
+              {tr("Create Settlement")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Settle Dialog */}
+      <Dialog open={!!settling} onOpenChange={(o) => !o && setSettling(null)}>
+        <DialogContent size="sm">
+          <DialogHeader>
+            <DialogTitle>{tr("Confirm settlement of")} {settling && money(settling.totalCash)}?</DialogTitle>
+            <DialogDescription>
+              {tr("Verify the physical cash count. Once confirmed, all included deliveries are marked as handed over.")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="p-4 space-y-3">
+            <Field label={tr("Resolution notes (optional)")}>
+              <Textarea
+                rows={2}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder={tr("e.g. Cash counted and deposited in cash drawer.")}
+              />
+            </Field>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSettling(null)}>{tr("Cancel")}</Button>
+            <Button loading={settleAct.isPending} onClick={() => settling && settleAct.mutate(settling.id)}>
+              {tr("Confirm Settled")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 export default function Deliveries() {
   const me = useAuth((s) => s.user);
   const [f, set] = useUrlState({ tab: "board", date: "", rider: "", from: "", to: "" });
@@ -215,6 +380,7 @@ export default function Deliveries() {
         <TabsList>
           <TabsTrigger value="board">{tr("Board")}</TabsTrigger>
           {manage && <TabsTrigger value="cash">{tr("Cash from riders")}</TabsTrigger>}
+          {manage && <TabsTrigger value="settlements">{tr("Daily settlements")}</TabsTrigger>}
           {manage && <TabsTrigger value="stats">{tr("Statistics")}</TabsTrigger>}
         </TabsList>
         <TabsContent value="board">
@@ -230,6 +396,7 @@ export default function Deliveries() {
           <BoardTab date={f.date} assigneeId={f.rider} />
         </TabsContent>
         {manage && <TabsContent value="cash"><CashTab /></TabsContent>}
+        {manage && <TabsContent value="settlements"><SettlementsTab /></TabsContent>}
         {manage && (
           <TabsContent value="stats">
             <div className="mb-3 flex flex-wrap items-end gap-2">

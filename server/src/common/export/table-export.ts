@@ -151,10 +151,14 @@ export async function sendTable(
         const n = Number(v);
         return Number.isFinite(n) ? n : null;
       }
-      // plain text, even if it looks like a formula
-      return typeof v === 'object'
-        ? JSON.stringify(v)
-        : String(v as string | number | boolean);
+      // plain text: neutralize spreadsheet formula prefixes (=, +, -, @)
+      const raw =
+        typeof v === 'object'
+          ? JSON.stringify(v)
+          : String(v as string | number | boolean);
+      return typeof v !== 'number' && /^[=+\-@\t\r]/.test(raw)
+        ? `'${raw}`
+        : raw;
     });
     const r = ws.addRow(cells);
     if (bold) r.font = { bold: true };

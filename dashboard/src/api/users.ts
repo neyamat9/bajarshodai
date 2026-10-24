@@ -9,6 +9,8 @@ export interface CustomerRow {
   status: "ACTIVE" | "SUSPENDED" | "BANNED";
   emailVerified: boolean;
   avatarUrl: string | null;
+  isBlacklisted?: boolean;
+  blacklistReason?: string | null;
   totalOrders: number;
   totalSpent: string;
   createdAt: string;
@@ -61,6 +63,29 @@ export const customersApi = {
   notes: (id: string) => api.get<CustomerNote[]>(`/admin/users/${id}/notes`).then((r) => r.data),
   addNote: (id: string, note: string) => api.post<CustomerNote>(`/admin/users/${id}/notes`, { note }).then((r) => r.data),
   removeNote: (id: string, noteId: string) => api.delete(`/admin/users/${id}/notes/${noteId}`).then((r) => r.data),
-  resetPassword: (id: string) => api.post<{ temporaryPassword: string }>(`/admin/users/${id}/reset-password`).then((r) => r.data),
+  resetPassword: (id: string, newPassword?: string) => api.post<{ temporaryPassword: string; message?: string }>(`/admin/users/${id}/reset-password`, { newPassword }).then((r) => r.data),
   setStatus: (id: string, status: CustomerRow["status"]) => api.patch(`/admin/users/${id}/status`, { status }).then((r) => r.data),
+  updateBlacklist: (id: string, isBlacklisted: boolean, reason?: string) => api.patch(`/admin/users/${id}/blacklist`, { isBlacklisted, reason }).then((r) => r.data),
+};
+
+export interface PasswordResetRequestRow {
+  id: string;
+  phone: string;
+  status: "PENDING" | "CONTACTED" | "COMPLETED" | "REJECTED";
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: string;
+    name: string;
+    phone: string | null;
+    email: string | null;
+  } | null;
+}
+
+export const passwordResetRequestsApi = {
+  list: (params?: { status?: string; page?: number; limit?: number }) =>
+    api.get<Paged<PasswordResetRequestRow>>("/admin/users/password-reset-requests", { params }).then((r) => r.data),
+  update: (id: string, status: string, notes?: string) =>
+    api.patch<PasswordResetRequestRow>(`/admin/users/password-reset-requests/${id}`, { status, notes }).then((r) => r.data),
 };

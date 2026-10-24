@@ -11,7 +11,14 @@ import { writeAudit, type AuditAction } from '../../common/audit';
 import { ACTIVE_DELIVERY } from '../../common/delivery/delivery-sync';
 import { normalizeBdPhone } from '../../common/utils/phone';
 import { AdminOrdersService } from '../orders/orders.service';
-import { BoardQueryDto, RangeDto, FAIL_REASONS } from './dto/deliveries.dto';
+import {
+  BoardQueryDto,
+  RangeDto,
+  FAIL_REASONS,
+  CreateSettlementDto,
+  ListSettlementsDto,
+  SettleSettlementDto,
+} from './dto/deliveries.dto';
 
 // An order can be given to a rider once the shop has accepted it and until it is delivered.
 const ASSIGNABLE: OrderStatus[] = [
@@ -1105,5 +1112,159 @@ export class DeliveriesService {
         delivered,
       })),
     };
+  }
+
+  // ------------------------------------------------------------------ rider settlements
+
+  async listSettlements(q: ListSettlementsDto) {
+    const where: Prisma.RiderSettlementWhereInput = {
+      ...(q.riderId ? { riderId: q.riderId } : {}),
+      ...(q.status ? { status: q.status } : {}),
+      ...(q.from || q.to
+        ? {
+            date: {
+              ...(q.from ? { gte: new Date(q.from) } : {}),
+              ...(q.to ? { lte: new Date(q.to) } : {}),
+            },
+          }
+        : {}),
+    };
+    const page = q.page || 1;
+    const limit = q.limit || 20;
+
+    const [data, total] = await Promise.all([
+      this.prisma.riderSettlement.findMany({
+        where,
+        include: {
+          rider: { select: { id: true, name: true, phone: true } },
+        },
+        orderBy: { date: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.riderSettlement.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async createSettlement(dto: CreateSettlementDto, adminId: string) {
+    const unhandedDeliveries = await this.prisma.delivery.findMany({
+      where: {
+        assigneeId: dto.riderId,
+        status: 'DELIVERED',
+        cashHandedOverAt: null,
+        cashCollected: { gt: 0 },
+      },
+      select: { id: true, cashCollected: true },
+    });
+
+    const totalCash = round2(
+      unhandedDeliveries.reduce(
+        (sum, d) => sum + Number(d.cashCollected ?? 0),
+        0,
+      ),
+    );
+
+    const settlement = await this.prisma.riderSettlement.create({
+      data: {
+        riderId: dto.riderId,
+        date: dto.date ? new Date(dto.date) : new Date(),
+        orderCount: unhandedDeliveries.length,
+        totalCashCollected: totalCash,
+        settledAmount: 0,
+        status: 'PENDING',
+        notes: dto.notes ?? null,
+      },
+      include: {
+        rider: { select: { id: true, name: true, phone: true } },
+      },
+    });
+
+    return settlement;
+  }
+
+  async settleSettlement(
+    id: string,
+    dto: SettleSettlementDto,
+    actor: User,
+  ) {
+    const settlement = await this.prisma.riderSettlement.findUnique({
+      where: { id },
+      include: { rider: true },
+    });
+    if (!settlement) {
+      throw new NotFoundException('Settlement record not found');
+    }
+    if (settlement.status === 'SETTLED') {
+      throw new BadRequestException('This settlement has already been settled.');
+    }
+
+    const unhanded = await this.prisma.delivery.findMany({
+      where: {
+        assigneeId: settlement.riderId,
+        status: 'DELIVERED',
+        cashHandedOverAt: null,
+        cashCollected: { gt: 0 },
+      },
+      select: { id: true, cashCollected: true },
+    });
+
+    const now = new Date();
+    await this.prisma.$transaction(async (tx) => {
+      await tx.riderSettlement.update({
+        where: { id },
+        data: {
+          status: 'SETTLED',
+          settledAmount: dto.settledAmount,
+          settledAt: now,
+          receivedByAdminId: actor.id,
+          notes: dto.notes ?? settlement.notes,
+        },
+      });
+
+      if (unhanded.length > 0) {
+        await tx.delivery.updateMany({
+          where: { id: { in: unhanded.map((d) => d.id) } },
+          data: {
+            cashHandedOverAt: now,
+            cashHandedOverById: actor.id,
+          },
+        });
+
+        await tx.deliveryEvent.createMany({
+          data: unhanded.map((d) => ({
+            deliveryId: d.id,
+            status: 'DELIVERED' as const,
+            actorId: actor.id,
+            actorName: actor.name,
+            note: `Settled via settlement #${id}: ৳${dto.settledAmount} received by ${actor.name}`,
+          })),
+        });
+      }
+
+      await writeAudit(tx, {
+        adminId: actor.id,
+        action: 'CASH_HANDED_OVER',
+        entity: 'Delivery',
+        entityId: id,
+        newValue: {
+          settlementId: id,
+          rider: settlement.rider.name,
+          settledAmount: dto.settledAmount,
+          ordersCount: unhanded.length,
+        },
+      });
+    });
+
+    return { success: true, message: 'Settlement confirmed successfully' };
   }
 }

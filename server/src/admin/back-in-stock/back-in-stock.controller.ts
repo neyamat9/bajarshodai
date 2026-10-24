@@ -12,9 +12,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Role } from '@prisma/client';
-import { JwtAuthGuard, RolesGuard } from '../../common/guards';
-import { Roles } from '../../common/decorators';
+import { JwtAuthGuard, PermissionsGuard } from '../../common/guards';
+import { RequirePermissions } from '../../common/decorators';
 import { AdminBackInStockService } from './back-in-stock.service';
 import {
   NotifyNowDto,
@@ -24,8 +23,8 @@ import {
 
 @ApiTags('Admin - Back in stock')
 @ApiBearerAuth('JWT')
-@Roles(Role.ADMIN, Role.SUPER_ADMIN)
-@UseGuards(JwtAuthGuard, RolesGuard)
+@RequirePermissions('products.view', 'inventory.manage')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('admin/back-in-stock')
 export class AdminBackInStockController {
   constructor(private readonly service: AdminBackInStockService) {}

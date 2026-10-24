@@ -196,7 +196,7 @@ export default function OrderCreatePage() {
 
   const submit = () => {
     if (lines.length === 0) return setErr(tr("Add at least one product"));
-    if (lines.some((l) => !(l.quantity >= 1) || l.price === "" || Number(l.price) < 0)) return setErr(tr("Check the quantity and price of each item"));
+    if (lines.some((l) => !(l.quantity >= 0.001) || l.price === "" || Number(l.price) < 0)) return setErr(tr("Check the quantity and price of each item"));
     if (walkIn) {
       if (phone.trim() && !BD_PHONE.test(phone.replace(/[\s-]/g, ""))) return setErr(tr("Enter a valid Bangladesh mobile number, or leave it empty"));
     } else {
@@ -289,15 +289,53 @@ export default function OrderCreatePage() {
                   {l.variantName && <p className="truncate text-[11px] text-muted-foreground">{l.variantName}</p>}
                   <div className="mt-1 flex items-center gap-2">
                     <div className="flex items-center rounded border border-input">
-                      <button type="button" aria-label={tr("Less")} onClick={() => (l.quantity <= 1 ? setLines((ls) => ls.filter((x) => x.key !== l.key)) : setLine(l.key, { quantity: l.quantity - 1 }))} className="flex size-7 cursor-pointer items-center justify-center hover:bg-muted"><Minus className="size-3.5" /></button>
+                      <button
+                        type="button"
+                        aria-label={tr("Less")}
+                        onClick={() => {
+                          if (l.quantity <= 0.25) {
+                            setLines((ls) => ls.filter((x) => x.key !== l.key));
+                          } else {
+                            const step = l.quantity <= 1 ? 0.25 : 1;
+                            setLine(l.key, { quantity: Math.round((l.quantity - step) * 1000) / 1000 });
+                          }
+                        }}
+                        className="flex size-7 cursor-pointer items-center justify-center hover:bg-muted"
+                      >
+                        <Minus className="size-3.5" />
+                      </button>
                       <input
                         aria-label={tr("Quantity")}
                         value={l.quantity}
-                        inputMode="numeric"
-                        onChange={(e) => setLine(l.key, { quantity: Math.min(l.stock, Math.max(1, Math.floor(Number(e.target.value.replace(/\D/g, "")) || 1))) })}
-                        className="h-7 w-9 border-x border-input bg-card text-center text-[13px] outline-none"
+                        inputMode="decimal"
+                        onChange={(e) => {
+                          const raw = e.target.value.replace(/[^\d.]/g, "");
+                          if (raw === "") {
+                            setLine(l.key, { quantity: 0 });
+                          } else {
+                            const val = Number(raw);
+                            setLine(l.key, { quantity: isNaN(val) ? 0 : Math.min(l.stock, val) });
+                          }
+                        }}
+                        onBlur={() => {
+                          if (l.quantity <= 0) {
+                            setLine(l.key, { quantity: 1 });
+                          }
+                        }}
+                        className="h-7 w-12 border-x border-input bg-card text-center text-[13px] outline-none"
                       />
-                      <button type="button" aria-label={tr("More")} disabled={l.quantity >= l.stock} onClick={() => setLine(l.key, { quantity: l.quantity + 1 })} className="flex size-7 cursor-pointer items-center justify-center hover:bg-muted disabled:opacity-40"><Plus className="size-3.5" /></button>
+                      <button
+                        type="button"
+                        aria-label={tr("More")}
+                        disabled={l.quantity >= l.stock}
+                        onClick={() => {
+                          const step = l.quantity < 1 ? 0.25 : 1;
+                          setLine(l.key, { quantity: Math.round(Math.min(l.stock, l.quantity + step) * 1000) / 1000 });
+                        }}
+                        className="flex size-7 cursor-pointer items-center justify-center hover:bg-muted disabled:opacity-40"
+                      >
+                        <Plus className="size-3.5" />
+                      </button>
                     </div>
                     <span className="text-xs text-muted-foreground">×</span>
                     <input

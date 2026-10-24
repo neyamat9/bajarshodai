@@ -12,9 +12,12 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { writeAudit } from '../../common/audit';
 import { Table } from '../../common/export/table-export';
 import {
+  AdminDirectResetPasswordDto,
   ExportUsersDto,
+  ListPasswordResetRequestsDto,
   ListUsersDto,
   PageDto,
+  UpdatePasswordResetRequestDto,
   UserFilterDto,
 } from './dto/users-admin.dto';
 
@@ -434,7 +437,11 @@ export class AdminUsersService {
   // use the emailed reset link. The shop sets a temporary password for them
   // (they are told it by phone) and they change it after logging in. The new
   // password is shown to the admin once and is never stored in the log.
-  async resetPassword(id: string, actor: User) {
+  async resetPassword(
+    id: string,
+    actor: User,
+    dto?: AdminDirectResetPasswordDto,
+  ) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('Customer not found');
     if (ADMIN_ROLES.includes(user.role) && actor.role !== Role.SUPER_ADMIN) {
@@ -447,11 +454,15 @@ export class AdminUsersService {
         'Use "Change password" in your profile for your own account',
       );
     }
-    // easy to read out loud: no 0/O, 1/l/I
-    const alphabet = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let temporaryPassword = '';
-    for (let i = 0; i < 8; i++) {
-      temporaryPassword += alphabet[randomInt(alphabet.length)];
+    let temporaryPassword = dto?.newPassword;
+    if (!temporaryPassword) {
+      // easy to read out loud: no 0/O, 1/l/I
+      const alphabet =
+        'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      temporaryPassword = '';
+      for (let i = 0; i < 8; i++) {
+        temporaryPassword += alphabet[randomInt(alphabet.length)];
+      }
     }
     const passwordHash = await argon2.hash(temporaryPassword);
     await this.prisma.$transaction(async (tx) => {
@@ -461,7 +472,15 @@ export class AdminUsersService {
       await tx.user.update({
         where: { id },
         // signed out everywhere: the old sessions stop working
-        data: { passwordHash, refreshTokenHash: null },
+        data: {
+          passwordHash,
+          refreshTokenHash: null,
+          failedLoginAttempts: 0,
+          lockedUntil: null,
+        },
+      });
+      await tx.userSession.deleteMany({
+        where: { userId: id },
       });
       await writeAudit(tx, {
         adminId: actor.id,
@@ -472,7 +491,12 @@ export class AdminUsersService {
         newValue: { passwordReset: true },
       });
     });
-    return { temporaryPassword };
+    return {
+      temporaryPassword,
+      success: true,
+      message:
+        'Password has been reset. Please provide this temporary password to the customer securely.',
+    };
   }
 
   async updateRole(id: string, role: Role, actor: User) {
@@ -599,4 +623,108 @@ export class AdminUsersService {
       rows,
     };
   }
+
+  async updateBlacklist(
+    id: string,
+    isBlacklisted: boolean,
+    reason?: string,
+    admin?: User,
+  ) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException('Customer not found');
+
+    const updated = await this.prisma.user.update({
+      where: { id },
+      data: {
+        isBlacklisted,
+        blacklistReason: isBlacklisted ? reason || 'Flagged by admin' : null,
+      },
+    });
+
+    if (isBlacklisted && user.phone) {
+      await this.prisma.blacklistedPhone.upsert({
+        where: { phone: user.phone },
+        create: { phone: user.phone, reason: reason || 'Flagged by admin' },
+        update: { reason: reason || 'Flagged by admin' },
+      });
+    } else if (!isBlacklisted && user.phone) {
+      await this.prisma.blacklistedPhone.deleteMany({
+        where: { phone: user.phone },
+      });
+    }
+
+    if (admin) {
+      await writeAudit(this.prisma, {
+        adminId: admin.id,
+        action: 'USER_BLACKLIST_CHANGED',
+        entity: 'User',
+        entityId: id,
+        oldValue: { isBlacklisted: user.isBlacklisted },
+        newValue: { isBlacklisted, reason },
+      });
+    }
+
+    return updated;
+  }
+
+  async findPasswordResetRequests(q: ListPasswordResetRequestsDto) {
+    const where: Prisma.PasswordResetRequestWhereInput = {};
+    if (q.status) {
+      where.status = q.status;
+    }
+    const [data, total] = await Promise.all([
+      this.prisma.passwordResetRequest.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (q.page - 1) * q.limit,
+        take: q.limit,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+              email: true,
+              status: true,
+            },
+          },
+        },
+      }),
+      this.prisma.passwordResetRequest.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        page: q.page,
+        limit: q.limit,
+        total,
+        totalPages: Math.ceil(total / q.limit),
+      },
+    };
+  }
+
+  async updatePasswordResetRequest(
+    id: string,
+    dto: UpdatePasswordResetRequestDto,
+    adminId: string,
+  ) {
+    const req = await this.prisma.passwordResetRequest.findUnique({
+      where: { id },
+    });
+    if (!req) throw new NotFoundException('Password reset request not found');
+
+    return this.prisma.passwordResetRequest.update({
+      where: { id },
+      data: {
+        status: dto.status,
+        notes: dto.notes !== undefined ? dto.notes : req.notes,
+        resolvedBy: adminId,
+        resolvedAt: ['RESOLVED', 'REJECTED'].includes(dto.status)
+          ? new Date()
+          : null,
+      },
+    });
+  }
 }
+

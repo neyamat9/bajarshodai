@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowRight, Check, Eye, EyeOff, KeyRound, UserRound, TriangleAlert } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Eye, EyeOff, KeyRound, ShieldCheck, UserRound, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/shared/Field";
@@ -21,11 +21,18 @@ type Form = z.infer<typeof schema>;
 
 export default function Login() {
   const login = useAuth((s) => s.login);
+  const verify2FA = useAuth((s) => s.verify2FA);
   const navigate = useNavigate();
   const loc = useLocation();
   const [show, setShow] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [caps, setCaps] = useState(false);
+
+  // 2FA state
+  const [twoFactorData, setTwoFactorData] = useState<{ tempToken: string; maskedEmail?: string; remember?: boolean } | null>(null);
+  const [otp, setOtp] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -35,13 +42,82 @@ export default function Login() {
   const submit = handleSubmit(async (v) => {
     setError(null);
     try {
-      await login(v.identifier, v.password, !!v.remember);
+      const res = await login(v.identifier, v.password, !!v.remember);
+      if (res.requires2FA && res.tempToken) {
+        setTwoFactorData({ tempToken: res.tempToken, maskedEmail: res.maskedEmail, remember: !!v.remember });
+        return;
+      }
       toast.success(tr("Welcome back"));
       navigate((loc.state as { from?: string } | null)?.from ?? "/", { replace: true });
     } catch (e) {
       setError(errorMessage(e, "Could not sign in"));
     }
   });
+
+  async function submitOtp(e: React.FormEvent) {
+    e.preventDefault();
+    if (!twoFactorData || otp.trim().length !== 6) return;
+    setError(null);
+    setIsVerifying(true);
+    try {
+      await verify2FA(twoFactorData.tempToken, otp.trim(), twoFactorData.remember);
+      toast.success(tr("Welcome back"));
+      navigate((loc.state as { from?: string } | null)?.from ?? "/", { replace: true });
+    } catch (e) {
+      setError(errorMessage(e, "Invalid or expired verification code"));
+    } finally {
+      setIsVerifying(false);
+    }
+  }
+
+  if (twoFactorData) {
+    return (
+      <AuthShell
+        title={tr("Two-Factor Verification")}
+        subtitle={twoFactorData.maskedEmail ? `Enter the 6-digit code sent to ${twoFactorData.maskedEmail}` : "Enter the 6-digit code sent to your email."}
+      >
+        <form onSubmit={submitOtp} className="space-y-4" noValidate>
+          {error && (
+            <div role="alert" className="flex items-start gap-2 rounded border border-destructive/30 bg-red-50 px-3 py-2.5 text-sm text-destructive dark:bg-red-500/10">
+              <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+          <Field>
+            <AuthInput
+              id="otp"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={6}
+              autoFocus
+              label={tr("6-Digit Code")}
+              icon={<ShieldCheck />}
+              value={otp}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              className="text-center font-mono text-xl tracking-widest"
+            />
+          </Field>
+          <Button type="submit" className={`group w-full ${authButton}`} loading={isVerifying} disabled={otp.length !== 6}>
+            Verify and sign in <ArrowRight className="transition-transform group-hover:translate-x-0.5" />
+          </Button>
+          <div className="pt-2 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setTwoFactorData(null);
+                setOtp("");
+                setError(null);
+              }}
+              className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="size-3.5" /> Back to sign in
+            </button>
+          </div>
+        </form>
+      </AuthShell>
+    );
+  }
 
   return (
     <AuthShell title={tr("Welcome back")} subtitle={tr("Sign in to manage your store.")}>

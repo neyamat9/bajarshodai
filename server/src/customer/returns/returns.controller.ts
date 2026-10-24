@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -35,14 +36,14 @@ export class ReturnsController {
   })
   async eligibility(
     @CurrentUser() user: User,
-    @Param('orderId') orderId: string,
+    @Param('orderId', ParseUUIDPipe) orderId: string,
   ) {
     return this.returnsService.getEligibility(user.id, orderId);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a return request' })
-  async findOne(@CurrentUser() user: User, @Param('id') id: string) {
+  async findOne(@CurrentUser() user: User, @Param('id', ParseUUIDPipe) id: string) {
     return this.returnsService.findOne(user.id, id);
   }
 
@@ -56,7 +57,8 @@ export class ReturnsController {
   @Post(':id/cancel')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Withdraw a return request (only while REQUESTED)' })
-  async cancel(@CurrentUser() user: User, @Param('id') id: string) {
+  async cancel(@CurrentUser() user: User, @Param('id', ParseUUIDPipe) id: string) {
     return this.returnsService.cancel(user.id, id);
   }
 }
+

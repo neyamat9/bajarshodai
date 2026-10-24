@@ -111,3 +111,69 @@ export class MyScopeDto {
   @IsIn(['active', 'done'])
   scope?: 'active' | 'done';
 }
+
+export class ListSettlementsDto {
+  @ApiPropertyOptional({ description: 'Filter by rider ID' })
+  @IsOptional()
+  @IsUUID()
+  riderId?: string;
+
+  @ApiPropertyOptional({ enum: ['PENDING', 'SETTLED'] })
+  @IsOptional()
+  @IsIn(['PENDING', 'SETTLED'])
+  status?: string;
+
+  @ApiPropertyOptional({ example: '2026-10-01' })
+  @IsOptional()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  from?: string;
+
+  @ApiPropertyOptional({ example: '2026-10-31' })
+  @IsOptional()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  to?: string;
+
+  @ApiPropertyOptional({ default: 1 })
+  @IsOptional()
+  @Type(() => Number)
+  @Min(1)
+  page?: number = 1;
+
+  @ApiPropertyOptional({ default: 20 })
+  @IsOptional()
+  @Type(() => Number)
+  @Min(1)
+  limit?: number = 20;
+}
+
+export class CreateSettlementDto {
+  @ApiProperty({ description: 'Rider User ID' })
+  @IsUUID()
+  riderId: string;
+
+  @ApiPropertyOptional({ example: '2026-10-24', description: 'Date of settlement' })
+  @IsOptional()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  date?: string;
+
+  @ApiPropertyOptional({ description: 'Optional admin notes' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  notes?: string;
+}
+
+export class SettleSettlementDto {
+  @ApiProperty({ example: 4500.5, description: 'Actual amount of cash settled' })
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  settledAmount: number;
+
+  @ApiPropertyOptional({ description: 'Optional admin notes' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  notes?: string;
+}
+

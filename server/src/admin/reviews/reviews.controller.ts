@@ -13,9 +13,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Role } from '@prisma/client';
-import { JwtAuthGuard, RolesGuard } from '../../common/guards';
-import { Roles } from '../../common/decorators';
+import { JwtAuthGuard, PermissionsGuard } from '../../common/guards';
+import { RequirePermissions } from '../../common/decorators';
 import { AdminReviewsService } from './reviews.service';
 import {
   AnswerQuestionDto,
@@ -27,8 +26,8 @@ import {
 
 @ApiTags('Admin - Reviews & Questions')
 @ApiBearerAuth('JWT')
-@Roles(Role.ADMIN, Role.SUPER_ADMIN)
-@UseGuards(JwtAuthGuard, RolesGuard)
+@RequirePermissions('products.view', 'products.manage')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('admin')
 export class AdminReviewsController {
   constructor(private readonly service: AdminReviewsService) {}

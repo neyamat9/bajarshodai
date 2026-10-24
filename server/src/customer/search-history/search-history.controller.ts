@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -53,7 +54,7 @@ export class SearchHistoryController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Remove one search from the history' })
-  remove(@CurrentUser() user: User, @Param('id') id: string) {
+  remove(@CurrentUser() user: User, @Param('id', ParseUUIDPipe) id: string) {
     return this.history.remove(user.id, id);
   }
 

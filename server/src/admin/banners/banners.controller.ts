@@ -1,8 +1,3 @@
-import { Put } from '@nestjs/common';
-import {
-  DisplayOrderService,
-  ReorderBannersDto,
-} from '../../common/display-order';
 import {
   Controller,
   Get,
@@ -10,22 +5,27 @@ import {
   Patch,
   Delete,
   Param,
+  ParseUUIDPipe,
   Body,
+  Put,
   UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { Role } from '@prisma/client';
-import { JwtAuthGuard, RolesGuard } from '../../common/guards';
-import { Roles } from '../../common/decorators';
+import { JwtAuthGuard, PermissionsGuard } from '../../common/guards';
+import { RequirePermissions } from '../../common/decorators';
+import {
+  DisplayOrderService,
+  ReorderBannersDto,
+} from '../../common/display-order';
 import { AdminBannersService } from './banners.service';
 import { CreateBannerDto, UpdateBannerDto } from './banner.dto';
 
 @ApiTags('Admin - Banners')
 @ApiBearerAuth('JWT')
-@Roles(Role.ADMIN, Role.SUPER_ADMIN)
-@UseGuards(JwtAuthGuard, RolesGuard)
+@RequirePermissions('settings.manage')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('admin/banners')
 export class AdminBannersController {
   constructor(
@@ -44,29 +44,38 @@ export class AdminBannersController {
     });
   }
 
-  @Get() @ApiOperation({ summary: 'List all banners' }) async findAll() {
+  @Get()
+  @ApiOperation({ summary: 'List all banners' })
+  async findAll() {
     return this.bannersService.findAll();
   }
-  @Get(':id') @ApiOperation({ summary: 'Get banner by ID' }) async findOne(
-    @Param('id') id: string,
-  ) {
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get banner by ID' })
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.bannersService.findOne(id);
   }
-  @Post() @ApiOperation({ summary: 'Create a banner' }) async create(
-    @Body() data: CreateBannerDto,
-  ) {
+
+  @Post()
+  @ApiOperation({ summary: 'Create a banner' })
+  async create(@Body() data: CreateBannerDto) {
     return this.bannersService.create(data);
   }
-  @Patch(':id') @ApiOperation({ summary: 'Update a banner' }) async update(
-    @Param('id') id: string,
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update a banner' })
+  async update(
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() data: UpdateBannerDto,
   ) {
     return this.bannersService.update(id, data);
   }
+
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete a banner' })
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.bannersService.remove(id);
   }
 }
+
