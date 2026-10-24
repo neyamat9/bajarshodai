@@ -163,6 +163,7 @@ export function DeliveryCard({ order, locked, phone, name, onEditAddress }: { or
               <Suspense fallback={<div className="h-64 animate-pulse bg-muted" />}>
                 <AdminMap
                   className="h-64 w-full"
+                  googleBrowserKey={settings.data?.maps.googleBrowserKey}
                   tileUrl={settings.data?.maps.osmTileUrl ?? "https://tile.openstreetmap.org/{z}/{x}/{y}.png"}
                   center={shown ?? DEFAULT_CENTER}
                   marker={shown}

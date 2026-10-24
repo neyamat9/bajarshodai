@@ -30,6 +30,9 @@ export interface MapViewProps {
   fitKey?: string;
   /** screen-reader name of the map */
   ariaLabel?: string;
+  googleBrowserKey?: string | null;
+  provider?: "osm" | "google";
+  onAuthError?: () => void;
 }
 
 /** Kalibari Bazar, Shahrasti: used to open the map when nothing else is known. */
