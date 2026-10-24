@@ -32,13 +32,16 @@ export function ScrollRow({ children, className, activeKey }: { children: ReactN
     for (const c of Array.from(el.children)) ro.observe(c);
     // the wheel scrolls the row sideways while there is room that way; otherwise the page scrolls as usual
     const onWheel = (e: WheelEvent) => {
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; // already a sideways gesture
+      const rawDelta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      const delta = e.deltaMode === 1 ? rawDelta * 32 : rawDelta;
+      if (!delta) return;
+
       const max = el.scrollWidth - el.clientWidth;
       if (max <= 0) return;
-      const next = el.scrollLeft + e.deltaY;
-      if ((e.deltaY < 0 && el.scrollLeft <= 0) || (e.deltaY > 0 && el.scrollLeft >= max)) return;
+
+      if ((delta < 0 && el.scrollLeft <= 0) || (delta > 0 && el.scrollLeft >= max)) return;
       e.preventDefault();
-      el.scrollLeft = Math.max(0, Math.min(max, next));
+      el.scrollLeft = Math.max(0, Math.min(max, el.scrollLeft + delta));
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => {
@@ -65,27 +68,39 @@ export function ScrollRow({ children, className, activeKey }: { children: ReactN
       <div
         ref={box}
         onScroll={measure}
+        onAuxClick={(e) => e.preventDefault()}
         onPointerDown={(e) => {
-          if (e.pointerType !== "mouse" || e.button !== 0 || !box.current) return;
+          if (e.pointerType !== "mouse" || (e.button !== 0 && e.button !== 1) || !box.current) return;
+          if (e.button === 1) e.preventDefault(); // prevent browser autoscroll icon on wheel click
           drag.current = { x: e.clientX, left: box.current.scrollLeft, moved: false };
         }}
         onPointerMove={(e) => {
           const d = drag.current;
           if (!d || !box.current) return;
           const dx = e.clientX - d.x;
-          if (!d.moved && Math.abs(dx) > 5) {
+          if (!d.moved && Math.abs(dx) > 3) {
             d.moved = true;
-            box.current.setPointerCapture(e.pointerId);
+            try {
+              box.current.setPointerCapture(e.pointerId);
+            } catch {
+              /* ignore */
+            }
           }
           if (d.moved) box.current.scrollLeft = d.left - dx;
         }}
-        onPointerUp={() => {
-          // a drag must not also "click" the chip under the pointer
+        onPointerUp={(e) => {
+          if (box.current && box.current.hasPointerCapture(e.pointerId)) {
+            try {
+              box.current.releasePointerCapture(e.pointerId);
+            } catch {
+              /* ignore */
+            }
+          }
           const moved = drag.current?.moved;
           drag.current = null;
           if (moved) window.addEventListener("click", (ev) => ev.stopPropagation(), { capture: true, once: true });
         }}
-        className="no-scrollbar flex cursor-grab touch-pan-x gap-1.5 overflow-x-auto scroll-smooth py-1 active:cursor-grabbing [&>*]:shrink-0 after:block after:w-6 after:shrink-0 after:content-['']"
+        className="no-scrollbar flex cursor-grab select-none touch-pan-x gap-1.5 overflow-x-auto py-1 active:cursor-grabbing [&>*]:shrink-0 after:block after:w-6 after:shrink-0 after:content-['']"
       >
         {children}
       </div>
