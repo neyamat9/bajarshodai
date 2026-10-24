@@ -372,7 +372,10 @@ export default function SiteHeader() {
 
           {/* Action Buttons */}
           <div className="order-2 ml-auto flex items-center gap-2 lg:order-3 lg:ml-0 lg:gap-3">
-            <LanguageSwitcher className="hidden h-11 items-center gap-1.5 rounded border border-border bg-card px-3 text-sm font-bold text-foreground transition-colors hover:border-brand-fresh hover:text-accent-text sm:flex" />
+            <LanguageSwitcher
+              short
+              className="hidden h-7 min-w-[34px] items-center justify-center rounded border border-border bg-card px-2 text-xs font-bold uppercase tracking-wider text-foreground shadow-2xs transition-colors hover:border-brand-fresh hover:text-accent-text sm:flex"
+            />
             <ThemeToggle className="!h-10 !w-10 max-sm:!hidden sm:!h-11 sm:!w-11" />
 
             <Link href="/wishlist" aria-label={t("wishlist")} className={`${actionBtn} hidden sm:flex`}>

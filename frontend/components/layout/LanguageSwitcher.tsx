@@ -10,7 +10,17 @@ import { useLocale, useTranslations } from "next-intl";
  * The choice is remembered in a cookie (so a bookmarked plain address opens in the chosen language)
  * and, for a signed-in customer, on their account (so emails and invoices follow it too).
  */
-export default function LanguageSwitcher({ className = "", compact = false }: { className?: string; compact?: boolean }) {
+export default function LanguageSwitcher({
+  className = "",
+  compact = false,
+  short = false,
+  showIcon = true,
+}: {
+  className?: string;
+  compact?: boolean;
+  short?: boolean;
+  showIcon?: boolean;
+}) {
   const locale = useLocale();
   const t = useTranslations("Language");
   const pathname = usePathname();
@@ -24,19 +34,26 @@ export default function LanguageSwitcher({ className = "", compact = false }: { 
     router.replace(`${pathname}${search}`, { locale: next });
   }
 
+  const isSmall = short || className.includes("h-7") || className.includes("h-8");
+  const label = short ? (locale === "bn" ? "EN" : "BN") : t("switchTo");
+  const renderIcon = showIcon && !short;
+
   return (
     <button
       type="button"
       onClick={switchLanguage}
       aria-label={t("switchAria")}
+      title={t("switchAria")}
       lang={next}
       className={
         className ||
-        "flex h-11 items-center justify-center gap-1.5 rounded border border-border bg-card px-3 text-sm font-bold text-foreground transition-colors hover:border-brand-fresh hover:text-accent-text"
+        "flex h-7 items-center justify-center rounded border border-border bg-card px-2 text-xs font-bold uppercase text-foreground transition-colors hover:border-brand-fresh hover:text-accent-text"
       }
     >
-      <Languages className="h-[18px] w-[18px]" aria-hidden="true" />
-      {!compact && <span>{t("switchTo")}</span>}
+      {renderIcon && (
+        <Languages className={`${isSmall ? "h-3.5 w-3.5" : "h-[18px] w-[18px]"} shrink-0`} aria-hidden="true" />
+      )}
+      {!compact && <span>{label}</span>}
     </button>
   );
 }
