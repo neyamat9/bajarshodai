@@ -89,24 +89,30 @@ export default function AdminLayout() {
             onClick={() => setPalette(true)}
             aria-label={tr("Quick search")}
             title={tr("Quick search (Ctrl K)")}
-            className="flex h-9 min-w-9 cursor-pointer items-center gap-2 rounded border border-transparent px-2.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:w-64 md:justify-start md:border-border md:bg-background"
+            className="flex h-9 min-w-9 cursor-pointer items-center justify-center gap-2 rounded border border-transparent px-2.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground min-[1200px]:w-64 min-[1200px]:justify-start min-[1200px]:border-border min-[1200px]:bg-background"
           >
-            <Search size={16} />
-            <span className="hidden flex-1 text-left md:inline">{tr("Search or jump to…")}</span>
-            <kbd className="hidden rounded border border-border bg-card px-1.5 text-[10px] md:inline">{tr("Ctrl K")}</kbd>
+            <Search size={16} className="shrink-0" />
+            <span className="hidden flex-1 text-left min-[1200px]:inline">{tr("Search or jump to…")}</span>
+            <kbd className="hidden rounded border border-border bg-card px-1.5 text-[10px] min-[1200px]:inline">{tr("Ctrl K")}</kbd>
           </button>
           <div className="ml-auto flex items-center gap-1">
-            {isAdminRole(user) && <SyncPill />}
-            <LanguageToggle />
+            {isAdminRole(user) && (
+              <div className="hidden min-[1200px]:flex">
+                <SyncPill />
+              </div>
+            )}
+            <div className="hidden min-[1200px]:flex">
+              <LanguageToggle />
+            </div>
             <a
               href={siteUrl}
               target="_blank"
               rel="noopener noreferrer"
               title={tr("View store")}
               aria-label={tr("View store")}
-              className="flex h-9 items-center gap-1.5 rounded px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="hidden min-[1200px]:flex h-9 items-center gap-1.5 rounded px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
-              <ExternalLink size={16} /> <span className="hidden sm:inline">{tr("View store")}</span>
+              <ExternalLink size={16} /> <span>{tr("View store")}</span>
             </a>
             <button
               type="button"
@@ -114,14 +120,18 @@ export default function AdminLayout() {
                 toggleSound();
                 if (!sound) chime();
               }}
-              className="hidden size-9 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:flex"
+              className="hidden min-[1200px]:flex size-9 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               aria-label={sound ? tr("Mute new-order sound") : tr("Turn on new-order sound")}
               title={sound ? "New-order sound is on" : "New-order sound is off"}
               aria-pressed={sound}
             >
               {sound ? <Volume2 size={18} /> : <VolumeX size={18} />}
             </button>
-            <button onClick={toggleDark} className="flex size-9 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer" aria-label={tr("Toggle theme")}>
+            <button
+              onClick={toggleDark}
+              className="hidden min-[1200px]:flex size-9 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer"
+              aria-label={tr("Toggle theme")}
+            >
               {dark ? <Sun size={18} /> : <Moon size={18} />}
             </button>
             <NotificationBell />
@@ -132,18 +142,75 @@ export default function AdminLayout() {
                     {user?.avatarUrl && <AvatarImage src={assetUrl(user.avatarUrl)} />}
                     <AvatarFallback className="bg-primary text-xs font-bold text-primary-foreground">{(user?.name ?? "A").slice(0, 1).toUpperCase()}</AvatarFallback>
                   </Avatar>
-                  <span className="hidden text-left leading-tight sm:block">
+                  <span className="hidden text-left leading-tight min-[1200px]:block">
                     <span className="block text-[13px] font-semibold">{user?.name}</span>
                     <span className="block text-[10px] uppercase tracking-wide text-muted-foreground">{user?.role?.replace("_", " ")}</span>
                   </span>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-64 min-[1200px]:w-56">
                 <DropdownMenuLabel className="font-normal">
                   <p className="truncate text-sm font-semibold">{user?.name}</p>
                   <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+
+                {/* Quick options for screens below 1200px (Language, Theme, Sound, Store link, Sync) */}
+                <div className="min-[1200px]:hidden space-y-1">
+                  <div
+                    className="flex items-center justify-between px-2 py-1.5 text-xs"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <span className="font-medium text-muted-foreground">{tr("Language")}</span>
+                    <LanguageToggle />
+                  </div>
+
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      toggleDark();
+                    }}
+                  >
+                    {dark ? <Sun size={16} /> : <Moon size={16} />}
+                    <span>{dark ? tr("Light mode") : tr("Dark mode")}</span>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      toggleSound();
+                      if (!sound) chime();
+                    }}
+                  >
+                    {sound ? <Volume2 size={16} /> : <VolumeX size={16} />}
+                    <span>{sound ? tr("Mute sound") : tr("Turn on sound")}</span>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem asChild>
+                    <a
+                      href={siteUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <ExternalLink size={16} />
+                      <span>{tr("View store")}</span>
+                    </a>
+                  </DropdownMenuItem>
+
+                  {isAdminRole(user) && (
+                    <div
+                      className="flex items-center justify-between px-2 py-1.5 text-xs border-t border-border/50 my-1 pt-1.5"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <span className="font-medium text-muted-foreground">{tr("Store Status")}</span>
+                      <SyncPill />
+                    </div>
+                  )}
+
+                  <DropdownMenuSeparator />
+                </div>
+
                 <DropdownMenuItem onClick={() => navigate("/profile")}>
                   <UserCircle />{" "}{tr("My profile")}
                 </DropdownMenuItem>

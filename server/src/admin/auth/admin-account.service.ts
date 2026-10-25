@@ -7,6 +7,7 @@ import {
   UnauthorizedException,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { Role, User } from '@prisma/client';
 import * as argon2 from 'argon2';
@@ -34,6 +35,8 @@ const LOCK_MS = 15 * 60 * 1000;
 
 @Injectable()
 export class AdminAccountService {
+  private readonly logger = new Logger(AdminAccountService.name);
+
   // email → failures; kept in memory (resets on restart, per server)
   private readonly failures = new Map<
     string,
@@ -109,7 +112,7 @@ export class AdminAccountService {
       });
 
       // Send OTP email
-      await this.mail.send({
+      const mailRes = await this.mail.send({
         to: user.email,
         subject: 'Bazar Shodai Admin Security Code',
         text: `Your security verification code is: ${otp}. It will expire in 10 minutes. If you did not request this, please secure your account immediately.`,
@@ -124,6 +127,25 @@ export class AdminAccountService {
           </div>
         `,
       });
+
+      // If email delivery is not configured in .env or Settings (provider === 'none'),
+      // fallback to direct login so the admin is never locked out of their store.
+      if (!mailRes.ok && mailRes.provider === 'none') {
+        this.logger.warn(
+          `2FA skipped for admin ${user.email}: email provider is unconfigured in .env or Settings. Allowing direct login.`,
+        );
+        await this.prisma.adminTwoFactorOtp.deleteMany({
+          where: { userId: user.id },
+        });
+        const session = await this.auth.login(user, clientMeta);
+        return {
+          requires2FA: false,
+          userId: session.userId,
+          accessToken: session.accessToken,
+          refreshToken: session.refreshToken,
+          user: this.auth.toPublicUser(user),
+        };
+      }
 
       // Sign short-lived temp token
       const tempToken = await this.jwt.signAsync(
