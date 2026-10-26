@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 
 interface CategoryPageProps {
   params: Promise<{ locale: string; slug: string }>;
-  searchParams: Promise<{ sub?: string }>;
+  searchParams: Promise<{ sub?: string; q?: string; search?: string; generic?: string; brand?: string }>;
 }
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
@@ -38,15 +38,24 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
   const { locale, slug } = await params;
   setRequestLocale(locale);
-  const { sub } = await searchParams;
   return (
-    <Suspense key={`${locale}|${slug}|${sub ?? ""}`} fallback={<ListingSkeleton />}>
-      <CategoryContent slug={slug} sub={sub} locale={locale as Locale} />
+    <Suspense key={`${locale}|${slug}`} fallback={<ListingSkeleton />}>
+      <CategoryContent slug={slug} searchParams={searchParams} locale={locale as Locale} />
     </Suspense>
   );
 }
 
-async function CategoryContent({ slug, sub, locale }: { slug: string; sub?: string; locale: Locale }) {
+async function CategoryContent({
+  slug,
+  searchParams,
+  locale,
+}: {
+  slug: string;
+  searchParams: Promise<{ sub?: string; q?: string; search?: string; generic?: string; brand?: string }>;
+  locale: Locale;
+}) {
+  const { sub, q, search: searchParam, generic, brand } = await searchParams;
+  const initialSearch = (q || searchParam || "").trim() || undefined;
   const categories = await getCategories(locale);
 
   const category = categories.find((c) => c.slug === slug);
@@ -59,8 +68,18 @@ async function CategoryContent({ slug, sub, locale }: { slug: string; sub?: stri
   const trail = trailOf(category, subSlug);
   const here = trail[trail.length - 1];
   const [initial, facets] = await Promise.all([
-    listProducts({ category: slug, subCategory: subSlug, sortBy: "popular" }, locale),
-    getProductFacets({ category: slug, subCategory: subSlug }),
+    listProducts(
+      {
+        category: slug,
+        subCategory: subSlug,
+        search: initialSearch,
+        brand: brand ? [brand] : undefined,
+        generic: generic ? [generic] : undefined,
+        sortBy: "popular",
+      },
+      locale,
+    ),
+    getProductFacets({ category: slug, subCategory: subSlug, search: initialSearch }),
   ]);
 
   return (
@@ -69,7 +88,7 @@ async function CategoryContent({ slug, sub, locale }: { slug: string; sub?: stri
         {/* Grid with filters — category is locked */}
         <Suspense fallback={<SkeletonGrid count={12} />}>
           <ProductGrid
-            key={subSlug ?? "all"}
+            key={`${subSlug ?? "all"}|${initialSearch ?? ""}`}
             header={
               slug === "medicine" ? (
                 <MedicineHeader
@@ -96,6 +115,11 @@ async function CategoryContent({ slug, sub, locale }: { slug: string; sub?: stri
             priceRange={facets.price}
             lockedCategory={slug}
             subCategory={subSlug}
+            search={initialSearch}
+            start={{
+              brand,
+              generic,
+            }}
           />
         </Suspense>
       </div>

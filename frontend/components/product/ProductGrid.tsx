@@ -15,6 +15,7 @@ import type { FilterState } from "./FilterSidebar";
 import FilterSidebar from "./FilterSidebar";
 import ProductCard from "./ProductCard";
 import MedicineListItem from "@/components/medicine/MedicineListItem";
+import MedicineSearchBar from "@/components/medicine/MedicineSearchBar";
 import SortBar from "./SortBar";
 import { flattenSubs } from "@/lib/utils/categories";
 
@@ -61,6 +62,7 @@ export default function ProductGrid({
   const locale = useLocale() as Locale;
   const isMedicine = lockedCategory === "medicine";
   const [viewMode, setViewMode] = useState<"list" | "grid">(isMedicine ? "list" : "grid");
+  const [searchQuery, setSearchQuery] = useState(search ?? "");
   const priceMin = Math.floor(priceRange.min);
   const priceMax = Math.ceil(priceRange.max);
   const base: FilterState = {
@@ -94,9 +96,10 @@ export default function ProductGrid({
     [categories, filters.subCategories],
   );
 
+  const effectiveSearch = (searchQuery || search || "").trim();
   const query = useMemo<ProductQuery>(
     () => ({
-      search: search || undefined,
+      search: effectiveSearch || undefined,
       category: lockedCategory ?? (filters.categories.length === 1 ? filters.categories[0] : undefined),
       subCategory:
         subCategory ??
@@ -110,7 +113,7 @@ export default function ProductGrid({
       sortBy,
       limit: PAGE_SIZE,
     }),
-    [filters, sortBy, onSale, search, lockedCategory, subCategory, priceMin, priceMax, subsOf],
+    [filters, sortBy, onSale, effectiveSearch, lockedCategory, subCategory, priceMin, priceMax, subsOf],
   );
 
   // New filters / sort → fetch page 1 again
@@ -200,6 +203,13 @@ export default function ProductGrid({
       chips.push({ key: `generic:${gen}`, label: gen });
     });
 
+    if (searchQuery.trim() && !search) {
+      chips.push({
+        key: "search",
+        label: `${locale === "bn" ? "অনুসন্ধান" : "Search"}: "${searchQuery.trim()}"`,
+      });
+    }
+
     if (filters.inStockOnly) chips.push({ key: "inStock", label: t("filters.inStock") });
     if (onSale) chips.push({ key: "onSale", label: t("filters.onSale") });
 
@@ -230,6 +240,8 @@ export default function ProductGrid({
       } else if (key.startsWith("generic:")) {
         const gen = key.replace("generic:", "");
         setFilters((prev) => ({ ...prev, generics: prev.generics.filter((g) => g !== gen) }));
+      } else if (key === "search") {
+        setSearchQuery("");
       } else if (key === "inStock") {
         setFilters((prev) => ({ ...prev, inStockOnly: false }));
       } else if (key === "onSale") {
@@ -244,6 +256,7 @@ export default function ProductGrid({
   function handleClearAll() {
     setFilters({ ...base, inStockOnly: false });
     setOnSale(false);
+    setSearchQuery("");
   }
 
   const hasActiveFilters = activeFilters.length > 0;
@@ -271,6 +284,16 @@ export default function ProductGrid({
       {/* ── Main content ────────────────────────────── */}
       <div className="flex-1 min-w-0">
         {header}
+
+        {/* Dedicated Search bar for Medicine */}
+        {isMedicine && (
+          <MedicineSearchBar
+            value={searchQuery}
+            onChange={setSearchQuery}
+            loading={loading}
+            totalResults={meta.total}
+          />
+        )}
 
         {/* Sort bar with viewMode toggle */}
         <SortBar
