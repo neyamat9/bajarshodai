@@ -10,6 +10,7 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import MedicineHeader from "@/components/medicine/MedicineHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -70,14 +71,28 @@ async function CategoryContent({ slug, sub, locale }: { slug: string; sub?: stri
           <ProductGrid
             key={subSlug ?? "all"}
             header={
-              <div className="mb-4">
-                <h1 className="font-outfit text-2xl font-extrabold tracking-tight text-foreground md:text-3xl">{here.name}</h1>
-                {!subSlug && category.description && <p className="mt-1 max-w-xl text-sm text-muted-foreground">{category.description}</p>}
-              </div>
+              slug === "medicine" ? (
+                <MedicineHeader
+                  categoryName={here.name}
+                  categoryDescription={!subSlug ? category.description : null}
+                />
+              ) : (
+                <div className="mb-4">
+                  <h1 className="font-outfit text-2xl font-extrabold tracking-tight text-foreground md:text-3xl">
+                    {here.name}
+                  </h1>
+                  {!subSlug && category.description && (
+                    <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+                      {category.description}
+                    </p>
+                  )}
+                </div>
+              )
             }
             initial={initial}
             categories={categories}
             brands={facetBrands(facets)}
+            generics={facets.generics}
             priceRange={facets.price}
             lockedCategory={slug}
             subCategory={subSlug}

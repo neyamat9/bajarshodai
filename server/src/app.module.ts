@@ -27,6 +27,8 @@ import { BackInStockModule } from './common/back-in-stock';
 import { AdminFeedModule } from './common/admin-feed';
 import { CustomerModule } from './customer/customer.module';
 
+import { MedExModule } from './common/medex';
+
 @Module({
   imports: [
     // ConfigModule with custom configuration factory
@@ -36,6 +38,7 @@ import { CustomerModule } from './customer/customer.module';
       cache: true,
     }),
 
+    MedExModule,
     RateLimitingModule,
     CacheModule,
     SettingsModule,

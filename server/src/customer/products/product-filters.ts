@@ -74,6 +74,9 @@ export function buildScopeWhere(q: ProductScopeDto): Prisma.ProductWhereInput {
       { categoryName: { contains: search, mode: ci } },
       { productCode: { equals: search, mode: ci } },
       { tags: { some: { tag: { equals: search, mode: ci } } } },
+      { medicineMeta: { genericName: { contains: search, mode: ci } } },
+      { medicineMeta: { manufacturer: { contains: search, mode: ci } } },
+      { medicineMeta: { dosageForm: { contains: search, mode: ci } } },
     ];
   }
   return where;
@@ -115,6 +118,16 @@ export function buildProductWhere(
   const and: Prisma.ProductWhereInput[] = [buildScopeWhere(q)];
 
   if (q.brand?.length) and.push({ brand: { slug: { in: q.brand } } });
+
+  if (q.generic?.length) {
+    and.push({
+      OR: q.generic.map((g) => ({
+        medicineMeta: {
+          genericName: { contains: g, mode: ci },
+        },
+      })),
+    });
+  }
 
   if (q.minPrice !== undefined || q.maxPrice !== undefined) {
     and.push({

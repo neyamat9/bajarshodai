@@ -144,6 +144,23 @@ export function mapProduct(p: Raw, locale: Locale = clientLocale()): Product {
     priceHistory: [...(p.priceHistory ?? [])].reverse().map((h: Raw) => ({ date: h.recordedAt, price: num(h.price) })),
     isFeatured: !!p.isFeatured,
     createdAt: p.createdAt ?? new Date().toISOString(),
+    medicineMeta: p.medicineMeta
+      ? {
+          id: p.medicineMeta.id,
+          genericName: p.medicineMeta.genericName,
+          genericSlug: p.medicineMeta.genericSlug,
+          dosageForm: p.medicineMeta.dosageForm,
+          strength: p.medicineMeta.strength,
+          manufacturer: p.medicineMeta.manufacturer,
+          type: p.medicineMeta.type ?? 'OTC',
+          medexUrl: p.medicineMeta.medexUrl,
+          medexId: p.medicineMeta.medexId,
+          mrpUnit: p.medicineMeta.mrpUnit ? num(p.medicineMeta.mrpUnit) : null,
+          mrpStrip: p.medicineMeta.mrpStrip ? num(p.medicineMeta.mrpStrip) : null,
+          mrpBox: p.medicineMeta.mrpBox ? num(p.medicineMeta.mrpBox) : null,
+          packSizeInfo: p.medicineMeta.packSizeInfo,
+        }
+      : null,
     // extras the API gives us
     ...({
       hasVariants: isCard ? !!p.hasVariants : (p.variants ?? []).length > 0,

@@ -118,6 +118,8 @@ export class ProductService {
           { slug: { contains: search, mode: 'insensitive' } },
           { productCode: { contains: search, mode: 'insensitive' } },
           { brandName: { contains: search, mode: 'insensitive' } },
+          { medicineMeta: { genericName: { contains: search, mode: 'insensitive' } } },
+          { medicineMeta: { manufacturer: { contains: search, mode: 'insensitive' } } },
           {
             variants: {
               some: { sku: { contains: search, mode: 'insensitive' } },
@@ -178,6 +180,7 @@ export class ProductService {
           isFeatured: true,
           createdAt: true,
           updatedAt: true,
+          medicineMeta: true,
           images: { where: { isMain: true }, take: 1, select: { url: true } },
           _count: {
             select: { variants: true, orderItems: true, reviews: true },
@@ -219,6 +222,7 @@ export class ProductService {
         tags: { orderBy: { tag: 'asc' } },
         attributes: true,
         priceHistory: { orderBy: { recordedAt: 'desc' }, take: 30 },
+        medicineMeta: true,
         _count: {
           select: { orderItems: true, reviews: true, questions: true },
         },
@@ -322,6 +326,28 @@ export class ProductService {
             attributes: attributes.length ? { create: attributes } : undefined,
             tags: tags.length
               ? { create: tags.map((tag) => ({ tag })) }
+              : undefined,
+            medicineMeta: dto.medicineMeta
+              ? {
+                  create: {
+                    genericName: dto.medicineMeta.genericName.trim(),
+                    genericSlug:
+                      dto.medicineMeta.genericSlug?.trim() ||
+                      slugify(dto.medicineMeta.genericName, 'generic'),
+                    dosageForm: dto.medicineMeta.dosageForm.trim(),
+                    strength: dto.medicineMeta.strength.trim(),
+                    manufacturer: dto.medicineMeta.manufacturer.trim(),
+                    type: dto.medicineMeta.type ?? 'OTC',
+                    medexUrl: dto.medicineMeta.medexUrl || null,
+                    medexId: dto.medicineMeta.medexId || null,
+                    mrpUnit: dto.medicineMeta.mrpUnit ?? null,
+                    mrpStrip: dto.medicineMeta.mrpStrip ?? null,
+                    mrpBox: dto.medicineMeta.mrpBox ?? null,
+                    packSizeInfo: dto.medicineMeta.packSizeInfo || null,
+                    lastSyncedAt: dto.medicineMeta.medexUrl ? new Date() : null,
+                    syncStatus: 'SYNCED',
+                  },
+                }
               : undefined,
           },
         });
@@ -545,6 +571,49 @@ export class ProductService {
           if (tags.length) {
             await tx.productTag.createMany({
               data: tags.map((tag) => ({ tag, productId: id })),
+            });
+          }
+        }
+        if (dto.medicineMeta !== undefined) {
+          if (dto.medicineMeta === null) {
+            await tx.medicineMeta.deleteMany({ where: { productId: id } });
+          } else {
+            const m = dto.medicineMeta;
+            await tx.medicineMeta.upsert({
+              where: { productId: id },
+              create: {
+                productId: id,
+                genericName: m.genericName.trim(),
+                genericSlug:
+                  m.genericSlug?.trim() || slugify(m.genericName, 'generic'),
+                dosageForm: m.dosageForm.trim(),
+                strength: m.strength.trim(),
+                manufacturer: m.manufacturer.trim(),
+                type: m.type ?? 'OTC',
+                medexUrl: m.medexUrl || null,
+                medexId: m.medexId || null,
+                mrpUnit: m.mrpUnit ?? null,
+                mrpStrip: m.mrpStrip ?? null,
+                mrpBox: m.mrpBox ?? null,
+                packSizeInfo: m.packSizeInfo || null,
+                lastSyncedAt: m.medexUrl ? new Date() : null,
+                syncStatus: 'SYNCED',
+              },
+              update: {
+                genericName: m.genericName.trim(),
+                genericSlug:
+                  m.genericSlug?.trim() || slugify(m.genericName, 'generic'),
+                dosageForm: m.dosageForm.trim(),
+                strength: m.strength.trim(),
+                manufacturer: m.manufacturer.trim(),
+                type: m.type ?? undefined,
+                medexUrl: m.medexUrl || null,
+                medexId: m.medexId || null,
+                mrpUnit: m.mrpUnit ?? null,
+                mrpStrip: m.mrpStrip ?? null,
+                mrpBox: m.mrpBox ?? null,
+                packSizeInfo: m.packSizeInfo || null,
+              },
             });
           }
         }

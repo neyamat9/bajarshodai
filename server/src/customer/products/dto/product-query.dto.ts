@@ -73,6 +73,16 @@ export class ProductQueryDto extends ProductScopeDto {
   @IsString({ each: true })
   brand?: string[];
 
+  @ApiPropertyOptional({
+    description: 'Generic name(s), comma-separated: generic=paracetamol,omeprazole',
+  })
+  @IsOptional()
+  @Transform(toList)
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsString({ each: true })
+  generic?: string[];
+
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)

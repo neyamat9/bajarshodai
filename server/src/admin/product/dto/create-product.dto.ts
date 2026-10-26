@@ -134,6 +134,75 @@ export class ProductVariantInputDto {
   attribute3Value?: string;
 }
 
+export class MedicineMetaInputDto {
+  @ApiProperty({ example: 'Paracetamol + Caffeine' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(200)
+  genericName: string;
+
+  @ApiPropertyOptional({ example: 'paracetamol-caffeine' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  genericSlug?: string;
+
+  @ApiProperty({ example: 'Tablet' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  dosageForm: string;
+
+  @ApiProperty({ example: '500 mg + 65 mg' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  strength: string;
+
+  @ApiProperty({ example: 'Beximco Pharmaceuticals Ltd.' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(200)
+  manufacturer: string;
+
+  @ApiPropertyOptional({ enum: ['OTC', 'PRESCRIPTION'], default: 'OTC' })
+  @IsOptional()
+  @IsIn(['OTC', 'PRESCRIPTION'])
+  type?: 'OTC' | 'PRESCRIPTION';
+
+  @ApiPropertyOptional({ example: 'https://medex.com.bd/brands/10592/napa-extra-500-mg-tablet' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  medexUrl?: string;
+
+  @ApiPropertyOptional({ example: 10592 })
+  @IsOptional()
+  @IsInt()
+  medexId?: number;
+
+  @ApiPropertyOptional({ example: 2.50 })
+  @IsOptional()
+  @IsNumber()
+  mrpUnit?: number;
+
+  @ApiPropertyOptional({ example: 25.00 })
+  @IsOptional()
+  @IsNumber()
+  mrpStrip?: number;
+
+  @ApiPropertyOptional({ example: 250.00 })
+  @IsOptional()
+  @IsNumber()
+  mrpBox?: number;
+
+  @ApiPropertyOptional({ example: '10 x 10 tablets' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  packSizeInfo?: string;
+}
+
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export class CreateProductDto {
@@ -475,4 +544,13 @@ export class CreateProductDto {
   @ValidateNested({ each: true })
   @Type(() => ProductVariantInputDto)
   variants?: ProductVariantInputDto[];
+
+  @ApiPropertyOptional({
+    type: () => MedicineMetaInputDto,
+    description: 'Factual pharmaceutical details for medicine products',
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => MedicineMetaInputDto)
+  medicineMeta?: MedicineMetaInputDto;
 }

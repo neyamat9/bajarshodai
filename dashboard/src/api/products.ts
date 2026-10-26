@@ -1,4 +1,5 @@
 import { api, clean, type Paged } from "./client";
+import type { MedicineMeta } from "./medicine";
 
 export type ProductStatus = "ACTIVE" | "INACTIVE" | "OUT_OF_STOCK" | "DRAFT" | "DISCONTINUED";
 
@@ -88,6 +89,7 @@ export interface ProductDetail extends Omit<ProductRow, "mainImage" | "_count" |
   tags: string[];
   priceHistory: { id: string; price: string; recordedAt: string }[];
   stockState: "in" | "low" | "out";
+  medicineMeta?: MedicineMeta | null;
   _count: { orderItems: number; reviews: number; questions: number };
 }
 
@@ -179,6 +181,7 @@ export interface ProductInput {
   attributes?: { name: string; value: string }[];
   tags?: string[];
   variants?: VariantInput[];
+  medicineMeta?: Partial<MedicineMeta> | null;
 }
 
 export const productsApi = {

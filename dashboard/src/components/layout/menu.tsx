@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import {
   LayoutDashboard, ShoppingBag, PlusCircle, RotateCcw, Users, Boxes, PackagePlus, Warehouse, FolderTree, Handshake, Images,
   TicketPercent, GalleryHorizontal, BellRing, Star, MessageCircleQuestion, LifeBuoy, Mail, Newspaper, BarChart3,
-  Bell, Settings, History, ShieldCheck, UserCircle, Ruler, CalendarClock, UserCog, Truck, Bike,
+  Bell, Settings, History, ShieldCheck, UserCircle, Ruler, CalendarClock, UserCog, Truck, Bike, Pill,
 } from "lucide-react";
 import type { AttentionSummary } from "@/api/notifications";
 import type { AdminUser } from "@/api/client";
@@ -53,6 +53,7 @@ export const menu: MenuSection[] = [
       { label: tr("Products"), to: "/products", icon: i(Boxes), end: true, needs: ["products.view"] },
       { label: tr("Add product"), to: "/products/new", icon: i(PackagePlus), needs: ["products.manage"] },
       { label: tr("Daily prices & stock"), to: "/daily-sheet", icon: i(CalendarClock), needs: ["inventory.manage", "products.manage"] },
+      { label: tr("Medicine Hub & Sync"), to: "/medicine-sync", icon: i(Pill), needs: ["products.view"] },
       { label: tr("Inventory"), to: "/inventory", icon: i(Warehouse), badge: (s) => s.lowStockItems + s.outOfStockItems, needs: ["inventory.manage", "products.view"] },
       { label: tr("Categories"), to: "/categories", icon: i(FolderTree), needs: ["products.view"] },
       { label: tr("Units"), to: "/units", icon: i(Ruler), needs: ["products.view"] },

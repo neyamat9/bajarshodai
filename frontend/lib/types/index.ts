@@ -86,6 +86,23 @@ export interface Product {
   avgRating?: number;
   reviewCount?: number;
   freeShipping?: boolean;
+  medicineMeta?: MedicineMeta | null;
+}
+
+export interface MedicineMeta {
+  id: string;
+  genericName: string;
+  genericSlug: string;
+  dosageForm: string;
+  strength: string;
+  manufacturer: string;
+  type: 'OTC' | 'PRESCRIPTION';
+  medexUrl?: string | null;
+  medexId?: number | null;
+  mrpUnit?: number | null;
+  mrpStrip?: number | null;
+  mrpBox?: number | null;
+  packSizeInfo?: string | null;
 }
 
 /** A category below the top level. The tree can go several levels deep: `children` are the next level. */

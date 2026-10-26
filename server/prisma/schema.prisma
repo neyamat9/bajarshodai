@@ -58,6 +58,11 @@ enum CategoryStatus {
   INACTIVE
 }
 
+enum MedicineType {
+  OTC
+  PRESCRIPTION
+}
+
 // How a delivery location was captured
 enum LocationSource {
   GPS // the phone's location button
@@ -636,6 +641,7 @@ model Product {
   flashDealProducts FlashDealProduct[]
   backInStockSubs   BackInStockSubscription[]
   recentlyViewed    RecentlyViewedProduct[]
+  medicineMeta      MedicineMeta?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -655,6 +661,39 @@ model Product {
   @@index([avgRating])
   @@index([totalSales])
   @@index([categoryId, status])
+}
+
+model MedicineMeta {
+  id           String       @id @default(uuid())
+  productId    String       @unique
+  product      Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  // Pharmaceutical Details
+  genericName  String
+  genericSlug  String
+  dosageForm   String       // Tablet, Capsule, Syrup, Drop, Ointment, etc.
+  strength     String       // e.g. "500 mg + 65 mg"
+  manufacturer String       // e.g. "Beximco Pharmaceuticals Ltd."
+  type         MedicineType @default(OTC)
+
+  // Live MedEx Sync Tracking
+  medexUrl     String?
+  medexId      Int?
+  lastSyncedAt DateTime?
+  syncStatus   String       @default("SYNCED") // SYNCED, DRIFT_DETECTED, FAILED
+  mrpUnit      Decimal?     @db.Decimal(10, 2)
+  mrpStrip     Decimal?     @db.Decimal(10, 2)
+  mrpBox       Decimal?     @db.Decimal(10, 2)
+  packSizeInfo String?
+
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([genericName])
+  @@index([genericSlug])
+  @@index([manufacturer])
+  @@index([dosageForm])
+  @@index([type])
 }
 
 model ProductImage {

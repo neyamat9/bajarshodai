@@ -288,12 +288,34 @@ export default function ProductCard({ product, animationDelay = 0, entrance = tr
 
       {/* ── Info (under image) ────────────────────────── */}
       <div className="flex flex-1 flex-col p-2.5 sm:p-3">
+        {product.medicineMeta && (
+          <div className="mb-1 flex items-center justify-between gap-1">
+            <span className="inline-flex items-center rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
+              {product.medicineMeta.dosageForm} {product.medicineMeta.strength ? `· ${product.medicineMeta.strength}` : ""}
+            </span>
+            {product.medicineMeta.type === "PRESCRIPTION" && (
+              <span className="rounded bg-indigo-500/10 px-1 py-0.5 text-[9px] font-bold text-indigo-700 dark:text-indigo-400">
+                Rx
+              </span>
+            )}
+          </div>
+        )}
         <Link href={`/products/${product.slug}`}>
           <h3 className="line-clamp-2 min-h-[2.4rem] font-outfit text-[13px] font-semibold leading-snug text-foreground transition-colors group-hover:text-primary dark:group-hover:text-accent-text sm:text-sm">
             {product.name}
             {sizeText ? ` - ${sizeText}` : ""}
           </h3>
         </Link>
+        {product.medicineMeta && (
+          <div className="mt-1 flex flex-col text-[11px] text-muted-foreground leading-tight">
+            <span className="truncate font-medium text-foreground/80 italic">
+              {product.medicineMeta.genericName}
+            </span>
+            <span className="truncate text-[10px]">
+              {product.medicineMeta.manufacturer}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Option picker — slides up over the card */}

@@ -117,7 +117,12 @@ export default function CategoryNav({ categories, compact = false }: CategoryNav
                 onMouseEnter={() => setOpenMenu(cat.slug)}
                 onMouseLeave={() => setOpenMenu(null)}
               >
-                <Link href={`/category/${cat.slug}`} prefetch className={linkClass}>
+                <Link
+                  href={`/category/${cat.slug}`}
+                  prefetch
+                  className={`${linkClass} ${cat.slug === "medicine" ? "font-bold text-emerald-600 dark:text-emerald-400" : ""}`}
+                >
+                  {cat.slug === "medicine" && <span className="mr-1">💊</span>}
                   {cat.name.split(" & ")[0]}
                   {cat.subCategories.length > 0 && (
                     <ChevronDown className="h-3 w-3 opacity-60" aria-hidden="true" />

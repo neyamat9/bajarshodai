@@ -11,6 +11,7 @@ export interface ProductQuery {
   subCategory?: string;
   search?: string;
   brand?: string[];
+  generic?: string[];
   minPrice?: number;
   maxPrice?: number;
   inStock?: boolean;
@@ -56,6 +57,7 @@ export interface ProductFacets {
   total: number;
   price: { min: number; max: number };
   brands: FacetBrand[];
+  generics?: { name: string; count: number }[];
   specs: { name: string; param: string; values: { value: string; count: number }[] }[];
   ratings: { minRating: number; count: number }[];
   tags: { tag: string; count: number }[];
@@ -66,6 +68,7 @@ export async function getProductFacets(scope: { category?: string; subCategory?:
     total: f.total ?? 0,
     price: { min: Number(f.price?.min ?? 0), max: Number(f.price?.max ?? 0) },
     brands: f.brands ?? [],
+    generics: f.generics ?? [],
     specs: f.specs ?? [],
     ratings: f.ratings ?? [],
     tags: f.tags ?? [],

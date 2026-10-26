@@ -179,6 +179,67 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
         )}
       </div>
 
+      {product.medicineMeta && (
+        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-500/10 pb-2">
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-foreground">
+              <span className="text-base">💊</span>
+              <span>{locale === "bn" ? "ফার্মাসিউটিক্যাল তথ্য" : "Pharmaceutical Specifications"}</span>
+            </span>
+            <span
+              className={`rounded px-2 py-0.5 text-[11px] font-bold ${
+                product.medicineMeta.type === "PRESCRIPTION"
+                  ? "bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-500/20"
+                  : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20"
+              }`}
+            >
+              {product.medicineMeta.type === "PRESCRIPTION"
+                ? locale === "bn"
+                  ? "প্রেসক্রিপশন প্রয়োজন (Rx)"
+                  : "Rx Prescription Required"
+                : locale === "bn"
+                  ? "ওটিসি ওষুধ (OTC)"
+                  : "OTC Medicine"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2.5 text-xs">
+            <div>
+              <span className="text-muted-foreground block text-[11px]">
+                {locale === "bn" ? "জেনেরিক নাম" : "Generic Name"}
+              </span>
+              <span className="font-semibold text-foreground italic">
+                {product.medicineMeta.genericName}
+              </span>
+            </div>
+            <div>
+              <span className="text-muted-foreground block text-[11px]">
+                {locale === "bn" ? "প্রস্তুতকারক" : "Manufacturer"}
+              </span>
+              <span className="font-semibold text-foreground">
+                {product.medicineMeta.manufacturer}
+              </span>
+            </div>
+            <div>
+              <span className="text-muted-foreground block text-[11px]">
+                {locale === "bn" ? "ডোজ ও শক্তি" : "Form & Strength"}
+              </span>
+              <span className="font-semibold text-foreground">
+                {product.medicineMeta.dosageForm} · {product.medicineMeta.strength}
+              </span>
+            </div>
+            <div>
+              <span className="text-muted-foreground block text-[11px]">
+                {locale === "bn" ? "প্যাকিং" : "Packaging"}
+              </span>
+              <span className="font-semibold text-foreground">
+                {product.medicineMeta.packSizeInfo || product.packSize || "Standard Pack"}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* key features */}
       {(bullets.length > 0 || product.shortDescription) && (
         <ul className="list-disc space-y-1.5 pl-5 text-sm text-muted-foreground marker:text-brand-fresh">

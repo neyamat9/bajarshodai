@@ -93,9 +93,17 @@ const toText = (v: unknown): string | null =>
 // so the change and its trail succeed or fail together.
 export async function writeAudit(db: Db, e: AuditInput) {
   const meta = currentRequestMeta();
+  const rawAdminId = e.adminId as unknown;
+  const userId =
+    typeof rawAdminId === 'string'
+      ? rawAdminId
+      : rawAdminId && typeof rawAdminId === 'object' && 'id' in rawAdminId
+        ? String((rawAdminId as { id: unknown }).id)
+        : '';
+
   await db.auditLog.create({
     data: {
-      userId: e.adminId,
+      userId,
       action: e.action,
       entity: e.entity,
       entityId: e.entityId ?? null,

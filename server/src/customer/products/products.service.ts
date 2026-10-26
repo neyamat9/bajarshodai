@@ -24,6 +24,7 @@ const productInclude = {
   category: true,
   tags: true,
   priceHistory: { orderBy: { recordedAt: 'desc' as const }, take: 30 },
+  medicineMeta: true,
 } satisfies Prisma.ProductInclude;
 
 // Lightweight product shape for grids, carousels and home sections.
@@ -64,6 +65,21 @@ export const cardSelect = {
   brand: { select: { name: true, slug: true } },
   category: { select: { name: true, nameBn: true, slug: true } },
   _count: { select: { variants: true } },
+  medicineMeta: {
+    select: {
+      id: true,
+      genericName: true,
+      genericSlug: true,
+      dosageForm: true,
+      strength: true,
+      manufacturer: true,
+      type: true,
+      mrpUnit: true,
+      mrpStrip: true,
+      mrpBox: true,
+      packSizeInfo: true,
+    },
+  },
   images: {
     orderBy: [{ isMain: 'desc' as const }, { order: 'asc' as const }],
     take: 2,
@@ -115,6 +131,21 @@ export function toCard(p: CardRow) {
     hasVariants: p._count.variants > 0,
     brand: p.brand,
     category: p.category,
+    medicineMeta: p.medicineMeta
+      ? {
+          id: p.medicineMeta.id,
+          genericName: p.medicineMeta.genericName,
+          genericSlug: p.medicineMeta.genericSlug,
+          dosageForm: p.medicineMeta.dosageForm,
+          strength: p.medicineMeta.strength,
+          manufacturer: p.medicineMeta.manufacturer,
+          type: p.medicineMeta.type,
+          mrpUnit: p.medicineMeta.mrpUnit ? Number(p.medicineMeta.mrpUnit) : null,
+          mrpStrip: p.medicineMeta.mrpStrip ? Number(p.medicineMeta.mrpStrip) : null,
+          mrpBox: p.medicineMeta.mrpBox ? Number(p.medicineMeta.mrpBox) : null,
+          packSizeInfo: p.medicineMeta.packSizeInfo,
+        }
+      : null,
     image: p.images[0]?.url ?? null,
     hoverImage: p.images[1]?.url ?? null,
   };
@@ -224,6 +255,7 @@ export class ProductsService {
       variants,
       ratings,
       tags,
+      genericGroups,
     ] = await Promise.all([
       this.prisma.product.count({ where }),
       this.prisma.product.count({
@@ -272,6 +304,13 @@ export class ProductsService {
         _count: { _all: true },
         orderBy: { _count: { tag: 'desc' } },
         take: 30,
+      }),
+      this.prisma.medicineMeta.groupBy({
+        by: ['genericName'],
+        where: { product: where },
+        _count: { _all: true },
+        orderBy: { _count: { genericName: 'desc' } },
+        take: 50,
       }),
     ]);
 
@@ -348,6 +387,7 @@ export class ProductsService {
         max: Number(price._max.sellingPrice ?? 0),
       },
       brands,
+      generics: genericGroups.map((g) => ({ name: g.genericName, count: g._count._all })),
       specs,
       ratings,
       tags: tags.map((t) => ({ tag: t.tag, count: t._count._all })),

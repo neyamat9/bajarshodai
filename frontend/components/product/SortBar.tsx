@@ -1,7 +1,7 @@
 "use client";
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ArrowDownUp, Check, ChevronDown, SlidersHorizontal } from "lucide-react";
+import { ArrowDownUp, Check, ChevronDown, LayoutGrid, List, SlidersHorizontal } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { formatNumber } from "@/lib/format";
 import type { Locale } from "@/lib/locale";
@@ -17,6 +17,8 @@ interface SortBarProps {
   onOpenFilters?: () => void;
   /** How many filters are switched on (shown on the mobile Filters button) */
   activeCount?: number;
+  viewMode?: "list" | "grid";
+  onViewModeChange?: (mode: "list" | "grid") => void;
 }
 
 const SORT_VALUES: SortOption[] = ["popular", "newest", "price-asc", "price-desc", "rating"];
@@ -29,6 +31,8 @@ export default function SortBar({
   onInStockChange,
   onOpenFilters,
   activeCount = 0,
+  viewMode,
+  onViewModeChange,
 }: SortBarProps) {
   const t = useTranslations("Product");
   const locale = useLocale() as Locale;
@@ -111,6 +115,37 @@ export default function SortBar({
           </DropdownMenuRadioGroup>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {onViewModeChange && viewMode && (
+        <div className="flex items-center gap-0.5 rounded border border-border bg-background p-1">
+          <button
+            type="button"
+            onClick={() => onViewModeChange("list")}
+            className={`flex h-7 w-7 items-center justify-center rounded transition-colors ${
+              viewMode === "list"
+                ? "bg-primary text-primary-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+            title="List View"
+            aria-label="List View"
+          >
+            <List className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onViewModeChange("grid")}
+            className={`flex h-7 w-7 items-center justify-center rounded transition-colors ${
+              viewMode === "grid"
+                ? "bg-primary text-primary-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+            title="Grid View"
+            aria-label="Grid View"
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </button>
+        </div>
+      )}
     </div>
   </div>
 );

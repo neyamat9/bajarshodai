@@ -59,7 +59,9 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
                 className="group flex flex-col items-center gap-2 text-center"
               >
                 <span className="relative flex aspect-square w-full max-w-[96px] items-center justify-center overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary to-brand-deep-light shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:border-brand-fresh group-hover:shadow-md">
-                  {image ? (
+                  {cat.slug === "medicine" ? (
+                    <span className="text-4xl" role="img" aria-label="Medicine">💊</span>
+                  ) : image ? (
                     <Image src={image} alt="" fill sizes="96px" className="object-cover transition-transform duration-500 group-hover:scale-110" />
                   ) : cat.icon ? (
                     <svg className="h-9 w-9 text-white/90" fill="none" stroke="currentColor" strokeWidth={1.4} viewBox="0 0 24 24" aria-hidden="true">

@@ -19,6 +19,8 @@ import { fromLocalInput, money, num as fmtNum, toLocalInput, titleCase } from "@
 import { VariantsEditor } from "./components/VariantsEditor";
 import { draftError, fromVariant, toInput, type VariantDraft } from "./components/variantDraft";
 import { PhotosEditor } from "./components/PhotosEditor";
+import { MedExAutoFill } from "./components/MedExAutoFill";
+import type { MedicineMeta, MedExMedicineDetail } from "@/api/medicine";
 import { ProductEditorSkeleton } from "@/components/shared/pageSkeletons";
 import { tr } from "@/i18n";
 
@@ -35,6 +37,7 @@ interface Form {
   metaTitle: string; metaDescription: string; metaKeywords: string;
   tags: string;
   attrs: { name: string; value: string }[];
+  medicineMeta?: Partial<MedicineMeta> | null;
 }
 
 const blank: Form = {
@@ -44,6 +47,7 @@ const blank: Form = {
   discountPrice: "", discountStart: "", discountEnd: "", discountLabel: "", trackStock: true, stock: "0", lowStockThreshold: "5", freeShipping: false,
   weight: "", length: "", width: "", height: "", isFeatured: false, isNew: false, isHot: false, isBestSeller: false, isLimitedStock: false,
   metaTitle: "", metaDescription: "", metaKeywords: "", tags: "", attrs: [],
+  medicineMeta: null,
 };
 const n = (v?: string | number | null) => (v === null || v === undefined ? "" : String(Number(v)));
 const toForm = (p: ProductDetail): Form => ({
@@ -59,6 +63,7 @@ const toForm = (p: ProductDetail): Form => ({
   metaTitle: p.metaTitle ?? "", metaDescription: p.metaDescription ?? "", metaKeywords: p.metaKeywords ?? "",
   tags: p.tags.join(", "),
   attrs: p.attributes.map((a) => ({ name: a.name, value: a.value })),
+  medicineMeta: p.medicineMeta ?? null,
 });
 const num = (v: string) => (v.trim() === "" ? undefined : Number(v));
 
@@ -99,6 +104,57 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
   const unitOptions = useMemo(() => (units.data ?? []).filter((u) => u.isActive || u.id === f.unitId), [units.data, f.unitId]);
   const unit = units.data?.find((u) => u.id === f.unitId);
   const hasVariants = variants.length > 0;
+
+  const handleSelectMedEx = (detail: MedExMedicineDetail) => {
+    const fullName = `${detail.name} ${detail.strength}`.trim();
+    setF((cur) => {
+      const next = { ...cur };
+      next.name = fullName;
+      if (!slugTouched) next.slug = slugify(fullName);
+      if (!next.nameBn) next.nameBn = fullName;
+
+      const price = detail.stripPrice ?? detail.unitPrice ?? detail.boxPrice;
+      if (price) {
+        next.sellingPrice = String(price);
+        next.regularPrice = String(price);
+        if (!next.buyingPrice) {
+          next.buyingPrice = (price * 0.88).toFixed(2);
+        }
+      }
+      if (detail.packSizeInfo) {
+        next.packSize = detail.packSizeInfo;
+      } else if (detail.stripPrice) {
+        next.packSize = "1 Strip";
+      }
+
+      // Auto-select category to Medicine if available
+      const medCat = catOptions.find(
+        (c) =>
+          c.node.slug === "medicine" ||
+          c.node.name.toLowerCase() === "medicine",
+      );
+      if (medCat && !cur.categoryId) {
+        next.categoryId = medCat.node.id;
+      }
+
+      next.medicineMeta = {
+        genericName: detail.genericName,
+        genericSlug: detail.genericSlug,
+        dosageForm: detail.dosageForm,
+        strength: detail.strength,
+        manufacturer: detail.companyName,
+        type: "OTC",
+        medexUrl: detail.medexUrl,
+        medexId: detail.medexId,
+        mrpUnit: detail.unitPrice,
+        mrpStrip: detail.stripPrice,
+        mrpBox: detail.boxPrice,
+        packSizeInfo: detail.packSizeInfo,
+      };
+
+      return next;
+    });
+  };
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -153,6 +209,7 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
       metaTitle: f.metaTitle || undefined, metaDescription: f.metaDescription || undefined, metaKeywords: f.metaKeywords || undefined,
       tags: f.tags.split(",").map((s) => s.trim()).filter(Boolean),
       attributes: f.attrs.filter((a) => a.name.trim() && a.value.trim()),
+      medicineMeta: f.medicineMeta,
     };
   };
 
@@ -205,6 +262,12 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
         </TabsList>
 
         <TabsContent value="basics" className="space-y-4">
+          <MedExAutoFill
+            medicineMeta={f.medicineMeta}
+            onSelectMedicine={handleSelectMedEx}
+            onChangeMeta={(meta) => set("medicineMeta", meta)}
+          />
+
           <Section title={tr("General")}>
             <div className="space-y-3">
               <div className="grid gap-3 sm:grid-cols-2">

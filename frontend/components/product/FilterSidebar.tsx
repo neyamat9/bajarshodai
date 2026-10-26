@@ -14,6 +14,7 @@ export interface FilterState {
   /** sub-category slugs ticked under their categories */
   subCategories: string[];
   brands: string[];
+  generics: string[];
   minPrice: number;
   maxPrice: number;
   inStockOnly: boolean;
@@ -22,6 +23,7 @@ export interface FilterState {
 interface FilterSidebarProps {
   categories: Category[];
   brands: Brand[];
+  generics?: { name: string; count: number }[];
   filters: FilterState;
   onFiltersChange: (filters: FilterState) => void;
   /** Absolute price bounds from the product set */
@@ -42,6 +44,7 @@ const DEFAULT_PRICE_MAX = 500000;
 export default function FilterSidebar({
   categories,
   brands,
+  generics,
   filters,
   onFiltersChange,
   priceMin = DEFAULT_PRICE_MIN,
@@ -58,6 +61,7 @@ export default function FilterSidebar({
   const [localMin, setLocalMin] = useState(filters.minPrice ?? priceMin);
   const [localMax, setLocalMax] = useState(filters.maxPrice ?? priceMax);
   const { input: brandInput, setInput: setBrandInput, query: brandQuery } = useDebouncedSearch(250);
+  const { input: genericInput, setInput: setGenericInput, query: genericQuery } = useDebouncedSearch(250);
 
   // Sync local price when external filters reset
   useEffect(() => {
@@ -97,6 +101,11 @@ export default function FilterSidebar({
     const q = brandQuery.toLowerCase();
     return q ? brands.filter((b) => b.name.toLowerCase().includes(q)) : brands;
   }, [brands, brandQuery]);
+
+  const shownGenerics = useMemo(() => {
+    const q = genericQuery.toLowerCase();
+    return q ? (generics || []).filter((g) => g.name.toLowerCase().includes(q)) : (generics || []);
+  }, [generics, genericQuery]);
 
   const content = (
     <div className="flex flex-col">
@@ -209,6 +218,56 @@ export default function FilterSidebar({
           {shownBrands.length === 0 && <li className="px-2 py-3 text-center text-xs text-muted-foreground">{t("filters.noBrands")}</li>}
         </ul>
       </Section>
+
+      {/* ── Generic Name (জেনেরিক নাম) ─────────────── */}
+      {generics && generics.length > 0 && (
+        <Section
+          title={locale === "bn" ? "জেনেরিক নাম" : "Generic Name"}
+          count={filters.generics.length}
+        >
+          {generics.length > 6 && (
+            <div className="relative mb-2.5">
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+                aria-hidden="true"
+              />
+              <input
+                type="search"
+                value={genericInput}
+                onChange={(e) => setGenericInput(e.target.value)}
+                placeholder={locale === "bn" ? "জেনেরিক খুঁজুন..." : "Search generic..."}
+                aria-label="Search generic names"
+                className="h-9 w-full rounded border border-border bg-background pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-fresh focus:outline-none focus:ring-2 focus:ring-brand-fresh/20"
+              />
+            </div>
+          )}
+          <ul className="no-scrollbar -mx-1 max-h-64 space-y-0.5 overflow-y-auto px-1" data-lenis-prevent>
+            {shownGenerics.map((g) => (
+              <Option
+                key={g.name}
+                id={`gen-${g.name}`}
+                label={g.name}
+                count={g.count}
+                checked={filters.generics.includes(g.name)}
+                onChange={() => {
+                  const on = filters.generics.includes(g.name);
+                  onFiltersChange({
+                    ...filters,
+                    generics: on
+                      ? filters.generics.filter((x) => x !== g.name)
+                      : [...filters.generics, g.name],
+                  });
+                }}
+              />
+            ))}
+            {shownGenerics.length === 0 && (
+              <li className="px-2 py-3 text-center text-xs text-muted-foreground">
+                {locale === "bn" ? "কোনো জেনেরিক মেলেনি" : "No generic found"}
+              </li>
+            )}
+          </ul>
+        </Section>
+      )}
     </div>
   );
 

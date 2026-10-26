@@ -14,6 +14,7 @@ import FilterChips from "./FilterChips";
 import type { FilterState } from "./FilterSidebar";
 import FilterSidebar from "./FilterSidebar";
 import ProductCard from "./ProductCard";
+import MedicineListItem from "@/components/medicine/MedicineListItem";
 import SortBar from "./SortBar";
 import { flattenSubs } from "@/lib/utils/categories";
 
@@ -25,6 +26,8 @@ interface ProductGridProps {
   categories: Category[];
   /** Brands that have products in this view (with counts) */
   brands: Brand[];
+  /** Generic pharmaceutical molecules (with counts) */
+  generics?: { name: string; count: number }[];
   /** price range of this view */
   priceRange: { min: number; max: number };
   /** If set, the category filter is locked to this slug (category page) */
@@ -36,7 +39,7 @@ interface ProductGridProps {
   /** search words (search page) */
   search?: string;
   /** options from the link that brought the visitor here */
-  start?: { sortBy?: SortOption; onSale?: boolean; inStock?: boolean; category?: string; brand?: string; sub?: string };
+  start?: { sortBy?: SortOption; onSale?: boolean; inStock?: boolean; category?: string; brand?: string; sub?: string; generic?: string };
 }
 
 const PAGE_SIZE = 24;
@@ -46,6 +49,7 @@ export default function ProductGrid({
   initial,
   categories,
   brands,
+  generics,
   priceRange,
   lockedCategory,
   lockedBrand,
@@ -55,12 +59,15 @@ export default function ProductGrid({
 }: ProductGridProps) {
   const t = useTranslations("Product");
   const locale = useLocale() as Locale;
+  const isMedicine = lockedCategory === "medicine";
+  const [viewMode, setViewMode] = useState<"list" | "grid">(isMedicine ? "list" : "grid");
   const priceMin = Math.floor(priceRange.min);
   const priceMax = Math.ceil(priceRange.max);
   const base: FilterState = {
     categories: lockedCategory ? [lockedCategory] : start?.category ? [start.category] : [],
     subCategories: start?.sub ? [start.sub] : [],
     brands: lockedBrand ? [lockedBrand] : start?.brand ? [start.brand] : [],
+    generics: start?.generic ? [start.generic] : [],
     minPrice: priceMin,
     maxPrice: priceMax,
     inStockOnly: !!start?.inStock,
@@ -95,6 +102,7 @@ export default function ProductGrid({
         subCategory ??
         (filters.categories.length === 1 ? subsOf(filters.categories[0]).join(",") || undefined : filters.categories.length === 0 ? filters.subCategories.join(",") || undefined : undefined),
       brand: filters.brands.length ? filters.brands : undefined,
+      generic: filters.generics.length ? filters.generics : undefined,
       minPrice: filters.minPrice > priceMin ? filters.minPrice : undefined,
       maxPrice: filters.maxPrice < priceMax ? filters.maxPrice : undefined,
       inStock: filters.inStockOnly || undefined,
@@ -188,6 +196,10 @@ export default function ProductGrid({
         if (brand) chips.push({ key: `brand:${slug}`, label: brand.name });
       });
 
+    filters.generics.forEach((gen) => {
+      chips.push({ key: `generic:${gen}`, label: gen });
+    });
+
     if (filters.inStockOnly) chips.push({ key: "inStock", label: t("filters.inStock") });
     if (onSale) chips.push({ key: "onSale", label: t("filters.onSale") });
 
@@ -215,6 +227,9 @@ export default function ProductGrid({
       } else if (key.startsWith("brand:")) {
         const slug = key.replace("brand:", "");
         setFilters((prev) => ({ ...prev, brands: prev.brands.filter((b) => b !== slug) }));
+      } else if (key.startsWith("generic:")) {
+        const gen = key.replace("generic:", "");
+        setFilters((prev) => ({ ...prev, generics: prev.generics.filter((g) => g !== gen) }));
       } else if (key === "inStock") {
         setFilters((prev) => ({ ...prev, inStockOnly: false }));
       } else if (key === "onSale") {
@@ -242,6 +257,7 @@ export default function ProductGrid({
       <FilterSidebar
         categories={categories}
         brands={brands}
+        generics={generics}
         filters={filters}
         onFiltersChange={setFilters}
         priceMin={priceMin}
@@ -256,7 +272,7 @@ export default function ProductGrid({
       <div className="flex-1 min-w-0">
         {header}
 
-        {/* Sort bar */}
+        {/* Sort bar with viewMode toggle */}
         <SortBar
           resultCount={meta.total}
           sortBy={sortBy}
@@ -265,6 +281,8 @@ export default function ProductGrid({
           activeCount={activeFilters.length}
           inStockOnly={filters.inStockOnly}
           onInStockChange={(inStockOnly) => setFilters((prev) => ({ ...prev, inStockOnly }))}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
         />
 
         {/* Active filter chips */}
@@ -278,7 +296,7 @@ export default function ProductGrid({
           </div>
         )}
 
-        {/* Product grid */}
+        {/* Product list / grid */}
         {error && (
           <p role="alert" className="mb-4 rounded border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
             {error}
@@ -287,6 +305,12 @@ export default function ProductGrid({
         <div className="transition-opacity duration-200" style={{ opacity: loading ? 0.45 : 1 }} aria-busy={loading}>
           {products.length === 0 && !loading ? (
             <EmptyState hasFilters={hasActiveFilters} onClearFilters={handleClearAll} />
+          ) : viewMode === "list" ? (
+            <div className="flex flex-col gap-2.5">
+              {products.map((product) => (
+                <MedicineListItem key={product.id} product={product} />
+              ))}
+            </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 md:gap-4">
               {products.map((product, idx) => (
