@@ -23,10 +23,14 @@ export async function getCategoryBySlug(slug: string, locale: Locale = clientLoc
 }
 
 /** Categories that actually have products — what menus and the home page should show. */
-export async function getShopCategories(locale: Locale = clientLocale()): Promise<Category[]> {
+export async function getShopCategories(
+  locale: Locale = clientLocale(),
+  options?: { excludeMedicine?: boolean },
+): Promise<Category[]> {
   const all = await getCategories(locale);
-  const stocked = all.filter((c) => c.productCount > 0 || c.slug === 'medicine');
-  const list = stocked.length > 0 ? stocked : all;
+  const filteredAll = options?.excludeMedicine ? all.filter((c) => c.slug !== 'medicine') : all;
+  const stocked = filteredAll.filter((c) => c.productCount > 0 || (!options?.excludeMedicine && c.slug === 'medicine'));
+  const list = stocked.length > 0 ? stocked : filteredAll;
   return [...list].sort((a, b) => {
     if (a.slug === 'medicine') return -1;
     if (b.slug === 'medicine') return 1;

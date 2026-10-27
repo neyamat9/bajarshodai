@@ -20,6 +20,7 @@ export interface ProductQuery {
   tag?: string[];
   spec?: string[]; // "RAM:8GB|12GB"
   sortBy?: SortOption;
+  excludeMedicine?: boolean;
   page?: number;
   limit?: number;
 }
@@ -62,7 +63,7 @@ export interface ProductFacets {
   ratings: { minRating: number; count: number }[];
   tags: { tag: string; count: number }[];
 }
-export async function getProductFacets(scope: { category?: string; subCategory?: string; search?: string } = {}): Promise<ProductFacets> {
+export async function getProductFacets(scope: { category?: string; subCategory?: string; search?: string; excludeMedicine?: boolean } = {}): Promise<ProductFacets> {
   const f = await api.get<any>(`/customer/products/filters${qs(scope)}`);
   return {
     total: f.total ?? 0,

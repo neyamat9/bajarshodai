@@ -109,7 +109,7 @@ async function CategoryContent({
               )
             }
             initial={initial}
-            categories={categories}
+            categories={slug === "medicine" ? [category] : categories}
             brands={facetBrands(facets)}
             generics={facets.generics}
             priceRange={facets.price}

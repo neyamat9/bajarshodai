@@ -15,6 +15,7 @@ import type { FilterState } from "./FilterSidebar";
 import FilterSidebar from "./FilterSidebar";
 import ProductCard from "./ProductCard";
 import MedicineListItem from "@/components/medicine/MedicineListItem";
+import MedicineDetailModal from "@/components/medicine/MedicineDetailModal";
 import MedicineSearchBar from "@/components/medicine/MedicineSearchBar";
 import SortBar from "./SortBar";
 import { flattenSubs } from "@/lib/utils/categories";
@@ -41,6 +42,8 @@ interface ProductGridProps {
   search?: string;
   /** options from the link that brought the visitor here */
   start?: { sortBy?: SortOption; onSale?: boolean; inStock?: boolean; category?: string; brand?: string; sub?: string; generic?: string };
+  /** When true, strictly excludes medicine products and facets */
+  excludeMedicine?: boolean;
 }
 
 const PAGE_SIZE = 24;
@@ -57,10 +60,12 @@ export default function ProductGrid({
   subCategory,
   search,
   start,
+  excludeMedicine,
 }: ProductGridProps) {
   const t = useTranslations("Product");
   const locale = useLocale() as Locale;
   const isMedicine = lockedCategory === "medicine";
+  const [selectedMedicine, setSelectedMedicine] = useState<Product | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "grid">(isMedicine ? "list" : "grid");
   const [searchQuery, setSearchQuery] = useState(search ?? "");
   const priceMin = Math.floor(priceRange.min);
@@ -112,8 +117,9 @@ export default function ProductGrid({
       onSale: onSale || undefined,
       sortBy,
       limit: PAGE_SIZE,
+      excludeMedicine: excludeMedicine || undefined,
     }),
-    [filters, sortBy, onSale, effectiveSearch, lockedCategory, subCategory, priceMin, priceMax, subsOf],
+    [filters, sortBy, onSale, effectiveSearch, lockedCategory, subCategory, priceMin, priceMax, subsOf, excludeMedicine],
   );
 
   // New filters / sort → fetch page 1 again
@@ -330,14 +336,31 @@ export default function ProductGrid({
             <EmptyState hasFilters={hasActiveFilters} onClearFilters={handleClearAll} />
           ) : viewMode === "list" ? (
             <div className="flex flex-col gap-2.5">
-              {products.map((product) => (
-                <MedicineListItem key={product.id} product={product} />
-              ))}
+              {products.map((product) =>
+                product.medicineMeta ? (
+                  <MedicineListItem
+                    key={product.id}
+                    product={product}
+                    onOpenDetail={setSelectedMedicine}
+                  />
+                ) : (
+                  <ProductCard key={product.id} product={product} />
+                ),
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 md:gap-4">
               {products.map((product, idx) => (
-                <ProductCard key={product.id} product={product} animationDelay={Math.min(idx * 40, 400)} />
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  animationDelay={Math.min(idx * 40, 400)}
+                  onMedicineClick={
+                    isMedicine || product.medicineMeta
+                      ? setSelectedMedicine
+                      : undefined
+                  }
+                />
               ))}
             </div>
           )}
@@ -366,6 +389,22 @@ export default function ProductGrid({
           <p className="mt-10 text-center text-sm font-medium text-muted-foreground">You&apos;ve seen all {meta.total} products</p>
         )}
       </div>
+
+      {/* Medicine Details Modal */}
+      {selectedMedicine && (
+        <MedicineDetailModal
+          product={selectedMedicine}
+          onClose={() => setSelectedMedicine(null)}
+          onSelectGeneric={(gen) => {
+            setFilters((prev) => ({
+              ...prev,
+              generics: prev.generics.includes(gen)
+                ? prev.generics
+                : [...prev.generics, gen],
+            }));
+          }}
+        />
+      )}
     </div>
   );
 }

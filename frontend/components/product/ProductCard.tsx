@@ -23,6 +23,8 @@ interface ProductCardProps {
   animationDelay?: number;
   /** Play the built-in fade-in on scroll. Turn off inside a RevealGroup. */
   entrance?: boolean;
+  /** Optional callback when medicine card is clicked (opens modal instead of full page) */
+  onMedicineClick?: (product: Product) => void;
 }
 
 const BADGE_STYLES: Record<string, string> = {
@@ -37,7 +39,12 @@ const BADGE_STYLES: Record<string, string> = {
  * After the first tap the button becomes a − quantity + stepper that follows the unit (0.5 kg steps for fish,
  * whole pieces for soap); stepping below the minimum takes it out of the cart again.
  */
-export default function ProductCard({ product, animationDelay = 0, entrance = true }: ProductCardProps) {
+export default function ProductCard({
+  product,
+  animationDelay = 0,
+  entrance = true,
+  onMedicineClick,
+}: ProductCardProps) {
   const t = useTranslations("Product");
   const locale = useLocale() as Locale;
   const formatBDT = (n: number) => formatMoney(n, locale);
@@ -51,7 +58,7 @@ export default function ProductCard({ product, animationDelay = 0, entrance = tr
   // start loading the product page as soon as the pointer is over the card, so the click opens it at once
   const prefetched = useRef(false);
   function warm() {
-    if (prefetched.current) return;
+    if (onMedicineClick || prefetched.current) return;
     prefetched.current = true;
     router.prefetch(`/products/${product.slug}`);
   }
@@ -182,17 +189,37 @@ export default function ProductCard({ product, animationDelay = 0, entrance = tr
     >
       {/* ── Image ───────────────────────────────────── */}
       <div className="relative aspect-square overflow-hidden bg-secondary">
-        <Link href={`/products/${product.slug}`} tabIndex={-1} aria-hidden="true" className="relative block h-full w-full">
-          {primaryImage && (
-            <Image
-              src={primaryImage.url}
-              alt={primaryImage.alt}
-              fill
-              sizes="(max-width: 640px) 46vw, (max-width: 1024px) 30vw, 17vw"
-              className={`object-cover transition-transform duration-500 group-hover:scale-105 ${outOfStock ? "opacity-60 grayscale" : ""}`}
-            />
-          )}
-        </Link>
+        {onMedicineClick ? (
+          <button
+            type="button"
+            onClick={() => onMedicineClick(product)}
+            tabIndex={-1}
+            aria-hidden="true"
+            className="relative block h-full w-full cursor-pointer text-left"
+          >
+            {primaryImage && (
+              <Image
+                src={primaryImage.url}
+                alt={primaryImage.alt}
+                fill
+                sizes="(max-width: 640px) 46vw, (max-width: 1024px) 30vw, 17vw"
+                className={`object-cover transition-transform duration-500 group-hover:scale-105 ${outOfStock ? "opacity-60 grayscale" : ""}`}
+              />
+            )}
+          </button>
+        ) : (
+          <Link href={`/products/${product.slug}`} tabIndex={-1} aria-hidden="true" className="relative block h-full w-full">
+            {primaryImage && (
+              <Image
+                src={primaryImage.url}
+                alt={primaryImage.alt}
+                fill
+                sizes="(max-width: 640px) 46vw, (max-width: 1024px) 30vw, 17vw"
+                className={`object-cover transition-transform duration-500 group-hover:scale-105 ${outOfStock ? "opacity-60 grayscale" : ""}`}
+              />
+            )}
+          </Link>
+        )}
 
         {outOfStock && (
           <div className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center bg-brand-deep/30" aria-hidden="true">
@@ -300,12 +327,25 @@ export default function ProductCard({ product, animationDelay = 0, entrance = tr
             )}
           </div>
         )}
-        <Link href={`/products/${product.slug}`}>
-          <h3 className="line-clamp-2 min-h-[2.4rem] font-outfit text-[13px] font-semibold leading-snug text-foreground transition-colors group-hover:text-primary dark:group-hover:text-accent-text sm:text-sm">
-            {product.name}
-            {sizeText ? ` - ${sizeText}` : ""}
-          </h3>
-        </Link>
+        {onMedicineClick ? (
+          <button
+            type="button"
+            onClick={() => onMedicineClick(product)}
+            className="text-left w-full"
+          >
+            <h3 className="line-clamp-2 min-h-[2.4rem] font-outfit text-[13px] font-semibold leading-snug text-foreground transition-colors group-hover:text-primary dark:group-hover:text-accent-text sm:text-sm">
+              {product.name}
+              {sizeText ? ` - ${sizeText}` : ""}
+            </h3>
+          </button>
+        ) : (
+          <Link href={`/products/${product.slug}`}>
+            <h3 className="line-clamp-2 min-h-[2.4rem] font-outfit text-[13px] font-semibold leading-snug text-foreground transition-colors group-hover:text-primary dark:group-hover:text-accent-text sm:text-sm">
+              {product.name}
+              {sizeText ? ` - ${sizeText}` : ""}
+            </h3>
+          </Link>
+        )}
         {product.medicineMeta && (
           <div className="mt-1 flex flex-col text-[11px] text-muted-foreground leading-tight">
             <span className="truncate font-medium text-foreground/80 italic">

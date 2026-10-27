@@ -171,30 +171,62 @@ export default function FilterSidebar({
         </div>
       </Section>
 
-      {/* Category */}
-      <Section title={t("filters.category")} count={filters.categories.length + filters.subCategories.length}>
-        <ul className="no-scrollbar -mx-1 max-h-80 space-y-0.5 overflow-y-auto px-1" data-lenis-prevent>
-          {categories.map((cat) => {
-            const checked = filters.categories.includes(cat.slug);
-            const allSubs = flattenSubs(cat.subCategories);
-            const picked = allSubs.filter((x) => filters.subCategories.includes(x.slug)).length;
-            return (
-              <Fragment key={cat.slug}>
-                <Option id={`cat-${cat.slug}`} label={cat.name} count={cat.productCount} checked={checked} hint={picked > 0 ? t("filters.selected", { count: formatNumber(picked, locale, 0) }) : undefined} onChange={() => toggleCategory(cat)} />
-                {checked && allSubs.length > 0 && (
-                  <li>
-                    <ul className="ml-[17px] space-y-0.5 border-l border-border pl-2.5" aria-label={t("filters.subCategories", { name: cat.name })}>
-                      {allSubs.map((sub) => (
-                        <Option key={sub.slug} small id={`sub-${sub.slug}`} label={`${"– ".repeat(sub.depth)}${sub.name}`} checked={filters.subCategories.includes(sub.slug)} onChange={() => toggleSub(cat, sub.slug)} />
-                      ))}
-                    </ul>
-                  </li>
-                )}
-              </Fragment>
-            );
-          })}
-        </ul>
-      </Section>
+      {/* Category / Subcategories */}
+      {(() => {
+        const isSingleLocked = categories.length === 1 && filters.categories.includes(categories[0].slug);
+        const singleSubs = isSingleLocked ? flattenSubs(categories[0].subCategories) : [];
+        if (isSingleLocked && singleSubs.length === 0) return null;
+
+        if (isSingleLocked) {
+          return (
+            <Section
+              title={locale === "bn" ? "উপ-ক্যাটাগরি" : "Subcategory"}
+              count={filters.subCategories.length}
+            >
+              <ul className="no-scrollbar -mx-1 max-h-80 space-y-0.5 overflow-y-auto px-1" data-lenis-prevent>
+                {singleSubs.map((sub) => (
+                  <Option
+                    key={sub.slug}
+                    small
+                    id={`sub-${sub.slug}`}
+                    label={`${"– ".repeat(sub.depth)}${sub.name}`}
+                    checked={filters.subCategories.includes(sub.slug)}
+                    onChange={() => toggleSub(categories[0], sub.slug)}
+                  />
+                ))}
+              </ul>
+            </Section>
+          );
+        }
+
+        if (categories.length === 0) return null;
+
+        return (
+          <Section title={t("filters.category")} count={filters.categories.length + filters.subCategories.length}>
+            <ul className="no-scrollbar -mx-1 max-h-80 space-y-0.5 overflow-y-auto px-1" data-lenis-prevent>
+              {categories.map((cat) => {
+                const checked = filters.categories.includes(cat.slug);
+                const allSubs = flattenSubs(cat.subCategories);
+                const picked = allSubs.filter((x) => filters.subCategories.includes(x.slug)).length;
+                return (
+                  <Fragment key={cat.slug}>
+                    <Option id={`cat-${cat.slug}`} label={cat.name} count={cat.productCount} checked={checked} hint={picked > 0 ? t("filters.selected", { count: formatNumber(picked, locale, 0) }) : undefined} onChange={() => toggleCategory(cat)} />
+                    {checked && allSubs.length > 0 && (
+                      <li>
+                        <ul className="ml-[17px] space-y-0.5 border-l border-border pl-2.5" aria-label={t("filters.subCategories", { name: cat.name })}>
+                          {allSubs.map((sub) => (
+                            <Option key={sub.slug} small id={`sub-${sub.slug}`} label={`${"– ".repeat(sub.depth)}${sub.name}`} checked={filters.subCategories.includes(sub.slug)} onChange={() => toggleSub(cat, sub.slug)} />
+                          ))}
+                        </ul>
+                      </li>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </ul>
+          </Section>
+        );
+      })()}
 
       {/* Brand */}
       <Section title={t("filters.brand")} count={filters.brands.length}>

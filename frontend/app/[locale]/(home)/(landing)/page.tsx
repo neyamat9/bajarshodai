@@ -13,7 +13,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   setRequestLocale(rawLocale);
   const locale = rawLocale as Locale;
   const [categories, home, heroMain, heroSide] = await Promise.all([
-    getShopCategories(locale),
+    getShopCategories(locale, { excludeMedicine: true }),
     getHomeData(locale).catch(() => ({ featured: [], newArrivals: [], bestSellers: [], onSale: [] })),
     getBanners("HERO_MAIN"),
     getBanners("HERO_SIDE"),

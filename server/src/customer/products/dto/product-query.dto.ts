@@ -60,6 +60,12 @@ export class ProductScopeDto {
   @IsString()
   @MaxLength(100)
   search?: string;
+
+  @ApiPropertyOptional({ description: 'Exclude medicine products and categories' })
+  @IsOptional()
+  @Transform(toBool)
+  @IsBoolean()
+  excludeMedicine?: boolean;
 }
 
 export class ProductQueryDto extends ProductScopeDto {
@@ -205,4 +211,10 @@ export class SectionQueryDto {
   @IsString()
   @MaxLength(150)
   category?: string;
+
+  @ApiPropertyOptional({ description: 'Exclude medicine products' })
+  @IsOptional()
+  @Transform(toBool)
+  @IsBoolean()
+  excludeMedicine?: boolean;
 }

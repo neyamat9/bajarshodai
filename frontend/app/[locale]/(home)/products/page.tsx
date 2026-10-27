@@ -46,9 +46,20 @@ async function ProductsContent({ sp, locale }: { sp: Search; locale: Locale }) {
   const start = { sortBy, onSale: sp.onSale === "true", inStock: sp.inStock === "true", category: sp.category || undefined, brand: sp.brand || undefined, sub: sp.sub || undefined };
 
   const [initial, categories, facets] = await Promise.all([
-    listProducts({ sortBy: sortBy ?? "popular", onSale: start.onSale || undefined, inStock: start.inStock || undefined, category: start.category, subCategory: start.sub, brand: start.brand ? [start.brand] : undefined }, locale),
-    getShopCategories(locale),
-    getProductFacets({ category: start.category }),
+    listProducts(
+      {
+        sortBy: sortBy ?? "popular",
+        onSale: start.onSale || undefined,
+        inStock: start.inStock || undefined,
+        category: start.category,
+        subCategory: start.sub,
+        brand: start.brand ? [start.brand] : undefined,
+        excludeMedicine: true,
+      },
+      locale,
+    ),
+    getShopCategories(locale, { excludeMedicine: true }),
+    getProductFacets({ category: start.category, excludeMedicine: true }),
   ]);
 
   const catName = categories.find((c) => c.slug === start.category)?.name;
@@ -77,6 +88,7 @@ async function ProductsContent({ sp, locale }: { sp: Search; locale: Locale }) {
             categories={categories}
             brands={facetBrands(facets)}
             priceRange={facets.price}
+            excludeMedicine={true}
             start={start}
           />
         </Suspense>

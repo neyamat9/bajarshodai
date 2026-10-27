@@ -50,11 +50,22 @@ const slugList = (v: string) =>
     .map((x) => x.trim())
     .filter(Boolean);
 
+// Helper to strictly exclude any product that is a medicine (either has medicineMeta or belongs to the medicine category tree).
+export function notMedicine(): Prisma.ProductWhereInput {
+  return {
+    medicineMeta: { is: null },
+    NOT: inCategories(['medicine']),
+  };
+}
+
 // Active products in the requested category (and everything below it) / search.
 // `subCategory` is kept for the old links: it is simply a deeper category slug.
 export function buildScopeWhere(q: ProductScopeDto): Prisma.ProductWhereInput {
   const where: Prisma.ProductWhereInput = { status: 'ACTIVE' };
   const and: Prisma.ProductWhereInput[] = [];
+  if (q.excludeMedicine) {
+    and.push(notMedicine());
+  }
   if (q.category) {
     const slugs = slugList(q.category);
     if (slugs.length) and.push(inCategories(slugs));

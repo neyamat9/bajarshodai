@@ -14,6 +14,7 @@ import {
   buildScopeWhere,
   facetValueCompare,
   inCategories,
+  notMedicine,
 } from './product-filters';
 
 const productInclude = {
@@ -228,6 +229,7 @@ export class ProductsService {
       scope.category ?? '',
       scope.subCategory ?? '',
       scope.search?.trim().toLowerCase() ?? '',
+      !!scope.excludeMedicine,
     ])}`;
     return this.cache.getOrSet(
       key,
@@ -507,7 +509,7 @@ export class ProductsService {
     const page = q.page ?? 1;
     const limit = q.limit ?? 12;
     return this.cache.getOrSet(
-      `products:section:sale:${q.category ?? ''}:${page}:${limit}`,
+      `products:section:sale:${q.category ?? ''}:${page}:${limit}:${!!q.excludeMedicine}`,
       async () => {
         const categoryFilter = q.category
           ? Prisma.sql`AND p."categoryId" IN (
@@ -517,15 +519,25 @@ export class ProductsService {
                 SELECT c.id FROM "Category" c JOIN t ON c."parentCategoryId" = t.id
               ) SELECT id FROM t)`
           : Prisma.empty;
+        const medicineFilter = q.excludeMedicine
+          ? Prisma.sql`AND NOT EXISTS (SELECT 1 FROM "MedicineMeta" m WHERE m."productId" = p.id)
+              AND p."categoryId" NOT IN (
+                WITH RECURSIVE med AS (
+                  SELECT c.id FROM "Category" c WHERE c.slug = 'medicine'
+                  UNION ALL
+                  SELECT c.id FROM "Category" c JOIN med ON c."parentCategoryId" = med.id
+                ) SELECT id FROM med
+              )`
+          : Prisma.empty;
         const [rows, countRows] = await Promise.all([
           this.prisma.$queryRaw<{ id: string }[]>`
             SELECT p.id FROM "Product" p
-            WHERE p.status = 'ACTIVE' AND p."sellingPrice" < p."regularPrice" ${categoryFilter}
+            WHERE p.status = 'ACTIVE' AND p."sellingPrice" < p."regularPrice" ${categoryFilter} ${medicineFilter}
             ORDER BY (p."regularPrice" - p."sellingPrice") / NULLIF(p."regularPrice", 0) DESC, p.id
             LIMIT ${limit} OFFSET ${(page - 1) * limit}`,
           this.prisma.$queryRaw<{ count: bigint }[]>`
             SELECT COUNT(*)::bigint AS count FROM "Product" p
-            WHERE p.status = 'ACTIVE' AND p."sellingPrice" < p."regularPrice" ${categoryFilter}`,
+            WHERE p.status = 'ACTIVE' AND p."sellingPrice" < p."regularPrice" ${categoryFilter} ${medicineFilter}`,
         ]);
         const ids = rows.map((r) => r.id);
         const products = ids.length
@@ -551,13 +563,13 @@ export class ProductsService {
   // Everything the home page needs in one request.
   async home() {
     return this.cache.getOrSet(
-      'products:home',
+      'products:home:v2',
       async () => {
-        const first = { page: 1, limit: 10 };
+        const first = { page: 1, limit: 10, excludeMedicine: true };
         const [featured, newArrivals, bestSellers, onSale, categories, brands] =
           await Promise.all([
             this.prisma.product.findMany({
-              where: { status: 'ACTIVE', isFeatured: true },
+              where: { status: 'ACTIVE', isFeatured: true, ...notMedicine() },
               select: cardSelect,
               orderBy: [{ featuredOrder: 'asc' }, { totalSales: 'desc' }, { id: 'asc' }],
               take: 18,
@@ -601,7 +613,12 @@ export class ProductsService {
       },
     } satisfies Prisma.CategorySelect;
     const flagged = await this.prisma.category.findMany({
-      where: { status: 'ACTIVE', isHomepage: true, parentCategoryId: null },
+      where: {
+        status: 'ACTIVE',
+        isHomepage: true,
+        parentCategoryId: null,
+        slug: { not: 'medicine' },
+      },
       select,
       orderBy: { displayOrder: 'asc' },
     });
@@ -609,7 +626,11 @@ export class ProductsService {
     const rows = flagged.length
       ? flagged
       : await this.prisma.category.findMany({
-          where: { status: 'ACTIVE', parentCategoryId: null },
+          where: {
+            status: 'ACTIVE',
+            parentCategoryId: null,
+            slug: { not: 'medicine' },
+          },
           select,
           orderBy: { displayOrder: 'asc' },
           take: 8,
@@ -629,11 +650,12 @@ export class ProductsService {
     const page = q.page ?? 1;
     const limit = q.limit ?? 12;
     return this.cache.getOrSet(
-      `products:section:${name}:${q.category ?? ''}:${page}:${limit}`,
+      `products:section:${name}:${q.category ?? ''}:${page}:${limit}:${!!q.excludeMedicine}`,
       async () => {
         const where: Prisma.ProductWhereInput = {
           AND: [
             { status: 'ACTIVE' },
+            q.excludeMedicine ? notMedicine() : {},
             q.category ? inCategories([q.category]) : {},
             extra,
           ],

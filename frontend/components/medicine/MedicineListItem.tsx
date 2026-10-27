@@ -32,9 +32,10 @@ import { PLACEHOLDER_IMAGE } from "@/lib/api/client";
 
 interface MedicineListItemProps {
   product: Product;
+  onOpenDetail?: (product: Product) => void;
 }
 
-export default function MedicineListItem({ product }: MedicineListItemProps) {
+export default function MedicineListItem({ product, onOpenDetail }: MedicineListItemProps) {
   const t = useTranslations("Product");
   const locale = useLocale() as Locale;
   const formatBDT = (n: number) => formatMoney(n, locale);
@@ -46,7 +47,7 @@ export default function MedicineListItem({ product }: MedicineListItemProps) {
   const prefetched = useRef(false);
 
   function warm() {
-    if (prefetched.current) return;
+    if (onOpenDetail || prefetched.current) return;
     prefetched.current = true;
     router.prefetch(`/products/${product.slug}`);
   }
@@ -172,7 +173,10 @@ export default function MedicineListItem({ product }: MedicineListItemProps) {
       {/* ── Left Side: Dosage Form Avatar & Medicine Info ────────── */}
       <div className="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
         {/* Medical Dosage Badge / Avatar */}
-        <div className="shrink-0">
+        <div
+          className={`shrink-0 ${onOpenDetail ? "cursor-pointer" : ""}`}
+          onClick={onOpenDetail ? () => onOpenDetail(product) : undefined}
+        >
           {hasRealImage ? (
             <div className="relative size-14 sm:size-16 rounded-lg overflow-hidden border bg-muted">
               <Image
@@ -198,12 +202,22 @@ export default function MedicineListItem({ product }: MedicineListItemProps) {
         <div className="min-w-0 flex-1 space-y-1">
           {/* Brand Name & Rx Tag */}
           <div className="flex flex-wrap items-center gap-2">
-            <Link
-              href={`/products/${product.slug}`}
-              className="font-outfit font-bold text-base sm:text-lg text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors line-clamp-1"
-            >
-              {product.name}
-            </Link>
+            {onOpenDetail ? (
+              <button
+                type="button"
+                onClick={() => onOpenDetail(product)}
+                className="font-outfit font-bold text-base sm:text-lg text-foreground text-left group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors line-clamp-1"
+              >
+                {product.name}
+              </button>
+            ) : (
+              <Link
+                href={`/products/${product.slug}`}
+                className="font-outfit font-bold text-base sm:text-lg text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors line-clamp-1"
+              >
+                {product.name}
+              </Link>
+            )}
 
             {/* OTC vs Rx Status */}
             {isRx ? (
