@@ -18,8 +18,8 @@ next-env.d.ts
 *.local
 
 # Uploaded files (served by the API, kept outside git)
-uploads/
-server/uploads/
+/uploads/
+/server/uploads/
 
 # Logs
 logs/
