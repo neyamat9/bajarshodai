@@ -87,7 +87,7 @@ export default function FarmFreshShowcase() {
       className="relative w-full overflow-hidden select-none border-none bg-secondary"
     >
       {/* ── Main Meadow Banner Container ────────────────────────── */}
-      <div className="relative w-full aspect-[16/11] sm:aspect-[16/9] md:min-h-[620px] lg:min-h-[720px] flex items-center justify-center">
+      <div className="relative w-full aspect-[16/10] sm:aspect-[16/8.5] md:min-h-[520px] lg:min-h-[600px] flex items-center justify-center">
         {/* Background Meadow with Generous Headroom for Bag Handles */}
         <div className="absolute inset-0 z-0">
           <Image
@@ -100,7 +100,7 @@ export default function FarmFreshShowcase() {
           />
 
           {/* Super smooth color gradient at the top: matches the preceding section (bg-secondary) with zero visible seam */}
-          <div className="absolute inset-x-0 top-0 h-28 sm:h-44 bg-gradient-to-b from-secondary via-secondary/60 to-transparent dark:from-secondary dark:via-secondary/80 pointer-events-none z-10" />
+          <div className="absolute inset-x-0 top-0 h-20 sm:h-32 bg-gradient-to-b from-secondary via-secondary/60 to-transparent dark:from-secondary dark:via-secondary/80 pointer-events-none z-10" />
 
           {/* Bottom organic green ground plane that seamlessly merges into the attached footer */}
           <div className="absolute inset-x-0 bottom-0 h-36 sm:h-48 md:h-56 bg-gradient-to-b from-transparent via-[#0b6234]/80 to-[#0b6234] dark:to-[#0a2e18] pointer-events-none z-10" />
@@ -188,7 +188,7 @@ export default function FarmFreshShowcase() {
           </div>
 
           {/* Spacer so the tote bag has breathing room before the footer text */}
-          <div className="h-28 sm:h-40 md:h-52 lg:h-72 w-full pointer-events-none" />
+          <div className="h-16 sm:h-24 md:h-36 lg:h-48 w-full pointer-events-none" />
         </div>
       </div>
     </section>
