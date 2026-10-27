@@ -607,6 +607,7 @@ model Product {
 
   // Flags
   isFeatured     Boolean @default(false)
+  featuredOrder  Int?
   isNew          Boolean @default(false)
   isHot          Boolean @default(false)
   isDiscounted   Boolean @default(false)
@@ -654,6 +655,7 @@ model Product {
   @@index([unitId])
   @@index([sellingPrice])
   @@index([isFeatured])
+  @@index([isFeatured, featuredOrder])
   @@index([isNew])
   @@index([isHot])
   @@index([isDiscounted])

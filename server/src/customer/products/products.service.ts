@@ -559,8 +559,8 @@ export class ProductsService {
             this.prisma.product.findMany({
               where: { status: 'ACTIVE', isFeatured: true },
               select: cardSelect,
-              orderBy: [{ totalSales: 'desc' }, { id: 'asc' }],
-              take: 10,
+              orderBy: [{ featuredOrder: 'asc' }, { totalSales: 'desc' }, { id: 'asc' }],
+              take: 18,
             }),
             this.newArrivals(first),
             this.bestSellers(first),

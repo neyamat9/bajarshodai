@@ -210,3 +210,30 @@ export const productsApi = {
   updateImage: (id: string, imageId: string, body: { alt?: string | null; isMain?: boolean }) => api.patch<ProductImage[]>(`/admin/products/${id}/images/${imageId}`, body).then((r) => r.data),
   removeImage: (id: string, imageId: string) => api.delete<ProductImage[]>(`/admin/products/${id}/images/${imageId}`).then((r) => r.data),
 };
+
+export interface FeaturedProductItem {
+  id: string;
+  name: string;
+  nameBn?: string | null;
+  slug: string;
+  productCode?: string | null;
+  regularPrice: number;
+  sellingPrice: number;
+  stock: number;
+  status: string;
+  isFeatured: boolean;
+  featuredOrder?: number | null;
+  brandName?: string | null;
+  categoryName?: string | null;
+  mainImage?: string | null;
+  unit?: {
+    shortLabel: string;
+    shortLabelBn?: string | null;
+  } | null;
+}
+
+export const featuredProductsApi = {
+  list: () => api.get<FeaturedProductItem[]>("/admin/featured-products").then((r) => r.data),
+  update: (productIds: string[]) => api.put<FeaturedProductItem[]>("/admin/featured-products", { productIds }).then((r) => r.data),
+};
+

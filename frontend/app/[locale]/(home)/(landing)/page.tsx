@@ -23,7 +23,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     <>
       <HeroSection main={heroMain} side={heroSide} spotlight={home.featured} categories={categories} />
       <CategoryGrid categories={categories} />
-      {home.featured.length > 0 && <FeaturedProducts products={home.featured.slice(0, 8)} />}
+      {home.featured.length > 0 && <FeaturedProducts products={home.featured.slice(0, 18)} />}
       {home.bestSellers.length > 0 && <BestSellingProducts products={home.bestSellers.slice(0, 8)} />}
     </>
   );

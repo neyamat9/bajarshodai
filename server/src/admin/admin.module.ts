@@ -27,6 +27,7 @@ import { AdminBackInStockModule } from './back-in-stock/back-in-stock.module';
 import { AdminReportsModule } from './reports/reports.module';
 import { AdminAuditLogsModule } from './audit-logs/audit-logs.module';
 import { AdminMedicineModule } from './medicine/medicine.module';
+import { FeaturedProductsModule } from './featured-products/featured-products.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { AdminMedicineModule } from './medicine/medicine.module';
     UnitsModule,
     AdminLocationsModule,
     ProductModule,
+    FeaturedProductsModule,
     AdminMedicineModule,
     DashboardModule,
     AdminOrdersModule,
