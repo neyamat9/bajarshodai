@@ -84,7 +84,7 @@ export default function FarmFreshShowcase() {
   return (
     <section
       aria-label="Farm Fresh Showcase"
-      className="relative w-full overflow-hidden select-none border-none bg-secondary"
+      className="relative w-full overflow-hidden select-none border-none bg-[#d4e3d1]"
     >
       {/* ── Main Meadow Banner Container ────────────────────────── */}
       <div className="relative w-full aspect-[16/10] sm:aspect-[16/8.5] md:min-h-[520px] lg:min-h-[600px] flex items-center justify-center">
@@ -92,15 +92,15 @@ export default function FarmFreshShowcase() {
         <div className="absolute inset-0 z-0">
           <Image
             src="/images/footer/farm_fresh_meadow.jpg"
-            alt="Farm fresh vegetables background"
+            alt="Bazar Shodai farm fresh vegetables showcase"
             fill
             priority
             sizes="100vw"
             className="object-cover object-[50%_15%] sm:object-[center_top]"
           />
 
-          {/* Super smooth color gradient at the top: matches the preceding section (bg-secondary) with zero visible seam */}
-          <div className="absolute inset-x-0 top-0 h-20 sm:h-32 bg-gradient-to-b from-secondary via-secondary/60 to-transparent dark:from-secondary dark:via-secondary/80 pointer-events-none z-10" />
+          {/* Super smooth color gradient at the top: matches the preceding section (bg-[#d4e3d1]) with zero visible seam */}
+          <div className="absolute inset-x-0 top-0 h-20 sm:h-32 bg-gradient-to-b from-[#d4e3d1] via-[#d4e3d1]/60 to-transparent dark:from-secondary dark:via-secondary/80 pointer-events-none z-10" />
 
           {/* Bottom organic green ground plane that seamlessly merges into the attached footer */}
           <div className="absolute inset-x-0 bottom-0 h-36 sm:h-48 md:h-56 bg-gradient-to-b from-transparent via-[#0b6234]/80 to-[#0b6234] dark:to-[#0a2e18] pointer-events-none z-10" />

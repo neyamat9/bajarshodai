@@ -12,7 +12,7 @@ interface BestSellingProductsProps {
 export default function BestSellingProducts({ products }: BestSellingProductsProps) {
   const t = useTranslations("Home");
   return (
-    <section className="overflow-x-clip bg-secondary pb-6 pt-[60px] sm:pb-8 sm:pt-[58px] md:pb-10 md:pt-[71px]" aria-labelledby="best-selling-heading">
+    <section className="overflow-x-clip bg-[#d4e3d1] pb-6 pt-[60px] sm:pb-8 sm:pt-[58px] md:pb-10 md:pt-[71px]" aria-labelledby="best-selling-heading">
       <RevealGroup className="relative mx-auto max-w-[1440px] px-4 md:px-8">
         <span data-drift="1.4" className="pointer-events-none absolute right-0 top-2 hidden h-5 w-5 bg-brand-fresh/60 md:block" aria-hidden="true" />
         <span data-drift="0.7" className="pointer-events-none absolute right-16 top-20 hidden h-3 w-3 bg-primary/30 md:block" aria-hidden="true" />
