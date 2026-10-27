@@ -84,8 +84,7 @@ export default function FarmFreshShowcase() {
   return (
     <section
       aria-label="Farm Fresh Showcase"
-      className="relative w-full overflow-hidden select-none border-none"
-      style={{ backgroundColor: "#f0f3d8" }}
+      className="relative w-full overflow-hidden select-none border-none bg-secondary"
     >
       {/* ── Main Meadow Banner Container ────────────────────────── */}
       <div className="relative w-full aspect-[16/11] sm:aspect-[16/9] md:min-h-[620px] lg:min-h-[720px] flex items-center justify-center">
@@ -100,8 +99,8 @@ export default function FarmFreshShowcase() {
             className="object-cover object-[50%_15%] sm:object-[center_top]"
           />
 
-          {/* Super smooth color gradient at the top: eliminates any horizontal seam line */}
-          <div className="absolute inset-x-0 top-0 h-24 sm:h-36 bg-gradient-to-b from-background via-background/40 to-transparent dark:from-background dark:via-background/70 pointer-events-none z-10" />
+          {/* Super smooth color gradient at the top: matches the preceding section (bg-secondary) with zero visible seam */}
+          <div className="absolute inset-x-0 top-0 h-28 sm:h-44 bg-gradient-to-b from-secondary via-secondary/60 to-transparent dark:from-secondary dark:via-secondary/80 pointer-events-none z-10" />
 
           {/* Bottom organic green ground plane that seamlessly merges into the attached footer */}
           <div className="absolute inset-x-0 bottom-0 h-36 sm:h-48 md:h-56 bg-gradient-to-b from-transparent via-[#0b6234]/80 to-[#0b6234] dark:to-[#0a2e18] pointer-events-none z-10" />
