@@ -505,3 +505,17 @@ html[lang="bn"] [class*="tracking-"] { letter-spacing: 0; }
 @media (max-width: 767px) {
   html[data-cart-bar] .scroll-top-btn { bottom: 5rem; }
 }
+
+/* Floating USP badges animation */
+@keyframes badgeFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-badge-float {
+  animation: badgeFloat 4s ease-in-out infinite;
+}

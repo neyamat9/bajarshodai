@@ -2,6 +2,7 @@ import { Link } from "@/i18n/navigation";
 import BrandLogo from "@/components/layout/BrandLogo";
 import NewsletterForm from "@/components/layout/NewsletterForm";
 import SocialIcons from "@/components/layout/SocialIcons";
+import FarmFreshShowcase from "@/components/layout/FarmFreshShowcase";
 import RevealGroup from "@/components/motion/RevealGroup";
 import type { SiteSettings } from "@/lib/services/site.service";
 import type { Category } from "@/lib/types";
@@ -24,24 +25,18 @@ export default async function SiteFooter({ settings, categories }: { settings: S
   ];
 
   return (
-    <footer className="relative bg-brand-deep text-white dark:border-t dark:border-border dark:bg-card">
-      <RevealGroup>
-        {/* subscribe bar: centred exactly on the footer's top edge (no gap above the green) */}
-        <div className="relative z-10 h-0">
-          <div className="absolute inset-x-0 top-0 mx-auto max-w-xl -translate-y-1/2 px-4">
-            <div data-reveal="up">
-              <NewsletterForm variant="bar" />
-            </div>
-          </div>
-        </div>
+    <footer className="relative bg-brand-deep text-white border-none">
+      {/* ── Attached Farm-Fresh Showcase (Vegetable Tote Bag + 6 Orbital Badges) ── */}
+      <FarmFreshShowcase />
 
+      <RevealGroup>
         {/* overflow-hidden: the rows slide up while animating in — they must not stretch the page below the footer */}
-        <div className="mx-auto max-w-[1440px] overflow-hidden px-4 pb-8 pt-20 md:px-8">
+        <div className="mx-auto max-w-[1440px] overflow-hidden px-4 pb-8 pt-8 sm:pt-12 md:px-8">
           <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-12 lg:gap-0">
             {/* brand */}
             <div data-reveal="up" className="flex flex-col gap-5 sm:col-span-2 lg:col-span-4 lg:pr-8">
               <BrandLogo size="lg" tone="onDark" />
-              <p className="max-w-xs text-sm leading-relaxed text-white/65">
+              <p className="max-w-xs text-sm leading-relaxed text-white/70">
                 {t("about")}
               </p>
               <Link href="/contact" className="group inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-brand-fresh">
@@ -63,7 +58,7 @@ export default async function SiteFooter({ settings, categories }: { settings: S
               </ul>
             </div>
 
-            <div data-reveal="up" className={`lg:col-span-3 ${colClass}`}>
+            <div data-reveal="up" className={`lg:col-span-2 ${colClass}`}>
               <h2 className={headingClass}>{t("help")}</h2>
               <ul className="space-y-3">
                 {links.map((l) => (
@@ -76,9 +71,19 @@ export default async function SiteFooter({ settings, categories }: { settings: S
               </ul>
             </div>
 
-            <div data-reveal="up" className={`lg:col-span-2 ${colClass}`}>
-              <h2 className={headingClass}>{t("follow")}</h2>
-              <SocialIcons settings={settings} variant="list" />
+            {/* Follow Us & Newsletter Subscription */}
+            <div data-reveal="up" className={`lg:col-span-3 ${colClass} flex flex-col justify-between gap-5`}>
+              <div>
+                <h2 className={headingClass}>{t("follow")}</h2>
+                <SocialIcons settings={settings} variant="icons" />
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-white/10">
+                <p className="text-xs font-semibold text-white/90">
+                  {t("newsletterTitle")}
+                </p>
+                <NewsletterForm variant="default" />
+              </div>
             </div>
           </div>
 

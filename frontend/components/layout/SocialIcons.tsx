@@ -77,7 +77,7 @@ export default function SocialIcons({ settings, variant = "icons" }: { settings:
             rel="noopener noreferrer"
             aria-label={label}
             title={label}
-            className={`flex h-11 w-11 items-center justify-center rounded border border-white/20 text-white/85 transition-all duration-300 hover:-translate-y-1 hover:border-transparent hover:text-white ${hover}`}
+            className={`flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-white/5 text-white/90 transition-all duration-300 hover:-translate-y-1 hover:border-transparent hover:text-white ${hover}`}
           >
             <Icon className="h-5 w-5" />
           </a>
