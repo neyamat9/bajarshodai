@@ -688,6 +688,11 @@ model MedicineMeta {
   mrpBox       Decimal?     @db.Decimal(10, 2)
   packSizeInfo String?
 
+  // Discount Overrides
+  // 'GLOBAL' (inherit category %), 'PERCENT' (custom %), 'FIXED' (fixed price), 'NONE' (0% / excluded)
+  discountMode   String       @default("GLOBAL")
+  discountValue  Decimal?     @db.Decimal(10, 2)
+
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
@@ -696,6 +701,7 @@ model MedicineMeta {
   @@index([manufacturer])
   @@index([dosageForm])
   @@index([type])
+  @@index([discountMode])
 }
 
 model ProductImage {

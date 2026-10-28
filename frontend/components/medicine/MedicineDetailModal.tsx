@@ -113,8 +113,12 @@ export default function MedicineDetailModal({
 
   // Multi-tier prices
   const unitPrice = Number(currentProduct.price);
+  const mrpUnit = meta?.mrpUnit ? Number(meta.mrpUnit) : null;
   const mrpStrip = meta?.mrpStrip ? Number(meta.mrpStrip) : null;
   const mrpBox = meta?.mrpBox ? Number(meta.mrpBox) : null;
+  const originalPrice = currentProduct.originalPrice ? Number(currentProduct.originalPrice) : null;
+  const isDiscounted = !!(originalPrice && originalPrice > unitPrice);
+  const discountPercent = currentProduct.discount || (isDiscounted && originalPrice ? Math.round(((originalPrice - unitPrice) / originalPrice) * 100) : 0);
 
   const line = cart.items.find(
     (i) => i.productId === currentProduct.id && !i.variantId
@@ -313,26 +317,48 @@ export default function MedicineDetailModal({
         {/* ── Pricing & Pack Breakdown ───────────────────────────── */}
         <div className="mt-4 p-4 rounded-xl border border-emerald-500/20 bg-emerald-50/30 dark:bg-emerald-950/20 space-y-3">
           <div className="flex items-baseline justify-between">
-            <span className="text-xs font-semibold text-muted-foreground">
-              {locale === "bn" ? "নির্ধারিত মূল্য" : "Retail Price"}
-            </span>
+            <div>
+              <span className="text-xs font-semibold text-muted-foreground block">
+                {locale === "bn" ? "বিক্রয় মূল্য" : "Selling Price"}
+              </span>
+              {isDiscounted && originalPrice && (
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="text-xs text-muted-foreground line-through">
+                    {formatBDT(originalPrice)}
+                  </span>
+                  <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-600 text-white leading-none">
+                    {discountPercent}% {locale === "bn" ? "ছাড়" : "OFF"}
+                  </span>
+                </div>
+              )}
+            </div>
             <div className="text-right">
               <span className="font-outfit text-2xl font-black text-emerald-700 dark:text-emerald-400">
                 {formatBDT(unitPrice)}
               </span>
               <span className="text-xs text-muted-foreground font-medium ml-1">
-                / {unit?.label || "unit"}
+                / {unit?.label || (locale === "bn" ? "পাতা" : "unit")}
               </span>
             </div>
           </div>
 
-          {/* Strip & Box Breakdown if available */}
-          {(mrpStrip || mrpBox || meta?.packSizeInfo) && (
+          {/* Detailed Packaging Breakdown (Piece, Strip, Box) */}
+          {(mrpUnit || mrpStrip || mrpBox || meta?.packSizeInfo) && (
             <div className="pt-2 border-t border-emerald-500/15 grid grid-cols-2 gap-2 text-xs">
+              {mrpUnit && (
+                <div className="rounded-lg bg-background/80 border p-2">
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground block">
+                    {locale === "bn" ? "প্রতি পিস (ট্যাবলেট/ক্যাপসুল)" : "Per Piece (Unit)"}
+                  </span>
+                  <span className="font-outfit font-bold text-foreground text-sm">
+                    {formatBDT(mrpUnit)}
+                  </span>
+                </div>
+              )}
               {mrpStrip && (
                 <div className="rounded-lg bg-background/80 border p-2">
                   <span className="text-[10px] font-bold uppercase text-muted-foreground block">
-                    {locale === "bn" ? "পাতা (Strip)" : "Strip"}
+                    {locale === "bn" ? "প্রতি পাতা (Strip)" : "Per Strip"}
                   </span>
                   <span className="font-outfit font-bold text-foreground text-sm">
                     {formatBDT(mrpStrip)}
@@ -342,15 +368,15 @@ export default function MedicineDetailModal({
               {mrpBox && (
                 <div className="rounded-lg bg-background/80 border p-2">
                   <span className="text-[10px] font-bold uppercase text-muted-foreground block">
-                    {locale === "bn" ? "বাক্স (Box)" : "Box"}
+                    {locale === "bn" ? "প্রতি বক্স (Box)" : "Per Box"}
                   </span>
                   <span className="font-outfit font-bold text-foreground text-sm">
                     {formatBDT(mrpBox)}
                   </span>
                 </div>
               )}
-              {meta?.packSizeInfo && !mrpBox && (
-                <div className="col-span-2 rounded-lg bg-background/80 border p-2 text-muted-foreground text-[11px]">
+              {meta?.packSizeInfo && (
+                <div className={`rounded-lg bg-background/80 border p-2 text-muted-foreground text-[11px] ${!mrpBox ? "col-span-2" : ""}`}>
                   <span className="font-bold text-foreground mr-1">
                     {locale === "bn" ? "প্যাক সাইজ:" : "Pack Size:"}
                   </span>

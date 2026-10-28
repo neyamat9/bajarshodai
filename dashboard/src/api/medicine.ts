@@ -18,6 +18,8 @@ export interface MedicineMeta {
   mrpStrip?: number | string | null;
   mrpBox?: number | string | null;
   packSizeInfo?: string | null;
+  discountMode?: "GLOBAL" | "PERCENT" | "FIXED" | "NONE";
+  discountValue?: number | string | null;
 }
 
 export interface MedExSearchResult {
@@ -90,4 +92,37 @@ export const medicineApi = {
     api.post(`/admin/medicine/accept-drift/${productId}`, { sellingPrice }).then((r) => r.data),
 
   acceptAllDrifts: () => api.post("/admin/medicine/accept-all-drifts").then((r) => r.data),
+
+  getDiscountSettings: () =>
+    api
+      .get<{
+        globalDiscountPercent: number;
+        stats: {
+          totalMedicines: number;
+          globalCount: number;
+          customCount: number;
+          noneCount: number;
+        };
+      }>("/admin/medicine/discount-settings")
+      .then((r) => r.data),
+
+  setGlobalDiscount: (discountPercent: number) =>
+    api
+      .post<{
+        ok: boolean;
+        globalDiscountPercent: number;
+        updatedMedicinesCount: number;
+      }>("/admin/medicine/global-discount", { discountPercent })
+      .then((r) => r.data),
+
+  setSinglePricing: (
+    productId: string,
+    data: {
+      discountMode: "GLOBAL" | "PERCENT" | "FIXED" | "NONE";
+      discountValue?: number;
+    },
+  ) =>
+    api
+      .post(`/admin/medicine/single-pricing/${productId}`, data)
+      .then((r) => r.data),
 };

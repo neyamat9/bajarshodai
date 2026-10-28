@@ -257,7 +257,7 @@ export default function MedicineListItem({ product, onOpenDetail }: MedicineList
               <span>{packText}</span>
               {meta?.mrpUnit && (
                 <span className="text-muted-foreground/60 ml-1">
-                  (প্রতি ইউনিট {formatBDT(Number(meta.mrpUnit))})
+                  ({locale === "bn" ? "প্রতি পিস" : "per piece"} {formatBDT(Number(meta.mrpUnit))})
                 </span>
               )}
             </div>
@@ -274,9 +274,16 @@ export default function MedicineListItem({ product, onOpenDetail }: MedicineList
               {formatBDT(product.price)}
             </span>
             {product.originalPrice && product.originalPrice > product.price && (
-              <span className="text-xs text-muted-foreground line-through">
-                {formatBDT(product.originalPrice)}
-              </span>
+              <>
+                <span className="text-xs text-muted-foreground line-through">
+                  {formatBDT(product.originalPrice)}
+                </span>
+                {product.discount ? (
+                  <span className="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1 py-0.5 rounded border border-emerald-500/20 leading-none">
+                    {product.discount}% {locale === "bn" ? "ছাড়" : "OFF"}
+                  </span>
+                ) : null}
+              </>
             )}
           </div>
           <p className="text-[11px] text-muted-foreground">

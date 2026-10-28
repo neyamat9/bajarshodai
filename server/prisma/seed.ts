@@ -57,6 +57,7 @@ const units: UnitSeed[] = [
   { code: 'bottle', name: 'Bottle', nameBn: 'বোতল', shortLabel: 'btl', shortLabelBn: 'বোতল', allowDecimal: false, defaultStep: 1, defaultMinQty: 1 },
   { code: 'box', name: 'Box', nameBn: 'বক্স', shortLabel: 'box', shortLabelBn: 'বক্স', allowDecimal: false, defaultStep: 1, defaultMinQty: 1 },
   { code: 'can', name: 'Can / Tin', nameBn: 'কৌটা', shortLabel: 'can', shortLabelBn: 'কৌটা', allowDecimal: false, defaultStep: 1, defaultMinQty: 1 },
+  { code: 'strip', name: 'Strip', nameBn: 'পাতা', shortLabel: 'strip', shortLabelBn: 'পাতা', allowDecimal: false, defaultStep: 1, defaultMinQty: 1 },
 ];
 
 // ---------------------------------------------------------------------------

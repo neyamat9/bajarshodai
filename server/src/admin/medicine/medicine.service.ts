@@ -393,4 +393,161 @@ export class MedicineService {
 
     return { ok: true, updatedCount };
   }
+
+  /**
+   * Get current global medicine discount setting and breakdown statistics
+   */
+  async getDiscountSettings() {
+    const setting = await this.prisma.siteSetting.findUnique({
+      where: { key: 'medicine_discount_settings' },
+    });
+    const parsed = setting?.value ? (typeof setting.value === 'string' ? JSON.parse(setting.value) : setting.value) : null;
+    const globalPercent = Number(parsed?.globalDiscountPercent ?? 0);
+
+    const [totalCount, globalCount, customCount, noneCount] = await Promise.all([
+      this.prisma.medicineMeta.count(),
+      this.prisma.medicineMeta.count({ where: { discountMode: 'GLOBAL' } }),
+      this.prisma.medicineMeta.count({ where: { discountMode: { in: ['PERCENT', 'FIXED'] } } }),
+      this.prisma.medicineMeta.count({ where: { discountMode: 'NONE' } }),
+    ]);
+
+    return {
+      globalDiscountPercent: globalPercent,
+      stats: {
+        totalMedicines: totalCount,
+        globalCount,
+        customCount,
+        noneCount,
+      },
+    };
+  }
+
+  /**
+   * Set global medicine discount percentage and batch recalculate all medicines in GLOBAL mode
+   */
+  async setGlobalDiscount(percent: number, adminId?: string) {
+    const validPercent = Math.max(0, Math.min(100, Math.round(percent)));
+
+    // 1. Save to SiteSetting
+    await this.prisma.siteSetting.upsert({
+      where: { key: 'medicine_discount_settings' },
+      update: {
+        value: JSON.stringify({ globalDiscountPercent: validPercent, updatedAt: new Date() }),
+      },
+      create: {
+        key: 'medicine_discount_settings',
+        value: JSON.stringify({ globalDiscountPercent: validPercent, updatedAt: new Date() }),
+      },
+    });
+
+    // 2. Batch update all medicines in GLOBAL mode
+    const count = await this.prisma.$executeRawUnsafe(`
+      UPDATE "Product" p
+      SET 
+        "regularPrice" = COALESCE(m."mrpStrip", m."mrpUnit" * 10, p."sellingPrice"),
+        "sellingPrice" = CASE 
+          WHEN ${validPercent} > 0 THEN ROUND(COALESCE(m."mrpStrip", m."mrpUnit" * 10, p."sellingPrice") * (1.0 - ${validPercent} / 100.0), 2)
+          ELSE COALESCE(m."mrpStrip", m."mrpUnit" * 10, p."sellingPrice")
+        END,
+        "isDiscounted" = (${validPercent} > 0)
+      FROM "MedicineMeta" m
+      WHERE p.id = m."productId"
+        AND (m."discountMode" = 'GLOBAL' OR m."discountMode" IS NULL);
+    `);
+
+    // Invalidate product caches
+    this.cache.delByPrefix('products:');
+
+    return {
+      ok: true,
+      globalDiscountPercent: validPercent,
+      updatedMedicinesCount: Number(count),
+    };
+  }
+
+  /**
+   * Set pricing / discount for a single medicine (Custom %, Fixed Price, Inherit Global, or None)
+   */
+  async setSingleMedicinePricing(
+    productId: string,
+    dto: { discountMode: 'GLOBAL' | 'PERCENT' | 'FIXED' | 'NONE'; discountValue?: number },
+    adminId?: string,
+  ) {
+    const product = await this.prisma.product.findUnique({
+      where: { id: productId },
+      include: { medicineMeta: true },
+    });
+    if (!product || !product.medicineMeta) {
+      throw new NotFoundException('Medicine product not found');
+    }
+
+    const meta = product.medicineMeta;
+    const baseMrp = Number(
+      meta.mrpStrip ?? (meta.mrpUnit ? Number(meta.mrpUnit) * 10 : product.regularPrice ?? product.sellingPrice),
+    );
+
+    let newSellingPrice = baseMrp;
+    let isDiscounted = false;
+    let discountVal: number | null = null;
+
+    if (dto.discountMode === 'PERCENT') {
+      const pct = Math.max(0, Math.min(100, Number(dto.discountValue || 0)));
+      discountVal = pct;
+      newSellingPrice = Math.round(baseMrp * (1.0 - pct / 100.0) * 100) / 100;
+      isDiscounted = pct > 0;
+    } else if (dto.discountMode === 'FIXED') {
+      const fixed = Math.max(0, Number(dto.discountValue || 0));
+      discountVal = fixed;
+      newSellingPrice = fixed;
+      isDiscounted = newSellingPrice < baseMrp;
+    } else if (dto.discountMode === 'GLOBAL') {
+      // Fetch active global discount
+      const setting = await this.prisma.siteSetting.findUnique({
+        where: { key: 'medicine_discount_settings' },
+      });
+      const parsed = setting?.value ? (typeof setting.value === 'string' ? JSON.parse(setting.value) : setting.value) : null;
+      const globalPercent = Number(parsed?.globalDiscountPercent ?? 0);
+      if (globalPercent > 0) {
+        newSellingPrice = Math.round(baseMrp * (1.0 - globalPercent / 100.0) * 100) / 100;
+        isDiscounted = true;
+      } else {
+        newSellingPrice = baseMrp;
+        isDiscounted = false;
+      }
+    } else if (dto.discountMode === 'NONE') {
+      newSellingPrice = baseMrp;
+      isDiscounted = false;
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.medicineMeta.update({
+        where: { id: meta.id },
+        data: {
+          discountMode: dto.discountMode,
+          discountValue: discountVal !== null ? discountVal : null,
+        },
+      });
+
+      await tx.product.update({
+        where: { id: productId },
+        data: {
+          regularPrice: baseMrp,
+          sellingPrice: newSellingPrice,
+          isDiscounted,
+        },
+      });
+    });
+
+    this.cache.delByPrefix('products:');
+
+    return {
+      ok: true,
+      productId,
+      discountMode: dto.discountMode,
+      discountValue: discountVal,
+      regularPrice: baseMrp,
+      sellingPrice: newSellingPrice,
+      isDiscounted,
+    };
+  }
 }

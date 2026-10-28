@@ -22,6 +22,8 @@ import { MedicineService } from './medicine.service';
 import {
   MedicineListQueryDto,
   ApplyDriftDto,
+  SetGlobalMedicineDiscountDto,
+  UpdateMedicinePricingDto,
 } from './dto/medicine.dto';
 
 @ApiTags('Admin - Medicine Catalog & Price Sync')
@@ -92,5 +94,32 @@ export class MedicineController {
   @ApiOperation({ summary: 'Batch accept all detected price drift revisions in 1 click' })
   acceptAllDrifts(@CurrentUser() admin: User) {
     return this.medicineService.acceptAllDrifts(admin.id);
+  }
+
+  @Get('discount-settings')
+  @ApiOperation({ summary: 'Get global medicine discount settings and breakdown' })
+  getDiscountSettings() {
+    return this.medicineService.getDiscountSettings();
+  }
+
+  @Post('global-discount')
+  @ResponseMessage('Global medicine discount updated and applied')
+  @ApiOperation({ summary: 'Set global medicine discount percentage for all medicines' })
+  setGlobalDiscount(
+    @Body() dto: SetGlobalMedicineDiscountDto,
+    @CurrentUser() admin: User,
+  ) {
+    return this.medicineService.setGlobalDiscount(dto.discountPercent, admin.id);
+  }
+
+  @Post('single-pricing/:productId')
+  @ResponseMessage('Medicine pricing updated successfully')
+  @ApiOperation({ summary: 'Set custom pricing or discount override for an individual medicine' })
+  setSingleMedicinePricing(
+    @Param('productId', ParseUUIDPipe) productId: string,
+    @Body() dto: UpdateMedicinePricingDto,
+    @CurrentUser() admin: User,
+  ) {
+    return this.medicineService.setSingleMedicinePricing(productId, dto, admin.id);
   }
 }

@@ -66,3 +66,22 @@ export class ApplyDriftDto {
   @Type(() => Number)
   sellingPrice?: number;
 }
+
+export class SetGlobalMedicineDiscountDto {
+  @ApiProperty({ example: 7, description: 'Global discount percentage for all medicines (0 to 100)' })
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  discountPercent: number;
+}
+
+export class UpdateMedicinePricingDto {
+  @ApiProperty({ enum: ['GLOBAL', 'PERCENT', 'FIXED', 'NONE'], example: 'PERCENT' })
+  @IsIn(['GLOBAL', 'PERCENT', 'FIXED', 'NONE'])
+  discountMode: 'GLOBAL' | 'PERCENT' | 'FIXED' | 'NONE';
+
+  @ApiPropertyOptional({ example: 10, description: 'Percentage if PERCENT mode, or fixed selling price if FIXED mode' })
+  @IsOptional()
+  @Type(() => Number)
+  discountValue?: number;
+}
