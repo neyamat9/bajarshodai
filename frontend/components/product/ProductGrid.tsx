@@ -19,7 +19,7 @@ import MedicineDetailModal from "@/components/medicine/MedicineDetailModal";
 import MedicineSearchBar from "@/components/medicine/MedicineSearchBar";
 import SortBar from "./SortBar";
 import { flattenSubs } from "@/lib/utils/categories";
-import { scrollToTopSmooth } from "@/components/motion/scroll-top";
+import { resetScrollAndResize, recalculateScrollBounds } from "@/components/motion/scroll-top";
 
 interface ProductGridProps {
   /** Optional page header / title rendered at the top of the main column */
@@ -133,9 +133,9 @@ export default function ProductGrid({
     setLoading(true);
     setError(null);
 
-    // If user is scrolled down, start scrolling to top immediately on filter change
-    if (typeof window !== "undefined" && window.scrollY > 120) {
-      scrollToTopSmooth(0.6);
+    // If user is scrolled down, reset scroll position immediately on filter change
+    if (typeof window !== "undefined" && window.scrollY > 80) {
+      resetScrollAndResize();
     }
 
     const t = setTimeout(async () => {
@@ -148,10 +148,14 @@ export default function ProductGrid({
         setProducts(merged);
         setMeta(cats.length > 1 ? { ...pages[0].meta, total: merged.length, totalPages: 1, page: 1 } : pages[0].meta);
 
-        // Ensure user is at the top of results when shorter list loads
-        if (typeof window !== "undefined" && window.scrollY > 120) {
-          scrollToTopSmooth(0.4);
-        }
+        // Reset scroll position and recalculate Lenis/ScrollTrigger bounds immediately to eliminate empty spaces
+        resetScrollAndResize();
+        requestAnimationFrame(() => {
+          recalculateScrollBounds();
+        });
+        setTimeout(() => {
+          recalculateScrollBounds();
+        }, 80);
       } catch (e) {
         if (id === reqId.current) setError(errorMessage(e));
       } finally {

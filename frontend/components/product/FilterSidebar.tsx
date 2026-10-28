@@ -312,6 +312,7 @@ export default function FilterSidebar({
       >
         <div
           data-lenis-prevent
+          style={{ maxHeight: "calc(100vh - var(--sticky-top, 8rem) - 1rem)" }}
           className="no-scrollbar max-h-[calc(100vh-var(--sticky-top,8rem)-1rem)] overflow-y-auto overscroll-contain rounded border border-border bg-card shadow-sm"
         >
           {content}

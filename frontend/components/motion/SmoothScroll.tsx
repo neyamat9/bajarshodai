@@ -69,13 +69,17 @@ export default function SmoothScroll() {
       },
     });
 
-    // Scroll-triggered animations are measured against the page layout. Images, fonts and
-    // late-arriving data change that layout, so re-measure whenever the page height changes
-    // (and after load / font swap) — otherwise titles can wait for a trigger point that moved.
+    // Scroll-triggered animations and Lenis virtual limits are measured against the page layout.
+    // Images, fonts and dynamic data (like filters and infinite scroll) change that layout,
+    // so re-measure whenever the page height changes — otherwise Lenis and ScrollTrigger retain
+    // stale scroll runways and create massive empty spaces.
     let t: ReturnType<typeof setTimeout> | undefined;
     const refresh = () => {
       clearTimeout(t);
-      t = setTimeout(() => ScrollTrigger.refresh(), 120);
+      t = setTimeout(() => {
+        lenis?.resize();
+        ScrollTrigger.refresh();
+      }, 50);
     };
     const ro = new ResizeObserver(refresh);
     ro.observe(document.body);
