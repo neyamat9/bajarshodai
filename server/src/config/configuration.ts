@@ -18,13 +18,11 @@ export default () => ({
     // x-seed-secret header). Without it the endpoint is disabled in production.
     adminSeedSecret: process.env.ADMIN_SEED_SECRET,
     corsOrigins: process.env.CORS_ORIGINS
-      ? process.env.CORS_ORIGINS.split(',')
-      : [
-          'http://localhost:3000',
-          'http://localhost:3001',
-          'http://localhost:5173',
-          'http://localhost:5174',
-        ],
+      ? process.env.CORS_ORIGINS
+          .split(',')
+          .map((s) => s.trim().replace(/^["']|["']$/g, '').replace(/\/+$/, ''))
+          .filter(Boolean)
+      : [],
   },
 
   swagger: {

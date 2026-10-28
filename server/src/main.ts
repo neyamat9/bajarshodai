@@ -1,12 +1,12 @@
-import { NestFactory, HttpAdapterHost, Reflector } from '@nestjs/core';
+import { Logger, ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { HttpAdapterHost, NestFactory, Reflector } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import compression from 'compression';
+import helmet from 'helmet';
 import * as path from 'path';
 import { AppModule } from './app.module';
-import { ValidationPipe, Logger } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ConfigService } from '@nestjs/config';
-import helmet from 'helmet';
-import compression from 'compression';
 import { AllExceptionsFilter } from './common/filters';
 import {
   LoggingInterceptor,
@@ -30,9 +30,7 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const port = configService.get<number>('app.port') ?? 8000;
   const apiPrefix = configService.get<string>('app.apiPrefix') ?? 'api';
-  const corsOrigins = configService.get<string[]>('security.corsOrigins') ?? [
-    'http://localhost:3000',
-  ];
+  const corsOrigins = configService.get<string[]>('security.corsOrigins') ?? [];
   const swaggerEnabled =
     configService.get<boolean>('swagger.enabled') ??
     (nodeEnv !== 'production' || process.env.ENABLE_SWAGGER === 'true');
