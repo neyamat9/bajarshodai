@@ -19,7 +19,7 @@ import MedicineDetailModal from "@/components/medicine/MedicineDetailModal";
 import MedicineSearchBar from "@/components/medicine/MedicineSearchBar";
 import SortBar from "./SortBar";
 import { flattenSubs } from "@/lib/utils/categories";
-import { resetScrollAndResize, recalculateScrollBounds } from "@/components/motion/scroll-top";
+import { recalculateScrollBounds } from "@/components/motion/scroll-top";
 
 interface ProductGridProps {
   /** Optional page header / title rendered at the top of the main column */
@@ -124,30 +124,16 @@ export default function ProductGrid({
     [filters, sortBy, onSale, effectiveSearch, lockedCategory, subCategory, priceMin, priceMax, subsOf, excludeMedicine],
   );
 
-  // When filters or search change, immediately snap scroll to top if user is scrolled down
-  useEffect(() => {
-    if (first.current) return;
-    if (typeof window !== "undefined" && window.scrollY > 40) {
-      resetScrollAndResize();
-    }
-  }, [filters, sortBy, onSale, searchQuery]);
-
   // Synchronously after DOM commits the updated products list:
-  // if this is a filter (page 1) or the products list shrank, clamp scroll to top and collapse Lenis & ScrollTrigger bounds
+  // ensure Lenis and ScrollTrigger recalculate bounds and clamp scroll smoothly if over maxScroll
   useLayoutEffect(() => {
     if (first.current) {
       prevCount.current = products.length;
       return;
     }
 
-    const isFilterOrShrink = meta.page === 1 || products.length < prevCount.current;
     prevCount.current = products.length;
-
-    if (isFilterOrShrink) {
-      resetScrollAndResize();
-    } else {
-      recalculateScrollBounds();
-    }
+    recalculateScrollBounds();
 
     const raf1 = requestAnimationFrame(() => {
       recalculateScrollBounds();
@@ -166,6 +152,7 @@ export default function ProductGrid({
       clearTimeout(timer);
     };
   }, [products, meta.page]);
+
 
   // New filters / sort → fetch page 1 again
   useEffect(() => {
@@ -314,7 +301,7 @@ export default function ProductGrid({
   const hasActiveFilters = activeFilters.length > 0;
 
   return (
-    <div className="flex items-start gap-6">
+    <div className="flex items-start gap-6 min-h-[calc(100vh-var(--sticky-top,8rem)-2rem)]">
       {/* Inject noindex when filters are active to prevent crawling of filtered URLs */}
       <NoIndexWhenFiltered noIndex={hasActiveFilters} />
 
