@@ -92,6 +92,7 @@ function BrowseModal({ kind, onClose, brands }: { kind: "brands" | null; onClose
     if (open) {
       instant.current = false;
       gsap.killTweensOf([panel.current, backdrop.current]);
+      gsap.set(backdrop.current, { display: "flex" });
       gsap.set([panel.current, backdrop.current], { visibility: "visible" });
       gsap.to(backdrop.current, { opacity: 1, duration: reduce ? 0 : 0.3 });
       gsap.fromTo(panel.current, { y: reduce ? 0 : 40, scale: reduce ? 1 : 0.96, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: reduce ? 0 : 0.5, ease: "expo.out" });
@@ -103,7 +104,7 @@ function BrowseModal({ kind, onClose, brands }: { kind: "brands" | null; onClose
     }
     gsap.killTweensOf([panel.current, backdrop.current]);
     if (instant.current) {
-      gsap.set([panel.current, backdrop.current], { opacity: 0, visibility: "hidden" });
+      gsap.set([panel.current, backdrop.current], { opacity: 0, visibility: "hidden", display: "none" });
       return;
     }
     gsap.to(backdrop.current, { opacity: 0, duration: reduce ? 0 : 0.25 });
@@ -114,7 +115,7 @@ function BrowseModal({ kind, onClose, brands }: { kind: "brands" | null; onClose
       duration: reduce ? 0 : 0.25,
       ease: "power2.in",
       onComplete: () => {
-        gsap.set([panel.current, backdrop.current], { visibility: "hidden" });
+        gsap.set([panel.current, backdrop.current], { visibility: "hidden", display: "none" });
       },
     });
   }, [open, mounted]);
@@ -125,7 +126,7 @@ function BrowseModal({ kind, onClose, brands }: { kind: "brands" | null; onClose
   if (!mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[2100] flex items-end justify-center sm:items-center sm:p-6" style={{ visibility: "hidden" }} ref={backdrop} data-lenis-prevent>
+    <div className="fixed inset-0 z-[2100] flex items-end justify-center overflow-hidden sm:items-center sm:p-6" style={{ visibility: "hidden", display: "none" }} ref={backdrop} data-lenis-prevent>
       {/* dim + blur */}
       <div className="absolute inset-0 bg-brand-deep/70 backdrop-blur-md" onClick={onClose} aria-hidden="true" />
 

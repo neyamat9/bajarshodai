@@ -74,7 +74,7 @@ export default function CategorySidebar({ open, onClose, categories }: CategoryS
         data-lenis-prevent
         onClick={onClose}
         className={`fixed inset-0 z-[2100] bg-brand-deep/60 backdrop-blur-sm transition-opacity duration-300 ${
-          open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
+          open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0 invisible"
         }`}
       />
 
@@ -87,7 +87,7 @@ export default function CategorySidebar({ open, onClose, categories }: CategoryS
         aria-label={t("allCategories")}
         aria-hidden={!open}
         className={`fixed left-0 top-0 z-[2110] flex h-full w-full max-w-[380px] flex-col border-r border-border bg-background outline-none transition-transform duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
-          open ? "translate-x-0 shadow-2xl" : "-translate-x-full"
+          open ? "translate-x-0 shadow-2xl" : "-translate-x-full invisible"
         }`}
       >
         {/* Header */}

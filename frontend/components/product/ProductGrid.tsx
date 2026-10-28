@@ -19,7 +19,7 @@ import MedicineDetailModal from "@/components/medicine/MedicineDetailModal";
 import MedicineSearchBar from "@/components/medicine/MedicineSearchBar";
 import SortBar from "./SortBar";
 import { flattenSubs } from "@/lib/utils/categories";
-import { scrollToTopSmooth, recalculateScrollBounds } from "@/components/motion/scroll-top";
+import { recalculateScrollBounds } from "@/components/motion/scroll-top";
 
 interface ProductGridProps {
   /** Optional page header / title rendered at the top of the main column */
@@ -132,15 +132,8 @@ export default function ProductGrid({
       return;
     }
 
-    const shrank = products.length < prevCount.current || meta.page === 1;
     prevCount.current = products.length;
     recalculateScrollBounds();
-
-    // If the product list shrank or reset to page 1 while user is scrolled down,
-    // smoothly glide to top so results are in view and no empty bottom space is displayed
-    if (shrank && typeof window !== "undefined" && window.scrollY > 80) {
-      scrollToTopSmooth(0.4);
-    }
 
     const raf1 = requestAnimationFrame(() => {
       recalculateScrollBounds();

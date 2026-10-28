@@ -311,6 +311,7 @@ export default function FilterSidebar({
         style={{
           top: "var(--sticky-top, 8rem)",
           maxHeight: "calc(100vh - var(--sticky-top, 8rem) - 1rem)",
+          contain: "paint",
         }}
       >
         <div
