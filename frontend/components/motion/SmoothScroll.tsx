@@ -58,9 +58,19 @@ export default function SmoothScroll() {
         easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
         smoothWheel: true,
         autoResize: true,
+        overscroll: false,
+        naiveDimensions: true,
       });
       (window as unknown as { __lenis?: Lenis }).__lenis = lenis;
-      lenis.on("scroll", ScrollTrigger.update);
+
+      lenis.on("scroll", (e: Lenis) => {
+        ScrollTrigger.update();
+        const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+        if (e.scroll > maxScroll) {
+          e.scrollTo(maxScroll, { immediate: true, force: true });
+        }
+      });
+
       tick = (time) => lenis?.raf(time * 1000);
       gsap.ticker.add(tick);
       gsap.ticker.lagSmoothing(0);
@@ -74,6 +84,15 @@ export default function SmoothScroll() {
       },
     });
 
+    const clampScroll = () => {
+      const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      if (window.scrollY > maxScroll) {
+        if (lenis) lenis.scrollTo(maxScroll, { immediate: true, force: true });
+        else window.scrollTo({ top: maxScroll, behavior: "instant" });
+      }
+    };
+    window.addEventListener("scroll", clampScroll, { passive: true });
+
     // Scroll-triggered animations and Lenis virtual limits are measured against the page layout.
     // Images, fonts and dynamic data (like filters and infinite scroll) change that layout,
     // so re-measure whenever the page height changes — otherwise Lenis and ScrollTrigger retain
@@ -84,7 +103,12 @@ export default function SmoothScroll() {
       t = setTimeout(() => {
         lenis?.resize();
         ScrollTrigger.refresh();
-      }, 50);
+        const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+        if (window.scrollY > maxScroll) {
+          if (lenis) lenis.scrollTo(maxScroll, { immediate: true, force: true });
+          else window.scrollTo({ top: maxScroll, behavior: "instant" });
+        }
+      }, 40);
     };
     const ro = new ResizeObserver(refresh);
     ro.observe(document.body);
@@ -99,6 +123,7 @@ export default function SmoothScroll() {
       clearTimeout(t);
       ro.disconnect();
       window.removeEventListener("load", refresh);
+      window.removeEventListener("scroll", clampScroll);
       progress.kill();
       if (tick) gsap.ticker.remove(tick);
       lenis?.destroy();

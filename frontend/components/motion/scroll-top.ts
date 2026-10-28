@@ -43,12 +43,23 @@ export function resetScrollAndResize() {
 
 /**
  * Forces Lenis and GSAP ScrollTrigger to recalculate their height bounds
- * to match the current DOM content without changing the scroll position.
+ * to match the current DOM content and clamps scroll position within natural content limits.
  */
 export function recalculateScrollBounds() {
   if (typeof window === "undefined") return;
-  const lenis = (window as unknown as { __lenis?: { resize?: () => void } }).__lenis;
+  const lenis = (window as unknown as {
+    __lenis?: {
+      resize?: () => void;
+      scrollTo: (n: number, o?: object) => void;
+    };
+  }).__lenis;
+
   lenis?.resize?.();
+  const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+  if (window.scrollY > maxScroll) {
+    if (lenis) lenis.scrollTo(maxScroll, { immediate: true, force: true });
+    else window.scrollTo({ top: maxScroll, behavior: "instant" });
+  }
   try {
     ScrollTrigger.refresh();
   } catch {}
