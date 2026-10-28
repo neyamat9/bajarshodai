@@ -1,3 +1,5 @@
+import { ScrollTrigger } from "./gsap";
+
 /** Jump to the top of the page at once — also stops any smooth-scroll (Lenis) momentum that is still running and recalculates bounds. */
 export function scrollTopNow() {
   if (typeof window === "undefined") return;
@@ -6,10 +8,9 @@ export function scrollTopNow() {
     lenis.scrollTo(0, { immediate: true, force: true });
     lenis.resize?.();
   }
-  window.scrollTo(0, 0);
+  window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   try {
-    const { ScrollTrigger } = require("./gsap");
-    ScrollTrigger?.refresh?.();
+    ScrollTrigger.refresh();
   } catch {}
 }
 
@@ -34,10 +35,9 @@ export function resetScrollAndResize() {
     lenis.scrollTo(0, { immediate: true, force: true });
     lenis.resize?.();
   }
-  window.scrollTo(0, 0);
+  window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   try {
-    const { ScrollTrigger } = require("./gsap");
-    ScrollTrigger?.refresh?.();
+    ScrollTrigger.refresh();
   } catch {}
 }
 
@@ -50,8 +50,7 @@ export function recalculateScrollBounds() {
   const lenis = (window as unknown as { __lenis?: { resize?: () => void } }).__lenis;
   lenis?.resize?.();
   try {
-    const { ScrollTrigger } = require("./gsap");
-    ScrollTrigger?.refresh?.();
+    ScrollTrigger.refresh();
   } catch {}
 }
 

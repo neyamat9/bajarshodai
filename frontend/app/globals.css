@@ -182,13 +182,35 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-inter), var(--font-bangla), sans-serif;
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
   }
   html[lang="bn"] body { line-height: 1.65; }
   html[lang="bn"] h1, html[lang="bn"] h2, html[lang="bn"] h3, html[lang="bn"] h4 { line-height: 1.35; letter-spacing: 0; }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-outfit), var(--font-bangla), sans-serif;
   }
+}
+
+/* ── Lenis Smooth Scroll Normalization ────────────── */
+html.lenis,
+html.lenis body {
+  height: auto !important;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+
+.lenis [data-lenis-prevent],
+.lenis [data-lenis-prevent-wheel],
+.lenis [data-lenis-prevent-touch],
+.lenis [data-lenis-prevent-vertical],
+.lenis [data-lenis-prevent-horizontal] {
+  overscroll-behavior: contain;
 }
 
 /* ── Custom Scrollbar ─────────────────────────────── */

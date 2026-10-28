@@ -53,7 +53,12 @@ export default function SmoothScroll() {
     let tick: ((time: number) => void) | null = null;
 
     if (mq.matches) {
-      lenis = new Lenis({ duration: 1.15, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), smoothWheel: true });
+      lenis = new Lenis({
+        duration: 1.15,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        smoothWheel: true,
+        autoResize: true,
+      });
       (window as unknown as { __lenis?: Lenis }).__lenis = lenis;
       lenis.on("scroll", ScrollTrigger.update);
       tick = (time) => lenis?.raf(time * 1000);
@@ -83,6 +88,9 @@ export default function SmoothScroll() {
     };
     const ro = new ResizeObserver(refresh);
     ro.observe(document.body);
+    if (typeof document !== "undefined" && document.documentElement) {
+      ro.observe(document.documentElement);
+    }
     window.addEventListener("load", refresh);
     void document.fonts?.ready.then(refresh);
     refresh();

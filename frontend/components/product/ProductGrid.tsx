@@ -4,7 +4,7 @@ import NoIndexWhenFiltered from "@/components/seo/NoIndexWhenFiltered";
 import { errorMessage } from "@/lib/api/client";
 import { listProducts, type ProductPage, type ProductQuery, type SortOption } from "@/lib/services/products.service";
 import type { Brand, Category, Product } from "@/lib/types";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import EmptyState from "./EmptyState";
 import { useLocale, useTranslations } from "next-intl";
 import { formatMoney } from "@/lib/format";
@@ -92,6 +92,7 @@ export default function ProductGrid({
   const [error, setError] = useState<string | null>(null);
   const first = useRef(true);
   const reqId = useRef(0);
+  const prevCount = useRef(initial.products.length);
 
   // slugs of the sub-categories that belong to a category
   const subsOf = useCallback(
@@ -123,6 +124,49 @@ export default function ProductGrid({
     [filters, sortBy, onSale, effectiveSearch, lockedCategory, subCategory, priceMin, priceMax, subsOf, excludeMedicine],
   );
 
+  // When filters or search change, immediately snap scroll to top if user is scrolled down
+  useEffect(() => {
+    if (first.current) return;
+    if (typeof window !== "undefined" && window.scrollY > 40) {
+      resetScrollAndResize();
+    }
+  }, [filters, sortBy, onSale, searchQuery]);
+
+  // Synchronously after DOM commits the updated products list:
+  // if this is a filter (page 1) or the products list shrank, clamp scroll to top and collapse Lenis & ScrollTrigger bounds
+  useLayoutEffect(() => {
+    if (first.current) {
+      prevCount.current = products.length;
+      return;
+    }
+
+    const isFilterOrShrink = meta.page === 1 || products.length < prevCount.current;
+    prevCount.current = products.length;
+
+    if (isFilterOrShrink) {
+      resetScrollAndResize();
+    } else {
+      recalculateScrollBounds();
+    }
+
+    const raf1 = requestAnimationFrame(() => {
+      recalculateScrollBounds();
+      const raf2 = requestAnimationFrame(() => {
+        recalculateScrollBounds();
+      });
+      return () => cancelAnimationFrame(raf2);
+    });
+
+    const timer = setTimeout(() => {
+      recalculateScrollBounds();
+    }, 100);
+
+    return () => {
+      cancelAnimationFrame(raf1);
+      clearTimeout(timer);
+    };
+  }, [products, meta.page]);
+
   // New filters / sort → fetch page 1 again
   useEffect(() => {
     if (first.current) {
@@ -133,11 +177,6 @@ export default function ProductGrid({
     setLoading(true);
     setError(null);
 
-    // If user is scrolled down, reset scroll position immediately on filter change
-    if (typeof window !== "undefined" && window.scrollY > 80) {
-      resetScrollAndResize();
-    }
-
     const t = setTimeout(async () => {
       try {
         // several categories on a non-category page: fetch each and merge
@@ -147,15 +186,6 @@ export default function ProductGrid({
         const merged = cats.length > 1 ? sortLocal(dedupe(pages.flatMap((p) => p.products)), sortBy) : pages[0].products;
         setProducts(merged);
         setMeta(cats.length > 1 ? { ...pages[0].meta, total: merged.length, totalPages: 1, page: 1 } : pages[0].meta);
-
-        // Reset scroll position and recalculate Lenis/ScrollTrigger bounds immediately to eliminate empty spaces
-        resetScrollAndResize();
-        requestAnimationFrame(() => {
-          recalculateScrollBounds();
-        });
-        setTimeout(() => {
-          recalculateScrollBounds();
-        }, 80);
       } catch (e) {
         if (id === reqId.current) setError(errorMessage(e));
       } finally {
