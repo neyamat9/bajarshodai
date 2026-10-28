@@ -338,6 +338,26 @@ export class StaffService {
         );
     }
 
+    let phoneToUpdate: string | undefined = undefined;
+    if (dto.phone) {
+      const normalizedPhone = normalizeBdPhone(dto.phone);
+      if (normalizedPhone !== target.phone) {
+        const taken = await this.prisma.user.findFirst({
+          where: {
+            phone: normalizedPhone,
+            id: { not: id },
+          },
+          select: { id: true },
+        });
+        if (taken) {
+          throw new ConflictException(
+            'This phone number is already used by another account',
+          );
+        }
+        phoneToUpdate = normalizedPhone;
+      }
+    }
+
     const role = dto.role ?? target.role;
     const permissions =
       role === 'ADMIN' || role === 'SUPER_ADMIN'
@@ -347,6 +367,7 @@ export class StaffService {
           );
     const data: Prisma.UserUpdateInput = {
       ...(dto.name !== undefined ? { name: dto.name } : {}),
+      ...(phoneToUpdate !== undefined ? { phone: phoneToUpdate } : {}),
       ...(dto.email !== undefined ? { email: dto.email } : {}),
       ...(dto.staffTitle !== undefined ? { staffTitle: dto.staffTitle } : {}),
       ...(dto.canDeliver !== undefined ? { canDeliver: dto.canDeliver } : {}),
@@ -355,8 +376,10 @@ export class StaffService {
         ? { permissions }
         : {}),
       ...(dto.status !== undefined ? { status: dto.status } : {}),
-      // a suspended person is signed out now
-      ...(dto.status === 'SUSPENDED' ? { refreshTokenHash: null } : {}),
+      // a suspended person or someone whose phone changed is signed out now
+      ...(dto.status === 'SUSPENDED' || phoneToUpdate !== undefined
+        ? { refreshTokenHash: null }
+        : {}),
     };
     if (Object.keys(data).length === 0)
       throw new BadRequestException('Nothing to update');
@@ -369,12 +392,14 @@ export class StaffService {
         entity: 'User',
         entityId: id,
         oldValue: {
+          phone: target.phone,
           role: target.role,
           permissions: target.permissions,
           canDeliver: target.canDeliver,
           status: target.status,
         },
         newValue: {
+          phone: saved.phone,
           role: saved.role,
           permissions: saved.permissions,
           canDeliver: saved.canDeliver,
@@ -384,12 +409,22 @@ export class StaffService {
       return saved;
     });
 
+    const phoneChanged = phoneToUpdate !== undefined;
     const statusChanged =
       dto.status !== undefined && dto.status !== target.status;
     const accessChanged =
       dto.permissions !== undefined ||
       (dto.role !== undefined && dto.role !== target.role) ||
       (dto.canDeliver !== undefined && dto.canDeliver !== target.canDeliver);
+    if (phoneChanged) {
+      this.log(
+        actor,
+        'staff.phone_changed',
+        `${actor.name} changed phone number for ${updated.name} to ${phoneToUpdate}`,
+        updated,
+        { before: target.phone, after: phoneToUpdate },
+      );
+    }
     if (statusChanged) {
       this.log(
         actor,
@@ -416,7 +451,7 @@ export class StaffService {
         },
       );
     }
-    if (!statusChanged && !accessChanged)
+    if (!statusChanged && !accessChanged && !phoneChanged)
       this.log(
         actor,
         'staff.updated',

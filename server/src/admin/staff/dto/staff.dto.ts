@@ -132,6 +132,13 @@ export class CreateStaffDto extends StaffFields {
 }
 
 export class UpdateStaffDto extends StaffFields {
+  @ApiPropertyOptional({ example: '01712345678' })
+  @IsOptional()
+  @Transform(trim)
+  @IsString()
+  @IsBdMobile()
+  phone?: string;
+
   @ApiPropertyOptional({
     enum: ['ACTIVE', 'SUSPENDED'],
     description: 'SUSPENDED = cannot sign in (nothing is deleted)',

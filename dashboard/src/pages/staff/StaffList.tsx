@@ -70,13 +70,14 @@ function StaffDialog({ person, onClose, onPassword }: { person: StaffRow | null;
     async () => {
       const common: StaffInput = {
         name: f.name.trim(),
+        phone: f.phone.trim(),
         email: f.email.trim() || null,
         staffTitle: f.staffTitle.trim() || null,
         canDeliver: f.canDeliver,
         ...(lockAccess ? {} : { role: f.role, permissions: f.role === "ADMIN" ? [] : f.permissions }),
       };
       if (editing) return { saved: await staffApi.update(person.id, common), temp: undefined as string | undefined };
-      const created = await staffApi.create({ ...common, phone: f.phone.trim(), password: f.password || undefined, useExistingCustomer: f.useExistingCustomer || undefined });
+      const created = await staffApi.create({ ...common, password: f.password || undefined, useExistingCustomer: f.useExistingCustomer || undefined });
       return { saved: created, temp: created.temporaryPassword };
     },
     {
@@ -100,7 +101,7 @@ function StaffDialog({ person, onClose, onPassword }: { person: StaffRow | null;
 
   const submit = () => {
     if (f.name.trim().length < 2) return setErr(tr("Enter the name"));
-    if (!editing && !/^(\+?88)?01[3-9]\d{8}$/.test(f.phone.replace(/[\s-]/g, ""))) return setErr(tr("Enter a valid Bangladesh mobile number"));
+    if (!/^(\+?88)?01[3-9]\d{8}$/.test(f.phone.replace(/[\s-]/g, ""))) return setErr(tr("Enter a valid Bangladesh mobile number"));
     if (f.email.trim() && !/^\S+@\S+\.\S+$/.test(f.email.trim())) return setErr(tr("Enter a valid email, or leave it empty"));
     if (f.password && f.password.length < 6) return setErr(tr("The password needs at least 6 characters, or leave it empty to get a temporary one"));
     setErr(null);
@@ -133,7 +134,7 @@ function StaffDialog({ person, onClose, onPassword }: { person: StaffRow | null;
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label={tr("Name")} required><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
             <Field label={tr("Job title")} hint={tr("Shown in lists, e.g. Rider, Packer")}><Input value={f.staffTitle} onChange={(e) => setF({ ...f, staffTitle: e.target.value })} /></Field>
-            <Field label={tr("Phone (sign-in)")} required={!editing}><Input value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} disabled={editing} placeholder="01XXXXXXXXX" inputMode="tel" /></Field>
+            <Field label={tr("Phone (sign-in)")} required><Input value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} placeholder="01XXXXXXXXX" inputMode="tel" /></Field>
             <Field label={tr("Email")} hint={tr("Optional")}><Input type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></Field>
             {!editing && (
               <Field label={tr("Password")} hint={tr("Leave empty to get a temporary one to give them")}><Input type="text" autoComplete="off" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} /></Field>
