@@ -1,6 +1,6 @@
 "use client";
 
-import { Link } from "@/i18n/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
 import type { Category } from "@/lib/types";
 import { useBrowse } from "@/components/browse/BrowseModals";
 import { gsap } from "@/components/motion/gsap";
@@ -16,8 +16,8 @@ interface CategoryNavProps {
   compact?: boolean;
 }
 
-const linkClass =
-  "relative inline-flex items-center gap-1 whitespace-nowrap px-3 py-3.5 text-[13px] font-semibold text-muted-foreground transition-colors hover:text-foreground after:absolute after:bottom-1.5 after:left-3 after:right-3 after:h-[2px] after:origin-left after:scale-x-0 after:bg-brand-fresh after:transition-transform hover:after:scale-x-100";
+const baseLinkClass =
+  "relative inline-flex items-center gap-1 whitespace-nowrap px-3 py-3.5 text-[13px] font-semibold transition-colors after:absolute after:bottom-1.5 after:left-3 after:right-3 after:h-[2px] after:origin-left after:transition-transform hover:after:scale-x-100";
 
 function MiniCart() {
   const th = useTranslations("Header");
@@ -58,8 +58,11 @@ function MiniCart() {
 
 export default function CategoryNav({ categories, compact = false }: CategoryNavProps) {
   const t = useTranslations("Nav");
+  const pathname = usePathname();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const { open: openBrowse } = useBrowse();
+
+  const isProductsActive = pathname === "/products" || pathname.startsWith("/products/");
 
   // Only the categories that really fit are shown; the rest live in the "All categories" drawer.
   // Every link stays in the flow at its natural width; the ones that end past the right edge are hidden (and un-focusable).
@@ -102,56 +105,76 @@ export default function CategoryNav({ categories, compact = false }: CategoryNav
               <LayoutGrid className="h-4 w-4" aria-hidden="true" />
               {t("allCategories")}
             </button>
-            <Link href="/products" className={`${linkClass} hidden xl:inline-flex`}>
+            <Link
+              href="/products"
+              aria-current={isProductsActive ? "page" : undefined}
+              className={`${baseLinkClass} after:bg-brand-fresh hidden xl:inline-flex ${
+                isProductsActive
+                  ? "text-foreground after:scale-x-100"
+                  : "text-muted-foreground hover:text-foreground after:scale-x-0"
+              }`}
+            >
               {t("allProducts")}
             </Link>
           </div>
 
           {/* Desktop nav */}
           <div ref={row} data-cat-row="" className="relative mx-2 hidden min-w-0 flex-1 items-center xl:flex">
-            {categories.map((cat, i) => (
-              <div
-                key={cat.slug}
-                className={`relative shrink-0 ${i >= fit ? "invisible" : ""}`}
-                inert={i >= fit}
-                onMouseEnter={() => setOpenMenu(cat.slug)}
-                onMouseLeave={() => setOpenMenu(null)}
-              >
-                <Link
-                  href={`/category/${cat.slug}`}
-                  prefetch
-                  className={`${linkClass} ${cat.slug === "medicine" ? "font-bold text-emerald-600 dark:text-emerald-400" : ""}`}
+            {categories.map((cat, i) => {
+              const isCatActive = pathname === `/category/${cat.slug}` || pathname.startsWith(`/category/${cat.slug}/`);
+              const isMedicine = cat.slug === "medicine";
+              return (
+                <div
+                  key={cat.slug}
+                  className={`relative shrink-0 ${i >= fit ? "invisible" : ""}`}
+                  inert={i >= fit}
+                  onMouseEnter={() => setOpenMenu(cat.slug)}
+                  onMouseLeave={() => setOpenMenu(null)}
                 >
-                  {cat.slug === "medicine" && <span className="mr-1">💊</span>}
-                  {cat.name.split(" & ")[0]}
-                  {cat.subCategories.length > 0 && (
-                    <ChevronDown className="h-3 w-3 opacity-60" aria-hidden="true" />
-                  )}
-                </Link>
+                  <Link
+                    href={`/category/${cat.slug}`}
+                    prefetch
+                    aria-current={isCatActive ? "page" : undefined}
+                    className={`${baseLinkClass} ${
+                      isMedicine
+                        ? "font-bold text-emerald-600 dark:text-emerald-400 after:bg-emerald-600 dark:after:bg-emerald-400"
+                        : "after:bg-brand-fresh"
+                    } ${
+                      isCatActive
+                        ? `after:scale-x-100 ${!isMedicine ? "text-foreground" : ""}`
+                        : `after:scale-x-0 ${!isMedicine ? "text-muted-foreground hover:text-foreground" : ""}`
+                    }`}
+                  >
+                    {cat.name.split(" & ")[0]}
+                    {cat.subCategories.length > 0 && (
+                      <ChevronDown className="h-3 w-3 opacity-60" aria-hidden="true" />
+                    )}
+                  </Link>
 
-                {openMenu === cat.slug && cat.subCategories.length > 0 && (
-                  <div className="absolute left-0 top-full z-[1000] min-w-[240px] pt-1">
-                    <div className="rounded border border-border bg-popover p-2 shadow-xl">
-                      {cat.subCategories.map((sub) => (
+                  {openMenu === cat.slug && cat.subCategories.length > 0 && (
+                    <div className="absolute left-0 top-full z-[1000] min-w-[240px] pt-1">
+                      <div className="rounded border border-border bg-popover p-2 shadow-xl">
+                        {cat.subCategories.map((sub) => (
+                          <Link
+                            key={sub.slug}
+                            href={categoryHref(cat.slug, sub.slug)}
+                            className="flex items-center rounded px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                          >
+                            {sub.name}
+                          </Link>
+                        ))}
                         <Link
-                          key={sub.slug}
-                          href={categoryHref(cat.slug, sub.slug)}
-                          className="flex items-center rounded px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                          href={`/category/${cat.slug}`}
+                          className="mt-1 flex items-center justify-center rounded bg-secondary px-3 py-2 text-sm font-semibold text-primary transition-colors hover:bg-accent dark:text-accent-text"
                         >
-                          {sub.name}
+                          {t("viewAllOf", { name: cat.name })}
                         </Link>
-                      ))}
-                      <Link
-                        href={`/category/${cat.slug}`}
-                        className="mt-1 flex items-center justify-center rounded bg-secondary px-3 py-2 text-sm font-semibold text-primary transition-colors hover:bg-accent dark:text-accent-text"
-                      >
-                        {t("viewAllOf", { name: cat.name })}
-                      </Link>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            ))}
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* Right side: promo + (when the header is tucked away) the cart */}
