@@ -73,8 +73,31 @@ export interface LoyaltySettings {
   freeShippingOrderInterval: number;
   freeShippingMaxWeightKg: number;
 }
+export type HeroLayoutMode = "SLIDER_AND_SIDE" | "SLIDER_ONLY";
+export interface HeroConfig {
+  layout?: HeroLayoutMode;
+  maxSlides?: number;
+  autoplayIntervalSec?: number;
+}
+
 export interface Settings {
-  site: { storeName: string; tagline: string; logoUrl: string | null; faviconUrl: string | null; contactEmail: string | null; hotline: string | null; whatsapp: string | null; address: string | null; businessHours: string | null; currency: string; currencySymbol: string; metaTitle: string | null; metaDescription: string | null; socialLinks: Record<string, string> };
+  site: {
+    storeName: string;
+    tagline: string;
+    logoUrl: string | null;
+    faviconUrl: string | null;
+    contactEmail: string | null;
+    hotline: string | null;
+    whatsapp: string | null;
+    address: string | null;
+    businessHours: string | null;
+    currency: string;
+    currencySymbol: string;
+    metaTitle: string | null;
+    metaDescription: string | null;
+    socialLinks: Record<string, string>;
+    hero?: HeroConfig;
+  };
   payment: { codEnabled: boolean; bkashEnabled: boolean; bkashNumber: string | null; bkashAccountType: "personal" | "merchant" | "agent"; bkashInstructions: string | null; nagadEnabled: boolean; nagadNumber: string | null; nagadAccountType: "personal" | "merchant" | "agent"; nagadInstructions: string | null; rocketEnabled: boolean; rocketNumber: string | null; rocketAccountType: "personal" | "merchant" | "agent"; rocketInstructions: string | null };
   delivery: DeliverySettings;
   maps: MapsSettings;

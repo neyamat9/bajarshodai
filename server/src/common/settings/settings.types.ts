@@ -31,6 +31,14 @@ export interface SocialLinks {
   linkedin?: string;
 }
 
+export type HeroLayoutMode = 'SLIDER_AND_SIDE' | 'SLIDER_ONLY';
+
+export interface HeroConfig {
+  layout?: HeroLayoutMode;
+  maxSlides?: number;
+  autoplayIntervalSec?: number;
+}
+
 export interface SiteSettings {
   storeName: string;
   tagline: string;
@@ -46,6 +54,7 @@ export interface SiteSettings {
   metaTitle: string | null;
   metaDescription: string | null;
   socialLinks: SocialLinks;
+  hero: HeroConfig;
 }
 
 export type MobileBankingMethod = 'BKASH' | 'NAGAD' | 'ROCKET';
@@ -254,6 +263,11 @@ export const DEFAULT_SETTINGS: SettingsMap = {
     metaTitle: null,
     metaDescription: null,
     socialLinks: {},
+    hero: {
+      layout: 'SLIDER_AND_SIDE',
+      maxSlides: 5,
+      autoplayIntervalSec: 6,
+    },
   },
   payment: {
     codEnabled: true,

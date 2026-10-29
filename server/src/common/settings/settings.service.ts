@@ -127,7 +127,18 @@ export class SettingsService {
     group: G,
     stored: Partial<SettingsMap[G]>,
   ): SettingsMap[G] {
-    return { ...DEFAULT_SETTINGS[group], ...stored };
+    const base = DEFAULT_SETTINGS[group];
+    if (group === 'site') {
+      const siteBase = base as any;
+      const siteStored = (stored || {}) as any;
+      return {
+        ...siteBase,
+        ...siteStored,
+        socialLinks: { ...siteBase.socialLinks, ...(siteStored.socialLinks || {}) },
+        hero: { ...siteBase.hero, ...(siteStored.hero || {}) },
+      } as unknown as SettingsMap[G];
+    }
+    return { ...base, ...stored };
   }
 
   private parse(value: string): Record<string, unknown> {

@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Check, LayoutTemplate, Pencil, Plus, Trash2 } from "lucide-react";
 import { BANNER_LINKS, BANNER_POSITIONS, bannersApi, type Banner, type BannerPosition } from "@/api/catalog";
+import { settingsApi, type HeroLayoutMode } from "@/api/system";
 import { assetUrl, errorMessage } from "@/api/client";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Card } from "@/components/ui/card";
@@ -92,6 +93,167 @@ function BannerDialog({ banner, defaultPosition, onClose }: { banner: Banner | n
   );
 }
 
+function HeroSettingsCard() {
+  const { data: settings, isLoading } = useQuery({ queryKey: ["settings"], queryFn: settingsApi.get });
+  const hero = settings?.site?.hero;
+
+  const [layout, setLayout] = useState<HeroLayoutMode>("SLIDER_AND_SIDE");
+  const [maxSlides, setMaxSlides] = useState<number>(5);
+  const [intervalSec, setIntervalSec] = useState<number>(6);
+  const [dirty, setDirty] = useState(false);
+
+  useEffect(() => {
+    if (hero) {
+      setLayout(hero.layout ?? "SLIDER_AND_SIDE");
+      setMaxSlides(hero.maxSlides ?? 5);
+      setIntervalSec(hero.autoplayIntervalSec ?? 6);
+      setDirty(false);
+    }
+  }, [hero]);
+
+  const save = useAct(
+    async () => {
+      if (!settings?.site) return;
+      await settingsApi.save("site", {
+        ...settings.site,
+        hero: {
+          layout,
+          maxSlides: Math.max(1, Math.min(15, Number(maxSlides) || 5)),
+          autoplayIntervalSec: Math.max(2, Math.min(30, Number(intervalSec) || 6)),
+        },
+      });
+    },
+    {
+      success: tr("Hero settings saved"),
+      invalidate: [["settings"]],
+      onSuccess: () => setDirty(false),
+    },
+  );
+
+  if (isLoading) return null;
+
+  return (
+    <Card className="mb-6 border-border p-4 sm:p-5">
+      <div className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+            <LayoutTemplate className="h-4 w-4 text-brand-leaf" />
+            {tr("Hero Section Controls")}
+          </h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {tr("Control how the public hero section looks: toggle full-width slider or slider with side cards, and set slide count.")}
+          </p>
+        </div>
+        <Button
+          size="sm"
+          variant="brand"
+          loading={save.isPending}
+          disabled={!dirty || save.isPending}
+          onClick={() => save.mutate()}
+        >
+          <Check className="mr-1.5 h-3.5 w-3.5" />
+          {dirty ? tr("Save Changes") : tr("Saved")}
+        </Button>
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-12">
+        <div className="space-y-2 lg:col-span-7">
+          <label className="text-xs font-semibold uppercase tracking-wide text-foreground">
+            {tr("Display Layout")}
+          </label>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => {
+                setLayout("SLIDER_AND_SIDE");
+                setDirty(true);
+              }}
+              className={`cursor-pointer rounded-md border p-3 text-left transition-all ${
+                layout === "SLIDER_AND_SIDE"
+                  ? "border-brand-leaf bg-brand-leaf/5 ring-1 ring-brand-leaf"
+                  : "border-border bg-background hover:border-border/80"
+              }`}
+            >
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-xs font-medium text-foreground">
+                  {tr("Slider + 2 Side Cards")}
+                </span>
+                {layout === "SLIDER_AND_SIDE" && (
+                  <span className="h-2 w-2 rounded-full bg-brand-leaf" />
+                )}
+              </div>
+              <p className="text-[11px] leading-normal text-muted-foreground">
+                {tr("Main slider on left + 2 promo banners on right (HERO_SIDE).")}
+              </p>
+            </div>
+
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => {
+                setLayout("SLIDER_ONLY");
+                setDirty(true);
+              }}
+              className={`cursor-pointer rounded-md border p-3 text-left transition-all ${
+                layout === "SLIDER_ONLY"
+                  ? "border-brand-leaf bg-brand-leaf/5 ring-1 ring-brand-leaf"
+                  : "border-border bg-background hover:border-border/80"
+              }`}
+            >
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-xs font-medium text-foreground">
+                  {tr("Full-Width Slider Only")}
+                </span>
+                {layout === "SLIDER_ONLY" && (
+                  <span className="h-2 w-2 rounded-full bg-brand-leaf" />
+                )}
+              </div>
+              <p className="text-[11px] leading-normal text-muted-foreground">
+                {tr("Slider expands 100% full width. Side banners are hidden.")}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid items-start gap-3 sm:grid-cols-2 lg:col-span-5">
+          <Field
+            label={tr("Max Slides")}
+            hint={tr("Max active slides to rotate")}
+          >
+            <Input
+              type="number"
+              min={1}
+              max={15}
+              value={maxSlides}
+              onChange={(e) => {
+                setMaxSlides(Number(e.target.value));
+                setDirty(true);
+              }}
+            />
+          </Field>
+
+          <Field
+            label={tr("Slide Interval (sec)")}
+            hint={tr("Seconds per slide")}
+          >
+            <Input
+              type="number"
+              min={2}
+              max={30}
+              value={intervalSec}
+              onChange={(e) => {
+                setIntervalSec(Number(e.target.value));
+                setDirty(true);
+              }}
+            />
+          </Field>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 export default function Banners() {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["banners"], queryFn: bannersApi.list });
@@ -117,6 +279,7 @@ export default function Banners() {
   return (
     <div>
       <PageHeader title={tr("Banners")} description={tr("Home page sliders and promotions. Drag inside a group to change the order.")} actions={<Button variant="brand" size="sm" onClick={() => setEdit({ banner: null, position: "HERO_MAIN" })}><Plus />{" "}{tr("New banner")}</Button>} />
+      <HeroSettingsCard />
       {all.length === 0 ? <Card><EmptyState title={tr("No banners yet")} description={tr("Add a banner to show on the home page.")} /></Card> : (
         <div className="space-y-6">
           {positions.map((pos) => {

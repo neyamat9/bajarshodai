@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Mail } from "lucide-react";
-import { settingsApi, type Settings as S, type SettingsGroup } from "@/api/system";
+import { settingsApi, type Settings as S, type SettingsGroup, type HeroLayoutMode } from "@/api/system";
 import { errorMessage } from "@/api/client";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Field, Section } from "@/components/shared/Field";
@@ -30,13 +30,45 @@ function useSave(group: SettingsGroup) {
 }
 
 function SiteForm({ v }: { v: S["site"] }) {
-  const [f, setF] = useState({ ...v, contactEmail: v.contactEmail ?? "", hotline: v.hotline ?? "", whatsapp: v.whatsapp ?? "", address: v.address ?? "", businessHours: v.businessHours ?? "", metaTitle: v.metaTitle ?? "", metaDescription: v.metaDescription ?? "" });
+  const [f, setF] = useState({
+    ...v,
+    contactEmail: v.contactEmail ?? "",
+    hotline: v.hotline ?? "",
+    whatsapp: v.whatsapp ?? "",
+    address: v.address ?? "",
+    businessHours: v.businessHours ?? "",
+    metaTitle: v.metaTitle ?? "",
+    metaDescription: v.metaDescription ?? "",
+    heroLayout: (v.hero?.layout ?? "SLIDER_AND_SIDE") as HeroLayoutMode,
+    heroMaxSlides: v.hero?.maxSlides ?? 5,
+    heroAutoplayIntervalSec: v.hero?.autoplayIntervalSec ?? 6,
+  });
   const [social, setSocial] = useState<Record<string, string>>(v.socialLinks ?? {});
   const save = useSave("site");
   const submit = () => {
     if (!f.storeName.trim()) return toast.error(tr("Store name is required"));
     if (f.contactEmail && !/^\S+@\S+\.\S+$/.test(f.contactEmail)) return toast.error(tr("Enter a valid contact email"));
-    save.mutate({ storeName: f.storeName.trim(), tagline: f.tagline, logoUrl: f.logoUrl, faviconUrl: f.faviconUrl, contactEmail: nz(f.contactEmail), hotline: nz(f.hotline), whatsapp: nz(f.whatsapp), address: nz(f.address), businessHours: nz(f.businessHours), currency: f.currency, currencySymbol: f.currencySymbol, metaTitle: nz(f.metaTitle), metaDescription: nz(f.metaDescription), socialLinks: Object.fromEntries(Object.entries(social).filter(([, x]) => x.trim())) });
+    save.mutate({
+      storeName: f.storeName.trim(),
+      tagline: f.tagline,
+      logoUrl: f.logoUrl,
+      faviconUrl: f.faviconUrl,
+      contactEmail: nz(f.contactEmail),
+      hotline: nz(f.hotline),
+      whatsapp: nz(f.whatsapp),
+      address: nz(f.address),
+      businessHours: nz(f.businessHours),
+      currency: f.currency,
+      currencySymbol: f.currencySymbol,
+      metaTitle: nz(f.metaTitle),
+      metaDescription: nz(f.metaDescription),
+      socialLinks: Object.fromEntries(Object.entries(social).filter(([, x]) => x.trim())),
+      hero: {
+        layout: f.heroLayout,
+        maxSlides: Number(f.heroMaxSlides) || 5,
+        autoplayIntervalSec: Number(f.heroAutoplayIntervalSec) || 6,
+      },
+    });
   };
   return (
     <div className="grid items-start gap-4 xl:grid-cols-2 [&>button]:justify-self-start xl:[&>button]:col-span-2">
@@ -44,6 +76,24 @@ function SiteForm({ v }: { v: S["site"] }) {
         <div className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-2"><Field label={tr("Store name")} required><Input value={f.storeName} onChange={(e) => setF({ ...f, storeName: e.target.value })} /></Field><Field label={tr("Tagline")}><Input value={f.tagline} onChange={(e) => setF({ ...f, tagline: e.target.value })} /></Field></div>
           <div className="grid gap-3 sm:grid-cols-2"><ImageField label={tr("Logo")} folder="site" value={f.logoUrl} onChange={(logoUrl) => setF({ ...f, logoUrl })} /><ImageField label={tr("Favicon")} folder="site" value={f.faviconUrl} onChange={(faviconUrl) => setF({ ...f, faviconUrl })} /></div>
+        </div>
+      </Section>
+      <Section title={tr("Home Hero Section")} description={tr("Display layout and slide rotation settings for the storefront hero section.")}>
+        <div className="space-y-3">
+          <Field label={tr("Hero Layout")} hint={tr("Choose between slider with side promotional cards or full-width slider only")}>
+            <Select value={f.heroLayout} onChange={(e) => setF({ ...f, heroLayout: e.target.value as HeroLayoutMode })}>
+              <option value="SLIDER_AND_SIDE">{tr("Slider + 2 Side Cards (Default)")}</option>
+              <option value="SLIDER_ONLY">{tr("Full-Width Slider Only")}</option>
+            </Select>
+          </Field>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label={tr("Max Slides")} hint={tr("How many active main slider photos rotate")}>
+              <Input type="number" min={1} max={15} value={f.heroMaxSlides} onChange={(e) => setF({ ...f, heroMaxSlides: Number(e.target.value) })} />
+            </Field>
+            <Field label={tr("Slide Interval (seconds)")} hint={tr("Seconds per slide")}>
+              <Input type="number" min={2} max={30} value={f.heroAutoplayIntervalSec} onChange={(e) => setF({ ...f, heroAutoplayIntervalSec: Number(e.target.value) })} />
+            </Field>
+          </div>
         </div>
       </Section>
       <Section title={tr("Contact")}>

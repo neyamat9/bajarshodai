@@ -24,6 +24,27 @@ import {
 // All fields are optional: a PUT only changes the fields it sends.
 // Send `null` to clear a nullable field.
 
+export class HeroConfigDto {
+  @ApiPropertyOptional({ enum: ['SLIDER_AND_SIDE', 'SLIDER_ONLY'] })
+  @IsOptional()
+  @IsIn(['SLIDER_AND_SIDE', 'SLIDER_ONLY'])
+  layout?: 'SLIDER_AND_SIDE' | 'SLIDER_ONLY';
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(20)
+  maxSlides?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Min(2)
+  @Max(30)
+  autoplayIntervalSec?: number;
+}
+
 export class SocialLinksDto {
   @ApiPropertyOptional() @IsOptional() @IsString() facebook?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() instagram?: string;
@@ -99,6 +120,12 @@ export class UpdateSiteSettingsDto {
   @ValidateNested()
   @Type(() => SocialLinksDto)
   socialLinks?: SocialLinksDto;
+
+  @ApiPropertyOptional({ type: HeroConfigDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => HeroConfigDto)
+  hero?: HeroConfigDto;
 }
 
 export class UpdatePaymentSettingsDto {

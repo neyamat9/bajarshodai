@@ -2,7 +2,7 @@
 
 import { Link } from "@/i18n/navigation";
 import { gsap, MOTION_OK, ScrollTrigger, useGSAP } from "@/components/motion/gsap";
-import type { Banner } from "@/lib/services/site.service";
+import type { Banner, HeroConfig } from "@/lib/services/site.service";
 import type { Category, Product } from "@/lib/types";
 import { ArrowRight, ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
@@ -19,12 +19,14 @@ interface HeroSectionProps {
   spotlight?: Product[];
   /** Categories shown as the two tiles on the right */
   categories?: Category[];
+  /** Dynamic hero layout and slide controls configured in dashboard */
+  heroConfig?: HeroConfig;
 }
 
 
 /* ─────────────── dashboard-managed banners (when the owner has set some up) ─────────────── */
 
-function BannerSlide({ b, priority }: { b: Banner; priority?: boolean }) {
+function BannerSlide({ b, priority, sizes = "(min-width: 1024px) 66vw, 100vw" }: { b: Banner; priority?: boolean; sizes?: string }) {
   const t = useTranslations("Home");
   const inner = (
     <>
@@ -33,7 +35,7 @@ function BannerSlide({ b, priority }: { b: Banner; priority?: boolean }) {
         alt={b.title ?? t("bannerAlt")}
         fill
         priority={priority}
-        sizes="(min-width: 1024px) 66vw, 100vw"
+        sizes={sizes}
         className="object-cover"
         unoptimized
       />
@@ -57,7 +59,15 @@ function BannerSlide({ b, priority }: { b: Banner; priority?: boolean }) {
   );
 }
 
-function Slider({ banners }: { banners: Banner[] }) {
+function Slider({
+  banners,
+  intervalSec = 6,
+  fullWidth = false,
+}: {
+  banners: Banner[];
+  intervalSec?: number;
+  fullWidth?: boolean;
+}) {
   const [i, setI] = useState(0);
   const n = banners.length;
   const t = useTranslations("Home");
@@ -66,19 +76,26 @@ function Slider({ banners }: { banners: Banner[] }) {
 
   useEffect(() => {
     if (n < 2) return;
-    const t = setInterval(next, 6000);
-    return () => clearInterval(t);
-  }, [n, next]);
+    const ms = Math.max(2, intervalSec) * 1000;
+    const timer = setInterval(next, ms);
+    return () => clearInterval(timer);
+  }, [n, next, intervalSec]);
 
   return (
-    <div className="relative h-full min-h-[260px] w-full overflow-hidden rounded border border-border bg-secondary md:min-h-[420px]">
+    <div
+      className={`relative h-full w-full overflow-hidden rounded border border-border bg-secondary ${
+        fullWidth
+          ? "min-h-[280px] sm:min-h-[360px] md:min-h-[440px] lg:min-h-[500px]"
+          : "min-h-[260px] md:min-h-[420px]"
+      }`}
+    >
       {banners.map((b, idx) => (
         <div
           key={b.id}
           className={`absolute inset-0 transition-opacity duration-700 ${idx === i ? "opacity-100" : "pointer-events-none opacity-0"}`}
           aria-hidden={idx !== i}
         >
-          <BannerSlide b={b} priority={idx === 0} />
+          <BannerSlide b={b} priority={idx === 0} sizes={fullWidth ? "100vw" : "(min-width: 1024px) 66vw, 100vw"} />
         </div>
       ))}
       {n > 1 && (
@@ -433,9 +450,19 @@ function Showcase({ spotlight, categories }: { spotlight: Product[]; categories:
   );
 }
 
-export default function HeroSection({ main, side, spotlight = [], categories = [] }: HeroSectionProps) {
+export default function HeroSection({
+  main,
+  side,
+  spotlight = [],
+  categories = [],
+  heroConfig,
+}: HeroSectionProps) {
   const root = useRef<HTMLElement>(null);
-  const hasSide = side.length > 0;
+  const isSliderOnly = heroConfig?.layout === "SLIDER_ONLY";
+  const maxSlides = heroConfig?.maxSlides ?? 5;
+  const intervalSec = heroConfig?.autoplayIntervalSec ?? 6;
+  const activeMain = main.slice(0, maxSlides);
+  const hasSide = !isSliderOnly && side.length > 0;
 
   useGSAP(
     () => {
@@ -477,21 +504,27 @@ export default function HeroSection({ main, side, spotlight = [], categories = [
         aria-hidden="true"
       />
       <div className="relative mx-auto max-w-[1440px] px-4 pb-16 pt-6 md:px-8 lg:pb-20 lg:pt-8">
-        {main.length > 0 ? (
-          <div className="flex flex-col gap-6 lg:flex-row">
-            <div className="min-w-0 flex-[2]">
-              <Slider banners={main} />
+        {activeMain.length > 0 ? (
+          isSliderOnly ? (
+            <div className="w-full">
+              <Slider banners={activeMain} intervalSec={intervalSec} fullWidth />
             </div>
-            {hasSide && (
-              <div className="flex flex-1 flex-col gap-6">
-                {side.slice(0, 2).map((b) => (
-                  <div key={b.id} className="relative min-h-[180px] flex-1 overflow-hidden rounded border border-border bg-secondary">
-                    <BannerSlide b={b} />
-                  </div>
-                ))}
+          ) : (
+            <div className="flex flex-col gap-6 lg:flex-row">
+              <div className="min-w-0 flex-[2]">
+                <Slider banners={activeMain} intervalSec={intervalSec} />
               </div>
-            )}
-          </div>
+              {hasSide && (
+                <div className="flex flex-1 flex-col gap-6">
+                  {side.slice(0, 2).map((b) => (
+                    <div key={b.id} className="relative min-h-[180px] flex-1 overflow-hidden rounded border border-border bg-secondary">
+                      <BannerSlide b={b} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
         ) : (
           <Showcase spotlight={spotlight} categories={categories} />
         )}
