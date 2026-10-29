@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import {
   LayoutDashboard, ShoppingBag, PlusCircle, RotateCcw, Users, Boxes, PackagePlus, Warehouse, FolderTree, Handshake, Images,
   TicketPercent, GalleryHorizontal, BellRing, Star, MessageCircleQuestion, LifeBuoy, Mail, Newspaper, BarChart3,
-  Bell, Settings, History, ShieldCheck, UserCircle, Ruler, CalendarClock, UserCog, Truck, Bike, Pill, Sparkles,
+  Bell, Settings, History, ShieldCheck, UserCircle, Ruler, CalendarClock, UserCog, Truck, Bike, Pill, Sparkles, FileText,
 } from "lucide-react";
 import type { AttentionSummary } from "@/api/notifications";
 import type { AdminUser } from "@/api/client";
@@ -73,6 +73,7 @@ export const menu: MenuSection[] = [
   {
     title: tr("Customer care"),
     items: [
+      { label: tr("Prescriptions"), to: "/prescriptions", icon: i(FileText), adminOnly: true },
       { label: tr("Reviews"), to: "/reviews", icon: i(Star), adminOnly: true },
       { label: tr("Questions"), to: "/questions", icon: i(MessageCircleQuestion), badge: (s) => s.unansweredQuestions, adminOnly: true },
       { label: tr("Support tickets"), to: "/support", icon: i(LifeBuoy), badge: (s) => s.openTickets, adminOnly: true },

@@ -1,20 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Pill,
-  ShieldCheck,
-  FileText,
   Upload,
-  CheckCircle2,
-  Clock,
   Phone,
   X,
-  Sparkles,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useLocale } from "next-intl";
 import type { Locale } from "@/lib/locale";
+import { useAuth } from "@/lib/hooks/use-auth";
+import { API_BASE_URL, tokens } from "@/lib/api/client";
 
 interface MedicineHeaderProps {
   categoryName: string;
@@ -27,11 +25,21 @@ export default function MedicineHeader({
 }: MedicineHeaderProps) {
   const locale = useLocale() as Locale;
   const isBn = locale === "bn";
+  const { user } = useAuth();
+
   const [rxModalOpen, setRxModalOpen] = useState(false);
   const [rxFile, setRxFile] = useState<File | null>(null);
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  // Auto-fill phone when signed in
+  useEffect(() => {
+    if (user?.phone && !phone) {
+      setPhone(user.phone);
+    }
+  }, [user, phone]);
 
   const handleSubmitRx = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,18 +52,57 @@ export default function MedicineHeader({
       return;
     }
 
+    const formData = new FormData();
+    formData.append("file", rxFile);
+    formData.append("phone", phone.trim());
+    if (notes.trim()) formData.append("notes", notes.trim());
+
     setIsSubmitting(true);
-    setTimeout(() => {
+    setUploadProgress(0);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${API_BASE_URL}/prescriptions`);
+
+    const token = tokens.access;
+    if (token) {
+      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+    }
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percent = Math.min(100, Math.round((event.loaded / event.total) * 100));
+        setUploadProgress(percent);
+      }
+    };
+
+    xhr.onload = () => {
       setIsSubmitting(false);
-      setRxModalOpen(false);
-      setRxFile(null);
-      setNotes("");
-      toast.success(
-        isBn
-          ? "প্রেসক্রিপশন সফলভাবে জমা হয়েছে! আমাদের ফার্মাসিস্ট শীঘ্রই কল করবেন।"
-          : "Prescription submitted! Our registered pharmacist will contact you shortly.",
-      );
-    }, 1000);
+      if (xhr.status >= 200 && xhr.status < 300) {
+        setRxModalOpen(false);
+        setRxFile(null);
+        setNotes("");
+        setUploadProgress(0);
+        toast.success(
+          isBn
+            ? "প্রেসক্রিপশন সফলভাবে জমা হয়েছে! আমাদের ফার্মাসিস্ট শীঘ্রই কল করবেন।"
+            : "Prescription submitted! Our registered pharmacist will contact you shortly.",
+        );
+      } else {
+        try {
+          const res = JSON.parse(xhr.responseText);
+          toast.error(res.message || (isBn ? "আপলোড ব্যর্থ হয়েছে" : "Upload failed"));
+        } catch {
+          toast.error(isBn ? "আপলোড ব্যর্থ হয়েছে" : "Upload failed");
+        }
+      }
+    };
+
+    xhr.onerror = () => {
+      setIsSubmitting(false);
+      toast.error(isBn ? "নেটওয়ার্ক সমস্যা, আবার চেষ্টা করুন" : "Network error, please try again");
+    };
+
+    xhr.send(formData);
   };
 
   return (
@@ -68,7 +115,8 @@ export default function MedicineHeader({
 
         <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
           <div className="space-y-2 max-w-2xl">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold tracking-wide text-white backdrop-blur-md">
+            {/* MRP Pill (rounded-[4px] as requested) */}
+            <div className="inline-flex items-center gap-1.5 rounded-[4px] bg-white/15 px-3 py-1 text-xs font-semibold tracking-wide text-white backdrop-blur-md">
               <Pill className="h-3.5 w-3.5 text-emerald-200" />
               <span>
                 {isBn
@@ -87,45 +135,23 @@ export default function MedicineHeader({
                   ? "দেশের শীর্ষস্থানীয় ফার্মাসিউটিক্যালস (স্কয়ার, বেক্সিমকো, ইনসেপ্টা, রেনাটা) থেকে সরাসরি সংগৃহীত জেনুইন ওষুধ।"
                   : "Genuine medicines sourced directly from top pharmaceutical manufacturers (Square, Beximco, Incepta, Renata). Factual brand & generic catalog.")}
             </p>
-
-            {/* Quality & Safety Badges */}
-            <div className="flex flex-wrap items-center gap-2 pt-2 text-xs font-medium text-white/90">
-              <span className="inline-flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 backdrop-blur-sm">
-                <ShieldCheck className="h-3.5 w-3.5 text-emerald-300" />
-                {isBn ? "ফার্মাসিস্ট ভেরিফাইড" : "Pharmacist Verified"}
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 backdrop-blur-sm">
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" />
-                {isBn ? "মেডেক্স লাইভ সিঙ্ক" : "MedEx Live Sync"}
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 backdrop-blur-sm">
-                <Clock className="h-3.5 w-3.5 text-emerald-300" />
-                {isBn ? "দ্রুততম হোম ডেলিভারি" : "Express Home Delivery"}
-              </span>
-            </div>
           </div>
 
-          {/* Rx Prescription Call-To-Action */}
+          {/* Rx Prescription Call-To-Action (Clean button, no icon, title: প্রেসক্রিপশন আপলোড) */}
           <div className="shrink-0">
             <button
               type="button"
               onClick={() => setRxModalOpen(true)}
-              className="group flex items-center gap-3 rounded-xl border border-white/30 bg-white/95 px-5 py-3.5 text-left text-emerald-950 shadow-md transition-all hover:bg-white hover:shadow-xl active:scale-95"
+              className="group flex flex-col justify-center rounded-xl border border-white/30 bg-white/95 px-6 py-3.5 text-left text-emerald-950 shadow-md transition-all hover:bg-white hover:shadow-xl active:scale-95"
             >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm transition-transform group-hover:scale-105">
-                <FileText className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="font-outfit text-sm font-bold flex items-center gap-1">
-                  <span>{isBn ? "প্রেসক্রিপশন আপলোড করুন" : "Upload Prescription"}</span>
-                  <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-                </p>
-                <p className="text-xs text-emerald-800/80">
-                  {isBn
-                    ? "ছবি তুলুন, আমরা ওষুধ প্রস্তুত করব"
-                    : "Snap a photo, we'll prepare your order"}
-                </p>
-              </div>
+              <p className="font-outfit text-base font-bold text-emerald-950">
+                {isBn ? "প্রেসক্রিপশন আপলোড" : "Upload Prescription"}
+              </p>
+              <p className="text-xs text-emerald-800/80">
+                {isBn
+                  ? "ছবি তুলুন, আমরা ওষুধ প্রস্তুত করব"
+                  : "Snap a photo, we'll prepare your order"}
+              </p>
             </button>
           </div>
         </div>
@@ -141,7 +167,9 @@ export default function MedicineHeader({
           <div className="relative w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
             <button
               type="button"
-              onClick={() => setRxModalOpen(false)}
+              onClick={() => {
+                if (!isSubmitting) setRxModalOpen(false);
+              }}
               className="absolute right-4 top-4 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               <X className="h-5 w-5" />
@@ -169,8 +197,9 @@ export default function MedicineHeader({
                 <input
                   type="file"
                   accept="image/*,.pdf"
+                  disabled={isSubmitting}
                   onChange={(e) => setRxFile(e.target.files?.[0] || null)}
-                  className="absolute inset-0 cursor-pointer opacity-0"
+                  className="absolute inset-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
                 />
                 <div className="flex flex-col items-center justify-center gap-1.5 text-xs text-muted-foreground">
                   <Upload className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
@@ -197,10 +226,11 @@ export default function MedicineHeader({
                   <input
                     type="tel"
                     required
+                    disabled={isSubmitting}
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="017xxxxxxxx"
-                    className="w-full rounded-lg border border-input bg-background pl-9 pr-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full rounded-lg border border-input bg-background pl-9 pr-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -212,6 +242,7 @@ export default function MedicineHeader({
                 </label>
                 <textarea
                   rows={2}
+                  disabled={isSubmitting}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder={
@@ -219,31 +250,59 @@ export default function MedicineHeader({
                       ? "যেমন: কতদিনের ওষুধ লাগবে..."
                       : "e.g. Need 1 month supply..."
                   }
-                  className="w-full rounded-lg border border-input bg-background p-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full rounded-lg border border-input bg-background p-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
                 />
               </div>
+
+              {/* Upload Progress Bar (0% - 100%) */}
+              {isSubmitting && (
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex items-center justify-between text-xs font-semibold">
+                    <span className="text-muted-foreground">
+                      {uploadProgress < 100
+                        ? isBn
+                          ? "প্রেসক্রিপশন আপলোড হচ্ছে..."
+                          : "Uploading prescription..."
+                        : isBn
+                          ? "যাচাই সম্পন্ন হচ্ছে..."
+                          : "Processing..."}
+                    </span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                      {uploadProgress}%
+                    </span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+                    <div
+                      className="h-full bg-emerald-600 transition-all duration-150 ease-out"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Submit Button */}
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
+                  disabled={isSubmitting}
                   onClick={() => setRxModalOpen(false)}
-                  className="rounded-lg border border-border px-4 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-muted"
+                  className="rounded-lg border border-border px-4 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-muted disabled:opacity-50"
                 >
                   {isBn ? "বাতিল" : "Cancel"}
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="rounded-lg bg-emerald-600 px-5 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-emerald-700 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-5 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-emerald-700 disabled:opacity-50"
                 >
-                  {isSubmitting
-                    ? isBn
-                      ? "জমা হচ্ছে..."
-                      : "Submitting..."
-                    : isBn
-                      ? "প্রেসক্রিপশন পাঠান"
-                      : "Send Prescription"}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span>{isBn ? "পাঠানো হচ্ছে..." : "Submitting..."}</span>
+                    </>
+                  ) : (
+                    <span>{isBn ? "প্রেসক্রিপশন পাঠান" : "Send Prescription"}</span>
+                  )}
                 </button>
               </div>
             </form>

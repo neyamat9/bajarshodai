@@ -308,6 +308,7 @@ model User {
   riderSettlements     RiderSettlement[]
   customerNotes        CustomerNote[]          @relation("CustomerNotes")
   notesWritten         CustomerNote[]          @relation("NotesWritten")
+  prescriptions        Prescription[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1773,6 +1774,7 @@ enum AdminNotificationType {
   OUT_OF_STOCK
   CONTACT_MESSAGE
   QUESTION_ASKED
+  NEW_PRESCRIPTION
 }
 
 // The admin dashboard bell: events the shop needs to look at. The list is
@@ -1914,4 +1916,28 @@ model DeliveryEvent {
   delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
 
   @@index([deliveryId, createdAt])
+}
+
+enum PrescriptionStatus {
+  PENDING
+  REVIEWED
+  ORDER_CREATED
+  REJECTED
+}
+
+model Prescription {
+  id         String             @id @default(uuid())
+  userId     String?
+  user       User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phone      String
+  imageUrl   String
+  notes      String?            @db.Text
+  status     PrescriptionStatus @default(PENDING)
+  adminNotes String?            @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
 }

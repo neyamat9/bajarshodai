@@ -86,6 +86,7 @@ export const router = createBrowserRouter([
           { path: "support", element: <Guard adminOnly>{L(() => import("@/pages/care/Support"), <SupportSkeleton />)}</Guard> },
           { path: "support/:id", element: <Guard adminOnly>{L(() => import("@/pages/care/SupportDetail"), <DetailPageSkeleton />)}</Guard> },
           { path: "contact", element: <Guard adminOnly>{L(() => import("@/pages/care/Contact"), <ContactSkeleton />)}</Guard> },
+          { path: "prescriptions", element: <Guard adminOnly>{L(() => import("@/pages/care/Prescriptions"), <ContactSkeleton />)}</Guard> },
           { path: "newsletter", element: <Guard adminOnly>{L(() => import("@/pages/care/Newsletter"), <NewsletterSkeleton />)}</Guard> },
           { path: "back-in-stock", element: <Guard adminOnly>{L(() => import("@/pages/care/BackInStock"), <BackInStockSkeleton />)}</Guard> },
           { path: "reports", element: <Guard needs={["reports.view"]}>{L(() => import("@/pages/reports/Reports"), <ReportsSkeleton />)}</Guard> },

@@ -24,6 +24,7 @@ import { RecentlyViewedModule } from './recently-viewed/recently-viewed.module';
 import { SearchHistoryModule } from './search-history/search-history.module';
 import { SupportModule } from './support/support.module';
 import { LoyaltyModule } from './loyalty/loyalty.module';
+import { PrescriptionsModule } from './prescriptions/prescriptions.module';
 
 @Module({
   imports: [
@@ -52,8 +53,10 @@ import { LoyaltyModule } from './loyalty/loyalty.module';
     SearchHistoryModule,
     SupportModule,
     LoyaltyModule,
+    PrescriptionsModule,
   ],
   exports: [
+    PrescriptionsModule,
     LoyaltyModule,
     ProductsModule,
     CategoriesModule,

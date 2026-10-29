@@ -2,9 +2,10 @@
 
 import { useLocale } from "next-intl";
 import type { Locale } from "@/lib/locale";
-import { Search, X, Loader2, Pill, Dna, Sparkles, Building2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Search, X, Loader2 } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { formatNumber } from "@/lib/format";
+import { useDebouncedSearch } from "@/lib/hooks/use-debounced-search";
 
 interface MedicineSearchBarProps {
   value: string;
@@ -12,23 +13,6 @@ interface MedicineSearchBarProps {
   loading?: boolean;
   totalResults?: number;
 }
-
-const POPULAR_SEARCHES = [
-  { label: "Napa", type: "brand", icon: Pill },
-  { label: "Paracetamol", type: "generic", icon: Dna },
-  { label: "Seclo", type: "brand", icon: Pill },
-  { label: "Omeprazole", type: "generic", icon: Dna },
-  { label: "Sergel", type: "brand", icon: Pill },
-  { label: "Esomeprazole", type: "generic", icon: Dna },
-  { label: "Ciprofloxacin", type: "generic", icon: Dna },
-  { label: "Azithromycin", type: "generic", icon: Dna },
-  { label: "Monas", type: "brand", icon: Pill },
-  { label: "Fexo", type: "brand", icon: Pill },
-  { label: "Ace", type: "brand", icon: Pill },
-  { label: "Square", type: "company", icon: Building2 },
-  { label: "Beximco", type: "company", icon: Building2 },
-  { label: "Incepta", type: "company", icon: Building2 },
-];
 
 export default function MedicineSearchBar({
   value,
@@ -38,40 +22,42 @@ export default function MedicineSearchBar({
 }: MedicineSearchBarProps) {
   const locale = useLocale() as Locale;
   const isBn = locale === "bn";
-  const [localInput, setLocalInput] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Sync internal input when parent value is cleared externally (e.g., via filter chips)
-  useEffect(() => {
-    setLocalInput(value);
-  }, [value]);
+  // Canonical debounced search hook (300ms pause)
+  const { input, setInput, query, clear, flush } = useDebouncedSearch(300, value);
 
-  // Debounced propagation to parent
+  // Sync internal input when parent value is changed externally (e.g., cleared via filter chips)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (localInput !== value) {
-        onChange(localInput);
-      }
-    }, 250);
-    return () => clearTimeout(timer);
-  }, [localInput, value, onChange]);
+    if (value !== query && value !== input) {
+      setInput(value);
+    }
+  }, [value, query, input, setInput]);
+
+  // Propagate debounced query changes to parent
+  useEffect(() => {
+    if (query !== value) {
+      onChange(query);
+    }
+  }, [query, value, onChange]);
 
   const handleClear = () => {
-    setLocalInput("");
+    clear();
     onChange("");
     inputRef.current?.focus();
   };
 
-  const handleQuickTagClick = (tag: string) => {
-    if (localInput.toLowerCase() === tag.toLowerCase()) {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      flush();
+      onChange(input.trim());
+    } else if (e.key === "Escape") {
       handleClear();
-    } else {
-      setLocalInput(tag);
-      onChange(tag);
     }
   };
 
-  const hasSearch = localInput.trim().length > 0;
+  const hasSearch = input.trim().length > 0 || query.length > 0;
 
   return (
     <div className="mb-4 space-y-2.5">
@@ -91,8 +77,9 @@ export default function MedicineSearchBar({
           <input
             ref={inputRef}
             type="text"
-            value={localInput}
-            onChange={(e) => setLocalInput(e.target.value)}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder={
               isBn
                 ? "ওষুধের নাম (যেমন: Napa, Seclo) অথবা জেনেরিক নাম (যেমন: Paracetamol, Omeprazole) দিয়ে খুঁজুন..."
@@ -118,43 +105,15 @@ export default function MedicineSearchBar({
           {/* Fast Submit / Search Indicator */}
           <button
             type="button"
-            onClick={() => onChange(localInput)}
+            onClick={() => {
+              flush();
+              onChange(input.trim());
+            }}
             className="hidden sm:inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-xs font-bold transition-all shadow-sm active:scale-95 shrink-0"
           >
             <span>{isBn ? "খুঁজুন" : "Search"}</span>
           </button>
         </div>
-      </div>
-
-      {/* ── Popular Quick Search Pills ─────────────────────────── */}
-      <div className="flex flex-wrap items-center gap-1.5 text-xs">
-        <span className="inline-flex items-center gap-1 font-semibold text-muted-foreground shrink-0 text-[11px] pr-1">
-          <Sparkles className="size-3 text-amber-500" />
-          <span>{isBn ? "দ্রুত খোঁজ:" : "Quick Search:"}</span>
-        </span>
-
-        {POPULAR_SEARCHES.map(({ label, icon: Icon, type }) => {
-          const isActive = localInput.toLowerCase() === label.toLowerCase();
-          return (
-            <button
-              key={label}
-              type="button"
-              onClick={() => handleQuickTagClick(label)}
-              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${
-                isActive
-                  ? "bg-emerald-600 text-white shadow-xs font-bold ring-2 ring-emerald-500/30"
-                  : type === "generic"
-                  ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 border border-emerald-500/20"
-                  : type === "company"
-                  ? "bg-sky-500/10 text-sky-700 dark:text-sky-300 hover:bg-sky-500/20 border border-sky-500/20"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground border border-border"
-              }`}
-            >
-              <Icon className="size-3 opacity-70" />
-              <span>{label}</span>
-            </button>
-          );
-        })}
       </div>
 
       {/* ── Active Search Results Banner ───────────────────────── */}
@@ -165,7 +124,7 @@ export default function MedicineSearchBar({
               {isBn ? "অনুসন্ধানের ফলাফল:" : "Search results for:"}
             </span>
             <span className="font-bold underline decoration-emerald-500 decoration-2">
-              &ldquo;{localInput}&rdquo;
+              &ldquo;{input.trim() || query}&rdquo;
             </span>
             {totalResults !== undefined && (
               <span className="text-emerald-700 dark:text-emerald-300 font-medium ml-1">

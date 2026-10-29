@@ -28,6 +28,7 @@ import { AdminReportsModule } from './reports/reports.module';
 import { AdminAuditLogsModule } from './audit-logs/audit-logs.module';
 import { AdminMedicineModule } from './medicine/medicine.module';
 import { FeaturedProductsModule } from './featured-products/featured-products.module';
+import { AdminPrescriptionsModule } from './prescriptions/admin-prescriptions.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { FeaturedProductsModule } from './featured-products/featured-products.mo
     AdminAuditLogsModule,
     AdminReportsModule,
     AdminBackInStockModule,
+    AdminPrescriptionsModule,
   ],
   exports: [
     BrandModule,

@@ -741,6 +741,7 @@
     "myOrders": "My orders",
     "wishlist": "Wishlist",
     "returns": "Returns",
+    "prescriptions": "Prescriptions",
     "settings": "Profile & security",
     "signedInAs": "Signed in as",
     "memberSince": "Member since {date}",
