@@ -24,8 +24,18 @@ const isBrowser = () => typeof window !== 'undefined';
 export const PLACEHOLDER_IMAGE = '/placeholder.svg';
 export function assetUrl(url?: string | null): string {
   if (!url) return PLACEHOLDER_IMAGE;
-  if (/^https?:\/\//i.test(url) || url.startsWith('data:')) return url;
-  return `${ASSET_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
+  if (url.startsWith('data:') || url.startsWith('blob:')) return url;
+  const clean = url.replace(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/i, '');
+  if (/^https?:\/\//i.test(clean)) return clean;
+  let base = ASSET_BASE;
+  if (typeof window !== 'undefined' && window.location.hostname) {
+    if (base.includes('localhost') && window.location.hostname === '127.0.0.1') {
+      base = base.replace('localhost', '127.0.0.1');
+    } else if (base.includes('127.0.0.1') && window.location.hostname === 'localhost') {
+      base = base.replace('127.0.0.1', 'localhost');
+    }
+  }
+  return `${base}${clean.startsWith('/') ? '' : '/'}${clean}`;
 }
 
 // ── token storage ────────────────────────────────────────

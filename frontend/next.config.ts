@@ -24,6 +24,8 @@ const nextConfig: NextConfig = {
     dangerouslyAllowLocalIP: ["localhost", "127.0.0.1"].includes(api.hostname),
     remotePatterns: [
       apiPattern,
+      { protocol: "http", hostname: "localhost", port: "8000" },
+      { protocol: "http", hostname: "127.0.0.1", port: "8000" },
       { protocol: "https", hostname: "picsum.photos" },
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "**.amazonaws.com" },

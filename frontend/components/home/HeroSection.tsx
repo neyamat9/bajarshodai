@@ -28,6 +28,7 @@ interface HeroSectionProps {
 
 function BannerSlide({ b, priority, sizes = "(min-width: 1024px) 66vw, 100vw" }: { b: Banner; priority?: boolean; sizes?: string }) {
   const t = useTranslations("Home");
+  const showTextOverlay = Boolean((b.title || b.subtitle) && (b.textColor || b.bgColor));
   const inner = (
     <>
       <Image
@@ -36,10 +37,10 @@ function BannerSlide({ b, priority, sizes = "(min-width: 1024px) 66vw, 100vw" }:
         fill
         priority={priority}
         sizes={sizes}
-        className="object-cover"
+        className="object-cover object-center"
         unoptimized
       />
-      {(b.title || b.subtitle) && (
+      {showTextOverlay && (
         <div
           className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-brand-deep/80 to-transparent p-6 md:p-10"
           style={b.textColor ? { color: b.textColor } : undefined}
@@ -85,8 +86,8 @@ function Slider({
     <div
       className={`relative h-full w-full overflow-hidden rounded border border-border bg-secondary ${
         fullWidth
-          ? "min-h-[280px] sm:min-h-[360px] md:min-h-[440px] lg:min-h-[500px]"
-          : "min-h-[260px] md:min-h-[420px]"
+          ? "aspect-[16/9] sm:aspect-[16/8] md:aspect-[16/7.5] min-h-[300px] sm:min-h-[380px] md:min-h-[460px] lg:min-h-[500px]"
+          : "aspect-[16/9] min-h-[260px] sm:min-h-[340px] md:min-h-[440px] lg:aspect-auto lg:h-full lg:min-h-0"
       }`}
     >
       {banners.map((b, idx) => (
@@ -510,17 +511,26 @@ export default function HeroSection({
               <Slider banners={activeMain} intervalSec={intervalSec} fullWidth />
             </div>
           ) : (
-            <div className="flex flex-col gap-6 lg:flex-row">
-              <div className="min-w-0 flex-[2]">
-                <Slider banners={activeMain} intervalSec={intervalSec} />
+            <div className="grid gap-4 lg:h-[480px] lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+              <div className="min-w-0 h-full">
+                <Slider banners={activeMain} intervalSec={intervalSec} fullWidth={isSliderOnly || !hasSide} />
               </div>
               {hasSide && (
-                <div className="flex flex-1 flex-col gap-6">
-                  {side.slice(0, 2).map((b) => (
-                    <div key={b.id} className="relative min-h-[180px] flex-1 overflow-hidden rounded border border-border bg-secondary">
-                      <BannerSlide b={b} />
+                <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 lg:grid-cols-1 lg:grid-rows-2">
+                  {/* Top card: first side banner (e.g. Medicine banner) */}
+                  {side[0] && (
+                    <div key={side[0].id} className="relative min-h-[180px] overflow-hidden rounded border border-border bg-secondary">
+                      <BannerSlide b={side[0]} sizes="(min-width: 1024px) 33vw, 100vw" />
                     </div>
-                  ))}
+                  )}
+                  {/* Bottom card: second side banner or category tile if only 1 side banner */}
+                  {side[1] ? (
+                    <div key={side[1].id} className="relative min-h-[180px] overflow-hidden rounded border border-border bg-secondary">
+                      <BannerSlide b={side[1]} sizes="(min-width: 1024px) 33vw, 100vw" />
+                    </div>
+                  ) : categories[0] ? (
+                    <CategoryTile cat={categories[0]} tone="fresh" />
+                  ) : null}
                 </div>
               )}
             </div>

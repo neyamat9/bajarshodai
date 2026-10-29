@@ -50,16 +50,19 @@ async function bootstrap() {
   app.use(
     helmet({
       crossOriginEmbedderPolicy: false,
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: [`'self'`],
-          styleSrc: [`'self'`, `'unsafe-inline'`],
-          imgSrc: [`'self'`, 'data:', 'blob:', 'https:'],
-          scriptSrc: [`'self'`, `'unsafe-inline'`, 'https:'],
-        },
-      },
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      contentSecurityPolicy: false,
+      hsts: nodeEnv === 'production' ? undefined : false,
     }),
   );
+
+  // In non-production, ensure any browser that cached HSTS for localhost clears it immediately
+  if (nodeEnv !== 'production') {
+    app.use((_req: unknown, res: import('http').ServerResponse, next: () => void) => {
+      res.setHeader('Strict-Transport-Security', 'max-age=0');
+      next();
+    });
+  }
 
   // Enable CORS with custom origins
   app.enableCors({
@@ -90,8 +93,9 @@ async function bootstrap() {
       immutable: true,
       setHeaders: (res: import('http').ServerResponse) => {
         res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('X-Content-Type-Options', 'nosniff');
-        res.setHeader('Content-Security-Policy', "default-src 'none'");
+        res.removeHeader('Content-Security-Policy');
       },
     },
   );
@@ -177,7 +181,7 @@ async function bootstrap() {
   }
 
   // ========== START SERVER ==========
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
 
   // ========== STARTUP LOGS ==========
   logger.log(`🚀 Server is running on: http://localhost:${port}`);
