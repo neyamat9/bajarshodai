@@ -28,13 +28,16 @@ export class PrismaService
     const pool = new Pool({
       connectionString: url,
 
+      // Maximum connections allowed in the pool
       max: 20,
-      min: 5,
-      idleTimeoutMillis: 30000,
+      // Scale-to-zero friendly: allow all idle connections to close when quiet
+      min: 0,
+      // Disconnect idle clients after 15 seconds of inactivity so Neon can suspend
+      idleTimeoutMillis: 15000,
       connectionTimeoutMillis: 10000,
 
-      keepAlive: true,
-      keepAliveInitialDelayMillis: 10000,
+      // Disable aggressive TCP keep-alive probes that keep serverless endpoints awake
+      keepAlive: false,
 
       statement_timeout: 30000,
     });

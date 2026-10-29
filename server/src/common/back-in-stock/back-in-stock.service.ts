@@ -39,7 +39,16 @@ export class BackInStockAlertService implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   onModuleInit() {
-    const every = Number(process.env.BACK_IN_STOCK_INTERVAL_MS) || 60_000;
+    // For Neon scale-to-zero, default to 0 (disabled in-process polling) or 1 hour (3,600,000ms).
+    // Prevents querying PostgreSQL every 60 seconds while idle.
+    const raw = process.env.BACK_IN_STOCK_INTERVAL_MS;
+    const every = raw !== undefined ? Number(raw) : 0;
+    if (every <= 0) {
+      this.logger.log(
+        'Back-in-stock periodic polling is disabled (Neon scale-to-zero friendly). Alerts trigger on stock replenishment or admin action.',
+      );
+      return;
+    }
     this.timer = setInterval(() => void this.run(), every);
     this.timer.unref();
   }

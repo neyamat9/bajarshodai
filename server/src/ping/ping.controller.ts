@@ -11,7 +11,9 @@ export class PingController {
   @Public()
   @Get()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Basic liveness ping' })
+  @ApiOperation({
+    summary: 'Basic liveness ping (recommended for hosting probes, does NOT touch database)',
+  })
   ping() {
     return this.pingService.ping();
   }
@@ -19,7 +21,10 @@ export class PingController {
   @Public()
   @Get('health')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Health check including database connection' })
+  @ApiOperation({
+    summary:
+      'Deep health check including database query (caution: high-frequency probes will prevent Neon scale-to-zero)',
+  })
   async health() {
     const dbStatus = await this.pingService.checkDb();
     if (!dbStatus.success) {

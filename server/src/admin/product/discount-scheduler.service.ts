@@ -26,10 +26,18 @@ export class DiscountSchedulerService implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   onModuleInit() {
-    const every = Number(process.env.DISCOUNT_SCHEDULER_INTERVAL_MS) || 60_000;
+    // For Neon scale-to-zero, default to 1 hour (3,600,000ms) or set to 0 to disable periodic polling.
+    // Prevents querying PostgreSQL every 60 seconds while the application is idle.
+    const raw = process.env.DISCOUNT_SCHEDULER_INTERVAL_MS;
+    const every = raw !== undefined ? Number(raw) : 3_600_000;
+    if (every <= 0) {
+      this.logger.log(
+        'Discount scheduler periodic polling is disabled (Neon scale-to-zero friendly).',
+      );
+      return;
+    }
     this.timer = setInterval(() => void this.run(), every);
     this.timer.unref();
-    void this.run();
   }
 
   onModuleDestroy() {
