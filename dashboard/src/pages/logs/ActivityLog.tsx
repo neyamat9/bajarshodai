@@ -442,11 +442,11 @@ export default function ActivityLog() {
           <SearchInput value={f.search} onChange={(v) => setF({ search: v })} placeholder={tr("Search actions, emails, summaries...")} className="max-w-none sm:max-w-sm" />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex w-full sm:w-auto items-center gap-2 flex-wrap sm:flex-nowrap">
           <Select
             value={f.actorType}
             onChange={(e) => setF({ actorType: e.target.value })}
-            className="h-8 rounded border border-input bg-background px-2.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            className="h-8 w-full sm:w-40 rounded border border-input bg-background px-2.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           >
             <option value="">{tr("All Actors")}</option>
             <option value="ADMIN">{tr("Admin")}</option>
@@ -458,7 +458,7 @@ export default function ActivityLog() {
           <Select
             value={f.success}
             onChange={(e) => setF({ success: e.target.value })}
-            className="h-8 rounded border border-input bg-background px-2.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            className="h-8 w-full sm:w-40 rounded border border-input bg-background px-2.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           >
             <option value="">{tr("All Results")}</option>
             <option value="true">{tr("Success Only")}</option>

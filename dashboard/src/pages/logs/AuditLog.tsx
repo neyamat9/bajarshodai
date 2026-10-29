@@ -285,12 +285,12 @@ export default function AuditLog() {
           <SearchInput value={f.search} onChange={(v) => setF({ search: v })} placeholder={tr("Search admin, entity ID or action...")} className="max-w-none sm:max-w-sm" />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex w-full sm:w-auto items-center gap-2 flex-wrap sm:flex-nowrap">
           {auditTypes?.actions && (
             <Select
               value={f.action}
               onChange={(e) => setF({ action: e.target.value })}
-              className="h-8 rounded border border-input bg-background px-2.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              className="h-8 w-full sm:w-48 rounded border border-input bg-background px-2.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
             >
               <option value="">{tr("All Actions")}</option>
               {auditTypes.actions.map((act) => (
@@ -305,7 +305,7 @@ export default function AuditLog() {
             <Select
               value={f.entity}
               onChange={(e) => setF({ entity: e.target.value })}
-              className="h-8 rounded border border-input bg-background px-2.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              className="h-8 w-full sm:w-48 rounded border border-input bg-background px-2.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
             >
               <option value="">{tr("All Entities")}</option>
               {Object.keys(auditTypes.types).map((typeKey) => (
