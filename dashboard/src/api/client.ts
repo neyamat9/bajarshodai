@@ -180,21 +180,17 @@ export function errorMessage(e: unknown, fallback = "Something went wrong"): str
   return fallback;
 }
 
-// /uploads/... paths come back relative when the server has no public URL set
+// /uploads/... paths come back relative when the server has no public URL set.
+// Handles both relative paths (/uploads/...) and absolute URLs from the server.
 export function assetUrl(url?: string | null): string {
   if (!url) return "";
   if (url.startsWith("data:") || url.startsWith("blob:")) return url;
+  // Strip localhost/127.0.0.1 prefix left over from dev-stored data
   const clean = url.replace(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/i, "");
+  // Already an absolute URL pointing to a real host — use it directly
   if (/^https?:\/\//i.test(clean)) return clean;
-  let base = ASSET_BASE;
-  if (typeof window !== "undefined" && window.location.hostname) {
-    if (base.includes("localhost") && window.location.hostname === "127.0.0.1") {
-      base = base.replace("localhost", "127.0.0.1");
-    } else if (base.includes("127.0.0.1") && window.location.hostname === "localhost") {
-      base = base.replace("127.0.0.1", "localhost");
-    }
-  }
-  return `${base}${clean.startsWith("/") ? "" : "/"}${clean}`;
+  // Relative path: prepend the API server base
+  return `${ASSET_BASE}${clean.startsWith("/") ? "" : "/"}${clean}`;
 }
 
 // ---- paged lists: the API answers { data, meta } ----

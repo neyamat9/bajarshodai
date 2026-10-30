@@ -2,6 +2,7 @@
 // and on the server (public data only, no tokens).
 
 export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api').replace(/\/$/, '');
+// ASSET_BASE = the origin of the API server (strip the /api suffix)
 const ASSET_BASE = API_BASE_URL.replace(/\/api$/, '');
 
 export class APIError extends Error {
@@ -22,20 +23,25 @@ const isBrowser = () => typeof window !== 'undefined';
 
 // ── image urls ───────────────────────────────────────────
 export const PLACEHOLDER_IMAGE = '/placeholder.svg';
+
+/**
+ * Converts a raw image URL/path from the API into a fully-qualified URL
+ * suitable for use in an <img> src attribute.
+ *
+ * Handles these input shapes:
+ *  - Absolute URL (https://...):  returned as-is (server already knows its public URL)
+ *  - Relative path (/uploads/...): prepend ASSET_BASE (derived from NEXT_PUBLIC_API_URL)
+ *  - localhost URL in any env:    strip host, treat as relative, prepend ASSET_BASE
+ */
 export function assetUrl(url?: string | null): string {
   if (!url) return PLACEHOLDER_IMAGE;
   if (url.startsWith('data:') || url.startsWith('blob:')) return url;
+  // Strip localhost/127.0.0.1 prefix that may be left over from dev data
   const clean = url.replace(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/i, '');
+  // Already an absolute URL pointing to a real host — use it directly
   if (/^https?:\/\//i.test(clean)) return clean;
-  let base = ASSET_BASE;
-  if (typeof window !== 'undefined' && window.location.hostname) {
-    if (base.includes('localhost') && window.location.hostname === '127.0.0.1') {
-      base = base.replace('localhost', '127.0.0.1');
-    } else if (base.includes('127.0.0.1') && window.location.hostname === 'localhost') {
-      base = base.replace('127.0.0.1', 'localhost');
-    }
-  }
-  return `${base}${clean.startsWith('/') ? '' : '/'}${clean}`;
+  // Relative path: prepend the API server base
+  return `${ASSET_BASE}${clean.startsWith('/') ? '' : '/'}${clean}`;
 }
 
 // ── token storage ────────────────────────────────────────

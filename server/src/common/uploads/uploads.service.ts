@@ -95,7 +95,13 @@ export class UploadsService implements OnModuleInit, OnModuleDestroy {
   }
 
   url(key: string) {
-    return `${this.publicBase}/uploads/${key}`;
+    // If UPLOADS_PUBLIC_URL is configured, produce an absolute URL.
+    // Otherwise produce a root-relative path that the frontend can prefix with
+    // its own API base (NEXT_PUBLIC_API_URL / VITE_API_URL minus "/api").
+    if (this.publicBase) {
+      return `${this.publicBase}/uploads/${key}`;
+    }
+    return `/uploads/${key}`;
   }
 
   thumbUrl(key: string) {

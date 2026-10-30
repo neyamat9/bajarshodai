@@ -11,6 +11,23 @@ const apiPattern = {
   ...(api.port ? { port: api.port } : {}),
 };
 
+// Also allow UPLOADS_PUBLIC_URL if different from the API URL
+// (e.g., when uploads are served from a CDN or a separate subdomain)
+const uploadsPatterns: { protocol: "http" | "https"; hostname: string; port?: string; pathname?: string }[] = [];
+if (process.env.UPLOADS_PUBLIC_URL) {
+  try {
+    const uploadsBase = new URL(process.env.UPLOADS_PUBLIC_URL);
+    uploadsPatterns.push({
+      protocol: uploadsBase.protocol.replace(":", "") as "http" | "https",
+      hostname: uploadsBase.hostname,
+      ...(uploadsBase.port ? { port: uploadsBase.port } : {}),
+      pathname: "/uploads/**",
+    });
+  } catch {
+    // Invalid URL — skip
+  }
+}
+
 const nextConfig: NextConfig = {
   // lets a production build run beside the dev server (different folder), e.g. NEXT_DIST_DIR=.nextprod for speed checks (avoid dashes in the name: they break the font loader)
   distDir: process.env.NEXT_DIST_DIR || ".next",
@@ -26,6 +43,7 @@ const nextConfig: NextConfig = {
       apiPattern,
       { protocol: "http", hostname: "localhost", port: "8000" },
       { protocol: "http", hostname: "127.0.0.1", port: "8000" },
+      ...uploadsPatterns,
       { protocol: "https", hostname: "picsum.photos" },
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "**.amazonaws.com" },
