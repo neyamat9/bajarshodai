@@ -44,9 +44,9 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
           }
         />
 
-        {/* small tiles: a picture, two lines of name */}
+        {/* small tiles: a picture, two lines of name (max 16) */}
         <div className="grid grid-cols-4 gap-x-2 gap-y-5 sm:grid-cols-5 md:gap-x-4 lg:grid-cols-8">
-          {categories.map((cat) => {
+          {categories.slice(0, 16).map((cat) => {
             // The dashboard can attach an image to a category; fall back to its icon, then to its first letter.
             const image = cat.image;
             return (
@@ -59,10 +59,10 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
                 className="group flex flex-col items-center gap-2 text-center"
               >
                 <span className="relative flex aspect-square w-full max-w-[96px] items-center justify-center overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary to-brand-deep-light shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:border-brand-fresh group-hover:shadow-md">
-                  {cat.slug === "medicine" ? (
-                    <span className="text-4xl" role="img" aria-label="Medicine">💊</span>
-                  ) : image ? (
+                  {image ? (
                     <Image src={image} alt="" fill sizes="96px" className="object-cover transition-transform duration-500 group-hover:scale-110" />
+                  ) : cat.slug === "medicine" ? (
+                    <span className="text-4xl" role="img" aria-label="Medicine">💊</span>
                   ) : cat.icon ? (
                     <svg className="h-9 w-9 text-white/90" fill="none" stroke="currentColor" strokeWidth={1.4} viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" d={cat.icon} />

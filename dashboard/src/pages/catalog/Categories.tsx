@@ -38,6 +38,7 @@ function EditDialog({ edit, tree, onClose }: { edit: Edit; tree: CategoryNode[];
   });
   const [touched, setTouched] = useState(!!it);
   const [err, setErr] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   // a category cannot move under itself or anything below it
   const options = useMemo(() => {
@@ -64,6 +65,7 @@ function EditDialog({ edit, tree, onClose }: { edit: Edit; tree: CategoryNode[];
     { success: tr("Saved"), invalidate: [["categories"]], onSuccess: onClose },
   );
   const submit = () => {
+    if (uploading) return;
     if (!f.name.trim()) return setErr(tr("Name (English) is required: it makes the web address"));
     if (!f.nameBn.trim()) return setErr(tr("Add the Bangla name: the shop shows it by default"));
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(f.slug)) return setErr(tr("Slug: lowercase English letters, numbers and dashes"));
@@ -91,7 +93,7 @@ function EditDialog({ edit, tree, onClose }: { edit: Edit; tree: CategoryNode[];
             <Field label={tr("Description (Bangla)")}><Textarea rows={2} value={f.descriptionBn} onChange={(e) => setF({ ...f, descriptionBn: e.target.value })} /></Field>
             <Field label={tr("Description (English)")}><Textarea rows={2} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></Field>
           </div>
-          <ImageField label={tr("Image (shown on the home page tile)")} folder="categories" value={f.image} onChange={(image) => setF({ ...f, image })} />
+          <ImageField label={tr("Image (shown on the home page tile)")} folder="categories" value={f.image} onChange={(image) => setF({ ...f, image })} onBusyChange={setUploading} />
           {!f.parentCategoryId && (
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label={tr("Meta title")}><Input value={f.metaTitle} onChange={(e) => setF({ ...f, metaTitle: e.target.value })} /></Field>
@@ -107,7 +109,7 @@ function EditDialog({ edit, tree, onClose }: { edit: Edit; tree: CategoryNode[];
         </DialogBody>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>{tr("Cancel")}</Button>
-          <Button loading={save.isPending} onClick={submit}>{tr("Save")}</Button>
+          <Button loading={save.isPending} disabled={uploading} onClick={submit}>{uploading ? tr("Uploading…") : tr("Save")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

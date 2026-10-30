@@ -10,21 +10,41 @@ import { Label } from "@/components/ui/input";
 import { tr } from "@/i18n";
 
 // Upload a new image, or pick one from the media library. Value is the stored URL.
-export function ImageField({ label, value, onChange, folder = "general", className }: { label?: string; value: string | null | undefined; onChange: (url: string | null) => void; folder?: MediaFolder; className?: string }) {
+export function ImageField({
+  label,
+  value,
+  onChange,
+  onBusyChange,
+  folder = "general",
+  className,
+}: {
+  label?: string;
+  value: string | null | undefined;
+  onChange: (url: string | null) => void;
+  onBusyChange?: (busy: boolean) => void;
+  folder?: MediaFolder;
+  className?: string;
+}) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [lib, setLib] = useState(false);
+
+  const updateBusy = (b: boolean) => {
+    setBusy(b);
+    onBusyChange?.(b);
+  };
+
   const upload = async (list: FileList | null) => {
     const f = list?.[0];
     if (!f) return;
-    setBusy(true);
+    updateBusy(true);
     try {
       const [saved] = await mediaApi.upload([f], folder);
       onChange(saved.url);
     } catch (e) {
       toast.error(errorMessage(e, "Upload failed"));
     } finally {
-      setBusy(false);
+      updateBusy(false);
       if (input.current) input.current.value = "";
     }
   };
