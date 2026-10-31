@@ -12,8 +12,6 @@ import {
   ShieldAlert,
   Sparkles,
   Percent,
-  SlidersHorizontal,
-  ArrowRight,
   Info,
 } from "lucide-react";
 import { medicineApi, type MedicineListResponse } from "@/api/medicine";

@@ -1,4 +1,4 @@
-import { api, clean, type Paged, ASSET_BASE } from "./client";
+import { api, clean, type Paged, assetUrl } from "./client";
 
 export type PrescriptionStatus = "PENDING" | "REVIEWED" | "ORDER_CREATED" | "REJECTED";
 
@@ -21,15 +21,31 @@ export interface PrescriptionItem {
   } | null;
 }
 
+interface AdminPrescriptionListResponse {
+  items: PrescriptionItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export const prescriptionsApi = {
-  list: (params: { page?: number; limit?: number; status?: string; search?: string }) =>
-    api.get<Paged<PrescriptionItem>>("/admin/prescriptions", { params: clean(params) }).then((r) => ({
-      ...r.data,
-      items: (r.data.items || []).map((it) => ({
+  list: (params: { page?: number; limit?: number; status?: string; search?: string }): Promise<Paged<PrescriptionItem>> =>
+    api.get<AdminPrescriptionListResponse>("/admin/prescriptions", { params: clean(params) }).then((r) => {
+      const items = (r.data.items || []).map((it) => ({
         ...it,
-        imageUrl: it.imageUrl?.startsWith("http") ? it.imageUrl : `${ASSET_BASE}${it.imageUrl}`,
-      })),
-    })),
+        imageUrl: assetUrl(it.imageUrl),
+      }));
+      return {
+        data: items,
+        meta: {
+          total: r.data.total ?? items.length,
+          page: r.data.page ?? 1,
+          limit: r.data.limit ?? 20,
+          totalPages: r.data.totalPages ?? 1,
+        },
+      };
+    }),
 
   updateStatus: (id: string, status: PrescriptionStatus, adminNotes?: string) =>
     api.patch<PrescriptionItem>(`/admin/prescriptions/${id}/status`, { status, adminNotes }).then((r) => r.data),

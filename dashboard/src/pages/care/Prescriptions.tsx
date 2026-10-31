@@ -8,7 +8,6 @@ import {
   PlusCircle,
   ExternalLink,
   Calendar,
-  User,
 } from "lucide-react";
 import {
   prescriptionsApi,
@@ -320,7 +319,7 @@ export default function Prescriptions() {
     <div className="space-y-4">
       <PageHeader
         title={tr("Customer Prescriptions (প্রেসক্রিপশন)")}
-        subtitle={tr("Review doctor prescriptions uploaded by patients and prepare medicine orders.")}
+        description={tr("Review doctor prescriptions uploaded by patients and prepare medicine orders.")}
       />
 
       <FilterBar>
@@ -343,12 +342,13 @@ export default function Prescriptions() {
       </FilterBar>
 
       <DataTable
+        infinite={q}
         columns={columns}
-        rows={q.rows}
-        loading={q.isLoading}
         onRowClick={(rx) => setSelected(rx)}
-        emptyTitle={tr("No prescriptions found")}
-        emptySubtitle={tr("When customers upload doctor prescriptions on the medicine page, they appear here.")}
+        empty={{
+          title: tr("No prescriptions found"),
+          description: tr("When customers upload doctor prescriptions on the medicine page, they appear here."),
+        }}
       />
 
       {selected && <DetailDialog rx={selected} onClose={() => setSelected(null)} />}
