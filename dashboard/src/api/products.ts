@@ -200,10 +200,21 @@ export const productsApi = {
   updateVariant: (id: string, variantId: string, body: Partial<VariantInput>) => api.patch<ProductVariant>(`/admin/products/${id}/variants/${variantId}`, body).then((r) => r.data),
   removeVariant: (id: string, variantId: string) => api.delete(`/admin/products/${id}/variants/${variantId}`).then((r) => r.data),
   // photos
-  uploadImages: (id: string, files: File[], alt?: string) => {
+  uploadImages: (id: string, files: File[], alt?: string, onProgress?: (percent: number) => void) => {
     const fd = new FormData();
     files.forEach((f) => fd.append("files", f));
-    return api.post<ProductImage[]>(`/admin/products/${id}/images`, fd, { params: alt ? { alt } : undefined, headers: { "Content-Type": "multipart/form-data" } }).then((r) => r.data);
+    return api
+      .post<ProductImage[]>(`/admin/products/${id}/images`, fd, {
+        params: alt ? { alt } : undefined,
+        headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percent = Math.min(100, Math.round((progressEvent.loaded * 100) / progressEvent.total));
+            onProgress?.(percent);
+          }
+        },
+      })
+      .then((r) => r.data);
   },
   attachImages: (id: string, body: { uploadIds?: string[]; urls?: string[] }) => api.post<ProductImage[]>(`/admin/products/${id}/images/attach`, body).then((r) => r.data),
   reorderImages: (id: string, imageIds: string[]) => api.put<ProductImage[]>(`/admin/products/${id}/images/order`, { imageIds }).then((r) => r.data),

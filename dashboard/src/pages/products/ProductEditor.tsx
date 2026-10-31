@@ -8,6 +8,7 @@ import { Checkbox, Input, Select, Textarea } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Field, Section } from "@/components/shared/Field";
+import { UploadProgressBar } from "@/components/shared/UploadProgressBar";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { ErrorState } from "@/components/shared/EmptyState";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -82,6 +83,7 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
   const [slugTouched, setSlugTouched] = useState(!!p);
   const [variants, setVariants] = useState<VariantDraft[]>(() => (p ? p.variants.map(fromVariant) : []));
   const [staged, setStaged] = useState<File[]>([]);
+  const [stagedProgress, setStagedProgress] = useState<number | null>(null);
   const [errs, setErrs] = useState<Record<string, string>>({});
   const [tab, setTab] = useState("basics");
   const [delOpen, setDelOpen] = useState(false);
@@ -218,7 +220,13 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
       if (!validate()) throw new Error("Validation");
       if (isNew) {
         const p = await productsApi.create({ ...build(), ...(hasVariants ? { variants: variants.map(toInput) } : {}) });
-        if (staged.length) await productsApi.uploadImages(p.id, staged).catch((e) => toast.warning(`Product saved, but photos failed: ${errorMessage(e)}`));
+        if (staged.length) {
+          setStagedProgress(0);
+          await productsApi
+            .uploadImages(p.id, staged, undefined, (pct) => setStagedProgress(pct))
+            .catch((e) => toast.warning(`Product saved, but photos failed: ${errorMessage(e)}`));
+          setStagedProgress(null);
+        }
         return p;
       }
       return productsApi.update(id!, build());
@@ -410,7 +418,7 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
         </TabsContent>
 
         <TabsContent value="photos">
-          <Section title={tr("Photos")}><PhotosEditor productId={id} images={p?.images} staged={staged} onStage={setStaged} /></Section>
+          <Section title={tr("Photos")}><PhotosEditor productId={id} images={p?.images} staged={staged} onStage={setStaged} stagedProgress={stagedProgress} /></Section>
         </TabsContent>
 
         <TabsContent value="variants">
@@ -460,6 +468,16 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
       </div>
 
       <ConfirmDialog open={delOpen} onOpenChange={setDelOpen} title={`Delete "${f.name}"?`} description={p && p._count.orderItems > 0 ? tr("It has been ordered before, so it is hidden instead of erased. Order history stays intact.") : tr("This cannot be undone.")} confirmLabel={tr("Delete")} destructive loading={del.isPending} onConfirm={() => del.mutate()} />
+
+      {stagedProgress !== null && (
+        <div className="fixed bottom-6 right-6 z-50 w-80 shadow-2xl">
+          <UploadProgressBar
+            progress={stagedProgress}
+            label={tr("Uploading {{count}} photos…", { count: staged.length })}
+            processingLabel={tr("Saving & optimizing photos…")}
+          />
+        </div>
+      )}
     </div>
   );
 }

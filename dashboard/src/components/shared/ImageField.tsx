@@ -7,6 +7,7 @@ import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@/
 import { assetUrl, errorMessage } from "@/api/client";
 import { mediaApi, type MediaFolder } from "@/api/catalog";
 import { Label } from "@/components/ui/input";
+import { UploadProgressBar } from "./UploadProgressBar";
 import { tr } from "@/i18n";
 
 // Upload a new image, or pick one from the media library. Value is the stored URL.
@@ -27,6 +28,7 @@ export function ImageField({
 }) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<number | null>(null);
   const [lib, setLib] = useState(false);
 
   const updateBusy = (b: boolean) => {
@@ -38,13 +40,15 @@ export function ImageField({
     const f = list?.[0];
     if (!f) return;
     updateBusy(true);
+    setProgress(0);
     try {
-      const [saved] = await mediaApi.upload([f], folder);
+      const [saved] = await mediaApi.upload([f], folder, (pct) => setProgress(pct));
       onChange(saved.url);
     } catch (e) {
       toast.error(errorMessage(e, "Upload failed"));
     } finally {
       updateBusy(false);
+      setProgress(null);
       if (input.current) input.current.value = "";
     }
   };
@@ -56,11 +60,21 @@ export function ImageField({
           {value ? <img src={assetUrl(value)} alt="" className="size-full object-cover" /> : <ImagePlus className="size-6 text-muted-foreground" />}
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button type="button" size="sm" variant="outline" loading={busy} onClick={() => input.current?.click()}><ImagePlus /> {value ? tr("Replace") : tr("Upload")}</Button>
-          <Button type="button" size="sm" variant="outline" onClick={() => setLib(true)}><Images />{" "}{tr("Library")}</Button>
-          {value && <Button type="button" size="sm" variant="ghost" onClick={() => onChange(null)}><Trash2 className="text-destructive" />{" "}{tr("Remove")}</Button>}
+          <Button type="button" size="sm" variant="outline" loading={busy} disabled={busy} onClick={() => input.current?.click()}><ImagePlus /> {value ? tr("Replace") : tr("Upload")}</Button>
+          <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => setLib(true)}><Images />{" "}{tr("Library")}</Button>
+          {value && <Button type="button" size="sm" variant="ghost" disabled={busy} onClick={() => onChange(null)}><Trash2 className="text-destructive" />{" "}{tr("Remove")}</Button>}
         </div>
       </div>
+      {progress !== null && (
+        <div className="mt-2.5 max-w-sm">
+          <UploadProgressBar
+            progress={progress}
+            size="sm"
+            label={tr("Uploading photo…")}
+            processingLabel={tr("Saving image…")}
+          />
+        </div>
+      )}
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden onChange={(e) => void upload(e.target.files)} />
       {lib && <LibraryDialog onPick={(u) => { onChange(u); setLib(false); }} onClose={() => setLib(false)} />}
     </div>

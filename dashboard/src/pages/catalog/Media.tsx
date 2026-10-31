@@ -13,6 +13,7 @@ import { Select } from "@/components/ui/input";
 import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EmptyState, ErrorState } from "@/components/shared/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UploadProgressBar } from "@/components/shared/UploadProgressBar";
 import { useAct } from "@/hooks/useAct";
 import { useInfiniteList } from "@/hooks/useInfiniteList";
 import { useUrlState } from "@/hooks/useUrlState";
@@ -63,9 +64,27 @@ export default function Media() {
   const search = f.search; // SearchInput waits for a pause in typing before it changes the URL
   const [sel, setSel] = useState<MediaFile | null>(null);
   const [folder, setFolder] = useState<MediaFolder>("general");
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [uploadCount, setUploadCount] = useState<number>(0);
   const input = useRef<HTMLInputElement>(null);
   const q = useInfiniteList(["media", f.folder, search], (page) => mediaApi.list({ folder: f.folder || undefined, search: search || undefined, page, limit: 24 }));
-  const upload = useAct((files: File[]) => mediaApi.upload(files, folder), { success: (r) => `${r.length} file(s) uploaded`, invalidate: [["media"]] });
+
+  const doUpload = async (files: File[]) => {
+    if (!files.length) return;
+    setUploadCount(files.length);
+    setUploadProgress(0);
+    try {
+      const res = await mediaApi.upload(files, folder, (pct) => setUploadProgress(pct));
+      toast.success(tr("{{count}} file(s) uploaded", { count: res.length }));
+      void q.refetch();
+    } catch (e) {
+      toast.error(errorMessage(e, "Upload failed"));
+    } finally {
+      setUploadProgress(null);
+      setUploadCount(0);
+      if (input.current) input.current.value = "";
+    }
+  };
 
   return (
     <div>
@@ -75,11 +94,23 @@ export default function Media() {
         actions={
           <>
             <Select value={folder} onChange={(e) => setFolder(e.target.value as MediaFolder)} className="w-auto" aria-label={tr("Upload folder")}>{MEDIA_FOLDERS.map((m) => <option key={m} value={m}>{tr("Into:")} {titleCase(m)}</option>)}</Select>
-            <Button variant="brand" size="sm" loading={upload.isPending} onClick={() => input.current?.click()}><Upload />{" "}{tr("Upload")}</Button>
-            <input ref={input} type="file" hidden multiple accept="image/jpeg,image/png,image/webp,image/gif" onChange={(e) => { const l = Array.from(e.target.files ?? []); if (l.length) upload.mutate(l); e.target.value = ""; }} />
+            <Button variant="brand" size="sm" loading={uploadProgress !== null} disabled={uploadProgress !== null} onClick={() => input.current?.click()}><Upload />{" "}{tr("Upload")}</Button>
+            <input ref={input} type="file" hidden multiple accept="image/jpeg,image/png,image/webp,image/gif" disabled={uploadProgress !== null} onChange={(e) => { const l = Array.from(e.target.files ?? []); if (l.length) void doUpload(l); }} />
           </>
         }
       />
+      {uploadProgress !== null && (
+        <div className="mb-4">
+          <UploadProgressBar
+            progress={uploadProgress}
+            label={tr("Uploading {{count}} file(s) into {{folder}}…", {
+              count: uploadCount,
+              folder: titleCase(folder),
+            })}
+            processingLabel={tr("Saving files & generating thumbnails…")}
+          />
+        </div>
+      )}
       <Card>
         <FilterBar>
           <SearchInput value={f.search} onChange={(v) => setF({ search: v })} placeholder={tr("File name…")} />

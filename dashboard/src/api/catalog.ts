@@ -116,10 +116,21 @@ export const MEDIA_FOLDERS = ["products", "banners", "brands", "categories", "si
 export type MediaFolder = (typeof MEDIA_FOLDERS)[number];
 export const mediaApi = {
   list: (f: Record<string, unknown>) => api.get<Paged<MediaFile>>("/admin/uploads", { params: f }).then((r) => r.data),
-  upload: (files: File[], folder: MediaFolder = "general") => {
+  upload: (files: File[], folder: MediaFolder = "general", onProgress?: (percent: number) => void) => {
     const fd = new FormData();
     files.forEach((f) => fd.append("files", f));
-    return api.post<MediaFile[]>("/admin/uploads", fd, { params: { folder }, headers: { "Content-Type": "multipart/form-data" } }).then((r) => r.data);
+    return api
+      .post<MediaFile[]>("/admin/uploads", fd, {
+        params: { folder },
+        headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percent = Math.min(100, Math.round((progressEvent.loaded * 100) / progressEvent.total));
+            onProgress?.(percent);
+          }
+        },
+      })
+      .then((r) => r.data);
   },
   usage: (id: string) => api.get<MediaUsage[]>(`/admin/uploads/${id}/usage`).then((r) => r.data),
   remove: (id: string, force = false) => api.delete(`/admin/uploads/${id}`, { params: force ? { force: true } : undefined }).then((r) => r.data),
