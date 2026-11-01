@@ -22,10 +22,17 @@ interface RuleSource {
 export function saleRuleOf(p: RuleSource): SaleRule {
   const u = p.unit;
   if (!u) return { allowDecimal: false, step: 1, min: 1 };
+  const step = toNum(p.sellStep ?? u.defaultStep) || 1;
+  const rawMin = toNum(p.minQty ?? u.defaultMinQty) || step;
+  // A product's minimum quantity cannot be less than its step, and must align with the step.
+  const min = Math.max(
+    step,
+    isOnStep(rawMin, step) ? rawMin : Math.ceil(round3(rawMin / step)) * step,
+  );
   return {
     allowDecimal: u.allowDecimal,
-    step: toNum(p.sellStep ?? u.defaultStep) || 1,
-    min: toNum(p.minQty ?? u.defaultMinQty) || 1,
+    step,
+    min,
   };
 }
 

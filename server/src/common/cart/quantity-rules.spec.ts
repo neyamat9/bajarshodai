@@ -46,6 +46,14 @@ describe('saleRuleOf', () => {
     });
   });
 
+  it('safely ensures minimum is on step even if DB has a smaller or misaligned minimum', () => {
+    expect(saleRuleOf({ unit: kg, sellStep: 1, minQty: 0.5 })).toEqual({
+      allowDecimal: true,
+      step: 1,
+      min: 1,
+    });
+  });
+
   it('treats a product without a unit as whole pieces', () => {
     expect(saleRuleOf({})).toEqual({ allowDecimal: false, step: 1, min: 1 });
   });

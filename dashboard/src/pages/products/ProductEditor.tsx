@@ -163,10 +163,17 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
     if (!f.name.trim()) e.name = "English name is required (it makes the web address)";
     if (!f.nameBn.trim()) e.nameBn = "Add the Bangla name: the shop shows it by default";
     if (f.unitId) {
-      const step = f.sellStep === "" ? unit?.defaultStep : Number(f.sellStep);
-      const min = f.minQty === "" ? unit?.defaultMinQty : Number(f.minQty);
+      const step = f.sellStep === "" ? (unit ? Number(unit.defaultStep) : 1) : Number(f.sellStep);
+      const min = f.minQty === "" ? (step || (unit ? Number(unit.defaultMinQty) : 1)) : Number(f.minQty);
       if (unit && !unit.allowDecimal && ((step !== undefined && !Number.isInteger(step)) || (min !== undefined && !Number.isInteger(min)))) e.sale = tr("\"{{unit}}\" is sold in whole numbers: use a whole-number step and minimum", { unit: unit.name });
       if ((f.sellStep !== "" && !(Number(f.sellStep) > 0)) || (f.minQty !== "" && !(Number(f.minQty) > 0))) e.sale = "Step and minimum must be above zero";
+      if (step > 0 && min > 0) {
+        if (min < step) {
+          e.sale = tr("Smallest quantity ({{min}}) cannot be less than the step ({{step}})", { min, step });
+        } else if (Math.abs(min / step - Math.round(min / step)) > 1e-9) {
+          e.sale = tr("Smallest quantity ({{min}}) must be a multiple of the step ({{step}})", { min, step });
+        }
+      }
     } else if (f.sellStep !== "" || f.minQty !== "") e.sale = "Choose a unit first";
     if (f.slug && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(f.slug)) e.slug = "Lowercase letters, numbers and single dashes";
     if (!f.categoryId) e.categoryId = "Choose a category";
@@ -196,7 +203,7 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
       description: f.description, shortDescription: f.shortDescription || undefined,
       descriptionBn: f.descriptionBn, shortDescriptionBn: f.shortDescriptionBn,
       unitId: f.unitId || undefined, packSize: f.packSize.trim(), isWeighed: f.isWeighed,
-      ...(f.unitId ? { sellStep: f.sellStep === "" ? null : Number(f.sellStep), minQty: f.minQty === "" ? null : Number(f.minQty) } : {}),
+      ...(f.unitId ? { sellStep: f.sellStep === "" ? null : Number(f.sellStep), minQty: f.minQty === "" ? (f.sellStep !== "" ? Number(f.sellStep) : null) : Number(f.minQty) } : {}),
       status: f.status, categoryId: f.categoryId, brandId: f.brandId || undefined,
       buyingPrice: Number(f.buyingPrice), regularPrice: Number(f.regularPrice), sellingPrice: Number(f.sellingPrice),
       discountPrice: f.discountPrice === "" ? null : Number(f.discountPrice),
@@ -323,7 +330,26 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
               </Field>
               <Field label={tr("Pack size")} hint={tr("Optional, e.g. 500 g")}><Input value={f.packSize} maxLength={40} onChange={(e) => set("packSize", e.target.value)} /></Field>
               <Field label={tr("Step")} hint={unit ? `Empty = unit step (${unit.defaultStep})` : tr("Choose a unit first")}><Input type="number" min={0} step="0.001" value={f.sellStep} disabled={!f.unitId} onChange={(e) => set("sellStep", e.target.value)} placeholder={unit ? String(unit.defaultStep) : ""} /></Field>
-              <Field label={tr("Smallest quantity")} hint={unit ? `Empty = unit minimum (${unit.defaultMinQty})` : tr("Choose a unit first")}><Input type="number" min={0} step="0.001" value={f.minQty} disabled={!f.unitId} onChange={(e) => set("minQty", e.target.value)} placeholder={unit ? String(unit.defaultMinQty) : ""} /></Field>
+              <Field
+                label={tr("Smallest quantity")}
+                hint={
+                  unit
+                    ? f.sellStep !== ""
+                      ? tr("Empty = step ({{step}})", { step: f.sellStep })
+                      : `Empty = unit minimum (${unit.defaultMinQty})`
+                    : tr("Choose a unit first")
+                }
+              >
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.001"
+                  value={f.minQty}
+                  disabled={!f.unitId}
+                  onChange={(e) => set("minQty", e.target.value)}
+                  placeholder={f.sellStep !== "" ? f.sellStep : unit ? String(unit.defaultMinQty) : ""}
+                />
+              </Field>
             </div>
             <label className="mt-3 flex cursor-pointer items-center gap-2 text-[13px]"><Checkbox checked={f.isWeighed} onChange={(e) => set("isWeighed", e.target.checked)} />{tr("Weighed when packed: the final weight (and bill) can differ a little from what was ordered")}</label>
           </Section>

@@ -109,7 +109,10 @@ export function toCard(p: CardRow) {
           allowDecimal: p.unit.allowDecimal,
           // a product can override the unit's step and minimum
           step: Number(p.sellStep ?? p.unit.defaultStep),
-          minQty: Number(p.minQty ?? p.unit.defaultMinQty),
+          minQty: Math.max(
+            Number(p.sellStep ?? p.unit.defaultStep),
+            Number(p.minQty ?? p.unit.defaultMinQty),
+          ),
         }
       : null,
     isWeighed: p.isWeighed,

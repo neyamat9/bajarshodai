@@ -12,6 +12,7 @@ import { UploadsService } from '../../common/uploads';
 import { slugify } from '../../common/utils/slug';
 import { writeAudit } from '../../common/audit';
 import { descendantIds, loadTreeRows } from '../../common/categories/category-tree';
+import { isOnStep } from '../../common/utils/qty';
 import {
   CreateProductDto,
   ProductVariantInputDto,
@@ -290,7 +291,7 @@ export class ProductService {
             unitId: dto.unitId,
             packSize: dto.packSize || null,
             sellStep: dto.sellStep ?? null,
-            minQty: dto.minQty ?? null,
+            minQty: dto.minQty ?? (dto.sellStep ? dto.sellStep : null),
             isWeighed: dto.isWeighed ?? false,
             status: dto.status ?? 'ACTIVE',
             buyingPrice: dto.buyingPrice,
@@ -980,13 +981,30 @@ export class ProductService {
       );
     }
     const step = input.sellStep ?? Number(unit.defaultStep);
-    const min = input.minQty ?? Number(unit.defaultMinQty);
+    let min =
+      input.minQty ??
+      (input.sellStep != null ? step : Number(unit.defaultMinQty));
     if (
       !unit.allowDecimal &&
       (!Number.isInteger(step) || !Number.isInteger(min))
     ) {
       throw new BadRequestException(
         `"${unit.name}" is sold in whole numbers, so the step and the minimum must be whole numbers`,
+      );
+    }
+    if (step <= 0 || min <= 0) {
+      throw new BadRequestException(
+        'The step and the minimum quantity must be above zero',
+      );
+    }
+    if (min < step) {
+      throw new BadRequestException(
+        `The smallest quantity (${min}) cannot be less than the step (${step})`,
+      );
+    }
+    if (!isOnStep(min, step)) {
+      throw new BadRequestException(
+        `The smallest quantity (${min}) must be a multiple of the step (${step})`,
       );
     }
     return { unit, step, min };
