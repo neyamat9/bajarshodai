@@ -153,6 +153,7 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
         mrpBox: detail.boxPrice,
         packSizeInfo: detail.packSizeInfo,
       };
+      next.trackStock = false;
 
       return next;
     });
@@ -404,30 +405,37 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
         <TabsContent value="inventory" className="space-y-4">
           <Section title={tr("Stock")}>
             <div className="space-y-4">
-              <label className="flex cursor-pointer items-start gap-2.5 rounded-md border border-border bg-muted/20 p-3 text-[13px]">
-                <Checkbox checked={f.trackStock} onChange={(e) => set("trackStock", e.target.checked)} className="mt-0.5" />
-                <div className="min-w-0">
-                  <span className="font-semibold text-foreground">{tr("Track inventory count")}</span>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {f.trackStock
-                      ? tr("Quantity is strictly counted and decremented on orders.")
-                      : tr("Daily Fresh / Bazaar items: Stock count is skipped. Product availability is managed daily on the shop.")}
-                  </p>
+              {f.medicineMeta ? (
+                <div className="rounded-md border border-emerald-500/20 bg-emerald-50/50 p-3 text-xs text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-300">
+                  <span className="font-semibold">{tr("Medicine stock:")}</span>{" "}
+                  {tr("Stock count is not tracked for medicines. All medicines have unlimited stock while Active.")}
                 </div>
-              </label>
+              ) : (
+                <label className="flex cursor-pointer items-start gap-2.5 rounded-md border border-border bg-muted/20 p-3 text-[13px]">
+                  <Checkbox checked={f.trackStock} onChange={(e) => set("trackStock", e.target.checked)} className="mt-0.5" />
+                  <div className="min-w-0">
+                    <span className="font-semibold text-foreground">{tr("Track inventory count")}</span>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {f.trackStock
+                        ? tr("Quantity is strictly counted and decremented on orders.")
+                        : tr("Daily Fresh / Bazaar items: Stock count is skipped. Product availability is managed daily on the shop.")}
+                    </p>
+                  </div>
+                </label>
+              )}
 
-              {f.trackStock ? (
+              {f.trackStock && !f.medicineMeta ? (
                 <div className="grid gap-3 sm:grid-cols-3">
                   <Field label={tr("Quantity in stock")} hint={hasVariants ? tr("Total of the variants — change each variant's stock instead") : isNew ? tr("Opening stock") : tr("Use Inventory → Adjust to change stock with a record")}>
                     <Input type="number" min={0} step="0.001" value={hasVariants ? String(variants.reduce((s, v) => s + Number(v.stock || 0), 0)) : f.stock} onChange={(e) => set("stock", e.target.value)} disabled={hasVariants || !isNew} />
                   </Field>
                   <Field label={tr("Low-stock alert at")} hint={tr("You get a bell alert when stock drops to this")}><Input type="number" min={0} value={f.lowStockThreshold} onChange={(e) => set("lowStockThreshold", e.target.value)} /></Field>
                 </div>
-              ) : (
+              ) : !f.medicineMeta ? (
                 <div className="rounded-md border border-emerald-500/20 bg-emerald-50/50 p-3 text-xs text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-300">
                   {tr("Daily fresh item: Numerical stock is not required. The product is always in-stock while status is Live/Active.")}
                 </div>
-              )}
+              ) : null}
             </div>
           </Section>
           <Section title={tr("Shipping")}>

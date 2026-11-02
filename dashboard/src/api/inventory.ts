@@ -13,6 +13,7 @@ export interface InventoryItem {
   retail: string;
   state: "in" | "low" | "out";
   trackStock?: boolean;
+  isMedicine?: boolean;
 }
 export interface InventorySummary {
   skuCount: number;
@@ -47,7 +48,8 @@ export interface BulkStockResult {
 }
 
 export const inventoryApi = {
-  summary: () => api.get<InventorySummary>("/admin/inventory/summary").then((r) => r.data),
+  summary: (scope?: "all" | "general" | "medicine") =>
+    api.get<InventorySummary>("/admin/inventory/summary", { params: clean({ scope }) }).then((r) => r.data),
   items: (f: Record<string, unknown>) => api.get<Paged<InventoryItem>>("/admin/inventory/items", { params: clean(f) }).then((r) => r.data),
   logs: (f: Record<string, unknown>) => api.get<Paged<StockLog>>("/admin/inventory/logs", { params: clean(f) }).then((r) => r.data),
   adjust: (b: { productId: string; variantId?: string; mode: "ADD" | "REMOVE" | "SET"; quantity: number; reason: string; note?: string }) => api.post("/admin/inventory/adjust", b).then((r) => r.data),

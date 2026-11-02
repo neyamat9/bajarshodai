@@ -25,6 +25,7 @@ export interface SkuRow {
   cost: string;
   retail: string;
   trackStock: boolean;
+  isMedicine: boolean;
 }
 
 // One row per sellable unit: a product without variants, or each variant.
@@ -33,14 +34,16 @@ export const SKU_ROWS = Prisma.sql`
          NULL::text AS "variantName", p."productCode" AS sku, p.status::text AS status,
          p.stock, p."lowStockThreshold" AS threshold,
          p."buyingPrice"::text AS cost, p."sellingPrice"::text AS retail,
-         p."trackStock" AS "trackStock"
+         p."trackStock" AS "trackStock",
+         EXISTS (SELECT 1 FROM "MedicineMeta" m WHERE m."productId" = p.id) AS "isMedicine"
   FROM "Product" p
   WHERE NOT EXISTS (SELECT 1 FROM "ProductVariant" v WHERE v."productId" = p.id)
   UNION ALL
   SELECT p.id, v.id, p.name, v.name, v.sku, p.status::text,
          v.stock, p."lowStockThreshold",
          p."buyingPrice"::text, COALESCE(v.price, p."sellingPrice")::text,
-         p."trackStock" AS "trackStock"
+         p."trackStock" AS "trackStock",
+         EXISTS (SELECT 1 FROM "MedicineMeta" m WHERE m."productId" = p.id) AS "isMedicine"
   FROM "ProductVariant" v JOIN "Product" p ON p.id = v."productId"`;
 
 @Injectable()
@@ -51,7 +54,14 @@ export class InventoryService {
     private cache: CacheService,
   ) {}
 
-  async summary() {
+  async summary(scope?: 'all' | 'general' | 'medicine') {
+    const scopeFilter =
+      scope === 'medicine'
+        ? Prisma.sql`AND "isMedicine" = true`
+        : scope === 'general'
+          ? Prisma.sql`AND "isMedicine" = false`
+          : Prisma.empty;
+
     const [row] = await this.prisma.$queryRaw<
       {
         items: bigint;
@@ -71,7 +81,7 @@ export class InventoryService {
              SUM(GREATEST(stock, 0) * cost::numeric)::text AS "costValue",
              SUM(GREATEST(stock, 0) * retail::numeric)::text AS "retailValue"
       FROM (${SKU_ROWS}) s
-      WHERE status NOT IN ('DISCONTINUED')`);
+      WHERE status NOT IN ('DISCONTINUED') ${scopeFilter}`);
     return {
       skuCount: Number(row.items),
       inStock: Number(row.inStock),
@@ -83,8 +93,13 @@ export class InventoryService {
     };
   }
 
-  private filter(q: Pick<InventoryListDto, 'search' | 'state'>) {
+  private filter(q: Pick<InventoryListDto, 'search' | 'state' | 'scope'>) {
     const parts: Prisma.Sql[] = [Prisma.sql`status NOT IN ('DISCONTINUED')`];
+    if (q.scope === 'medicine') {
+      parts.push(Prisma.sql`"isMedicine" = true`);
+    } else if (q.scope === 'general') {
+      parts.push(Prisma.sql`"isMedicine" = false`);
+    }
     if (q.state === 'out')
       parts.push(Prisma.sql`"trackStock" = true AND stock <= 0`);
     if (q.state === 'low')
@@ -133,9 +148,20 @@ export class InventoryService {
   }
 
   // Every unit, for the CSV download (streamed in chunks by the controller).
-  async exportRows(offset: number, take: number) {
+  async exportRows(
+    offset: number,
+    take: number,
+    scope?: 'all' | 'general' | 'medicine',
+  ) {
+    const scopeFilter =
+      scope === 'medicine'
+        ? Prisma.sql`AND "isMedicine" = true`
+        : scope === 'general'
+          ? Prisma.sql`AND "isMedicine" = false`
+          : Prisma.empty;
+
     return this.prisma.$queryRaw<SkuRow[]>(Prisma.sql`
-      SELECT * FROM (${SKU_ROWS}) s WHERE status NOT IN ('DISCONTINUED')
+      SELECT * FROM (${SKU_ROWS}) s WHERE status NOT IN ('DISCONTINUED') ${scopeFilter}
       ORDER BY "productName" ASC, "variantName" ASC NULLS FIRST, "variantId" ASC NULLS FIRST
       LIMIT ${take} OFFSET ${offset}`);
   }

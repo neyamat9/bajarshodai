@@ -31,6 +31,7 @@ import {
   AdjustStockDto,
   BulkStockQueryDto,
   InventoryListDto,
+  InventorySummaryDto,
   StockLogQueryDto,
 } from './dto/inventory.dto';
 import { InventoryService } from './inventory.service';
@@ -49,8 +50,8 @@ export class InventoryController {
   @ApiOperation({
     summary: 'Stock overview: counts, units on hand, stock value',
   })
-  summary() {
-    return this.inventory.summary();
+  summary(@Query() q: InventorySummaryDto) {
+    return this.inventory.summary(q?.scope);
   }
 
   @Get('items')
@@ -99,7 +100,7 @@ export class InventoryController {
     summary:
       'Download the stock of every item as CSV (the same format bulk-update reads)',
   })
-  async export(@Res() res: Response) {
+  async export(@Query() q: InventorySummaryDto, @Res() res: Response) {
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader(
       'Content-Disposition',
@@ -118,7 +119,7 @@ export class InventoryController {
       ]) + '\r\n',
     );
     for (let offset = 0; ; offset += CSV_CHUNK) {
-      const rows = await this.inventory.exportRows(offset, CSV_CHUNK);
+      const rows = await this.inventory.exportRows(offset, CSV_CHUNK, q?.scope);
       for (const r of rows) {
         res.write(
           csvLine([

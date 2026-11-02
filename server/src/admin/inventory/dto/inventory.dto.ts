@@ -106,6 +106,18 @@ export class InventoryListDto extends Paged {
   @IsOptional()
   @IsIn(['all', 'low', 'out'])
   state?: 'all' | 'low' | 'out';
+
+  @ApiPropertyOptional({ enum: ['all', 'general', 'medicine'], default: 'all' })
+  @IsOptional()
+  @IsIn(['all', 'general', 'medicine'])
+  scope?: 'all' | 'general' | 'medicine';
+}
+
+export class InventorySummaryDto {
+  @ApiPropertyOptional({ enum: ['all', 'general', 'medicine'], default: 'all' })
+  @IsOptional()
+  @IsIn(['all', 'general', 'medicine'])
+  scope?: 'all' | 'general' | 'medicine';
 }
 
 export class StockLogQueryDto extends Paged {

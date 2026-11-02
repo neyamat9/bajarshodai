@@ -319,7 +319,7 @@ export class ProductService {
             discountLabel:
               dto.discountPrice == null ? null : (dto.discountLabel ?? null),
             stock: 0,
-            trackStock: dto.trackStock ?? true,
+            trackStock: dto.medicineMeta ? false : (dto.trackStock ?? true),
             lowStockThreshold: dto.lowStockThreshold ?? 5,
             freeShipping: dto.freeShipping ?? false,
             weight: dto.weight,
@@ -420,7 +420,10 @@ export class ProductService {
   async update(id: string, dto: UpdateProductDto, adminId: string) {
     const current = await this.prisma.product.findUnique({
       where: { id },
-      include: { _count: { select: { variants: true } } },
+      include: {
+        _count: { select: { variants: true } },
+        medicineMeta: true,
+      },
     });
     if (!current) throw new NotFoundException('Product not found');
 
@@ -559,6 +562,15 @@ export class ProductService {
     ] as const;
     for (const k of copy) {
       if (dto[k] !== undefined) (data as Record<string, unknown>)[k] = dto[k];
+    }
+
+    // Medicines always have unlimited stock (trackStock = false)
+    if (dto.medicineMeta !== undefined) {
+      if (dto.medicineMeta !== null) {
+        data.trackStock = false;
+      }
+    } else if (current.medicineMeta) {
+      data.trackStock = false;
     }
 
     const attributes = dto.attributes

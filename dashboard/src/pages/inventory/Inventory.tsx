@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AlertTriangle, Boxes, PackageX, SlidersHorizontal, Upload, Wallet } from "lucide-react";
+import { AlertTriangle, Boxes, PackageX, Pill, SlidersHorizontal, Upload, Wallet } from "lucide-react";
 import { inventoryApi, type BulkStockResult, type InventoryItem } from "@/api/inventory";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
@@ -122,7 +122,7 @@ function BulkDialog({ onClose }: { onClose: () => void }) {
   );
 }
 
-const D = { search: "", state: "", tab: "items", reason: "", from: "", to: "", page: "1" };
+const D = { search: "", state: "", tab: "general", reason: "", from: "", to: "", page: "1" };
 
 export default function Inventory() {
   const [f, setF] = useUrlState(D);
@@ -130,18 +130,111 @@ export default function Inventory() {
   const [adj, setAdj] = useState<InventoryItem | null>(null);
   const [bulk, setBulk] = useState(false);
 
-  const sum = useQuery({ queryKey: ["inventory", "summary"], queryFn: inventoryApi.summary });
-  const items = useInfiniteList(["inventory", "items", search, f.state], (page) => inventoryApi.items({ search, state: f.state || undefined, page, limit: 20 }), { enabled: f.tab === "items" });
-  const logs = useInfiniteList(["inventory", "logs", f.reason, f.from, f.to], (page) => inventoryApi.logs({ reason: f.reason, from: f.from, to: f.to ? `${f.to}T23:59:59` : undefined, page, limit: 20 }), { enabled: f.tab === "logs" });
+  const currentTab = f.tab === "medicine" ? "medicine" : f.tab === "logs" ? "logs" : "general";
+  const scope: "general" | "medicine" = currentTab === "medicine" ? "medicine" : "general";
+
+  const sum = useQuery({
+    queryKey: ["inventory", "summary", scope],
+    queryFn: () => inventoryApi.summary(scope),
+  });
+  const items = useInfiniteList(
+    ["inventory", "items", scope, search, f.state],
+    (page) => inventoryApi.items({ search, state: f.state || undefined, scope, page, limit: 20 }),
+    { enabled: currentTab !== "logs" },
+  );
+  const logs = useInfiniteList(
+    ["inventory", "logs", f.reason, f.from, f.to],
+    (page) => inventoryApi.logs({ reason: f.reason, from: f.from, to: f.to ? `${f.to}T23:59:59` : undefined, page, limit: 20 }),
+    { enabled: currentTab === "logs" },
+  );
   const s = sum.data;
 
-  const cols: Column<InventoryItem>[] = [
-    { key: "item", header: tr("Item"), sk: "lines2", cell: (i) => (<div className="max-w-[320px]"><div className="flex items-center gap-1.5"><Link to={`/products/${i.productId}/edit`} target="_blank" rel="noopener noreferrer" className="block truncate font-medium hover:text-primary">{i.productName}</Link>{!i.trackStock && <span className="inline-flex items-center rounded bg-emerald-100 px-1 py-0 text-[10px] font-semibold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">{tr("Fresh")}</span>}</div><p className="truncate text-[11px] text-muted-foreground">{[i.variantName, i.sku].filter(Boolean).join(" · ") || "—"}</p></div>) },
+  const generalCols: Column<InventoryItem>[] = [
+    {
+      key: "item",
+      header: tr("Item"),
+      sk: "lines2",
+      cell: (i) => (
+        <div className="max-w-[320px]">
+          <div className="flex items-center gap-1.5">
+            <Link to={`/products/${i.productId}/edit`} target="_blank" rel="noopener noreferrer" className="block truncate font-medium hover:text-primary">
+              {i.productName}
+            </Link>
+            {!i.trackStock && (
+              <span className="inline-flex items-center rounded bg-emerald-100 px-1 py-0 text-[10px] font-semibold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                {tr("Fresh")}
+              </span>
+            )}
+          </div>
+          <p className="truncate text-[11px] text-muted-foreground">{[i.variantName, i.sku].filter(Boolean).join(" · ") || "—"}</p>
+        </div>
+      ),
+    },
     { key: "status", header: tr("Status"), sk: "badge", cell: (i) => <StatusBadge status={i.status} /> },
-    { key: "stock", header: tr("In stock"), align: "right", sk: "num", cell: (i) => !i.trackStock ? <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">{tr("Daily Fresh")}</span> : <b>{i.stock}</b> },
-    { key: "state", header: tr("Level"), sk: "badge", cell: (i) => <StatusBadge status={i.state} label={i.state === "in" ? tr("In stock") : i.state === "low" ? tr("Low (≤{{n}})", { n: num(i.threshold) }) : tr("Out")} /> },
+    {
+      key: "stock",
+      header: tr("In stock"),
+      align: "right",
+      sk: "num",
+      cell: (i) => (!i.trackStock ? <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">{tr("Daily Fresh")}</span> : <b>{i.stock}</b>),
+    },
+    {
+      key: "state",
+      header: tr("Level"),
+      sk: "badge",
+      cell: (i) => <StatusBadge status={i.state} label={i.state === "in" ? tr("In stock") : i.state === "low" ? tr("Low (≤{{n}})", { n: num(i.threshold) }) : tr("Out")} />,
+    },
     { key: "cost", header: tr("Value (cost)"), align: "right", sk: "num", cell: (i) => money(Number(i.cost) * i.stock) },
     { key: "act", header: "", align: "right", sk: "btn", cell: (i) => <Button size="xs" variant="outline" onClick={() => setAdj(i)}><SlidersHorizontal />{" "}{tr("Adjust")}</Button> },
+  ];
+
+  const medicineCols: Column<InventoryItem>[] = [
+    {
+      key: "item",
+      header: tr("Medicine"),
+      sk: "lines2",
+      cell: (i) => (
+        <div className="max-w-[340px]">
+          <div className="flex items-center gap-1.5">
+            <Link to={`/products/${i.productId}/edit`} target="_blank" rel="noopener noreferrer" className="block truncate font-medium hover:text-primary">
+              {i.productName}
+            </Link>
+            <span className="inline-flex items-center rounded bg-blue-100 px-1 py-0 text-[10px] font-semibold text-blue-800 dark:bg-blue-950/60 dark:text-blue-300">
+              {tr("Medicine")}
+            </span>
+          </div>
+          <p className="truncate text-[11px] text-muted-foreground">{[i.variantName, i.sku].filter(Boolean).join(" · ") || "—"}</p>
+        </div>
+      ),
+    },
+    { key: "status", header: tr("Status"), sk: "badge", cell: (i) => <StatusBadge status={i.status} /> },
+    {
+      key: "stock",
+      header: tr("In stock"),
+      align: "right",
+      sk: "badge",
+      cell: () => (
+        <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+          <span className="size-1.5 rounded-full bg-emerald-500" />
+          {tr("Unlimited")}
+        </span>
+      ),
+    },
+    {
+      key: "state",
+      header: tr("Level"),
+      sk: "badge",
+      cell: () => <StatusBadge status="in" label={tr("Available")} />,
+    },
+    { key: "cost", header: tr("Cost price"), align: "right", sk: "num", cell: (i) => money(i.cost) },
+    { key: "retail", header: tr("Retail (MRP)"), align: "right", sk: "num", cell: (i) => money(i.retail) },
+    {
+      key: "act",
+      header: "",
+      align: "right",
+      sk: "none",
+      cell: () => <span className="text-[11px] text-muted-foreground">{tr("Not counted")}</span>,
+    },
   ];
 
   return (
@@ -149,28 +242,54 @@ export default function Inventory() {
       <PageHeader
         title={tr("Inventory")}
         description={tr("Stock levels, adjustments and the full movement history.")}
-        actions={<>
-          <DownloadButton path="/admin/inventory/export" params={{ search, state: f.state }} filename="inventory.csv" />
-          <Button variant="outline" size="sm" onClick={() => setBulk(true)}><Upload />{" "}{tr("Bulk update")}</Button>
-        </>}
+        actions={
+          <>
+            <DownloadButton path="/admin/inventory/export" params={{ search, state: f.state, scope }} filename={`inventory-${scope}.csv`} />
+            {currentTab === "general" && (
+              <Button variant="outline" size="sm" onClick={() => setBulk(true)}>
+                <Upload />{" "}{tr("Bulk update")}
+              </Button>
+            )}
+          </>
+        }
       />
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard hintSk label={tr("Units on hand")} value={s ? num(s.unitsOnHand) : "—"} hint={s ? tr("{{n}} items tracked", { n: num(s.skuCount) }) : undefined} icon={<Boxes className="size-4" />} loading={sum.isLoading} />
-        <StatCard hintSk label={tr("Stock value (cost)")} value={s ? money(s.stockValueAtCost) : "—"} hint={s ? tr("{{amount}} at retail", { amount: money(s.stockValueAtRetail) }) : undefined} icon={<Wallet className="size-4" />} tone="green" loading={sum.isLoading} />
-        <StatCard label={tr("Low stock")} value={s?.lowStock ?? "—"} icon={<AlertTriangle className="size-4" />} tone="fresh" loading={sum.isLoading} onClick={() => setF({ tab: "items", state: "low" })} />
-        <StatCard label={tr("Out of stock")} value={s?.outOfStock ?? "—"} icon={<PackageX className="size-4" />} tone="red" loading={sum.isLoading} onClick={() => setF({ tab: "items", state: "out" })} />
-      </div>
 
-      <Tabs value={f.tab} onValueChange={(t) => setF({ tab: t })}>
+      {currentTab === "medicine" ? (
+        <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <StatCard hintSk label={tr("Medicine items")} value={s ? num(s.skuCount) : "—"} hint={tr("Catalog total")} icon={<Pill className="size-4" />} loading={sum.isLoading} />
+          <StatCard label={tr("Stock count policy")} value={tr("Unlimited")} hint={tr("Stock count is not tracked for medicines")} icon={<Wallet className="size-4" />} tone="green" loading={sum.isLoading} />
+          <StatCard label={tr("Catalog status")} value={tr("Available")} hint={tr("Always in-stock for customer orders")} icon={<Boxes className="size-4" />} tone="fresh" loading={sum.isLoading} />
+        </div>
+      ) : (
+        <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <StatCard hintSk label={tr("Units on hand")} value={s ? num(s.unitsOnHand) : "—"} hint={s ? tr("{{n}} items tracked", { n: num(s.skuCount) }) : undefined} icon={<Boxes className="size-4" />} loading={sum.isLoading} />
+          <StatCard hintSk label={tr("Stock value (cost)")} value={s ? money(s.stockValueAtCost) : "—"} hint={s ? tr("{{amount}} at retail", { amount: money(s.stockValueAtRetail) }) : undefined} icon={<Wallet className="size-4" />} tone="green" loading={sum.isLoading} />
+          <StatCard label={tr("Low stock")} value={s?.lowStock ?? "—"} icon={<AlertTriangle className="size-4" />} tone="fresh" loading={sum.isLoading} onClick={() => setF({ tab: "general", state: "low" })} />
+          <StatCard label={tr("Out of stock")} value={s?.outOfStock ?? "—"} icon={<PackageX className="size-4" />} tone="red" loading={sum.isLoading} onClick={() => setF({ tab: "general", state: "out" })} />
+        </div>
+      )}
+
+      <Tabs value={currentTab} onValueChange={(t) => setF({ tab: t, state: "", page: "1" })}>
         <TabsList className="mb-3">
-          <TabsTrigger value="items">{tr("Stock levels")}</TabsTrigger>
-          <TabsTrigger value="logs">{tr("Movement history")}</TabsTrigger>
+          <TabsTrigger value="general" className="gap-1.5">
+            <Boxes className="size-3.5" />
+            {tr("General Products")}
+          </TabsTrigger>
+          <TabsTrigger value="medicine" className="gap-1.5">
+            <Pill className="size-3.5" />
+            {tr("Medicine")}
+          </TabsTrigger>
+          <TabsTrigger value="logs">
+            {tr("Movement history")}
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="items">
-          <DataTable infinite={items}
-            columns={cols}
+
+        <TabsContent value="general">
+          <DataTable
+            infinite={items}
+            columns={generalCols}
             rowKey={(i) => `${i.productId}-${i.variantId ?? ""}`}
-            empty={{ title: tr("Nothing here"), description: tr("No items match the filters.") }}
+            empty={{ title: tr("Nothing here"), description: tr("No products match the filters.") }}
             toolbar={
               <FilterBar>
                 <SearchInput value={f.search} onChange={(v) => setF({ search: v })} placeholder={tr("Product, variant, SKU…")} />
@@ -179,6 +298,21 @@ export default function Inventory() {
             }
           />
         </TabsContent>
+
+        <TabsContent value="medicine">
+          <DataTable
+            infinite={items}
+            columns={medicineCols}
+            rowKey={(i) => `${i.productId}-${i.variantId ?? ""}`}
+            empty={{ title: tr("No medicines found"), description: tr("Try searching by generic or brand name.") }}
+            toolbar={
+              <FilterBar>
+                <SearchInput value={f.search} onChange={(v) => setF({ search: v })} placeholder={tr("Medicine name, generic, SKU…")} />
+              </FilterBar>
+            }
+          />
+        </TabsContent>
+
         <TabsContent value="logs">
           <DataTable
             infinite={logs}
