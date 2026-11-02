@@ -297,4 +297,15 @@ export const ordersApi = {
   refund: (id: string, body: { paymentId?: string; amount: number; method: "ORIGINAL_PAYMENT" | "STORE_CREDIT" | "BANK_TRANSFER"; reason: string }) => api.post(`/admin/orders/${id}/refunds`, body).then((r) => r.data),
   updateWeights: (id: string, body: { items: { itemId: string; finalQty: number }[]; note?: string; markPacked?: boolean }) =>
     api.put<OrderDetail>(`/admin/orders/${id}/weights`, body).then((r) => r.data),
+  remove: (id: string) =>
+    api.delete<{ success: boolean; deleted: boolean; orderNumber?: string; message: string }>(`/admin/orders/${id}`).then((r) => r.data),
+  bulkDelete: (ids: string[]) =>
+    api
+      .post<{
+        total: number;
+        deleted: number;
+        blocked: number;
+        results: { id: string; success: boolean; deleted: boolean; orderNumber?: string; message: string }[];
+      }>("/admin/orders/bulk-delete", { ids })
+      .then((r) => r.data),
 };

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -30,6 +31,7 @@ import { OrderEditService } from './order-edit.service';
 import { OrderPaymentsService } from './order-payments.service';
 import { VerifyPaymentDto } from './dto/verify-payment.dto';
 import {
+  BulkDeleteOrdersDto,
   BulkOrderStatusDto,
   OverrideDeliveryFeeDto,
   SetDeliveryPinDto,
@@ -159,6 +161,15 @@ export class AdminOrdersController {
   })
   bulkStatus(@Body() dto: BulkOrderStatusDto, @CurrentUser() admin: User) {
     return this.orders.bulkStatus(dto.ids, dto.status, dto.note, admin.id);
+  }
+
+  @Post('bulk-delete')
+  @ApiOperation({
+    summary:
+      'Bulk delete multiple orders by their IDs. Delivered or in-transit orders are skipped/blocked.',
+  })
+  bulkDelete(@Body() dto: BulkDeleteOrdersDto, @CurrentUser() admin: User) {
+    return this.orders.bulkDelete(dto.ids, admin.id);
   }
 
   @Get(':id')
@@ -302,5 +313,17 @@ export class AdminOrdersController {
     @CurrentUser() admin: User,
   ) {
     return this.payments.refund(id, dto, admin.id);
+  }
+
+  @Delete(':id')
+  @ApiOperation({
+    summary:
+      'Delete a single order (only pending, processing, on-hold or cancelled orders; delivered or in-transit orders cannot be deleted)',
+  })
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() admin: User,
+  ) {
+    return this.orders.remove(id, admin.id);
   }
 }

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { PlusCircle, X } from "lucide-react";
+import { Eye, FileText, MoreHorizontal, PlusCircle, Trash2, X } from "lucide-react";
 import { ORDER_STATUSES, ordersApi, type OrderStatus, type OrderSummary } from "@/api/orders";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { DataTable, type Column } from "@/components/shared/DataTable";
@@ -13,7 +13,7 @@ import { useAct } from "@/hooks/useAct";
 import { patchListRows } from "@/hooks/useInfiniteList";
 import { QuickStatus, type QuickOption } from "@/components/shared/QuickStatus";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { errorMessage } from "@/api/client";
+import { errorMessage, openHtml } from "@/api/client";
 import { useInfiniteList } from "@/hooks/useInfiniteList";
 import { useUrlState } from "@/hooks/useUrlState";
 import { dateTime, money, num, orderStatusLabel, titleCase } from "@/lib/format";
@@ -23,6 +23,8 @@ import { Field } from "@/components/shared/Field";
 import { toast } from "sonner";
 import { BulkBar } from "@/components/shared/BulkBar";
 import { SavedViews } from "@/components/shared/SavedViews";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { tr } from "@/i18n";
 
 const LOCKED: OrderStatus[] = ["DELIVERED", "CANCELLED", "RETURNED", "REFUNDED"];
@@ -60,6 +62,8 @@ export default function OrdersList() {
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkStatus, setBulkStatus] = useState<OrderStatus>("CONFIRMED");
   const [bulkNote, setBulkNote] = useState("");
+  const [del, setDel] = useState<OrderSummary | null>(null);
+  const [bulkDelOpen, setBulkDelOpen] = useState(false);
 
   const params = { ...f, search: debounced };
   const q = useInfiniteList(["orders", "list", params], (page) => ordersApi.list({ ...params, page, limit: 20 }));
@@ -78,6 +82,40 @@ export default function OrdersList() {
       void qc.invalidateQueries({ queryKey: ["dashboard-home"] });
       void qc.invalidateQueries({ queryKey: ["attention-summary"] });
     },
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => ordersApi.remove(id),
+    onSuccess: (res) => {
+      toast.success(res.message || tr("Order deleted successfully"));
+      setDel(null);
+      void qc.invalidateQueries({ queryKey: ["orders"] });
+      void qc.invalidateQueries({ queryKey: ["dashboard-home"] });
+      void qc.invalidateQueries({ queryKey: ["attention-summary"] });
+    },
+    onError: (e) => toast.error(errorMessage(e)),
+  });
+
+  const bulkDelete = useMutation({
+    mutationFn: (ids: string[]) => ordersApi.bulkDelete(ids),
+    onSuccess: (res) => {
+      if (res.blocked > 0) {
+        toast.warning(
+          tr("Deleted {{deleted}} orders. {{blocked}} delivered/in-transit orders were protected.", {
+            deleted: res.deleted,
+            blocked: res.blocked,
+          }),
+        );
+      } else {
+        toast.success(tr("{{count}} orders deleted successfully", { count: res.deleted }));
+      }
+      setSelected([]);
+      setBulkDelOpen(false);
+      void qc.invalidateQueries({ queryKey: ["orders"] });
+      void qc.invalidateQueries({ queryKey: ["dashboard-home"] });
+      void qc.invalidateQueries({ queryKey: ["attention-summary"] });
+    },
+    onError: (e) => toast.error(errorMessage(e)),
   });
 
   const bulk = useAct((status?: OrderStatus) => ordersApi.bulkStatus(selected, status ?? bulkStatus, status ? undefined : bulkNote), {
@@ -170,6 +208,48 @@ export default function OrdersList() {
       ),
     },
     { key: "total", header: tr("Total"), align: "right", sk: "num", mobile: "end", cell: (o) => <span className="font-semibold">{money(o.total)}</span> },
+    {
+      key: "actions",
+      header: "",
+      sk: "icon",
+      align: "right",
+      cell: (o) => {
+        const canDelete = !["DELIVERED", "SHIPPED", "IN_TRANSIT", "OUT_FOR_DELIVERY"].includes(o.status);
+        return (
+          <div onClick={(e) => e.stopPropagation()}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon-sm" aria-label={tr("Actions")}>
+                  <MoreHorizontal />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => navigate(`/orders/${o.id}`)}>
+                  <Eye /> {tr("View details")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => openHtml(`/admin/orders/${o.id}/invoice`).catch((e) => toast.error(errorMessage(e)))}>
+                  <FileText /> {tr("Invoice")}
+                </DropdownMenuItem>
+                {canDelete && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setDel(o);
+                      }}
+                    >
+                      <Trash2 /> {tr("Delete")}
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        );
+      },
+    },
   ];
 
   return (
@@ -225,6 +305,10 @@ export default function OrdersList() {
         <Button size="sm" variant="brand" onClick={() => { setBulkStatus("CONFIRMED"); bulk.mutate("CONFIRMED"); }} loading={bulk.isPending}>{tr("Confirm")}</Button>
         <Button size="sm" variant="secondary" onClick={() => { setBulkStatus("SHIPPED"); bulk.mutate("SHIPPED"); }} loading={bulk.isPending}>{tr("Mark shipped")}</Button>
         <Button size="sm" variant="secondary" onClick={() => setBulkOpen(true)}>{tr("Change status…")}</Button>
+        <Button size="sm" variant="destructive" onClick={() => setBulkDelOpen(true)} className="gap-1.5 font-medium">
+          <Trash2 className="size-3.5" />
+          {tr("Delete selected")}
+        </Button>
       </BulkBar>
 
       <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
@@ -248,6 +332,33 @@ export default function OrdersList() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={bulkDelOpen}
+        onOpenChange={(o) => !o && setBulkDelOpen(false)}
+        title={tr("Delete {{count}} selected orders?", { count: selected.length })}
+        description={tr(
+          "Pending or processing orders will be cancelled and restored to inventory stock before removal. Note: Delivered or in-transit orders cannot be deleted and will be skipped.",
+        )}
+        confirmLabel={tr("Delete orders")}
+        destructive
+        loading={bulkDelete.isPending}
+        onConfirm={() => bulkDelete.mutate(selected)}
+      />
+      <ConfirmDialog
+        open={!!del}
+        onOpenChange={(o) => !o && setDel(null)}
+        title={del ? `Delete order #${del.orderNumber}?` : ""}
+        description={
+          del?.status === "CANCELLED"
+            ? tr("This cancelled order will be permanently removed.")
+            : tr("This order will be cancelled, stock will be returned to inventory, and all records removed. This cannot be undone.")
+        }
+        confirmLabel={tr("Delete")}
+        destructive
+        loading={remove.isPending}
+        onConfirm={() => del && remove.mutate(del.id)}
+      />
     </div>
   );
 }

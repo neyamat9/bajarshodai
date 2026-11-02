@@ -693,4 +693,151 @@ export class AdminOrdersService {
     void this.notifier.paymentUpdated(id, paymentStatus, note);
     return updated;
   }
+
+  async remove(id: string, adminId: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id },
+      include: {
+        items: true,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException(`Order not found`);
+    }
+
+    const NON_DELETABLE: OrderStatus[] = [
+      'DELIVERED',
+      'SHIPPED',
+      'IN_TRANSIT',
+      'OUT_FOR_DELIVERY',
+    ];
+
+    if (NON_DELETABLE.includes(order.status)) {
+      throw new BadRequestException(
+        `Order #${order.orderNumber} cannot be deleted because it is ${order.status.toLowerCase().replace(/_/g, ' ')}. Delivered or in-transit orders cannot be deleted directly.`,
+      );
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      // 1. If active and not already cancelled/returned/refunded, restore stock, reverse coupon usage, and restore points/stats
+      if (
+        order.status !== 'CANCELLED' &&
+        order.status !== 'RETURNED' &&
+        order.status !== 'REFUNDED'
+      ) {
+        await cancelOrderAndRestore(tx, id, {
+          allowedFrom: ['PENDING', 'CONFIRMED', 'PROCESSING', 'ON_HOLD'],
+          note: 'Order deleted by admin',
+          changedBy: 'admin',
+        });
+      }
+
+      // 2. Detach soft references where orderId is optional
+      await tx.loyaltyTransaction.updateMany({
+        where: { orderId: id },
+        data: { orderId: null },
+      });
+      await tx.locationRequest.updateMany({
+        where: { orderId: id },
+        data: { orderId: null },
+      });
+      await tx.supportTicket.updateMany({
+        where: { orderId: id },
+        data: { orderId: null },
+      });
+      await tx.review.updateMany({
+        where: { orderId: id },
+        data: { orderId: null },
+      });
+
+      // 3. Delete refund transactions and payment records
+      await tx.refundTransaction.deleteMany({ where: { orderId: id } });
+      await tx.payment.deleteMany({ where: { orderId: id } });
+
+      // 4. Delete return items and return requests
+      await tx.returnItem.deleteMany({
+        where: { returnRequest: { orderId: id } },
+      });
+      await tx.returnRequest.deleteMany({ where: { orderId: id } });
+
+      // 5. Delete delivery events and delivery
+      await tx.deliveryEvent.deleteMany({
+        where: { delivery: { orderId: id } },
+      });
+      await tx.delivery.deleteMany({ where: { orderId: id } });
+
+      // 6. Delete coupon usage
+      await tx.couponUsage.deleteMany({ where: { orderId: id } });
+
+      // 7. Delete status history and order items
+      await tx.orderStatusHistory.deleteMany({ where: { orderId: id } });
+      await tx.orderItem.deleteMany({ where: { orderId: id } });
+
+      // 8. Delete the order
+      await tx.order.delete({ where: { id } });
+    });
+
+    void this.adminFeed.resolve('NEW_ORDER', id);
+    void this.adminFeed.resolve('PAYMENT_PENDING', id);
+    void this.adminFeed.resolve('RETURN_REQUESTED', id);
+
+    if (adminId) {
+      await this.audit.recordSafe({
+        adminId,
+        action: 'ORDER_DELETED',
+        entity: 'Order',
+        entityId: id,
+        oldValue: {
+          orderNumber: order.orderNumber,
+          status: order.status,
+          total: order.total,
+          paymentStatus: order.paymentStatus,
+          paymentMethod: order.paymentMethod,
+          itemsCount: order.items.length,
+        },
+        newValue: null,
+      });
+    }
+
+    return {
+      success: true,
+      deleted: true,
+      orderNumber: order.orderNumber,
+      message: `Order #${order.orderNumber} deleted successfully.`,
+    };
+  }
+
+  async bulkDelete(ids: string[], adminId: string) {
+    const results: {
+      id: string;
+      orderNumber?: string;
+      success: boolean;
+      deleted: boolean;
+      message: string;
+    }[] = [];
+
+    for (const id of ids) {
+      try {
+        const res = await this.remove(id, adminId);
+        results.push({ id, ...res });
+      } catch (err) {
+        results.push({
+          id,
+          success: false,
+          deleted: false,
+          message: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
+    const deleted = results.filter((r) => r.deleted).length;
+    const blocked = results.length - deleted;
+    return {
+      total: ids.length,
+      deleted,
+      blocked,
+      results,
+    };
+  }
 }

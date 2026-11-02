@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CreditCard, FileText, Pencil, RotateCcw, Scale, Truck, User } from "lucide-react";
+import { CreditCard, FileText, Pencil, RotateCcw, Scale, Trash2, Truck, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input, Select, Textarea } from "@/components/ui/input";
@@ -110,8 +110,10 @@ function NotesCard({ order }: { order: Order }) {
 
 export default function OrderDetailPage() {
   const { id = "" } = useParams();
+  const navigate = useNavigate();
   const q = useQuery({ queryKey: ["order", id], queryFn: () => ordersApi.get(id), enabled: !!id });
   const [dlg, setDlg] = useState<null | "status" | "address" | "items" | "weights" | "pay" | "refund" | "verifyPaid" | "verifyFailed">(null);
+  const [delOpen, setDelOpen] = useState(false);
 
   const advance = useAct((status: OrderStatus) => ordersApi.setStatus(id, status), {
     success: tr("Status updated"),
@@ -121,6 +123,11 @@ export default function OrderDetailPage() {
     success: tr("Payment updated"),
     invalidate: [["order", id], ["orders"]],
     onSuccess: () => setDlg(null),
+  });
+  const remove = useAct(() => ordersApi.remove(id), {
+    success: tr("Order deleted successfully"),
+    invalidate: [["orders"]],
+    onSuccess: () => navigate("/orders"),
   });
 
   if (q.isLoading) return <DetailPageSkeleton />;
@@ -163,6 +170,11 @@ export default function OrderDetailPage() {
               </Button>
             )}
             <Button size="sm" variant={next ? "outline" : "default"} onClick={() => setDlg("status")}>{tr("Change status")}</Button>
+            {!["DELIVERED", "SHIPPED", "IN_TRANSIT", "OUT_FOR_DELIVERY"].includes(o.status) && (
+              <Button size="sm" variant="destructive" onClick={() => setDelOpen(true)}>
+                <Trash2 />{" "}{tr("Delete")}
+              </Button>
+            )}
           </>
         }
       />
@@ -313,6 +325,20 @@ export default function OrderDetailPage() {
         destructive={dlg === "verifyFailed"}
         loading={verify.isPending}
         onConfirm={() => verify.mutate(dlg === "verifyFailed" ? "FAILED" : "PAID")}
+      />
+      <ConfirmDialog
+        open={delOpen}
+        onOpenChange={setDelOpen}
+        title={`Delete order #${o.orderNumber}?`}
+        description={
+          o.status === "CANCELLED"
+            ? tr("This cancelled order will be permanently removed.")
+            : tr("This order will be cancelled, stock will be returned to inventory, and all records removed. This cannot be undone.")
+        }
+        confirmLabel={tr("Delete order")}
+        destructive
+        loading={remove.isPending}
+        onConfirm={() => remove.mutate()}
       />
     </div>
   );

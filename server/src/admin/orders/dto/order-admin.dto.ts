@@ -704,3 +704,13 @@ export class UpdatePackerWeightsDto {
   markPacked?: boolean;
 }
 
+export class BulkDeleteOrdersDto {
+  @ApiProperty({ type: [String], description: 'Array of order IDs to delete' })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(100)
+  @IsUUID('all', { each: true })
+  ids: string[];
+}
+
+
