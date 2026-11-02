@@ -746,6 +746,36 @@ export class ProductService {
     return { success: true, deleted: true, message: 'Product deleted' };
   }
 
+  async bulkDelete(ids: string[], adminId: string) {
+    const results: {
+      id: string;
+      success: boolean;
+      deleted: boolean;
+      message: string;
+    }[] = [];
+
+    for (const id of ids) {
+      try {
+        const res = await this.remove(id, adminId);
+        results.push({ id, ...res });
+      } catch (err) {
+        results.push({
+          id,
+          success: false,
+          deleted: false,
+          message: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
+    const total = ids.length;
+    const deleted = results.filter((r) => r.deleted).length;
+    const deactivated = results.filter((r) => r.success && !r.deleted).length;
+    const failed = results.filter((r) => !r.success).length;
+
+    return { total, deleted, deactivated, failed, results };
+  }
+
   // ---------- duplicate ----------
 
   async duplicate(id: string, adminId: string) {

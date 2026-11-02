@@ -63,6 +63,7 @@ export default function ProductsList() {
     },
   });
   const [sel, setSel] = useState<string[]>([]);
+  const [bulkDelOpen, setBulkDelOpen] = useState(false);
   const bulkStatus = useMutation({
     mutationFn: (status: ProductStatus) => Promise.all(sel.map((id) => productsApi.update(id, { status }))).then(() => status),
     onSuccess: (status) => {
@@ -73,7 +74,43 @@ export default function ProductsList() {
     },
     onError: (e) => toast.error(errorMessage(e)),
   });
-  const remove = useAct((id: string) => productsApi.remove(id), { invalidate: [["products"], ["inventory"]], onSuccess: (r) => { void r; setDel(null); }, success: tr("Product removed") });
+  const bulkDelete = useMutation({
+    mutationFn: (ids: string[]) => productsApi.bulkDelete(ids),
+    onSuccess: (res) => {
+      if (res.failed > 0) {
+        toast.warning(
+          tr("Processed {{total}} products: {{deleted}} deleted, {{deactivated}} archived, {{failed}} failed", {
+            total: res.total,
+            deleted: res.deleted,
+            deactivated: res.deactivated,
+            failed: res.failed,
+          }),
+        );
+      } else if (res.deactivated > 0 && res.deleted > 0) {
+        toast.success(
+          tr("{{deleted}} deleted, {{deactivated}} archived (has previous orders)", {
+            deleted: res.deleted,
+            deactivated: res.deactivated,
+          }),
+        );
+      } else if (res.deactivated > 0) {
+        toast.success(
+          tr("{{count}} products archived because they have previous orders", { count: res.deactivated }),
+        );
+      } else {
+        toast.success(
+          tr("{{count}} products deleted", { count: res.deleted }),
+        );
+      }
+      setSel([]);
+      setBulkDelOpen(false);
+      void qc.invalidateQueries({ queryKey: ["products"] });
+      void qc.invalidateQueries({ queryKey: ["inventory"] });
+      void qc.invalidateQueries({ queryKey: ["featured-products"] });
+    },
+    onError: (e) => toast.error(errorMessage(e)),
+  });
+  const remove = useAct((id: string) => productsApi.remove(id), { invalidate: [["products"], ["inventory"], ["featured-products"]], onSuccess: (r) => { void r; setDel(null); }, success: tr("Product removed") });
 
   const filtered = !!(f.search || f.status || f.visibility || f.onDiscount || f.categoryId || f.brandId || f.stock);
 
@@ -198,7 +235,23 @@ export default function ProductsList() {
       <BulkBar count={sel.length} onClear={() => setSel([])} noun={sel.length === 1 ? "product" : "products"}>
         <Button size="sm" variant="brand" loading={bulkStatus.isPending && bulkStatus.variables === "ACTIVE"} onClick={() => bulkStatus.mutate("ACTIVE")}>{tr("Show on shop")}</Button>
         <Button size="sm" variant="secondary" loading={bulkStatus.isPending && bulkStatus.variables === "INACTIVE"} onClick={() => bulkStatus.mutate("INACTIVE")}>{tr("Hide")}</Button>
+        <Button size="sm" variant="destructive" onClick={() => setBulkDelOpen(true)} className="gap-1.5 font-medium">
+          <Trash2 className="size-3.5" />
+          {tr("Delete selected")}
+        </Button>
       </BulkBar>
+      <ConfirmDialog
+        open={bulkDelOpen}
+        onOpenChange={(o) => !o && setBulkDelOpen(false)}
+        title={tr("Delete {{count}} selected products?", { count: sel.length })}
+        description={tr(
+          "Products that have previous customer orders will be archived (hidden from shop) to preserve order history. Products with no orders will be permanently removed.",
+        )}
+        confirmLabel={tr("Delete all")}
+        destructive
+        loading={bulkDelete.isPending}
+        onConfirm={() => bulkDelete.mutate(sel)}
+      />
       <ConfirmDialog
         open={!!del}
         onOpenChange={(o) => !o && setDel(null)}

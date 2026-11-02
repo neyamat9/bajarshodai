@@ -192,6 +192,16 @@ export const productsApi = {
   create: (body: ProductInput) => api.post<ProductDetail>("/admin/products", body).then((r) => r.data),
   update: (id: string, body: ProductInput) => api.patch<ProductDetail>(`/admin/products/${id}`, body).then((r) => r.data),
   remove: (id: string) => api.delete<{ deleted: boolean; message: string }>(`/admin/products/${id}`).then((r) => r.data),
+  bulkDelete: (ids: string[]) =>
+    api
+      .post<{
+        total: number;
+        deleted: number;
+        deactivated: number;
+        failed: number;
+        results: { id: string; success: boolean; deleted: boolean; message: string }[];
+      }>("/admin/products/bulk-delete", { ids })
+      .then((r) => r.data),
   duplicate: (id: string) => api.post<ProductDetail>(`/admin/products/${id}/duplicate`).then((r) => r.data),
   tags: () => api.get<{ tag: string; products: number }[]>("/admin/products/tags").then((r) => r.data),
   dailySheet: (rows: { id: string; sellingPrice?: number; stock?: number; status?: "ACTIVE" | "INACTIVE"; trackStock?: boolean }[]) =>

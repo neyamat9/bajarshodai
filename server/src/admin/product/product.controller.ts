@@ -47,6 +47,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import {
   AdminProductQueryDto,
   DailySheetDto,
+  BulkDeleteProductsDto,
   AttachImagesDto,
   ImageUploadQueryDto,
   ReorderImagesDto,
@@ -112,6 +113,19 @@ export class ProductController {
   })
   dailySheet(@Body() dto: DailySheetDto, @CurrentUser() admin: User) {
     return this.products.dailySheet(dto, admin.id);
+  }
+
+  @Post('bulk-delete')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Delete multiple products at once. Products that have previous orders are deactivated (archived) instead of permanently erased.',
+  })
+  bulkDelete(
+    @Body() dto: BulkDeleteProductsDto,
+    @CurrentUser() admin: User,
+  ) {
+    return this.products.bulkDelete(dto.ids, admin.id);
   }
 
   @Get(':id')

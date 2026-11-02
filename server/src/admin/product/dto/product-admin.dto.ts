@@ -112,6 +112,18 @@ export class AdminProductQueryDto {
   includeMedicines?: boolean;
 }
 
+export class BulkDeleteProductsDto {
+  @ApiProperty({
+    type: [String],
+    description: 'Array of product IDs to delete or archive',
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(100)
+  @IsUUID('all', { each: true })
+  ids: string[];
+}
+
 export class SetTagsDto {
   @ApiProperty({ type: [String], example: ['5G', 'gaming'] })
   @IsArray()
