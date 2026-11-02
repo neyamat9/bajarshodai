@@ -166,6 +166,7 @@ export class ReportsService {
         stock: number;
         cost: string;
         retail: string;
+        trackStock: boolean;
       }[]
     >(Prisma.sql`
       SELECT * FROM (${SKU_ROWS}) s WHERE status NOT IN ('DISCONTINUED')
@@ -173,7 +174,7 @@ export class ReportsService {
       LIMIT ${REPORT_MAX_ROWS + 1}`);
     assertNotTruncated(rows);
     const out = rows.map((x) => {
-      const units = Math.max(0, x.stock);
+      const units = x.trackStock ? Math.max(0, x.stock) : 0;
       const cost = Number(x.cost);
       const retail = Number(x.retail);
       return {
@@ -181,11 +182,11 @@ export class ReportsService {
         product: x.productName,
         variant: x.variantName,
         status: x.status,
-        stock: x.stock,
+        stock: x.trackStock ? x.stock : 0,
         cost,
         price: retail,
-        costValue: round2(units * cost),
-        retailValue: round2(units * retail),
+        costValue: x.trackStock ? round2(units * cost) : 0,
+        retailValue: x.trackStock ? round2(units * retail) : 0,
       };
     });
     const sum = (k: 'stock' | 'costValue' | 'retailValue') =>

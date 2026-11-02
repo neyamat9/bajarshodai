@@ -182,10 +182,37 @@ export default function Inventory() {
       key: "state",
       header: tr("Level"),
       sk: "badge",
-      cell: (i) => <StatusBadge status={i.state} label={i.state === "in" ? tr("In stock") : i.state === "low" ? tr("Low (≤{{n}})", { n: num(i.threshold) }) : tr("Out")} />,
+      cell: (i) =>
+        !i.trackStock ? (
+          <StatusBadge status="in" label={tr("Available")} />
+        ) : (
+          <StatusBadge
+            status={i.state}
+            label={i.state === "in" ? tr("In stock") : i.state === "low" ? tr("Low (≤{{n}})", { n: num(i.threshold) }) : tr("Out")}
+          />
+        ),
     },
-    { key: "cost", header: tr("Value (cost)"), align: "right", sk: "num", cell: (i) => money(Number(i.cost) * i.stock) },
-    { key: "act", header: "", align: "right", sk: "btn", cell: (i) => <Button size="xs" variant="outline" onClick={() => setAdj(i)}><SlidersHorizontal />{" "}{tr("Adjust")}</Button> },
+    {
+      key: "cost",
+      header: tr("Value (cost)"),
+      align: "right",
+      sk: "num",
+      cell: (i) => (!i.trackStock ? <span className="text-muted-foreground">—</span> : money(Number(i.cost) * i.stock)),
+    },
+    {
+      key: "act",
+      header: "",
+      align: "right",
+      sk: "btn",
+      cell: (i) =>
+        !i.trackStock ? (
+          <span className="text-[11px] text-muted-foreground">{tr("Not counted")}</span>
+        ) : (
+          <Button size="xs" variant="outline" onClick={() => setAdj(i)}>
+            <SlidersHorizontal /> {tr("Adjust")}
+          </Button>
+        ),
+    },
   ];
 
   const medicineCols: Column<InventoryItem>[] = [

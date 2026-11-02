@@ -32,7 +32,8 @@ export interface SkuRow {
 export const SKU_ROWS = Prisma.sql`
   SELECT p.id AS "productId", NULL::text AS "variantId", p.name AS "productName",
          NULL::text AS "variantName", p."productCode" AS sku, p.status::text AS status,
-         p.stock, p."lowStockThreshold" AS threshold,
+         CASE WHEN p."trackStock" = false THEN 0 ELSE p.stock END AS stock,
+         p."lowStockThreshold" AS threshold,
          p."buyingPrice"::text AS cost, p."sellingPrice"::text AS retail,
          p."trackStock" AS "trackStock",
          EXISTS (SELECT 1 FROM "MedicineMeta" m WHERE m."productId" = p.id) AS "isMedicine"
@@ -40,7 +41,8 @@ export const SKU_ROWS = Prisma.sql`
   WHERE NOT EXISTS (SELECT 1 FROM "ProductVariant" v WHERE v."productId" = p.id)
   UNION ALL
   SELECT p.id, v.id, p.name, v.name, v.sku, p.status::text,
-         v.stock, p."lowStockThreshold",
+         CASE WHEN p."trackStock" = false THEN 0 ELSE v.stock END AS stock,
+         p."lowStockThreshold",
          p."buyingPrice"::text, COALESCE(v.price, p."sellingPrice")::text,
          p."trackStock" AS "trackStock",
          EXISTS (SELECT 1 FROM "MedicineMeta" m WHERE m."productId" = p.id) AS "isMedicine"
@@ -77,9 +79,9 @@ export class InventoryService {
              COUNT(*) FILTER (WHERE "trackStock" = false OR stock > threshold) AS "inStock",
              COUNT(*) FILTER (WHERE "trackStock" = true AND stock > 0 AND stock <= threshold) AS low,
              COUNT(*) FILTER (WHERE "trackStock" = true AND stock <= 0) AS out,
-             SUM(GREATEST(stock, 0)) AS units,
-             SUM(GREATEST(stock, 0) * cost::numeric)::text AS "costValue",
-             SUM(GREATEST(stock, 0) * retail::numeric)::text AS "retailValue"
+             SUM(CASE WHEN "trackStock" = true THEN GREATEST(stock, 0) ELSE 0 END) AS units,
+             SUM(CASE WHEN "trackStock" = true THEN GREATEST(stock, 0) * cost::numeric ELSE 0 END)::text AS "costValue",
+             SUM(CASE WHEN "trackStock" = true THEN GREATEST(stock, 0) * retail::numeric ELSE 0 END)::text AS "retailValue"
       FROM (${SKU_ROWS}) s
       WHERE status NOT IN ('DISCONTINUED') ${scopeFilter}`);
     return {
@@ -172,9 +174,14 @@ export class InventoryService {
     }
     const product = await this.prisma.product.findUnique({
       where: { id: dto.productId },
-      select: { id: true, _count: { select: { variants: true } } },
+      select: { id: true, trackStock: true, _count: { select: { variants: true } } },
     });
     if (!product) throw new BadRequestException('Product not found');
+    if (!product.trackStock) {
+      throw new BadRequestException(
+        'Stock cannot be adjusted for Daily Fresh or untracked products',
+      );
+    }
     if (product._count.variants > 0 && !dto.variantId) {
       throw new BadRequestException(
         'This product has variants: choose which variant to adjust',

@@ -66,8 +66,8 @@ export class ProductService {
              COUNT(*) FILTER (WHERE p.status IN ('DRAFT', 'INACTIVE')) AS hidden,
              COUNT(*) FILTER (WHERE p."trackStock" AND p.stock > 0 AND p.stock <= p."lowStockThreshold") AS low,
              COUNT(*) FILTER (WHERE p."trackStock" AND p.stock <= 0) AS out,
-             SUM(GREATEST(p.stock, 0) * p."buyingPrice")::text AS "costValue",
-             SUM(GREATEST(p.stock, 0) * p."sellingPrice")::text AS "retailValue",
+             SUM(CASE WHEN p."trackStock" THEN GREATEST(p.stock, 0) * p."buyingPrice" ELSE 0 END)::text AS "costValue",
+             SUM(CASE WHEN p."trackStock" THEN GREATEST(p.stock, 0) * p."sellingPrice" ELSE 0 END)::text AS "retailValue",
              COUNT(*) FILTER (WHERE p."isDiscounted" AND p.status = 'ACTIVE') AS discounted,
              COUNT(*) FILTER (WHERE NOT EXISTS (SELECT 1 FROM "ProductImage" i WHERE i."productId" = p.id)) AS "noPhoto"
       FROM "Product" p
@@ -282,9 +282,12 @@ export class ProductService {
     const slug = dto.slug ?? (await this.freeSlug(slugify(name, 'product')));
     if (dto.slug) await this.assertSlugFree(dto.slug);
 
-    const startStock = variantRows.length
-      ? variantRows.reduce((s, v) => s + v.stock, 0)
-      : (dto.stock ?? 0);
+    const isUntracked = Boolean(dto.medicineMeta) || dto.trackStock === false;
+    const startStock = isUntracked
+      ? 0
+      : variantRows.length
+        ? variantRows.reduce((s, v) => s + v.stock, 0)
+        : (dto.stock ?? 0);
     const tags = normalizeTags(dto.tags);
     const attributes = normalizeAttributes(dto.attributes);
 
@@ -319,7 +322,7 @@ export class ProductService {
             discountLabel:
               dto.discountPrice == null ? null : (dto.discountLabel ?? null),
             stock: 0,
-            trackStock: dto.medicineMeta ? false : (dto.trackStock ?? true),
+            trackStock: isUntracked ? false : (dto.trackStock ?? true),
             lowStockThreshold: dto.lowStockThreshold ?? 5,
             freeShipping: dto.freeShipping ?? false,
             weight: dto.weight,
@@ -385,9 +388,9 @@ export class ProductService {
 
         for (const v of variantRows) {
           const created = await tx.productVariant.create({
-            data: { ...v, stock: 0, productId: product.id },
+            data: { ...v, stock: isUntracked ? 0 : v.stock, productId: product.id },
           });
-          if (v.stock > 0) {
+          if (v.stock > 0 && !isUntracked) {
             await this.stock.change(tx, {
               productId: product.id,
               variantId: created.id,
@@ -398,7 +401,7 @@ export class ProductService {
             });
           }
         }
-        if (!variantRows.length && startStock > 0) {
+        if (!variantRows.length && startStock > 0 && !isUntracked) {
           await this.stock.change(tx, {
             productId: product.id,
             change: startStock,
@@ -573,6 +576,15 @@ export class ProductService {
       data.trackStock = false;
     }
 
+    const isUntracked =
+      data.trackStock === false ||
+      dto.trackStock === false ||
+      (data.trackStock === undefined && current.trackStock === false);
+
+    if (isUntracked) {
+      data.stock = 0;
+    }
+
     const attributes = dto.attributes
       ? normalizeAttributes(dto.attributes)
       : undefined;
@@ -643,7 +655,13 @@ export class ProductService {
             });
           }
         }
-        if (dto.stock !== undefined) {
+        if (isUntracked) {
+          await tx.product.update({ where: { id }, data: { stock: 0 } });
+          await tx.productVariant.updateMany({
+            where: { productId: id },
+            data: { stock: 0 },
+          });
+        } else if (dto.stock !== undefined) {
           await this.stock.setTo(tx, {
             productId: id,
             quantity: dto.stock,

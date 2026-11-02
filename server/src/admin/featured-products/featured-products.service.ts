@@ -59,7 +59,7 @@ export class FeaturedProductsService {
       ...p,
       regularPrice: Number(p.regularPrice),
       sellingPrice: Number(p.sellingPrice),
-      stock: Number(p.stock),
+      stock: p.trackStock ? Number(p.stock) : 0,
       mainImage: p.images[0]?.url || null,
     }));
   }
