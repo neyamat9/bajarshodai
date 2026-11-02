@@ -24,6 +24,10 @@ export function DialogContent({
           width,
           className,
         )}
+        onCloseAutoFocus={(e) => {
+          document.body.style.pointerEvents = "";
+          props.onCloseAutoFocus?.(e);
+        }}
         {...props}
       >
         {children}

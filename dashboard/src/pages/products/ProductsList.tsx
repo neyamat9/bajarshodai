@@ -191,7 +191,7 @@ export default function ProductsList() {
               <DropdownMenuItem onSelect={() => openInNewTab(`/products/${p.id}/edit`)}><Pencil />{" "}{tr("Edit")}</DropdownMenuItem>
               <DropdownMenuItem onSelect={() => dup.mutate(p.id)}><Copy />{" "}{tr("Duplicate")}</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive" onSelect={() => setDel(p)}><Trash2 />{" "}{tr("Delete")}</DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onSelect={(e) => { e.preventDefault(); setDel(p); }}><Trash2 />{" "}{tr("Delete")}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
