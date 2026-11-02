@@ -70,12 +70,16 @@ export class ProductService {
              SUM(GREATEST(p.stock, 0) * p."sellingPrice")::text AS "retailValue",
              COUNT(*) FILTER (WHERE p."isDiscounted" AND p.status = 'ACTIVE') AS discounted,
              COUNT(*) FILTER (WHERE NOT EXISTS (SELECT 1 FROM "ProductImage" i WHERE i."productId" = p.id)) AS "noPhoto"
-      FROM "Product" p`);
+      FROM "Product" p
+      WHERE NOT EXISTS (SELECT 1 FROM "MedicineMeta" m WHERE m."productId" = p.id)`);
 
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const best = await this.prisma.orderItem.groupBy({
       by: ['productId'],
       where: {
+        product: {
+          medicineMeta: { is: null },
+        },
         order: {
           placedAt: { gte: since },
           status: { notIn: ['CANCELLED', 'RETURNED', 'REFUNDED'] },
@@ -111,6 +115,13 @@ export class ProductService {
   async findAll(q: AdminProductQueryDto) {
     const where: Prisma.ProductWhereInput = {};
     const and: Prisma.ProductWhereInput[] = [];
+
+    // By default, exclude medicines so the grocery product page only shows grocery items.
+    // Dedicated medicine page (/medicine-sync) handles pharmaceutical products.
+    if (!q.includeMedicines) {
+      where.medicineMeta = { is: null };
+    }
+
     const search = q.search?.trim();
     if (search) {
       and.push({
@@ -1014,10 +1025,10 @@ export class ProductService {
     const rows =
       kind === 'low'
         ? await this.prisma.$queryRaw<{ id: string }[]>(
-            Prisma.sql`SELECT id FROM "Product" WHERE "trackStock" = true AND stock > 0 AND stock <= "lowStockThreshold"`,
+            Prisma.sql`SELECT id FROM "Product" p WHERE p."trackStock" = true AND p.stock > 0 AND p.stock <= p."lowStockThreshold" AND NOT EXISTS (SELECT 1 FROM "MedicineMeta" m WHERE m."productId" = p.id)`,
           )
         : await this.prisma.$queryRaw<{ id: string }[]>(
-            Prisma.sql`SELECT id FROM "Product" WHERE "trackStock" = false OR stock > "lowStockThreshold"`,
+            Prisma.sql`SELECT id FROM "Product" p WHERE (p."trackStock" = false OR p.stock > p."lowStockThreshold") AND NOT EXISTS (SELECT 1 FROM "MedicineMeta" m WHERE m."productId" = p.id)`,
           );
     return rows.map((r) => r.id);
   }

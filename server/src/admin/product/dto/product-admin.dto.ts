@@ -102,6 +102,14 @@ export class AdminProductQueryDto {
   @IsOptional()
   @IsIn(ADMIN_PRODUCT_SORTS)
   sortBy?: (typeof ADMIN_PRODUCT_SORTS)[number];
+
+  @ApiPropertyOptional({
+    description: 'true = include medicines in the list (excluded by default)',
+  })
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  includeMedicines?: boolean;
 }
 
 export class SetTagsDto {

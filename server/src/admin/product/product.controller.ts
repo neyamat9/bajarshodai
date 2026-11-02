@@ -93,6 +93,11 @@ export class ProductController {
   async popularTags() {
     const rows = await this.prisma.productTag.groupBy({
       by: ['tag'],
+      where: {
+        product: {
+          medicineMeta: { is: null },
+        },
+      },
       _count: { tag: true },
       orderBy: [{ _count: { tag: 'desc' } }, { tag: 'asc' }],
       take: 200,

@@ -119,6 +119,7 @@ export interface ProductFilters {
   sortBy?: string;
   page?: number;
   limit?: number;
+  includeMedicines?: boolean;
 }
 
 export interface VariantInput {
