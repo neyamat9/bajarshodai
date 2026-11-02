@@ -240,7 +240,7 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
     },
     {
       success: isNew ? tr("Product created") : "Product saved",
-      invalidate: [["products"], ["product", id], ["inventory"]],
+      invalidate: [["products"], ["product", id], ["inventory"], ["featured-products"]],
       onSuccess: (p) => { if (isNew) nav(`/products/${p.id}/edit`, { replace: true }); },
       silentError: (e) => e instanceof Error && e.message === "Validation",
     },

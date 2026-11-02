@@ -9,10 +9,12 @@ import { money } from "@/lib/format";
 import { errorMessage } from "@/api/client";
 import { toast } from "sonner";
 import { LoadMore } from "./DataTable";
+import { useProductNameDisplay } from "@/lib/productName";
 import { tr } from "@/i18n";
 
 // Search the catalog and pick a product (loads its variants too). Opens with the whole list; more load as you scroll.
 export function ProductPicker({ onPick, placeholder = "Search products by name, code or SKU…", onlyActive = true }: { onPick: (p: ProductDetail) => void; placeholder?: string; onlyActive?: boolean }) {
+  const { format: formatName } = useProductNameDisplay();
   const [text, setText] = useState("");
   const [open, setOpen] = useState(false);
   const [loadingId, setLoadingId] = useState<string | null>(null);
@@ -69,8 +71,19 @@ export function ProductPicker({ onPick, placeholder = "Search products by name, 
             >
               <Thumb src={p.mainImage} className="size-9" />
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[13px] font-medium">{p.name}</span>
-                <span className="block text-[11px] text-muted-foreground">{p._count.variants ? `${p._count.variants} options` : `${p.stock} in stock`}</span>
+                <span className="block truncate text-[13px] font-medium">{formatName(p).primary}</span>
+                <span className="block text-[11px] text-muted-foreground">
+                  {[
+                    formatName(p).secondary,
+                    p._count.variants
+                      ? `${p._count.variants} options`
+                      : p.trackStock
+                      ? `${p.stock} in stock`
+                      : tr("Daily Fresh"),
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
               </span>
               <span className="text-[13px] font-semibold">{money(p.sellingPrice)}</span>
               {loadingId === p.id && <Loader2 className="size-4 animate-spin" />}

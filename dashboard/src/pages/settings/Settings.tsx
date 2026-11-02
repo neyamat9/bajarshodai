@@ -15,6 +15,7 @@ import { useAct } from "@/hooks/useAct";
 import { useUrlState } from "@/hooks/useUrlState";
 import { SettingsSkeleton } from "@/components/shared/pageSkeletons";
 import { DeliveryForm, MapsForm } from "./DeliveryMaps";
+import { saveProductNameLang, type ProductNameLanguage } from "@/lib/productName";
 import { tr } from "@/i18n";
 
 const nz = (v: string) => (v.trim() === "" ? null : v.trim());
@@ -42,6 +43,7 @@ function SiteForm({ v }: { v: S["site"] }) {
     heroLayout: (v.hero?.layout ?? "SLIDER_AND_SIDE") as HeroLayoutMode,
     heroMaxSlides: v.hero?.maxSlides ?? 5,
     heroAutoplayIntervalSec: v.hero?.autoplayIntervalSec ?? 6,
+    productNameLanguage: (v.productNameLanguage ?? "auto") as ProductNameLanguage,
   });
   const [social, setSocial] = useState<Record<string, string>>(v.socialLinks ?? {});
   const save = useSave("site");
@@ -68,7 +70,9 @@ function SiteForm({ v }: { v: S["site"] }) {
         maxSlides: Number(f.heroMaxSlides) || 5,
         autoplayIntervalSec: Number(f.heroAutoplayIntervalSec) || 6,
       },
+      productNameLanguage: f.productNameLanguage,
     });
+    saveProductNameLang(f.productNameLanguage);
   };
   return (
     <div className="grid items-start gap-4 xl:grid-cols-2 [&>button]:justify-self-start xl:[&>button]:col-span-2">
@@ -76,6 +80,23 @@ function SiteForm({ v }: { v: S["site"] }) {
         <div className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-2"><Field label={tr("Store name")} required><Input value={f.storeName} onChange={(e) => setF({ ...f, storeName: e.target.value })} /></Field><Field label={tr("Tagline")}><Input value={f.tagline} onChange={(e) => setF({ ...f, tagline: e.target.value })} /></Field></div>
           <div className="grid gap-3 sm:grid-cols-2"><ImageField label={tr("Logo")} folder="site" value={f.logoUrl} onChange={(logoUrl) => setF({ ...f, logoUrl })} /><ImageField label={tr("Favicon")} folder="site" value={f.faviconUrl} onChange={(faviconUrl) => setF({ ...f, faviconUrl })} /></div>
+          <Field
+            label={tr("Product Name Language in Dashboard")}
+            hint={tr("Controls whether product names in admin lists appear in English, Bangla, or follow the interface language.")}
+          >
+            <Select
+              value={f.productNameLanguage}
+              onChange={(e) => {
+                const val = e.target.value as ProductNameLanguage;
+                setF({ ...f, productNameLanguage: val });
+                saveProductNameLang(val);
+              }}
+            >
+              <option value="auto">{tr("Auto (Follow Dashboard Language)")}</option>
+              <option value="bn">{tr("Always Bangla (বাংলা)")}</option>
+              <option value="en">{tr("Always English")}</option>
+            </Select>
+          </Field>
         </div>
       </Section>
       <Section title={tr("Home Hero Section")} description={tr("Display layout and slide rotation settings for the storefront hero section.")}>

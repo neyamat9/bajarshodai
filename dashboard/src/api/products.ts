@@ -232,6 +232,7 @@ export interface FeaturedProductItem {
   regularPrice: number;
   sellingPrice: number;
   stock: number;
+  trackStock?: boolean;
   status: string;
   isFeatured: boolean;
   featuredOrder?: number | null;

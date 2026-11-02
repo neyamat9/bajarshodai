@@ -24,6 +24,7 @@ import { money, titleCase } from "@/lib/format";
 import { openInNewTab } from "@/lib/utils";
 import { BulkBar } from "@/components/shared/BulkBar";
 import { SavedViews } from "@/components/shared/SavedViews";
+import { useProductNameDisplay } from "@/lib/productName";
 import { tr } from "@/i18n";
 
 const STATUS_OPTIONS: QuickOption<string>[] = [
@@ -36,6 +37,7 @@ const DEFAULTS = { search: "", status: "", visibility: "", onDiscount: "", categ
 
 export default function ProductsList() {
   const navigate = useNavigate();
+  const { format: formatName } = useProductNameDisplay();
   const [f, setF] = useUrlState(DEFAULTS);
   const search = f.search; // SearchInput waits for a pause in typing before it changes the URL
   const [del, setDel] = useState<ProductRow | null>(null);
@@ -79,15 +81,18 @@ export default function ProductsList() {
     {
       key: "product",
       header: tr("Product"), sk: "thumb2",
-      cell: (p) => (
-        <div className="flex items-center gap-3">
-          <Thumb src={p.mainImage} alt={p.name} className="size-11" />
-          <div className="min-w-0 max-w-[280px]">
-            <a href={`/products/${p.id}/edit`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="block truncate font-medium hover:text-primary">{p.nameBn || p.name}</a>
-            <p className="truncate text-[11px] text-muted-foreground">{[p.nameBn ? p.name : null, p.productCode, p.categoryName, p.unit ? `per ${p.unit.shortLabel}` : null].filter(Boolean).join(" · ")}</p>
+      cell: (p) => {
+        const nameInfo = formatName(p);
+        return (
+          <div className="flex items-center gap-3">
+            <Thumb src={p.mainImage} alt={nameInfo.primary} className="size-11" />
+            <div className="min-w-0 max-w-[280px]">
+              <a href={`/products/${p.id}/edit`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="block truncate font-medium hover:text-primary">{nameInfo.primary}</a>
+              <p className="truncate text-[11px] text-muted-foreground">{[nameInfo.secondary, p.productCode, p.categoryName, p.unit ? `per ${p.unit.shortLabel}` : null].filter(Boolean).join(" · ")}</p>
+            </div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       key: "status",

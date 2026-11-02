@@ -38,11 +38,13 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { money } from "@/lib/format";
 import { tr } from "@/i18n";
 import { CardListSkeleton } from "@/components/shared/skeletons";
+import { useProductNameDisplay } from "@/lib/productName";
 
 const MAX_FEATURED = 18;
 
 export default function FeaturedProducts() {
   const qc = useQueryClient();
+  const { format: formatName } = useProductNameDisplay();
 
   const { data: serverItems, isLoading } = useQuery({
     queryKey: ["featured-products"],
@@ -105,6 +107,7 @@ export default function FeaturedProducts() {
       regularPrice: Number(product.regularPrice),
       sellingPrice: Number(product.sellingPrice),
       stock: Number(product.stock),
+      trackStock: product.trackStock,
       status: product.status,
       isFeatured: true,
       categoryName: product.categoryName,
@@ -135,7 +138,10 @@ export default function FeaturedProducts() {
 
   const featuredIds = useMemo(() => new Set(items.map((i) => i.id)), [items]);
   const outOfStockCount = useMemo(
-    () => items.filter((i) => i.stock <= 0 || i.status !== "ACTIVE").length,
+    () =>
+      items.filter(
+        (i) => i.status !== "ACTIVE" || (i.trackStock && i.stock <= 0),
+      ).length,
     [items],
   );
 
@@ -236,7 +242,9 @@ export default function FeaturedProducts() {
           <SortableList items={items} onReorder={handleReorder}>
             {(item) => {
               const idx = items.findIndex((p) => p.id === item.id) + 1;
-              const isOOS = item.stock <= 0 || item.status !== "ACTIVE";
+              const isOOS = item.status !== "ACTIVE" || (item.trackStock && item.stock <= 0);
+              const isDailyFresh = !item.trackStock;
+              const nameInfo = formatName(item);
 
               return (
                 <div className="flex items-center justify-between gap-4 p-2 sm:p-3">
@@ -246,15 +254,15 @@ export default function FeaturedProducts() {
                       #{idx}
                     </div>
 
-                    <Thumb src={item.mainImage} alt={item.name} className="size-12 shrink-0" />
+                    <Thumb src={item.mainImage} alt={nameInfo.primary} className="size-12 shrink-0" />
 
                     <div className="min-w-0">
                       <p className="truncate font-semibold text-sm text-foreground">
-                        {item.nameBn || item.name}
+                        {nameInfo.primary}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">
                         {[
-                          item.nameBn ? item.name : null,
+                          nameInfo.secondary,
                           item.productCode,
                           item.categoryName,
                           item.unit?.shortLabel ? `per ${item.unit.shortLabel}` : null,
@@ -271,6 +279,10 @@ export default function FeaturedProducts() {
                       <Badge variant="danger" className="gap-1 text-[11px] font-bold">
                         <AlertTriangle className="size-3" />
                         {tr("Out of Stock")}
+                      </Badge>
+                    ) : isDailyFresh ? (
+                      <Badge variant="success" className="text-[11px] font-semibold">
+                        {tr("Daily Fresh")}
                       </Badge>
                     ) : (
                       <span className="text-xs text-muted-foreground font-medium hidden sm:inline">
@@ -375,6 +387,7 @@ export default function FeaturedProducts() {
                   searchResult.data.map((prod: ProductRow) => {
                     const isAdded = featuredIds.has(prod.id);
                     const isFull = items.length >= MAX_FEATURED;
+                    const nameInfo = formatName(prod);
 
                     return (
                       <div
@@ -382,14 +395,14 @@ export default function FeaturedProducts() {
                         className="flex items-center justify-between gap-3 rounded border border-border p-2.5 transition-colors hover:bg-muted/40"
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <Thumb src={prod.mainImage} alt={prod.name} className="size-10 shrink-0" />
+                          <Thumb src={prod.mainImage} alt={nameInfo.primary} className="size-10 shrink-0" />
                           <div className="min-w-0">
                             <p className="truncate text-sm font-semibold text-foreground">
-                              {prod.nameBn || prod.name}
+                              {nameInfo.primary}
                             </p>
                             <p className="truncate text-xs text-muted-foreground">
                               {[
-                                prod.nameBn ? prod.name : null,
+                                nameInfo.secondary,
                                 prod.productCode,
                                 prod.categoryName,
                                 money(prod.sellingPrice),

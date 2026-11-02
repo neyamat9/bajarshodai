@@ -16,6 +16,7 @@ const featuredSelect = {
   regularPrice: true,
   sellingPrice: true,
   stock: true,
+  trackStock: true,
   status: true,
   isFeatured: true,
   featuredOrder: true,

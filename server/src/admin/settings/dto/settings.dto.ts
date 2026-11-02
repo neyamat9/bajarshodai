@@ -126,6 +126,11 @@ export class UpdateSiteSettingsDto {
   @ValidateNested()
   @Type(() => HeroConfigDto)
   hero?: HeroConfigDto;
+
+  @ApiPropertyOptional({ enum: ['auto', 'bn', 'en'] })
+  @IsOptional()
+  @IsIn(['auto', 'bn', 'en'])
+  productNameLanguage?: 'auto' | 'bn' | 'en';
 }
 
 export class UpdatePaymentSettingsDto {

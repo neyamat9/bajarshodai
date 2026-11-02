@@ -127,8 +127,10 @@ export class ProductService {
       and.push({
         OR: [
           { name: { contains: search, mode: 'insensitive' } },
+          { nameBn: { contains: search, mode: 'insensitive' } },
           { slug: { contains: search, mode: 'insensitive' } },
           { productCode: { contains: search, mode: 'insensitive' } },
+          { barcode: { contains: search, mode: 'insensitive' } },
           { brandName: { contains: search, mode: 'insensitive' } },
           { medicineMeta: { genericName: { contains: search, mode: 'insensitive' } } },
           { medicineMeta: { manufacturer: { contains: search, mode: 'insensitive' } } },

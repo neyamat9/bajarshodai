@@ -16,6 +16,7 @@ import { Thumb } from "@/components/shared/Thumb";
 import { ListPageSkeleton } from "@/components/shared/skeletons";
 import { useUrlState } from "@/hooks/useUrlState";
 import { useAct } from "@/hooks/useAct";
+import { useProductNameDisplay } from "@/lib/productName";
 import { money, num } from "@/lib/format";
 import { tr } from "@/i18n";
 
@@ -31,6 +32,7 @@ const TEXT = tr("Fish and vegetable prices change every day. Type the new price 
 /** The daily sheet: one table to update the price, the stock and the on/off state of many products in one go. */
 export default function DailySheet() {
   const qc = useQueryClient();
+  const { format: formatName } = useProductNameDisplay();
   const [f, setF] = useUrlState(DEFAULTS);
   const [edits, setEdits] = useState<Record<string, Edit>>({});
   const cats = useQuery({ queryKey: ["categories"], queryFn: categoriesApi.list });
@@ -121,17 +123,17 @@ export default function DailySheet() {
                     <tr key={p.id} className={`border-b border-border last:border-0 ${dirty ? "bg-amber-50/60 dark:bg-amber-500/5" : ""}`}>
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-3">
-                          <Thumb src={p.mainImage} alt={p.name} className="size-9" />
+                          <Thumb src={p.mainImage} alt={formatName(p).primary} className="size-9" />
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <p className="truncate font-medium">{p.nameBn || p.name}</p>
+                              <p className="truncate font-medium">{formatName(p).primary}</p>
                               {!p.trackStock && (
                                 <span className="inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
                                   {tr("Fresh")}
                                 </span>
                               )}
                             </div>
-                            <p className="truncate text-[11px] text-muted-foreground">{p.nameBn ? `${p.name} · ` : ""}{p.categoryName}</p>
+                            <p className="truncate text-[11px] text-muted-foreground">{formatName(p).secondary ? `${formatName(p).secondary} · ` : ""}{p.categoryName}</p>
                           </div>
                         </div>
                       </td>
