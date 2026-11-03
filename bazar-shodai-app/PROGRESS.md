@@ -19,3 +19,20 @@
   - \`npm --prefix bazar-shodai-app run type-check\` passed with 0 errors.
 - **Known Issues**: None.
 
+
+### Phase 2: Strict TypeScript & Path Aliases
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Configure path aliases (`@/*` pointing to `./src/*`) and strict type checking rules.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/tsconfig.json` (configured `@/*` path mapping, enabled `noUncheckedIndexedAccess`, `noImplicitOverride`, `noFallthroughCasesInSwitch`, `forceConsistentCasingInFileNames`)
+  - `bazar-shodai-app/babel.config.js` (standard Expo babel preset configuration)
+  - `bazar-shodai-app/src/components/ui/Button.tsx` (reusable button component used to verify alias imports)
+  - `bazar-shodai-app/App.tsx` (updated to consume `@/components/ui/Button`)
+- **Decisions Made**:
+  - In TypeScript 6.0+, `baseUrl` is deprecated; configured root-relative `"paths": { "@/*": ["./src/*"] }` cleanly without deprecated flags.
+  - Metro natively maps TypeScript path aliases since Expo SDK 49+.
+- **Verification & Testing**:
+  - `npm --prefix bazar-shodai-app run type-check` passed with 0 errors.
+  - Tested negative assertion (deliberate invalid import was correctly rejected by compiler).
+- **Known Issues**: None.

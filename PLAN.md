@@ -37,7 +37,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Absolute imports like `@/components/ui/Button` resolve cleanly.
 - **Dependencies**: Phase 1.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 3: ESLint, Prettier & Git Ignore Configuration
 - **Goal**: Establish deterministic code style, formatting, and ignore rules.
