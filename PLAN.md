@@ -29,7 +29,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Expo app runs via `npx expo start` with 0 TypeScript errors.
 - **Dependencies**: None.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 2: Strict TypeScript & Path Aliases
 - **Goal**: Configure path aliases (`@/*` pointing to `./src/*`) and strict type checking rules.
