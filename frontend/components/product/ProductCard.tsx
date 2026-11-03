@@ -7,6 +7,7 @@ import { getProductBySlug } from "@/lib/services/products.service";
 import { playClick } from "@/lib/sound";
 import { useInView } from "@/lib/hooks/use-in-view";
 import { useWishlist } from "@/lib/hooks/use-wishlist";
+import { useProductQuickView } from "@/components/product/ProductQuickViewModal";
 import type { Product, ProductVariant } from "@/lib/types";
 import { Heart, Loader2, Minus, Plus, ShoppingCart, X } from "lucide-react";
 import Image from "next/image";
@@ -51,10 +52,21 @@ export default function ProductCard({
   const quickAdd = useQuickAdd();
   const { addToCart } = useCartActions();
   const { cart, updateQuantity, removeFromCart } = useCart();
+  const { openQuickView } = useProductQuickView();
   // option picker for products with colours / sizes (so the customer never leaves the card)
   const [picker, setPicker] = useState<{ loading: boolean; variants: ProductVariant[] } | null>(null);
   const { addToVault, removeFromVault, isInVault } = useWishlist();
   const router = useRouter();
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (e.ctrlKey || e.metaKey || e.button === 1) return;
+    e.preventDefault();
+    if (onMedicineClick && product.medicineMeta) {
+      onMedicineClick(product);
+    } else {
+      openQuickView(product);
+    }
+  };
   // start loading the product page as soon as the pointer is over the card, so the click opens it at once
   const prefetched = useRef(false);
   function warm() {
@@ -208,7 +220,13 @@ export default function ProductCard({
             )}
           </button>
         ) : (
-          <Link href={`/products/${product.slug}`} tabIndex={-1} aria-hidden="true" className="relative block h-full w-full">
+          <Link
+            href={`/products/${product.slug}`}
+            onClick={handleCardClick}
+            tabIndex={-1}
+            aria-hidden="true"
+            className="relative block h-full w-full cursor-pointer"
+          >
             {primaryImage && (
               <Image
                 src={primaryImage.url}
@@ -339,7 +357,11 @@ export default function ProductCard({
             </h3>
           </button>
         ) : (
-          <Link href={`/products/${product.slug}`}>
+          <Link
+            href={`/products/${product.slug}`}
+            onClick={handleCardClick}
+            className="text-left w-full block cursor-pointer"
+          >
             <h3 className="line-clamp-2 min-h-[2.4rem] font-outfit text-[13px] font-semibold leading-snug text-foreground transition-colors group-hover:text-primary dark:group-hover:text-accent-text sm:text-sm">
               {product.name}
               {sizeText ? ` - ${sizeText}` : ""}

@@ -389,6 +389,16 @@
       "footer": " Every item is fresh and good quality, with delivery across Shahrasti and cash on delivery available.",
       "related": "Related Products",
       "heading": "What is the price of {name}?"
+    },
+    "quickView": {
+      "title": "Quick Preview",
+      "viewFullDetails": "View Full Details",
+      "viewFullDetailsSubtitle": "Full specifications, nutrition facts & customer reviews",
+      "close": "Close preview",
+      "inStock": "In Stock",
+      "stockOut": "Out of Stock",
+      "dailyFresh": "Daily Fresh",
+      "save": "Save"
     }
   },
   "Pages": {
