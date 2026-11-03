@@ -69,6 +69,25 @@ export default function ProductGrid({
   const [selectedMedicine, setSelectedMedicine] = useState<Product | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "grid">(isMedicine ? "list" : "grid");
   const [searchQuery, setSearchQuery] = useState(search ?? "");
+
+  // Keep search state in sync if parent search prop changes
+  useEffect(() => {
+    setSearchQuery(search ?? "");
+  }, [search]);
+
+  // Synchronize browser URL query param on medicine / category search
+  useEffect(() => {
+    if (typeof window === "undefined" || !isMedicine) return;
+    const url = new URL(window.location.href);
+    const trimmed = searchQuery.trim();
+    if (trimmed) {
+      url.searchParams.set("q", trimmed);
+    } else {
+      url.searchParams.delete("q");
+      url.searchParams.delete("search");
+    }
+    window.history.replaceState(null, "", url.toString());
+  }, [searchQuery, isMedicine]);
   const priceMin = Math.floor(priceRange.min);
   const priceMax = Math.ceil(priceRange.max);
   const base: FilterState = {
@@ -103,7 +122,7 @@ export default function ProductGrid({
     [categories, filters.subCategories],
   );
 
-  const effectiveSearch = (searchQuery || search || "").trim();
+  const effectiveSearch = searchQuery.trim();
   const query = useMemo<ProductQuery>(
     () => ({
       search: effectiveSearch || undefined,
@@ -242,7 +261,7 @@ export default function ProductGrid({
       chips.push({ key: `generic:${gen}`, label: gen });
     });
 
-    if (searchQuery.trim() && !search) {
+    if (searchQuery.trim()) {
       chips.push({
         key: "search",
         label: `${locale === "bn" ? "অনুসন্ধান" : "Search"}: "${searchQuery.trim()}"`,

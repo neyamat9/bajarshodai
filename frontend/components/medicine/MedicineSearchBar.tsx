@@ -3,9 +3,8 @@
 import { useLocale } from "next-intl";
 import type { Locale } from "@/lib/locale";
 import { Search, X, Loader2 } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { formatNumber } from "@/lib/format";
-import { useDebouncedSearch } from "@/lib/hooks/use-debounced-search";
 
 interface MedicineSearchBarProps {
   value: string;
@@ -23,26 +22,27 @@ export default function MedicineSearchBar({
   const locale = useLocale() as Locale;
   const isBn = locale === "bn";
   const inputRef = useRef<HTMLInputElement>(null);
+  const [input, setInput] = useState(value);
 
-  // Canonical debounced search hook (300ms pause)
-  const { input, setInput, query, clear, flush } = useDebouncedSearch(300, value);
-
-  // Sync internal input when parent value is changed externally (e.g., cleared via filter chips)
+  // Sync internal input whenever the parent `value` changes from outside
   useEffect(() => {
-    if (value !== query && value !== input) {
-      setInput(value);
-    }
-  }, [value, query, input, setInput]);
+    setInput(value);
+  }, [value]);
 
-  // Propagate debounced query changes to parent
+  // Debounced propagate to parent when user types
   useEffect(() => {
-    if (query !== value) {
-      onChange(query);
-    }
-  }, [query, value, onChange]);
+    const trimmed = input.trim();
+    if (trimmed === value.trim()) return;
+
+    const timer = setTimeout(() => {
+      onChange(trimmed);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [input, value, onChange]);
 
   const handleClear = () => {
-    clear();
+    setInput("");
     onChange("");
     inputRef.current?.focus();
   };
@@ -50,14 +50,13 @@ export default function MedicineSearchBar({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      flush();
       onChange(input.trim());
     } else if (e.key === "Escape") {
       handleClear();
     }
   };
 
-  const hasSearch = input.trim().length > 0 || query.length > 0;
+  const hasSearch = input.trim().length > 0 || value.trim().length > 0;
 
   return (
     <div className="mb-4 space-y-2.5">
@@ -106,7 +105,6 @@ export default function MedicineSearchBar({
           <button
             type="button"
             onClick={() => {
-              flush();
               onChange(input.trim());
             }}
             className="hidden sm:inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-xs font-bold transition-all shadow-sm active:scale-95 shrink-0"
@@ -124,7 +122,7 @@ export default function MedicineSearchBar({
               {isBn ? "অনুসন্ধানের ফলাফল:" : "Search results for:"}
             </span>
             <span className="font-bold underline decoration-emerald-500 decoration-2">
-              &ldquo;{input.trim() || query}&rdquo;
+              &ldquo;{input.trim() || value.trim()}&rdquo;
             </span>
             {totalResults !== undefined && (
               <span className="text-emerald-700 dark:text-emerald-300 font-medium ml-1">

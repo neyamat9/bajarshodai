@@ -1,542 +1,1304 @@
-# Bazar Shodai (বাজার সদাই) — Master Plan
-
-## 1. Context
-
-`E:\bazar-shodai` holds three apps copied from an older electronics shop ("GadgetBachai" / "RaizBD" / "TechBD"):
-
-| App | Stack | Role |
-|---|---|---|
-| `server/` | NestJS 11, Prisma 7, PostgreSQL, JWT | REST API (`/api/customer/*`, `/api/admin/*`) |
-| `frontend/` | Next.js 16, React 19, Tailwind 4, GSAP | Customer storefront |
-| `dashboard/` | Vite, React 19, Tailwind 4, TanStack Query, Zustand, Recharts | Admin panel |
-
-**Git status (checked):** you already removed every `.git` and `.husky` folder, including the old remotes. There is no git anywhere now, so we start clean (§16).
-**Database:** a new, empty Neon database is configured in `server/.env`.
-
-**Goal:** turn it into **Bazar Shodai**, a daily-needs grocery and fresh-food delivery service (fish, vegetables, fruit and so on) for **Shahrasti upazila, Chandpur**, delivering within about 20 km. It needs:
-
-- Bangla (default) and English.
-- GPS-based location sharing.
-- Distance-based delivery fee.
-- Staff and rider management.
-- Delivery tracking, activity logs and delivery statistics.
-- A new green brand taken from the logo.
-
-**What already exists and will be reused**
-
-- Order, cart and guest checkout flow, plus COD and manual bKash/Nagad payments.
-- `ActivityLog` and `AuditLog` (`server/src/common/activity/`, `common/audit/`).
-- Settings store with encrypted secrets (`server/src/common/settings/` — `SECRET_FIELDS`, `secret-box.ts`).
-- Order item editing (`server/src/admin/orders/order-edit.service.ts`), reports, analytics and dashboard shell.
-- Bangladesh division/district/upazila data (`server/src/common/locations/`), and lat/lng columns on `Address`.
-
-**What is missing and is new work**
-
-- No i18n and no Bangla font anywhere.
-- No staff or permission system. Every admin sees everything, and `MODERATOR` is unused.
-- No map code, no delivery or rider module.
-- Quantities are integers, so there are no weight-based items.
-- Categories are only two levels in practice, but the screenshots show three.
-- No floating cart.
-
-## 2. Decisions already made
-
-| Topic | Decision |
-|---|---|
-| Maps | **Both Google Maps and OpenStreetMap**, chosen in **Admin → Settings → Maps**. Switch at any time. Start on OSM if wanted, move to Google later. |
-| Payments | Cash on Delivery + manual bKash/Nagad (existing flow). |
-| Customer login | **Phone + password**, email optional, **guest checkout kept**. SMS OTP can come later. |
-| Units | **Admin-managed** (kg, piece, packet and any future unit) in Dashboard → Catalog → Units. A database table, not a fixed list. |
-| Slugs | **English ASCII slug only.** Bangla lives in separate `…Bn` fields. See §6. |
-| Database | Assumed **fresh**. We reset to one new Prisma baseline migration (the old migrations are stale). |
-| **Distance origin** | **Kalibari Bazar, by the Kalibari High School field and Sonali Bank Kalibari.** Every delivery distance, and the 20 km service limit, is measured from this one point. |
-| Git | **One monorepo at `E:\bazar-shodai`** (server, frontend, dashboard, PLAN.md, brand assets). Fresh history. Remote `https://github.com/neyamat7/bazar-shodai.git`, branch `main`, everything pushed to `main`. See §16. |
-| Hosting | **Not now.** No VPS settings or deploy files in this work. Done later. |
-| Env files | Regenerate all secrets, fix dev paths, add the new variables. See §17. |
-| Plan file | Already copied to `E:\bazar-shodai\PLAN.md` (Phase 0, done). |
-
-## 3. Brand and theme (green)
-
-Logos: use the **new** pair you attached (they replace the earlier versions). They now include a **medicine capsule** in the cart:
-
-- Square mark with the name below (2000×2000): `...\images\7.png`.
-- Horizontal wordmark (2800×840): `...\images\8.png`.
-
-(Both are in the session's temp `images` folder.) During implementation they get copied into `frontend/public`, `dashboard/public` and `app/icon.png`, exported to webp, and used to make a favicon and PWA icons. The wide logo goes in headers and the dashboard sidebar, the square one on login pages, the favicon and PWA icons.
-
-Palette sampled from the logo (exact hex values are re-sampled from the files in Phase 1):
-
-| Token | Approx. | Use |
-|---|---|---|
-| Deep green (বাজার) | `#0B6234` | Header, headings, sidebar |
-| Fresh green (সদাই) | `#4DA32F` | Accents, active states |
-| CTA green | about `#3E9B2A` | Add-to-cart, primary buttons. Contrast with white text must be ≥ 4.5:1. |
-| Tomato red | `#E0261B` | Discounts, errors |
-| Carrot orange | `#F57C00` | Secondary highlights, badges |
-| Fish blue | `#1E88B5` | Info, links |
-| Background | soft off-white with a green tint | Page background |
-
-**How to change it**
-
-- **Storefront.** Colours live only in `frontend/app/globals.css`. `brand-orange` is used about 283 times and `brand-navy` about 31, so rename the tokens with a codemod instead of editing by hand:
-  - `brand-navy` → `brand-deep`
-  - `brand-orange` → `brand-fresh`
-  - `on-orange` → `on-fresh`
-- **Hardcoded values to fix:**
-  - `#1d6ac9` and `via-[#0b4d9c]` in `components/auth/AuthBits.tsx`, `AuthForm.tsx`, `components/account/ui.tsx`, `AccountShell.tsx`, `app/(account)/account/page.tsx`.
-  - Navy and orange `rgba(...)` shadows in `CartSidebar.tsx`, `ProductCard.tsx`, `CheckoutHeader.tsx`, `OrderReview.tsx`, `app/(checkout)/cart/page.tsx`, `app/not-found.tsx`.
-  - The `AuthModal.tsx` background gradient.
-  - `RobotMascot.tsx` (about 25 fills; recolour it, or replace it with the logo mark).
-  - Keep the bKash `#e2136e` and Nagad `#f6921e` brand colours.
-- **Dashboard.** Edit `dashboard/src/index.css` (`--color-navy-*` and `--color-orange-*` scales, `:root`/`.dark` variables). Then fix:
-  - `Sidebar.tsx` (`to-[#042a55]`, `text-navy-*`).
-  - `AuthShell.tsx` gradients and decorative capsules.
-  - `pages/dashboard/Dashboard.tsx` chart hexes (`PIE`, area and bar colours).
-  - `StatCard.tsx` `STROKE` map, `ui/badge.tsx` `brand`/`orange` variants.
-  - `pages/catalog/Banners.tsx` placeholder.
-- **Rebrand strings.** Replace "GadgetBachai", "RaizBD", "TechBD" and "RZ-" everywhere:
-  - Storefront: `app/layout.tsx` metadata, every page `generateMetadata` title, `BrandLogo.tsx`, `SiteFooter.tsx`, `AuthForm.tsx`, `ProductDetailClient.tsx`, `contact/page.tsx`, `lib/services/site.service.ts` fallback, `lib/api/mappers.ts:210`.
-  - Dashboard: `index.html`, `Sidebar.tsx`, `AuthShell.tsx`, `useLiveOrders.ts`, `AdminLayout.tsx` fallback URL, `ProductEditor.tsx` SEO preview.
-  - Server: `main.ts` Swagger, `app.service.ts`, `settings.types.ts` defaults (`TechBD`), `configuration.ts` `MAIL_FROM`, `.env.example`, `settings.dto.ts` examples.
-  - Order-number prefix `RZ-` → `BS-` (`common/orders/order-lifecycle.ts` and its Swagger examples).
-  - Also rename the `gb_*` localStorage keys and events to `bs_*`.
-  - Delete `frontend/demo/`, `public/window.svg`, and `server/test_output.txt`.
-- **Fonts.** Add a Bangla font (Hind Siliguri, or Noto Sans Bengali / Anek Bangla) via `next/font/google` with the `bengali` subset in `frontend/app/layout.tsx`. Keep Inter for Latin text. Add it to the dashboard CSS import too.
-
-## 4. Data model (Prisma) — `server/prisma/schema.prisma`
-
-Reset to a single baseline migration. Seed new grocery data (§11).
-
-**Remove** (unused or electronics-only): `SpecificationHeader/Item`, `CompareItem`, `Affiliate`, `Commission`, `AbandonedCartReminder`, `ShippingMethod/Zone/ZoneRate`, `SitePage`, `BlogPost`, `Redirect`, `AnalyticsEvent`, `SubCategory`, product warranty, and the courier/tracking and `shippingZone` fields on `Order`.
-
-**Change**
-
-| Model | Change |
-|---|---|
-| `Category` | One self-referencing tree with unlimited depth (screenshots need 3 levels). Add `nameBn`, `descriptionBn`. Slug stays ASCII. SubCategory rows migrate into it. |
-| `Product` | Add `nameBn`, `shortDescriptionBn`, `descriptionBn`. Add `unitId` (a link to the admin-managed `Unit` table, not a fixed list), `packSize` (e.g. "500 g"), `sellStep` and `minQty` (optional, they override the unit's defaults, e.g. 0.5 for fish), `isWeighed` (final weight may differ). `stock` becomes Decimal. Brand stays optional, hidden in the UI. |
-| `ProductVariant` | Becomes "pack options" (250 g / 500 g / 1 kg), with `nameBn`. |
-| `CartItem`, `OrderItem` | `quantity` → `Decimal(10,3)`. `OrderItem` adds `unitLabel` / `unitLabelBn` (a **snapshot** of the unit text at order time, so renaming a unit later never changes old orders or invoices), `orderedQty`, `finalQty`, `finalTotal` (set when the packer weighs the item). |
-| `Banner` | Add `titleBn` and bilingual text. |
-| `User` | Phone required and unique, email optional. Roles: `USER, STAFF, ADMIN, SUPER_ADMIN` (`MODERATOR` removed). Add `permissions String[]`, `canDeliver Boolean`, `staffTitle`, `isActive`. Keep `language`, default `bn`. |
-| `Address` | Add `placeName`, `placeNameBn`, `landmark`, `accuracyM`, `locationSource` (GPS / PIN / LINK), `locationCapturedAt`. |
-| `Order` | Add `deliveryLat/Lng` (snapshot), `deliveryDistanceKm`, `deliveryDurationSec`, `deliveryFee` (calculated), `deliveryFeeOverride`, `deliveryFeeOverrideReason`, `distanceEstimated`, `deliverySlot`, `deliveryDate`, `customerKey`. Statuses simplify to `PENDING, CONFIRMED, PACKING, OUT_FOR_DELIVERY, DELIVERED, CANCELLED, FAILED`. |
-
-**New models**
-
-| Model | Fields |
-|---|---|
-| `Unit` | **Admin-managed units of sale.** `code` (unique ASCII, e.g. `kg`), `name` / `nameBn` (Kilogram / কেজি), `shortLabel` / `shortLabelBn` (shown on cards, e.g. `kg` / `কেজি`), `allowDecimal` (true for kg and litre, false for piece and packet), `defaultStep` (0.5, 1 …), `defaultMinQty`, `isActive`, `displayOrder`. See the rules below this table. |
-| `CustomerLocation` | `userId?`, `deviceToken?`, `phone`, `lat`, `lng`, `accuracyM`, `placeName`, `source`, `capturedAt`, `consentAt`. Keeps recent history; the latest is the "saved location". |
-| `LocationRequest` | Share-link record: `token`, `phone?`, `name?`, `orderId?`, `status` (PENDING / SHARED / EXPIRED), `expiresAt`, shared `lat/lng`, `createdByStaffId`. |
-| `Delivery` | `orderId` (unique), `assigneeId`, `assignedById`, `status` (ASSIGNED, ACCEPTED, PICKED_UP, ON_THE_WAY, DELIVERED, FAILED, CANCELLED), `assignedAt`, `pickedUpAt`, `deliveredAt`, `failedReason`, `cashToCollect`, `cashCollected`, `cashHandedOverAt`, `proofUploadId?`, `distanceKm`, `customerKey`. |
-| `DeliveryEvent` | Append-only history of every delivery status change (who, when, note). |
-
-**Unit rules (admin can add units any time)**
-
-- Admin adds, edits, reorders and deactivates units in **Dashboard → Catalog → Units**. No developer or deploy is needed for a new unit such as বোতল (bottle), আঁটি (bundle) or হালি (set of 4).
-- A unit that products use **cannot be deleted**. It can only be **deactivated**, which hides it from new products but keeps old products and orders correct.
-- Editing a unit's label changes the storefront everywhere at once. Past orders and invoices keep the snapshot text.
-- `allowDecimal = false` makes the cart stepper whole numbers only (1, 2, 3). `allowDecimal = true` uses the step (for example 0.5 kg).
-- A product can override the unit's step and minimum (e.g. fish sold from 0.5 kg, rice from 1 kg).
-- No unit conversion (grams to kilograms). Each product is sold in one unit. If a product needs several sizes, use **pack options** (250 g / 500 g / 1 kg).
-- Every active unit is returned with the product data and cached with the home and settings data, so cards render without extra requests.
-
-**Counters.** `customerKey = userId ?? normalizedPhone`.
-
-- Total deliveries = `Delivery` rows with status `DELIVERED`.
-- Unique customers = `COUNT(DISTINCT customerKey)` over those rows.
-
-## 5. Delivery fee and service area
-
-**Settings (new `delivery` group in `settings.types.ts`, all editable in the dashboard)**
-
-- **Origin = Kalibari Bazar** (Kalibari High School field side / Sonali Bank Kalibari), stored as `originLat/originLng` plus a label in Bangla and English (কালীবাড়ী বাজার, হাই স্কুল মাঠ সংলগ্ন / সোনালী ব্যাংক কালীবাড়ী). The service-area centre defaults to this same point.
-- I don't have the exact coordinates, and guessing would put every fee off. So the seed leaves a placeholder, and the **admin drops the pin on the map once in Settings → Delivery** (satellite view helps find the school field). Until the pin is set, checkout stays disabled with a warning in the dashboard.
-- `serviceRadiusKm` = 20, measured from the origin.
-- `baseKm` = 2, `baseCharge` = 20, `perKmRate` = 10, `stepKm` = 1.
-- Minimum order amount, optional free-delivery threshold, delivery time slots, shop open/close hours and an on/off switch.
-
-**Formula** (server-authoritative; the client only previews)
-
-```
-d = round(roadDistanceKm, 2)
-fee = d <= baseKm ? baseCharge
-                  : baseCharge + perKmRate * ceil((d - baseKm) / stepKm)
-```
-
-| Distance | Fee |
-|---|---|
-| 0 – 2 km | ৳20 |
-| 2.01 – 3 km | ৳30 |
-| 3.01 – 4 km | ৳40 |
-| … | +৳10 per started km |
-| 19.01 – 20 km | ৳200 |
-
-- Rounding to 2 decimals before `ceil` avoids float glitches such as 2.0000001 → ৳30.
-- **Service-area check:** straight-line distance from the origin (Kalibari Bazar) must be ≤ `serviceRadiusKm`, otherwise checkout is blocked with a clear message. The fee uses **road distance from the same origin** to the customer pin.
-- **Fallback:** if routing fails, use straight line × 1.3 and set `distanceEstimated = true`. Admin sees a warning.
-- Admin can **override** the fee on an order. A reason is required and the change is logged.
-
-The rewrite goes in `server/src/customer/shipping/shipping.service.ts` (replacing the Dhaka zone logic), called from `checkout.service.ts` and `orders.service.ts`.
-
-> Note: 20 km is larger than Shahrasti upazila itself, so it reaches neighbouring upazilas. If you want exactly the upazila boundary, we can add a polygon check later.
-
-## 6. Bangla and English
-
-- **Library:** `next-intl` in the storefront. **Bangla is the default with no URL prefix**, English is `/en/...`. Routes move under `app/[locale]/`. This is a mechanical move of the route groups, but it touches many files.
-- **Slugs:** ASCII English only, identical in both languages (`/products/fresh-rui-fish` and `/en/products/fresh-rui-fish`). Bangla slugs become long encoded URLs that break when shared. So the answer to "do we need Bangla slugs?" is **no**: use separate `…Bn` fields.
-- **API:** returns both fields (`name`, `nameBn`). The frontend mapper picks one by locale, so the cache stays shared. If `…Bn` is empty it falls back to English.
-- **Formatting:** one central `lib/format.ts` replaces the ~25 inline `৳` sites and three `formatBDT` copies. It uses `bn-BD` for Bangla digits (৳ ৬,২৪৫) and `en-BD` for English.
-- **Language switch:** a toggle in the header, remembered per customer in a cookie and in `User.language`.
-- **Server texts:** order status labels, emails, invoice and notifications follow `User.language` or the order's language.
-- **Dashboard:** `react-i18next`, **Bangla default**, English toggle. New pages are written bilingual from day one. Old pages are translated in the final phase, starting with Orders, Deliveries and Staff.
-- **Admin entry:** the product and category forms get Bangla fields next to English ones. The Bangla name is required, and the English name is used for the slug. An optional "auto-fill Bangla" button (AI translate) is a later suggestion.
-
-## 7. Maps (switchable in admin settings)
-
-**Server module `server/src/common/maps/`**
-
-```
-interface MapProvider {
-  route(origin, dest): { meters, seconds, polyline }
-  reverseGeocode(lat, lng, lang): { placeName }
-  search(query): Place[]            // address search
-}
-```
-
-- `GoogleMapsProvider`: Routes API (Compute Routes) + Geocoding API.
-- `OsmProvider`: OpenRouteService for routes, Nominatim or the ORS geocoder for place names.
-- The active provider is read from the `maps` settings group, so the switch needs no redeploy.
-- Cache reverse-geocode results (coordinates rounded to ~5 decimals), compute the route **once per order** and store it on the order, and add a configurable **daily request cap** to protect the bill.
-
-**Settings → Maps tab (dashboard)**
-
-- Provider: `Google` or `OpenStreetMap`.
-- Google: a browser key (HTTP-referrer restricted, public) and a server key (secret, encrypted via `SECRET_FIELDS`).
-- OSM: tile URL, routing API key (secret).
-- A "Test connection" button and today's usage counter.
-- `GET /customer/settings` exposes only the public values (provider, browser key, tile URL), never the server keys.
-
-**Frontend `<MapView>`** (lazy-loaded with `next/dynamic`, so ordinary browsing never loads a map or costs anything):
-
-- `GoogleMapView` (`@vis.gl/react-google-maps`).
-- `OsmMapView` (MapLibre GL or Leaflet).
-- Both support: draggable pin, accuracy circle, route polyline, shop marker.
-
-**Navigation links are free.** Rider and admin buttons use `https://www.google.com/maps/dir/?api=1&destination=lat,lng`. This works in both provider modes and costs nothing.
-
-**Google billing (from Google's pricing page, March 2025 model, no $200 credit any more)**
-
-| Product | Free per month | After free (first tier) |
-|---|---|---|
-| Dynamic Maps (map loads) | 10,000 | $7.00 / 1,000 |
-| Geocoding (place name from coordinates) | 10,000 | $5.00 / 1,000 |
-| Routes: Compute Routes Essentials | 10,000 | $5.00 / 1,000 |
-| Routes: Compute Route Matrix Essentials | 10,000 | $5.00 / 1,000 |
-| Autocomplete (address search) | 10,000 | $2.83 / 1,000 |
-| Compute Routes Pro (traffic-aware) | 5,000 | $10.00 / 1,000 |
-
-Rough monthly estimates (mine, not Google's):
-
-- **About 100 orders/day:** every product stays under its free 10,000 → **$0**.
-- **About 500 orders/day:** about 20k map loads, 15k routes, 15k geocodes → roughly **$120/month** (about ৳14,000 at ৳120 per $).
-
-Volume discounts start above 100k calls. These estimates assume lazy-loaded maps, cached place names and one route per order. Prices can change, so verify them in the Google Cloud console before launch. A billing account is needed to activate the APIs.
-
-**OSM caveats:** the public tile and Nominatim servers forbid heavy use, so production needs a hosted tile provider (e.g. MapTiler or Stadia) or self-hosting. Village lanes and place names are patchier than Google's.
-
-## 8. Customer storefront (`frontend/`)
-
-**a. Categories and menu (screenshots 1, 3, 4)**
-
-- New `components/layout/CategoryTree.tsx`: accordion tree with chevrons, 3 levels, and the active path highlighted in brand green. It is a left rail on desktop and a drawer on mobile.
-- Update `CategorySidebar.tsx`, `CategoryNav.tsx` and `MobileMenu.tsx` to use it.
-- Special links at the top: Popular, Offers, New arrivals. Footer links: Help, Contact.
-- Data from a new `GET /customer/categories/tree` (cached).
-
-**b. Smaller category cards.** `components/home/CategoryGrid.tsx` becomes compact tiles: a round or square image of about 72–96 px with a 2-line label. 4 columns on mobile (or a horizontal scroller), up to 8 on desktop. No big gradient cards.
-
-**c. Smaller, simpler product card.** `components/product/ProductCard.tsx` (368 lines) is rewritten.
-
-- Layout: small square image, 2-line name, unit chip taken from the product's admin-managed unit (`১ কেজি` / `500 g` / `প্যাকেট` / `পিস` …), price with the old price struck through and a small `-%` badge, and the add button.
-- The add button becomes a `− qty +` stepper after the first add. Weighed items step by 0.5 kg.
-- Removed: compare, rating, "sold today", brand, rank tag, second-image hover swap.
-- Grid: 2 columns on mobile, 3 on tablet, 5–6 on desktop. Update `ProductGrid.tsx`, `SkeletonGrid.tsx`, `FeaturedProducts.tsx`, `BestSellingProducts.tsx`.
-- Products with pack options keep the small in-card picker.
-
-**d. Floating cart with animated total (screenshot 2)**
-
-- New `components/cart/FloatingCart.tsx`: fixed on the right edge, middle of the screen. It shows a bag icon, "20 items" and the ৳ total in a darker footer strip. Clicking opens the existing `CartSidebar` drawer (restyled green).
-- New `AnimatedNumber` component: counts from the old to the new total on each change (GSAP is already installed; respect `prefers-reduced-motion`). The widget also does a small bump when an item is added.
-- On mobile it becomes a bottom bar so it doesn't cover products. Move `ScrollToTop` out of its way.
-- The total comes from `CartContext.tsx` (`cartTotal`).
-
-**e. Remove compare entirely.** Delete: `app/(home)/compare/`, `components/compare/*`, `components/skeletons/CompareSkeleton.tsx`, `lib/context/CompareContext.tsx`, `lib/hooks/use-compare.ts`, `lib/compare-rows.ts`. Edit out references in `app/layout.tsx`, `ProductCard.tsx`, `ProductSummary.tsx`, `MobileMenu.tsx`, `NavigationGate.tsx`, `lib/hooks/index.ts`, `lib/types/index.ts`. Then grep `compare`, `GitCompareArrows`, `gb_compare`.
-
-**f. Checkout (`app/(checkout)/checkout/page.tsx`, `components/checkout/*`)**
-
-1. Details: name, phone, address text, landmark, note.
-2. **Location:** a "Share my current location" button, then a map with the pin, an accuracy circle and the place name shown live. The pin is draggable and there is an address search as a fallback. The delivery fee and distance update live in the order summary.
-3. Payment and review. **Confirm stays disabled until a location exists.**
-
-- The server re-validates the service area and recomputes the fee at `placeOrder`. It never trusts the client fee.
-- New hook `useGeolocation`: high accuracy, `watchPosition` for a few seconds to get under ~50 m, then stop. It handles denied permission, timeout and non-HTTPS (geolocation needs HTTPS), with clear Bangla and English instructions.
-- Saved to the DB on first share. Later orders prefill from it.
-
-**g. Public `/share-location` page (and `/l/<token>` links)**
-
-- A mobile-first page with one big "Share my location" button. It shows the place name and the estimated delivery fee, then confirms.
-- Staff generate a link from the dashboard ("Request location") and send it by WhatsApp or Messenger. This suits phone and Facebook orders.
-- Without a token it works as a public "Check my delivery charge" page.
-- Backend: `POST /customer/locations/share`, `POST /customer/location-requests/:token/submit`.
-
-**h. Saved location ("track after the browser closes")**
-
-- Stored in `CustomerLocation`, linked to the logged-in account, or to a `deviceToken` for guests.
-- Because there is no OTP, a guest's saved location is prefilled **by device token only**, not by typing a phone number. This stops someone from reading another person's location by entering their phone number.
-- Admin can always see it by phone or customer.
-- This remembers the **last location the customer chose to share**. It is not continuous background tracking. Browsers can't do that, and it would be a privacy problem. The page shows a consent line, and customers can delete their saved location in the account page.
-
-**i. Phone-first auth.** Signup and login by phone and password, email optional. Keep guest checkout and the existing "claim guest orders" flow. Phone validation helper already exists (`server/src/common/utils/phone.ts`).
-
-**j. Home and copy.** New hero banners, small category tiles, "Today's fresh", Offers. Search placeholder in Bangla ("মাছ, সবজি, ফল…"). Replace gadget copy.
-
-## 9. Admin dashboard (`dashboard/`)
-
-**a. Staff management — new `/staff` page**
-
-- List, create, edit and deactivate staff. Never hard-delete, to keep history. Reset password.
-- Fields: name, phone, email (optional), password, role preset, permission checkboxes, `canDeliver` toggle, active flag.
-- Presets: Admin, Manager, Packer, Rider, Order taker.
-- **Permissions** (strings): `orders.view`, `orders.manage`, `orders.assign`, `products.manage`, `inventory.manage`, `customers.view`, `delivery.perform`, `delivery.manage`, `reports.view`, `settings.manage`, `staff.manage`, `logs.view`. ADMIN and SUPER_ADMIN have all. Only SUPER_ADMIN can grant admin (existing rule kept).
-- **"Everyone can deliver":** `delivery.perform` is independent of role. A staff member, a manager or an admin can have it, and all of them appear in the "assign to" list, including "Assign to me".
-- Staff detail: activity timeline and delivery stats.
-
-**b. Permission enforcement**
-
-- Server: new `PermissionsGuard` and `@RequirePermissions()` decorator, replacing `@Roles(ADMIN, SUPER_ADMIN)` on the ~25 admin controllers. `jwt.strategy.ts` already loads the user on every request, so permission changes apply immediately.
-- Dashboard: a `can()` helper, menu filtering in `components/layout/menu.tsx`, and a route guard next to `components/shared/AuthGuard.tsx`. Today there are no role guards.
-
-**c. Deliveries**
-
-- `/deliveries` board: columns Unassigned, Assigned, On the way, Delivered, Failed. Filters by date and rider. Assign, reassign and bulk assign.
-- **Order detail:** map card with shop → customer route, distance and fee. "Override fee" dialog (reason required). Customer's place name. "Open navigation", call and WhatsApp buttons. "Request location" button.
-- **`/my-deliveries` rider view:** mobile-first. Today's assigned orders. Buttons step through Accept → Picked up → On the way → **Delivered** (confirm the cash collected, prefilled with the due amount, optional note and photo) or **Failed** (pick a reason).
-- Every press:
-  - Writes a `DeliveryEvent`.
-  - Writes an explicit activity-log entry (`delivery.delivered` etc., with the actor).
-  - Updates the order status (existing COD-paid-on-delivery rule is reused).
-  - Notifies the customer.
-
-**d. Statistics (dashboard cards)**
-
-- **Total deliveries done**, and **unique customers delivered to**.
-- Repeat-customer %, average delivery time, pending today, COD still to collect.
-- Per-rider leaderboard.
-- New endpoint `GET /admin/deliveries/stats`, built on `Delivery` and `customerKey`.
-
-**e. Activity logs.** The existing middleware already logs every request. Add explicit semantic events for delivery steps, staff changes, location shares, fee overrides and settings changes. Add a filter by staff and an activity timeline on staff and order detail pages. Logs stay append-only. Translate action labels into Bangla and English.
-
-**f. Settings.** New tabs **Delivery** and **Maps**.
-
-- Delivery tab: drop the **Kalibari Bazar origin pin** on a map (with satellite view), a 20 km radius circle preview, the rates, minimum order, slots, hours, and a "click the map to preview the fee" tool. The service centre can optionally be set separately from the origin.
-- Maps tab: the provider switch described in §7.
-
-**g. Catalog admin**
-
-- Product editor: Bangla fields, **unit picker (with a "+ Add new unit" shortcut that opens the unit form)**, optional step and minimum, pack options.
-- **New `/units` page** (Catalog menu): list, add, edit, reorder (drag), deactivate. Form fields: code, name (English and Bangla), short label (English and Bangla), "allow decimals" switch, default step, default minimum. Shows how many products use each unit. Needs `products.manage`.
-- **Bulk daily price and stock sheet.** Fish and vegetable prices change every day, so this saves a lot of time.
-- Category page becomes a nestable drag-and-drop tree (`@dnd-kit` is already installed). Brands moves out of the main menu.
-
-**h. Other**
-
-- Phone-order create page: add location request and map pin, with automatic fee.
-- Customer detail: last shared location on a map, delivered count.
-- Reports: add delivery per rider, per day, and COD reconciliation.
-- Dashboard rebrand and Bangla toggle (§3, §6).
-
-## 10. Server work (`server/src/`)
-
-| Area | Change |
-|---|---|
-| `common/maps/` (new) | `MapProvider`, Google and OSM implementations, cache, daily cap |
-| `customer/shipping/` | Distance-based fee (replace Dhaka zones), service-area check |
-| `customer/checkout/`, `customer/orders/` | Fee and location validation, decimal quantities, delivery slot |
-| `customer/locations/` (new share endpoints) | `share`, `location-requests/:token`, saved location read and delete |
-| `admin/staff/` (new) | CRUD, permissions, deactivate, reset password |
-| `admin/deliveries/` (new) + `customer` tracking | Assign, status steps, stats, cash handover |
-| `common/guards/` | `PermissionsGuard`, `@RequirePermissions()` |
-| `common/settings/settings.types.ts` | Add `delivery` and `maps` groups, update defaults |
-| `common/inventory/stock.service.ts`, cart, invoice, reports | Decimal quantity support |
-| `admin/category/`, `customer/categories/` | Tree API; remove `sub-category` modules |
-| `admin/units/` (new) + `customer` read | Unit CRUD, reorder, deactivate (delete blocked while in use), activity-logged. Active units included in the customer product and settings data. |
-| `admin/product/` | Bangla fields, `unitId`, optional step and minimum, bulk price/stock endpoint. Validates that quantity rules fit the unit (`allowDecimal`, step). |
-| `common/activity/` | Explicit delivery, staff and location events |
-| `prisma/seed.ts` | Grocery category tree (Bangla and English) and sample products; first admin |
-| Cleanup | Remove CompareItem/PC-builder/spec code and unused models; document `REVALIDATE_SECRET` and `API_KEY` in `.env.example` |
-
-## 11. Seed data (grocery)
-
-Category tree with Bangla names, for example: খাদ্য → ফল ও সবজি → তাজা সবজি / তাজা ফল; মাছ; মাংস; ডিম ও দুগ্ধজাত; চাল-ডাল-তেল-মসলা; পানীয়; শিশুদের পণ্য; ব্যক্তিগত পরিচর্যা; ঘরের সামগ্রী; ওষুধ ও স্বাস্থ্য (the new logo shows a medicine capsule). Plus a **starter list of units** (admin can change or add more any time): kg / কেজি, gram / গ্রাম, litre / লিটার, ml / মি.লি., piece / পিস, dozen / ডজন, hali (4 pcs) / হালি, packet / প্যাকেট, bundle / আঁটি, bottle / বোতল, box / বক্স, can / কৌটা. Then about 30 demo products using them with steps, and a seeded SUPER_ADMIN.
-
-## 12. Suggestions (best additions)
-
-**Included in the phases above**
-
-- Weight-based items with a final-weight step. The packer weighs the fish and the bill adjusts. The existing order-item editor is reused.
-- Item notes ("clean and cut the fish") and a "reorder last order" button.
-- Delivery time slots, minimum order amount, shop open/closed switch.
-- Bulk daily price and stock sheet.
-- WhatsApp order button and click-to-call in the header and footer.
-- Live new-order sound for staff (`dashboard/src/hooks/useLiveOrders.ts` exists).
-- Printable order slip with a QR link to the location.
-
-**Recommended next** (not in the first release, each needs an extra service)
-
-- SMS OTP login and order SMS (needs a Bangladesh SMS gateway; small per-SMS cost).
-- Delivery OTP confirmation, so a rider can't mark an order delivered wrongly.
-- Installable app (PWA) and web push notifications for riders.
-- Rider live location **while on duty only**, with opt-in.
-- Cash handover and settlement per rider.
-- Auto-suggest the nearest rider, and batch nearby orders into one route.
-- Order heat-map by area, and substitution preferences ("if out of stock…").
-- AI "auto-fill Bangla" for product names.
-
-**Risks to handle**
-
-- If you sell **medicine** (the logo suggests so), Bangladesh requires a pharmacy/drug licence from the drug authority. Please confirm the rules before launch. We can restrict that category to OTC items or add a "prescription needed" flag.
-- The origin pin must be dropped accurately once; every fee depends on it.
-- Product images upload to local disk. That is fine for development; decide where they live (persistent disk or object storage) when we plan deployment.
-- Geolocation requires HTTPS and can be inaccurate indoors, hence the draggable pin.
-- The old migrations are stale, so we reset the baseline.
-- Order numbers change prefix, so old `RZ-` numbers (if any) still need to be found by exact match.
-
-## 13. Phases
-
-| Phase | Scope |
-|---|---|
-| 0 | **Done:** plan copied to `E:\bazar-shodai\PLAN.md`, logos copied to `assets/brand/`. Nothing in git was changed. |
-| 0b | Git and env (§16, §17): `git init -b main` at the root, add the remote `https://github.com/neyamat7/bazar-shodai.git`, root `.gitignore`/README/package.json, rewrite all three `.env.example` files, regenerate secrets, fix dev paths, first commit, push to `main`. |
-| 1 | **Done.** Rebrand, green theme, compare and electronics-only code removed (specs, warranty, in-the-box, EMI, GraphQL, unused models), new Prisma baseline and grocery seed. Left for later phases: the SubCategory-to-tree change (Phase 3), the courier/tracking and shipping-zone fields on Order (Phases 4 and 5), and the shipping-zone setting (Phase 4). |
-| 2 | **Done.** Bangla (default, no URL prefix) and English (`/en`) across the whole storefront with next-intl, self-hosted Bangla font, central formatters (Bangla digits ৳ ৬,২৪৫), server texts (emails, invoice, notifications) in both languages, API errors shown in the page language, phone-first accounts (phone + password, email optional, guest checkout kept, admin temporary password for customers without email). Checkout address form uses location flow; contact form supports phone-first with optional email. |
-| 3 | **Done.** Category tree of any depth (sub-categories moved into one tree), admin-managed Units (add, edit, reorder, switch off; delete only when unused), decimal quantities with the unit step and minimum enforced by the server, Bangla fields in the product and category forms, daily price and stock sheet, small category tiles, small product cards with a quantity stepper, animated floating cart, tree drawer with Popular / Offers / New arrivals. Dedicated Packer Final-Weight Screen (`PackerWeightDialog`) with real-time scale inputs, difference calculations, and order total recalculation. |
-| 4 | **Done.** Map service switchable in Settings → Maps (OpenStreetMap + OpenRouteService, or Google; keys stored encrypted, daily limit, test button), delivery charge by road distance from the Kalibari Bazar pin (`23.2452, 90.9422` seeded and active) (Settings → Delivery: pin on a satellite map, radius circle, rates, minimum order, slots, hours, shop open switch, fee preview), service-area limit, share-my-location and drop-a-pin picker, saved location per account or device (with delete), saved-address form in account page updated to GPS/landmark flow, `/share-location` and `/l/<token>` links the shop sends, 4-step checkout, order page map with route, distance and charge override (reason logged), request-location and move-pin, phone orders with a pin, last shared location on the customer page. |
-| 5 | **Done.** Staff with a permissions list (Manager, Packer, Rider, Order taker presets; admins can do everything; only a super admin makes admins), checked on every staff-facing page and API call; anyone of any role can be switched to "can deliver". Staff page (add, change, deactivate, temporary password, activity timeline), delivery board (waiting, given, on the way, delivered, failed; give to a rider, move, take back, "give to me"), mobile rider screen (accept, picked up, on the way, delivered with cash taken, could not deliver with a reason), cash handover from riders, delivery statistics (total deliveries, different customers, came-back %, average time, per-rider numbers, per-day chart), rider card on the order page, rider name and phone for the customer once the parcel is with them, explicit activity-log and audit events. Left for later: the dashboard is still English (Phase 6); coupons, banners, reviews, support and newsletter pages stay admin-only. |
-| 6 | **Done (first release).** The dashboard speaks Bangla (the default) with an English switch (বাং | EN, remembered; Bangla digits, dates and taka), Bangla font, and the shell, sign-in, dashboard home, orders, order page, phone orders, deliveries, rider screen, staff, customers, reports and the delivery and map settings translated; a text that has no Bangla yet shows in English. New reports: deliveries per rider, deliveries per day and cash-on-delivery reconciliation (screen, CSV, Excel). Tests: dictionary checks (every {{value}} kept), language switch, access rules, permissions guard, delivery sync, fee table. Not translated yet: catalog pages (products, categories, units, brands, banners, media), coupons, reviews, support, contact, newsletter, back in stock, inventory, the product editor, the audit and activity log pages and the remaining settings tabs. Deployment is a separate, later job. |
-
-## 14. Verification
-
-- **Unit tests** (server and frontend already have Jest): fee table (0.5, 2.0, 2.01, 3.0, 3.01, 19.5, 20, 20.1), rounding edge cases, radius check, provider fallback, decimal stock, permission guard (403 without permission), unique-customer counting, unit rules (delete blocked while in use, deactivate hides it from new products, `allowDecimal=false` rejects 1.5, label change leaves old order snapshots untouched).
-- **Units by hand:** in the dashboard add a new unit (e.g. বোতল), create a product with it, see it on the storefront card in both languages, order it, then rename the unit and confirm the old order still shows the old text.
-- **Run:** `server` → `npm run start:dev` (port 8000, Swagger at `/docs`), `frontend` → `npm run dev`, `dashboard` → `npm run dev`. Run `npm run validate` in `frontend` and `npm run build` in `dashboard` and `server`.
-- **End-to-end by hand:**
-  1. Add items → floating cart total animates.
-  2. Checkout → share location → place name and fee appear → Confirm enabled.
-  3. A point beyond 20 km is blocked.
-  4. Admin sees the pin, route and fee, overrides the fee (logged).
-  5. Assign to a staff member who is also a rider.
-  6. The rider marks delivered with cash collected.
-  7. Dashboard counters (total deliveries, unique customers) update; activity log shows each step.
-  8. Switch Maps provider Google ↔ OSM in Settings and repeat steps 2–3.
-  9. Toggle Bangla/English: digits, names, slugs unchanged.
-  10. Close and reopen the browser: saved location prefilled.
-- Test geolocation on a real phone over HTTPS, and run a mobile Lighthouse pass.
-- Grep the repo for old brand names, `RZ-`, `gb_`, `compare`, `navy` and `orange`.
-
-## 16. Git (monorepo)
-
-**Why a monorepo.** Almost every feature here crosses all three apps (schema → API → storefront → dashboard). One repo means one commit and one review per feature, and `PLAN.md` and the brand assets have a natural home. The three apps keep their own `package.json` and `node_modules` (no workspaces, to avoid dependency-hoisting surprises).
-
-**Remote:** `https://github.com/neyamat7/bazar-shodai.git`. Everything goes on the **`main`** branch.
-
-**VPS / deployment settings are out of scope for now.** No `deploy/` folder, Nginx, PM2 or `DEPLOY.md` in this work. We do that later. The one thing to remember for then: phone GPS needs HTTPS.
-
-**Git steps (Phase 0b)**
-
-1. `git init -b main` at `E:\bazar-shodai`.
-2. Root `.gitignore`: `node_modules`, `dist`, `.next`, `.swc`, all `.env*` except `.env.example`, `uploads/`, `*.log`, `*.tsbuildinfo`, `server/test_output.txt`. (Note: `frontend/.gitignore` currently uses `.env*`, which also hides `.env.example`; add `!.env.example`.)
-3. Root `package.json`: rename to `bazar-shodai`, remove the old `raizzbd` repo and bugs URLs and the husky `prepare` script. The `.husky` folders are already deleted, so also remove `prepare: husky` and the husky/lint-staged dev dependencies from each app's `package.json`. Hooks can be re-added later if wanted.
-4. Root `README.md`: project summary, folder map, how to run each app, link to `PLAN.md`.
-5. Before the first commit, check with `git status` that no `.env` file, key or `node_modules` is staged (the DB password and secrets must never be committed). First commit: "Initial commit: Bazar Shodai base (from existing codebase)".
-6. `git remote add origin https://github.com/neyamat7/bazar-shodai.git`, then `git push -u origin main`. If the GitHub repo is not empty (for example it has a README), I stop and ask you before touching it. I will not force-push.
-7. From then on, finished work is committed and pushed to `main`, one commit per step, as you asked.
-
-## 17. Environment files
-
-**Findings from the current files** (values not shown; secrets checked by length only)
-
-- Secrets are long (64 and 48 characters). I can't tell if they were copied from the old project, and it costs nothing to replace them on a fresh database. **Regenerate all of them.**
-- `UPLOAD_DIR=/var/data/uploads` is a Linux path and will not work on your Windows machine. Use `./uploads` in dev.
-- `UPLOADS_PUBLIC_URL=https://api.example.com` makes every uploaded image URL point to a site that doesn't exist. Use `http://localhost:8000` in dev.
-- `API_KEY` is empty and its guard is not used. `NEXT_PUBLIC_USE_MOCK_API` is not read by any code. Remove both.
-- `REVALIDATE_SECRET` is used by the server but missing from `server/.env.example`. Add it. It must be the **same value** in the server and the storefront.
-- `MAIL_FROM` is already "Bazar-Shodai". Change the placeholder domain once you have one.
-- Neon's pooled connection can break `prisma migrate`. Add an optional `DATABASE_URL_DIRECT`, used by `prisma.config.ts` for migrations and falling back to `DATABASE_URL`.
-
-**Secrets.** I generate fresh random values with Node (`crypto.randomBytes(48).toString('hex')`) and write them straight into the real, git-ignored `.env` files. I don't print them in chat. All of these must differ from each other: `JWT_SECRET`, `JWT_SECRET_REFRESH`, `SETTINGS_ENCRYPTION_KEY`, `ADMIN_SEED_SECRET`, `REVALIDATE_SECRET`. Changing `SETTINGS_ENCRYPTION_KEY` later forces re-entering stored SMTP/API secrets, which is fine now.
-
-**`server/.env` and `server/.env.example`**
-
-The "Production" column is only a reminder for later. We set only the **dev** values now.
-
-| Variable | Dev value | Production (later) | Notes |
-|---|---|---|---|
-| `NODE_ENV` | `development` | `production` | |
-| `PORT`, `API_PREFIX` | `8000`, `api` | same | |
-| `TRUST_PROXY` | `1` | `1` | Number of proxies in front |
-| `TZ` | `Asia/Dhaka` | `Asia/Dhaka` | **New.** Order numbers and reports use Bangladesh days |
-| `DATABASE_URL` | new Neon URL | Neon or local Postgres | Rotate the Neon password (it was shown in this session) |
-| `DATABASE_URL_DIRECT` | optional | optional | **New.** Non-pooled URL for migrations |
-| `JWT_SECRET`, `JWT_SECRET_REFRESH`, `JWT_EXPIRES_IN` | fresh random, `1d` | fresh random | |
-| `SETTINGS_ENCRYPTION_KEY` | fresh random | fresh random | |
-| `ADMIN_SEED_SECRET` | fresh random | fresh random | Remove after first admin exists |
-| `REVALIDATE_SECRET` | fresh random | same as storefront | **Added** to the example file |
-| `CORS_ORIGINS`, `FRONTEND_URL`, `ADMIN_URL` | localhost 3000 / 5173 | `https://bazarshodai.com`, `https://admin.bazarshodai.com` | No trailing slash |
-| `RESET_PASSWORD_PATH`, `ADMIN_RESET_PASSWORD_PATH`, `PASSWORD_RESET_TTL_MINUTES` | unchanged | unchanged | |
-| `MAIL_HOST/PORT/SECURE/USER/PASS`, `MAIL_FROM` | blank, `"Bazar Shodai <no-reply@yourdomain>"` | real SMTP | Also editable in Settings → Email |
-| `UPLOAD_DIR` | `./uploads` | `/var/www/bazar-shodai/uploads` | Fix |
-| `UPLOADS_PUBLIC_URL` | `http://localhost:8000` | `https://api.bazarshodai.com` | Fix |
-| `UPLOAD_CLEANUP_INTERVAL_MS`, `UPLOAD_UNATTACHED_TTL_MS` | defaults | defaults | |
-| `THROTTLE_TTL`, `THROTTLE_LIMIT` | `60`, `60` | same | |
-| `SWAGGER_ENABLED`, `GRAPHQL_*` | `true` in dev | `false` | |
-| `ACTIVITY_LOG_*` | `365` / `30` / `false` | same | |
-| `SEED_SUPERADMIN_NAME`, `_PHONE`, `_EMAIL` (optional), `_PASSWORD` | yours | yours | **New.** Used only by `prisma db seed` to create the first Super Admin. Remove after seeding. |
-| `LOCATION_LINK_TTL_HOURS` | `24` | `24` | **New.** Lifetime of "share your location" links |
-| `MAPS_PROVIDER` | `osm` | `osm` or `google` | **New.** Starting value only. After first start, the dashboard setting wins |
-| `GOOGLE_MAPS_SERVER_KEY`, `GOOGLE_MAPS_BROWSER_KEY` | blank | blank | **New**, optional. Normally entered in Dashboard → Settings → Maps and stored encrypted. Env is only a starting fallback |
-| `ORS_API_KEY`, `OSM_TILE_URL`, `OSM_CONTACT_EMAIL` | blank | set | **New**, optional. OpenRouteService key, tile server URL, and a contact email Nominatim requires in its User-Agent |
-| `SMS_PROVIDER`, `SMS_API_KEY`, `SMS_SENDER_ID` | commented out | commented out | **New**, placeholders for later SMS OTP |
-| `DISCOUNT_SCHEDULER_INTERVAL_MS`, `BACK_IN_STOCK_INTERVAL_MS` | commented out | commented out | |
-| ~~`API_KEY`~~ | remove | remove | Unused |
-
-Delivery rates, the Kalibari Bazar origin and the radius are **not** in env. They are dashboard settings, so there is one source of truth and no redeploy to change them.
-
-**`frontend/.env.local` and `.env.example`**
-
-| Variable | Dev | Production |
-|---|---|---|
-| `NEXT_PUBLIC_API_URL` | `http://localhost:8000/api` | `https://api.bazarshodai.com/api` |
-| `NEXT_PUBLIC_SITE_URL` | `http://localhost:3000` | `https://bazarshodai.com`. **New.** Canonical URL for metadata, sitemap, Open Graph and location-share links |
-| `REVALIDATE_SECRET` | same as server | same as server |
-| ~~`NEXT_PUBLIC_USE_MOCK_API`~~ | remove | remove |
-
-**`dashboard/.env` and `.env.example`**
-
-| Variable | Dev | Production |
-|---|---|---|
-| `VITE_API_URL` | `http://localhost:8000/api` | `https://api.bazarshodai.com/api` |
-| `VITE_PUBLIC_SITE_URL` | `http://localhost:3000` | `https://bazarshodai.com` |
-
-Map keys reach the browsers through `GET /customer/settings` from the Maps tab. So the storefront and dashboard need **no** Google or OSM variables.
-
-**Other server cleanup (recommended in Phase 1):** remove the legacy GraphQL layer (only `auth.resolver`, `ping.resolver` and one activity resolver use it), with `@nestjs/graphql`, `@nestjs/apollo`, `@apollo/server`, `apollo-server-core`, `@as-integrations/express5`, and the stray `jwt-service`, `config` and `@types/joi` packages. This also drops the three `GRAPHQL_*` variables.
-
-**Verification for this step:** start the server and confirm it boots with the new `.env` (`npm run start:dev`, then `GET /api/ping`). Confirm `git status` shows no `.env` files. Confirm `NEXT_PUBLIC_API_URL` and `VITE_API_URL` reach the API. Confirm an uploaded image URL opens at `http://localhost:8000/uploads/...`.
-
-## 15. Critical files
-
-- Server: `prisma/schema.prisma`, `src/common/settings/settings.types.ts`, `src/customer/shipping/shipping.service.ts`, `src/customer/checkout/checkout.service.ts`, `src/customer/orders/orders.service.ts`, `src/common/inventory/stock.service.ts`, `src/common/guards/`, `src/main.ts`.
-- Storefront: `app/globals.css`, `app/layout.tsx`, `components/product/ProductCard.tsx`, `components/layout/CategorySidebar.tsx`, `components/home/CategoryGrid.tsx`, `components/cart/CartSidebar.tsx`, `lib/context/CartContext.tsx`, `app/(checkout)/checkout/page.tsx`, `lib/api/client.ts`, `lib/services/site.service.ts`.
-- Dashboard: `src/index.css`, `src/router.tsx`, `src/components/layout/menu.tsx`, `src/components/layout/Sidebar.tsx`, `src/pages/settings/Settings.tsx`, `src/pages/orders/OrderDetail.tsx`, `src/pages/dashboard/Dashboard.tsx`, `src/api/client.ts`.
+# PLAN.md: Master Implementation Plan for Bazar Shodai Mobile App
+
+## 1. Project Overview & Architecture Blueprint
+
+- **Target Platforms**: Android First, iOS Ready.
+- **Directory**: `bazar-shodai-app` (standalone project isolated from backend, frontend, and dashboard).
+- **Architecture Strategy**: Dual-Mode Mobile App:
+  1. **Customer Storefront (Default)**: Full retail catalog, prescription upload, cart synchronization, GPS location sharing, bKash/Nagad/Rocket/COD checkout, live tracking, returns, loyalty rewards, and customer care.
+  2. **Delivery Rider Portal (Role-Gated)**: Assigned delivery queue, 1-tap customer call, GPS turn-by-turn navigation via Google Maps / Apple Maps, live delivery status transitions, and cash reconciliation.
+- **Core Stack**:
+  - Expo SDK 52+ with React Native New Architecture & Hermes engine
+  - Expo Router v4 (file-based navigation with native tabs & stack modaling)
+  - NativeWind v4 (Tailwind CSS v3/v4 compiler with direct 1:1 token reuse from web storefront)
+  - TanStack Query v5 (server cache, optimistic mutations, offline persistence)
+  - Zustand v5 (client UI state: cart, guest token, auth, theme, active filters)
+  - FlashList by Shopify (60fps recycling list engine)
+  - React Native Reanimated v3 + React Native Gesture Handler v2
+  - MMKV (fast key-value storage for cart/cache) + Expo Secure Store (JWT tokens)
+  - Axios with automated token refresh rotation & retry interceptors
+  - Expo Location, Expo Image, Expo Haptics, Expo Notifications
+
+---
+
+## Milestone 1: Project Initialization & Monorepo Isolation (Phases 1-6)
+
+### Phase 1: Expo App Initialization
+- **Goal**: Initialize the standalone Expo project with TypeScript template in strict mode.
+- **Files**: `bazar-shodai-app/package.json`, `bazar-shodai-app/tsconfig.json`, `bazar-shodai-app/app.json`
+- **API**: None.
+- **Acceptance Criteria**: Expo app runs via `npx expo start` with 0 TypeScript errors.
+- **Dependencies**: None.
+- **Status**: [ ] Not started
+
+### Phase 2: Strict TypeScript & Path Aliases
+- **Goal**: Configure path aliases (`@/*` pointing to `./src/*`) and strict type checking rules.
+- **Files**: `bazar-shodai-app/tsconfig.json`, `bazar-shodai-app/babel.config.js`
+- **API**: None.
+- **Acceptance Criteria**: Absolute imports like `@/components/ui/Button` resolve cleanly.
+- **Dependencies**: Phase 1.
+- **Status**: [ ] Not started
+
+### Phase 3: ESLint, Prettier & Git Ignore Configuration
+- **Goal**: Establish deterministic code style, formatting, and ignore rules.
+- **Files**: `bazar-shodai-app/.eslintrc.js`, `bazar-shodai-app/.prettierrc`, `bazar-shodai-app/.gitignore`
+- **API**: None.
+- **Acceptance Criteria**: `npm run lint` passes with 0 warnings.
+- **Dependencies**: Phase 2.
+- **Status**: [ ] Not started
+
+### Phase 4: Environment Variables Setup (`.env`)
+- **Goal**: Configure environment support for dev, staging, and production API base URLs.
+- **Files**: `bazar-shodai-app/src/config/env.ts`, `bazar-shodai-app/.env.example`
+- **API**: None.
+- **Acceptance Criteria**: Typed `ENV.API_BASE_URL` validates using Zod at app launch.
+- **Dependencies**: Phase 1.
+- **Status**: [ ] Not started
+
+### Phase 5: New Architecture & Hermes Verification
+- **Goal**: Verify React Native New Architecture (Fabric + TurboModules) and Hermes engine enabled.
+- **Files**: `bazar-shodai-app/app.json`
+- **API**: None.
+- **Acceptance Criteria**: App config has `newArchEnabled: true` and `jsEngine: "hermes"`.
+- **Dependencies**: Phase 1.
+- **Status**: [ ] Not started
+
+### Phase 6: Folder Structure Scaffolding
+- **Goal**: Establish the standard enterprise feature-based directory structure.
+- **Files**: `bazar-shodai-app/src/{api,assets,components,config,constants,features,hooks,navigation,store,types,utils}`
+- **API**: None.
+- **Acceptance Criteria**: Clean directory layout matching architecture guidelines.
+- **Dependencies**: Phase 1.
+- **Status**: [ ] Not started
+
+---
+
+## Milestone 2: Design Tokens, Theme & NativeWind Setup (Phases 7-12)
+
+### Phase 7: NativeWind v4 Installation & Configuration
+- **Goal**: Install and configure NativeWind v4 with Tailwind CSS compiler and Metro plugins.
+- **Files**: `bazar-shodai-app/tailwind.config.js`, `bazar-shodai-app/metro.config.js`, `bazar-shodai-app/global.css`
+- **API**: None.
+- **Acceptance Criteria**: Test component renders styled with Tailwind utility classes.
+- **Dependencies**: Phase 6.
+- **Status**: [ ] Not started
+
+### Phase 8: Color Tokens Porting from Web Storefront
+- **Goal**: Port exact web color tokens (`brand-fresh`, `brand-charcoal`, `primary`, `secondary`, `card`, `border`) into mobile theme.
+- **Files**: `bazar-shodai-app/src/constants/colors.ts`, `bazar-shodai-app/tailwind.config.js`
+- **API**: None.
+- **Acceptance Criteria**: Color palettes match `frontend/tailwind.config.ts` 1:1.
+- **Dependencies**: Phase 7.
+- **Status**: [ ] Not started
+
+### Phase 9: Typography & Font Scaling System
+- **Goal**: Configure Outfit and Inter font families with accessibility-aware dynamic font scaling.
+- **Files**: `bazar-shodai-app/src/constants/typography.ts`, `bazar-shodai-app/src/hooks/useFonts.ts`
+- **API**: None.
+- **Acceptance Criteria**: Fonts load via `expo-font` before splash screen dismisses.
+- **Dependencies**: Phase 8.
+- **Status**: [ ] Not started
+
+### Phase 10: Dark Mode Theme Provider
+- **Goal**: Implement system-preference dark mode with manual toggle (Light / Dark / System).
+- **Files**: `bazar-shodai-app/src/store/useThemeStore.ts`, `bazar-shodai-app/src/components/theme/ThemeProvider.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Dark mode toggles instantly without layout flicker.
+- **Dependencies**: Phase 8.
+- **Status**: [ ] Not started
+
+### Phase 11: Spacing, Radius & Elevation Tokens
+- **Goal**: Standardize touch target dimensions (min 44px), border radii, and native Android elevation shadows.
+- **Files**: `bazar-shodai-app/src/constants/layout.ts`
+- **API**: None.
+- **Acceptance Criteria**: Reusable layout constants exported and typed.
+- **Dependencies**: Phase 8.
+- **Status**: [ ] Not started
+
+### Phase 12: Splash Screen & App Icon Branding
+- **Goal**: Configure native splash screen with logo and color-matched Android adaptive icons.
+- **Files**: `bazar-shodai-app/assets/icon.png`, `bazar-shodai-app/assets/splash.png`, `bazar-shodai-app/app.json`
+- **API**: None.
+- **Acceptance Criteria**: Smooth transition from OS boot to React Native mount.
+- **Dependencies**: Phase 9.
+- **Status**: [ ] Not started
+
+---
+
+## Milestone 3: Core Storage, Security & Network Architecture (Phases 13-19)
+
+### Phase 13: MMKV Fast Key-Value Storage
+- **Goal**: Setup `react-native-mmkv` for synchronous, ultra-fast client state persistence.
+- **Files**: `bazar-shodai-app/src/utils/storage.ts`
+- **API**: None.
+- **Acceptance Criteria**: Read/write benchmarks execute in <1ms without async delay.
+- **Dependencies**: Phase 6.
+- **Status**: [ ] Not started
+
+### Phase 14: Secure Token Vault (Expo Secure Store)
+- **Goal**: Setup hardware-backed encrypted storage for customer JWT access & refresh tokens.
+- **Files**: `bazar-shodai-app/src/utils/secureStore.ts`
+- **API**: None.
+- **Acceptance Criteria**: Tokens encrypted on device Keystore/Keychain.
+- **Dependencies**: Phase 6.
+- **Status**: [ ] Not started
+
+### Phase 15: Guest Token UUID Engine
+- **Goal**: Implement persistent device UUID generator for anonymous guest shopping cart and location tracking.
+- **Files**: `bazar-shodai-app/src/utils/guestToken.ts`
+- **API**: None.
+- **Acceptance Criteria**: Guest token persists across app restarts and attaches to `X-Guest-Token` header.
+- **Dependencies**: Phase 13.
+- **Status**: [ ] Not started
+
+### Phase 16: Axios Network Client & Interceptors
+- **Goal**: Create configured Axios instance with base URL, timeout, and automatic header injection.
+- **Files**: `bazar-shodai-app/src/api/client.ts`
+- **API**: `GET /ping`
+- **Acceptance Criteria**: Requests automatically attach `Authorization: Bearer <token>` and `X-Guest-Token`.
+- **Dependencies**: Phases 14, 15.
+- **Status**: [ ] Not started
+
+### Phase 17: Silent Token Refresh & Queue Interceptor
+- **Goal**: Handle 401 Unauthorized by executing `POST /customer/auth/refresh` and replaying queued requests.
+- **Files**: `bazar-shodai-app/src/api/interceptors.ts`
+- **API**: `POST /customer/auth/refresh`
+- **Acceptance Criteria**: Seamless token renewal without kicking active users to login screen.
+- **Dependencies**: Phase 16.
+- **Status**: [ ] Not started
+
+### Phase 18: TanStack Query v5 Setup & Offline Persistence
+- **Goal**: Initialize `QueryClient` with exponential backoff retry and MMKV hydration.
+- **Files**: `bazar-shodai-app/src/api/queryClient.ts`, `bazar-shodai-app/src/components/providers/QueryProvider.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Cached queries rehydrate instantly when app is launched offline.
+- **Dependencies**: Phase 13.
+- **Status**: [ ] Not started
+
+### Phase 19: Global API Error & Network Banner Handler
+- **Goal**: Standardize error normalization (validation errors, 500 server errors, offline state banner).
+- **Files**: `bazar-shodai-app/src/api/errorHandler.ts`, `bazar-shodai-app/src/components/ui/NetworkBanner.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Shows smooth offline pill when device loses internet connectivity.
+- **Dependencies**: Phase 16.
+- **Status**: [ ] Not started
+
+---
+
+## Milestone 4: Design System Primitives & UI Atoms (Phases 20-33)
+
+### Phase 20: Accessible Button Atom
+- **Goal**: Create primary, secondary, outline, ghost, and danger buttons with loading spinner and haptics.
+- **Files**: `bazar-shodai-app/src/components/ui/Button.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Supports disabled state, size variants, minimum 44px touch target, and active press scale animation.
+- **Dependencies**: Phase 8.
+- **Status**: [ ] Not started
+
+### Phase 21: Typography & Heading Atoms
+- **Goal**: Create `Text`, `Heading`, `Subheading`, and `Caption` primitives enforcing font scale and colors.
+- **Files**: `bazar-shodai-app/src/components/ui/Typography.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Text respects Android system font scaling without breaking layouts.
+- **Dependencies**: Phase 9.
+- **Status**: [ ] Not started
+
+### Phase 22: Form Input & Floating Label Atom
+- **Goal**: Text input with clear button, password visibility toggle, leading/trailing icons, and error states.
+- **Files**: `bazar-shodai-app/src/components/ui/Input.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Seamless keyboard interaction and inline error validation display.
+- **Dependencies**: Phase 20.
+- **Status**: [ ] Not started
+
+### Phase 23: Bangladeshi Phone Number Input Atom
+- **Goal**: Input with pre-fixed `+880` country code, auto-formatting, and Bangladeshi mobile regex validation.
+- **Files**: `bazar-shodai-app/src/components/ui/PhoneInput.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Validates Grameenphone, Robi, Banglalink, Teletalk prefixes.
+- **Dependencies**: Phase 22.
+- **Status**: [ ] Not started
+
+### Phase 24: Currency & Money Formatter Atom
+- **Goal**: Standardized BDT (`৳`) currency renderer with English and Bengali numeral translation.
+- **Files**: `bazar-shodai-app/src/components/ui/Price.tsx`, `bazar-shodai-app/src/utils/format.ts`
+- **API**: None.
+- **Acceptance Criteria**: Correctly renders `৳১,২৫৫` in Bengali and `৳1,255` in English.
+- **Dependencies**: Phase 21.
+- **Status**: [ ] Not started
+
+### Phase 25: Badge & Tag Atom
+- **Goal**: Badge component for product discounts, `NEW`, `HOT`, `BEST SELLER`, and stock statuses.
+- **Files**: `bazar-shodai-app/src/components/ui/Badge.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Port exact color styles from web `BADGE_STYLES`.
+- **Dependencies**: Phase 8.
+- **Status**: [ ] Not started
+
+### Phase 26: Skeleton Loading Atom
+- **Goal**: Shimmer animation primitive using Reanimated for cards, text blocks, and avatars.
+- **Files**: `bazar-shodai-app/src/components/ui/Skeleton.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Smooth 60fps shimmer running on native thread.
+- **Dependencies**: Phase 8.
+- **Status**: [ ] Not started
+
+### Phase 27: Optimized Image Atom (expo-image)
+- **Goal**: Wrapper for `expo-image` with progressive blurhash placeholder, disk caching, and fallback.
+- **Files**: `bazar-shodai-app/src/components/ui/AppImage.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Smooth fade-in on image load without visual jump.
+- **Dependencies**: Phase 6.
+- **Status**: [ ] Not started
+
+### Phase 28: Icon Engine (Lucide Icons)
+- **Goal**: Typed Lucide React Native icon integration with theme color bindings.
+- **Files**: `bazar-shodai-app/src/components/ui/Icon.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Seamless icon rendering with consistent sizing.
+- **Dependencies**: Phase 8.
+- **Status**: [ ] Not started
+
+### Phase 29: Toast & Notification Snackbars
+- **Goal**: Custom toast notification system for success, warning, error, and cart addition events.
+- **Files**: `bazar-shodai-app/src/components/ui/Toast.tsx`, `bazar-shodai-app/src/store/useToastStore.ts`
+- **API**: None.
+- **Acceptance Criteria**: Smooth slide-down banner dismissible by swipe gesture.
+- **Dependencies**: Phase 20.
+- **Status**: [ ] Not started
+
+### Phase 30: Card Container Primitive
+- **Goal**: Reusable card wrapper with surface elevation, border tokens, and touchable feedback.
+- **Files**: `bazar-shodai-app/src/components/ui/Card.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Consistent padding, corner radius, and dark mode background.
+- **Dependencies**: Phase 11.
+- **Status**: [ ] Not started
+
+### Phase 31: Empty State Graphic Atom
+- **Goal**: Illustrated empty state component for empty cart, empty orders, search not found, and offline.
+- **Files**: `bazar-shodai-app/src/components/ui/EmptyState.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Features title, friendly description, and action button.
+- **Dependencies**: Phase 20.
+- **Status**: [ ] Not started
+
+### Phase 32: Error Boundary & Crash Fallback
+- **Goal**: React error boundary capturing render exceptions with reload action.
+- **Files**: `bazar-shodai-app/src/components/shared/ErrorBoundary.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Gracefully prevents app white-screen crashes.
+- **Dependencies**: Phase 20.
+- **Status**: [ ] Not started
+
+### Phase 33: Tactile Haptics Service
+- **Goal**: Centralized haptic feedback service wrapper around `expo-haptics`.
+- **Files**: `bazar-shodai-app/src/services/haptics.ts`
+- **API**: None.
+- **Acceptance Criteria**: Provides light, medium, heavy, success, and error tactile pulses.
+- **Dependencies**: Phase 6.
+- **Status**: [ ] Not started
+
+---
+
+## Milestone 5: Complex UI Molecules & Bottom Sheets (Phases 34-43)
+
+### Phase 34: Gorhom Bottom Sheet Engine Integration
+- **Goal**: Setup `@gorhom/bottom-sheet` with backdrop, snap points, and keyboard avoidance.
+- **Files**: `bazar-shodai-app/src/components/ui/BottomSheet.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Fluid gesture-driven pull down to dismiss with native physics.
+- **Dependencies**: Phase 6.
+- **Status**: [ ] Not started
+
+### Phase 35: Quantity Stepper Molecule
+- **Goal**: Reusable fractional/integer quantity stepper (`-`, quantity, `+`) supporting unit steps.
+- **Files**: `bazar-shodai-app/src/components/product/QuantityStepper.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Respects minimum quantity and step size (e.g., 0.5kg steps, 1 piece steps).
+- **Dependencies**: Phases 20, 33.
+- **Status**: [ ] Not started
+
+### Phase 36: Star Rating & Review Breakdown Molecule
+- **Goal**: Interactive star selector (1-5) and display widget with review counts and average score.
+- **Files**: `bazar-shodai-app/src/components/ui/StarRating.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Fractional star filling for accurate average rating display.
+- **Dependencies**: Phase 28.
+- **Status**: [ ] Not started
+
+### Phase 37: Search Bar with Voice / Scan Trigger
+- **Goal**: Modern search input with instant clear, debounce trigger, and filter button.
+- **Files**: `bazar-shodai-app/src/components/ui/SearchBar.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Smooth animation when transitioning into active search mode.
+- **Dependencies**: Phase 22.
+- **Status**: [ ] Not started
+
+### Phase 38: Confirmation Modal Molecule
+- **Goal**: Native modal dialog for destructive actions (remove item, cancel order, logout).
+- **Files**: `bazar-shodai-app/src/components/ui/ConfirmDialog.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Clear cancel and confirm actions with dimmed backdrop.
+- **Dependencies**: Phase 20.
+- **Status**: [ ] Not started
+
+### Phase 39: Product Card Molecule (Grid Variant)
+- **Goal**: High-performance product card with image, badges, price, unit label, and 1-tap cart button.
+- **Files**: `bazar-shodai-app/src/components/product/ProductGridCard.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Instant morphing into stepper upon first tap; tap card body opens Quick View sheet.
+- **Dependencies**: Phases 24, 25, 27, 35.
+- **Status**: [ ] Not started
+
+### Phase 40: Product Card Molecule (Horizontal List Variant)
+- **Goal**: Compact horizontal product card for carts, checkout review, and search results.
+- **Files**: `bazar-shodai-app/src/components/product/ProductListCard.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Thumbnail, name, unit price, quantity stepper, and delete action.
+- **Dependencies**: Phase 39.
+- **Status**: [ ] Not started
+
+### Phase 41: Product Quick View Bottom Sheet
+- **Goal**: Mobile equivalent of the web quick view modal: image carousel, unit details, stepper, and "View Full Details" link.
+- **Files**: `bazar-shodai-app/src/components/product/ProductQuickViewSheet.tsx`
+- **API**: `GET /customer/products/:slug`
+- **Acceptance Criteria**: Opens smoothly on product card press with native back-button dismissal.
+- **Dependencies**: Phases 34, 39.
+- **Status**: [ ] Not started
+
+### Phase 42: Category Tile Molecule
+- **Goal**: Circular/rounded category icon tile with label and press feedback.
+- **Files**: `bazar-shodai-app/src/components/category/CategoryTile.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Displays image or fallback initial; navigates to category drilldown.
+- **Dependencies**: Phase 27.
+- **Status**: [ ] Not started
+
+### Phase 43: Banner Carousel Molecule
+- **Goal**: Auto-playing banner slider with pagination dots and smooth reanimated gesture swiping.
+- **Files**: `bazar-shodai-app/src/components/home/BannerCarousel.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Pauses on touch press; supports deep link navigation on click.
+- **Dependencies**: Phase 27.
+- **Status**: [ ] Not started
+
+---
+
+## Milestone 6: Navigation Architecture & Tab Shell (Phases 44-50)
+
+### Phase 44: Expo Router File-Based Routing Setup
+- **Goal**: Setup root layout (`app/_layout.tsx`) with SafeAreaProvider, GestureHandlerRootView, and fonts.
+- **Files**: `bazar-shodai-app/app/_layout.tsx`
+- **API**: None.
+- **Acceptance Criteria**: App boots with zero layout shifts or safe area clipping.
+- **Dependencies**: Phase 1.
+- **Status**: [ ] Not started
+
+### Phase 45: Bottom Tab Navigator Architecture
+- **Goal**: Create bottom tabs: Home, Categories, Cart, Wishlist, Account with custom badges.
+- **Files**: `bazar-shodai-app/app/(tabs)/_layout.tsx`, `bazar-shodai-app/src/navigation/TabBar.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Native animated bottom bar with active indicator and cart item badge counter.
+- **Dependencies**: Phase 44.
+- **Status**: [ ] Not started
+
+### Phase 46: Root Stack & Modal Screen Setup
+- **Goal**: Configure modal routes (product quick view, address picker, prescription upload) and standard stack push routes.
+- **Files**: `bazar-shodai-app/app/_layout.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Modals slide up with native drag-to-dismiss gesture on Android & iOS.
+- **Dependencies**: Phase 44.
+- **Status**: [ ] Not started
+
+### Phase 47: Header & Navigation Bar Components
+- **Goal**: Custom animated header with logo, location pill, search trigger, and notification bell.
+- **Files**: `bazar-shodai-app/src/components/navigation/AppHeader.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Header collapses or pins smoothly as user scrolls content.
+- **Dependencies**: Phase 45.
+- **Status**: [ ] Not started
+
+### Phase 48: Deep Linking & Universal Links Configuration
+- **Goal**: Configure scheme (`bazarshodai://`) and universal links for products, categories, orders, and reset password.
+- **Files**: `bazar-shodai-app/app.json`, `bazar-shodai-app/src/navigation/linking.ts`
+- **API**: None.
+- **Acceptance Criteria**: Opening `bazarshodai://product/fresh-mango` routes directly to the product screen.
+- **Dependencies**: Phase 46.
+- **Status**: [ ] Not started
+
+### Phase 49: Back-Button Android Hardware Navigation
+- **Goal**: Intercept hardware back button to close bottom sheets and modals before navigating backwards.
+- **Files**: `bazar-shodai-app/src/hooks/useHardwareBack.ts`
+- **API**: None.
+- **Acceptance Criteria**: 1st press closes active modal/sheet; 2nd press navigates to previous screen or prompts exit.
+- **Dependencies**: Phase 46.
+- **Status**: [ ] Not started
+
+### Phase 50: Tab Transition Animations
+- **Goal**: Configure lightweight subtle cross-fade transitions between bottom tabs.
+- **Files**: `bazar-shodai-app/app/(tabs)/_layout.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Tab switches feel immediate and fluid without blank frames.
+- **Dependencies**: Phase 45.
+- **Status**: [ ] Not started
+
+---
+
+## Milestone 7: Customer Authentication & Session Management (Phases 51-58)
+
+### Phase 51: Auth Store & State Management
+- **Goal**: Implement Zustand store for user profile, authentication status, and token lifecycle.
+- **Files**: `bazar-shodai-app/src/store/useAuthStore.ts`
+- **API**: None.
+- **Acceptance Criteria**: Syncs auth state seamlessly between MMKV, SecureStore, and React state.
+- **Dependencies**: Phases 13, 14.
+- **Status**: [ ] Not started
+
+### Phase 52: Customer Login Screen
+- **Goal**: Mobile login screen accepting Bangladeshi mobile phone or email + password.
+- **Files**: `bazar-shodai-app/app/(auth)/login.tsx`, `bazar-shodai-app/src/features/auth/api/login.ts`
+- **API**: `POST /customer/auth/login`
+- **Acceptance Criteria**: Validates inputs with Zod, sends `guestToken` for automatic cart merge, saves tokens.
+- **Dependencies**: Phases 23, 51.
+- **Status**: [ ] Not started
+
+### Phase 53: Customer Registration Screen
+- **Goal**: Signup screen with Name, Phone (+880), Email (optional), Password, and terms confirmation.
+- **Files**: `bazar-shodai-app/app/(auth)/register.tsx`, `bazar-shodai-app/src/features/auth/api/register.ts`
+- **API**: `POST /customer/auth/register`
+- **Acceptance Criteria**: Merges guest cart on backend, logs customer in, navigates to Home.
+- **Dependencies**: Phases 23, 51.
+- **Status**: [ ] Not started
+
+### Phase 54: Forgot Password Screen
+- **Goal**: Request password recovery link/token via customer email or phone.
+- **Files**: `bazar-shodai-app/app/(auth)/forgot-password.tsx`, `bazar-shodai-app/src/features/auth/api/forgotPassword.ts`
+- **API**: `POST /customer/auth/forgot-password`
+- **Acceptance Criteria**: Shows success message and instructions to check inbox.
+- **Dependencies**: Phase 52.
+- **Status**: [ ] Not started
+
+### Phase 55: Reset Password Screen
+- **Goal**: Token verification and new password entry screen.
+- **Files**: `bazar-shodai-app/app/(auth)/reset-password.tsx`, `bazar-shodai-app/src/features/auth/api/resetPassword.ts`
+- **API**: `GET /customer/auth/reset-password/verify`, `POST /customer/auth/reset-password`
+- **Acceptance Criteria**: Validates token; submits new password with min 6 characters.
+- **Dependencies**: Phase 54.
+- **Status**: [ ] Not started
+
+### Phase 56: User Profile Fetch & Background Sync
+- **Goal**: Fetch current authenticated customer profile on startup and cache in store.
+- **Files**: `bazar-shodai-app/src/features/auth/api/getProfile.ts`
+- **API**: `GET /customer/auth/profile`
+- **Acceptance Criteria**: Updates user points, avatar, and default address.
+- **Dependencies**: Phase 51.
+- **Status**: [ ] Not started
+
+### Phase 57: Change Password Screen
+- **Goal**: In-app password change screen requiring current password and new password confirmation.
+- **Files**: `bazar-shodai-app/app/(account)/change-password.tsx`
+- **API**: `POST /customer/auth/change-password`
+- **Acceptance Criteria**: Shows error on incorrect current password; confirms success.
+- **Dependencies**: Phase 51.
+- **Status**: [ ] Not started
+
+### Phase 58: Logout & Guest Session Reset
+- **Goal**: Invalidate server session, clear tokens, and generate fresh guest cart token.
+- **Files**: `bazar-shodai-app/src/features/auth/api/logout.ts`
+- **API**: `POST /customer/auth/logout`
+- **Acceptance Criteria**: Cleans secure store and resets app state without stale user data.
+- **Dependencies**: Phase 51.
+- **Status**: [ ] Not started
+
+---
+
+## Milestone 8: Home Screen Experience & Sliders (Phases 59-67)
+
+### Phase 59: Home Screen Data Aggregator Hook
+- **Goal**: Unified TanStack Query hook fetching banners, featured products, categories, and best sellers.
+- **Files**: `bazar-shodai-app/src/features/home/api/useHomeData.ts`
+- **API**: `GET /customer/products/home`, `GET /customer/banners`, `GET /customer/categories`
+- **Acceptance Criteria**: Parallel execution with cached fallback for instant rendering.
+- **Dependencies**: Phase 18.
+- **Status**: [ ] Not started
+
+### Phase 60: Home Sticky Header with Location Pill
+- **Goal**: App header showing active delivery zone / address, search bar trigger, and shopping bag icon.
+- **Files**: `bazar-shodai-app/src/features/home/components/HomeHeader.tsx`
+- **API**: `GET /customer/my-location`
+- **Acceptance Criteria**: Location pill displays delivery estimate (e.g. "১-২ ঘণ্টা ডেলিভারি").
+- **Dependencies**: Phase 47.
+- **Status**: [ ] Not started
+
+### Phase 61: Promotional Hero Slider Section
+- **Goal**: Dynamic hero banner carousel with autoplay, manual swipe, and deep link routing.
+- **Files**: `bazar-shodai-app/src/features/home/components/HeroSliderSection.tsx`
+- **API**: `GET /customer/banners`
+- **Acceptance Criteria**: Respects banner position `HERO_MAIN` and `HERO_SIDE`.
+- **Dependencies**: Phase 43.
+- **Status**: [ ] Not started
+
+### Phase 62: Category Circular Grid Section
+- **Goal**: Horizontal scrolling or 2-row grid of popular categories with icons.
+- **Files**: `bazar-shodai-app/src/features/home/components/CategoryGridSection.tsx`
+- **API**: `GET /customer/categories`
+- **Acceptance Criteria**: Displays top 16 categories; "View All" navigates to Categories tab.
+- **Dependencies**: Phase 42.
+- **Status**: [ ] Not started
+
+### Phase 63: Featured Products (*আজকের তাজা বাজার*) Section
+- **Goal**: FlashList horizontal/2-column grid showing fresh daily items with live steppers.
+- **Files**: `bazar-shodai-app/src/features/home/components/FeaturedProductsSection.tsx`
+- **API**: `GET /customer/products/home` (`featured`)
+- **Acceptance Criteria**: Seamless add-to-cart directly from home feed.
+- **Dependencies**: Phase 39.
+- **Status**: [ ] Not started
+
+### Phase 64: Best Selling Products Section
+- **Goal**: Visual section highlighting top-selling grocery essentials.
+- **Files**: `bazar-shodai-app/src/features/home/components/BestSellersSection.tsx`
+- **API**: `GET /customer/products/home` (`bestSellers`)
+- **Acceptance Criteria**: Includes "Top Seller" badges and discount percentages.
+- **Dependencies**: Phase 39.
+- **Status**: [ ] Not started
+
+### Phase 65: Brand Showcase Section
+- **Goal**: Interactive brand pill selector filtering products by brand with smooth transitions.
+- **Files**: `bazar-shodai-app/src/features/home/components/BrandShowcaseSection.tsx`
+- **API**: `GET /customer/brands`
+- **Acceptance Criteria**: Tapping a brand updates the product carousel instantly.
+- **Dependencies**: Phase 39.
+- **Status**: [ ] Not started
+
+### Phase 66: Home Pull-to-Refresh & Skeleton State
+- **Goal**: RefreshControl updating all home queries with haptic feedback, and skeleton placeholder layout.
+- **Files**: `bazar-shodai-app/app/(tabs)/index.tsx`
+- **API**: All home APIs.
+- **Acceptance Criteria**: Refreshes data cleanly without layout jumping.
+- **Dependencies**: Phases 26, 59.
+- **Status**: [ ] Not started
+
+### Phase 67: Quick Category Quick-Jump Sticky Bar
+- **Goal**: Subtle pill bar below search allowing 1-tap jump to Vegetables, Fish, Meat, Dairy, Fruits.
+- **Files**: `bazar-shodai-app/src/features/home/components/QuickJumpBar.tsx`
+- **API**: `GET /customer/categories`
+- **Acceptance Criteria**: Highlights active category as user scrolls.
+- **Dependencies**: Phase 62.
+- **Status**: [ ] Not started
+
+---
+
+## Milestone 9: Product Catalog, Facets & Search Engine (Phases 68-76)
+
+### Phase 68: Category Drilldown Screen (Categories Tab)
+- **Goal**: 2-column mobile layout: vertical category rail on left, subcategories and product grid on right.
+- **Files**: `bazar-shodai-app/app/(tabs)/categories.tsx`
+- **API**: `GET /customer/categories`, `GET /customer/products`
+- **Acceptance Criteria**: Smooth thumb navigation between parent categories and child products.
+- **Dependencies**: Phases 42, 45.
+- **Status**: [ ] Not started
+
+### Phase 69: Product Listing Screen (`/products`)
+- **Goal**: Infinite-scroll FlashList grid of products with sorting, count indicator, and active filters.
+- **Files**: `bazar-shodai-app/app/products/index.tsx`
+- **API**: `GET /customer/products`
+- **Acceptance Criteria**: 60fps scrolling over 1,000+ items with optimized window recycling.
+- **Dependencies**: Phase 39.
+- **Status**: [ ] Not started
+
+### Phase 70: Full-Text Search Screen with Live Debounce
+- **Goal**: Instant search screen with recent searches history and live suggestions as user types.
+- **Files**: `bazar-shodai-app/app/search/index.tsx`, `bazar-shodai-app/src/features/search/api/useSearch.ts`
+- **API**: `GET /customer/products` (with `search` query param)
+- **Acceptance Criteria**: 300ms debounce prevents unnecessary API requests.
+- **Dependencies**: Phase 37.
+- **Status**: [ ] Not started
+
+### Phase 71: Search History Persistence & Suggestions
+- **Goal**: Persist recent search queries in MMKV and sync with backend history endpoint.
+- **Files**: `bazar-shodai-app/src/features/search/api/searchHistory.ts`
+- **API**: `GET /customer/search-history`, `POST /customer/search-history`, `DELETE /customer/search-history`
+- **Acceptance Criteria**: 1-tap re-search and 1-tap clear history.
+- **Dependencies**: Phase 70.
+- **Status**: [ ] Not started
+
+### Phase 72: Filter Bottom Sheet Modal
+- **Goal**: Slide-up filter panel with Price Range slider, Brand checkboxes, Category selector, and In-Stock toggle.
+- **Files**: `bazar-shodai-app/src/features/products/components/FilterBottomSheet.tsx`
+- **API**: `GET /customer/brands`, `GET /customer/categories`
+- **Acceptance Criteria**: Dynamic active filter count badge; "Reset" and "Apply" buttons.
+- **Dependencies**: Phase 34.
+- **Status**: [ ] Not started
+
+### Phase 73: Sort Options Sheet
+- **Goal**: Quick-select bottom sheet for sorting (Relevance, Price: Low to High, Price: High to Low, Newest).
+- **Files**: `bazar-shodai-app/src/features/products/components/SortBottomSheet.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Updates query params and re-orders listing instantly.
+- **Dependencies**: Phase 34.
+- **Status**: [ ] Not started
+
+### Phase 74: Infinite Scroll & Pagination Engine
+- **Goal**: Automatic page fetching when user reaches 80% scroll depth of FlashList.
+- **Files**: `bazar-shodai-app/src/features/products/hooks/useInfiniteProducts.ts`
+- **API**: `GET /customer/products` (with `page` & `limit`)
+- **Acceptance Criteria**: Shows small bottom activity indicator during next page fetch.
+- **Dependencies**: Phase 69.
+- **Status**: [ ] Not started
+
+### Phase 75: Back-In-Stock Subscription Dialog
+- **Goal**: Modal allowing customers to subscribe via email/phone when an out-of-stock product is restocked.
+- **Files**: `bazar-shodai-app/src/features/products/components/BackInStockDialog.tsx`
+- **API**: `POST /customer/back-in-stock`
+- **Acceptance Criteria**: Submits subscription and alerts user when confirmed.
+- **Dependencies**: Phase 38.
+- **Status**: [ ] Not started
+
+### Phase 76: Empty Search & Filter State
+- **Goal**: Helpful empty state suggesting alternative keywords or clearing active filters.
+- **Files**: `bazar-shodai-app/src/features/products/components/NoProductsFound.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Features "Clear All Filters" button resetting state.
+- **Dependencies**: Phase 31.
+- **Status**: [ ] Not started
+
+---
+
+## Milestone 10: Product Details Screen & Image Gallery (Phases 77-83)
+
+### Phase 77: Product Details Layout & Header
+- **Goal**: Fullscreen screen with collapsible hero image header, share button, and wishlist toggle.
+- **Files**: `bazar-shodai-app/app/product/[slug].tsx`
+- **API**: `GET /customer/products/:slug`
+- **Acceptance Criteria**: Smooth entry transition; back button returns to exact scroll position.
+- **Dependencies**: Phase 44.
+- **Status**: [ ] Not started
+
+### Phase 78: Fullscreen Multi-Image Swiper with Pinch-to-Zoom
+- **Goal**: Reanimated image carousel supporting pinch-to-zoom gesture and thumbnail selector.
+- **Files**: `bazar-shodai-app/src/features/products/components/ProductImageGallery.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Natural physics zoom with double-tap reset.
+- **Dependencies**: Phase 27.
+- **Status**: [ ] Not started
+
+### Phase 79: Unit Pricing & Quantity Stepper Bottom Action Bar
+- **Goal**: Sticky bottom bar displaying total price, fractional unit stepper, and Add to Bag button.
+- **Files**: `bazar-shodai-app/src/features/products/components/ProductStickyBottomBar.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Always accessible above Android system navigation bar.
+- **Dependencies**: Phases 20, 35.
+- **Status**: [ ] Not started
+
+### Phase 80: Product Description, Nutrition & Specifications
+- **Goal**: Accordion tabs for description, nutritional details, origin, and unit specifications in English/Bengali.
+- **Files**: `bazar-shodai-app/src/features/products/components/ProductSpecs.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Clean expandable panels with formatted typography.
+- **Dependencies**: Phase 21.
+- **Status**: [ ] Not started
+
+### Phase 81: Customer Reviews & Photo Rating Breakdown
+- **Goal**: Review list with star breakdown, verified purchase badge, and customer review images.
+- **Files**: `bazar-shodai-app/src/features/reviews/components/ProductReviewsList.tsx`
+- **API**: `GET /customer/reviews/product/:productId`
+- **Acceptance Criteria**: Displays helpful vote counter with 1-tap helpful button.
+- **Dependencies**: Phase 36.
+- **Status**: [ ] Not started
+
+### Phase 82: Write Review & Photo Upload Sheet
+- **Goal**: Bottom sheet allowing customers who bought the item to rate, review, and upload photos.
+- **Files**: `bazar-shodai-app/src/features/reviews/components/WriteReviewSheet.tsx`
+- **API**: `POST /customer/uploads/review-images`, `POST /customer/reviews`
+- **Acceptance Criteria**: Uses `expo-image-picker` to attach up to 5 photos from camera or gallery.
+- **Dependencies**: Phase 34.
+- **Status**: [ ] Not started
+
+### Phase 83: Related & Frequently Bought Together Products
+- **Goal**: Horizontal product recommendation carousel at bottom of product detail page.
+- **Files**: `bazar-shodai-app/src/features/products/components/RelatedProducts.tsx`
+- **API**: `GET /customer/products` (same category filter)
+- **Acceptance Criteria**: 1-tap add directly from related list.
+- **Dependencies**: Phase 39.
+- **Status**: [ ] Not started
+
+---
+
+## Milestone 11: Medicine, Pharmacy & Prescription Module (Phases 84-89)
+
+### Phase 84: Pharmacy & Medicine Catalog Screen
+- **Goal**: Dedicated pharmacy landing view filtering OTC and Prescription drugs with dosage warnings.
+- **Files**: `bazar-shodai-app/app/pharmacy/index.tsx`
+- **API**: `GET /customer/products` (category=medicine, type=OTC/PRESCRIPTION)
+- **Acceptance Criteria**: Displays generic name, strength (e.g. 500mg), dosage form, and manufacturer.
+- **Dependencies**: Phase 69.
+- **Status**: [ ] Not started
+
+### Phase 85: Medicine Detail View & Generic Info
+- **Goal**: Medicine-specific details showing indications, precautions, and side effects from `MedicineMeta`.
+- **Files**: `bazar-shodai-app/src/features/pharmacy/components/MedicineInfoSheet.tsx`
+- **API**: `GET /customer/products/:slug`
+- **Acceptance Criteria**: Clear warning banner for prescription-only pharmaceuticals.
+- **Dependencies**: Phase 77.
+- **Status**: [ ] Not started
+
+### Phase 86: Prescription Camera Capture & Upload Flow
+- **Goal**: Camera viewfinder (`expo-camera`) and file picker allowing instant prescription upload.
+- **Files**: `bazar-shodai-app/app/prescription/upload.tsx`
+- **API**: `POST /prescriptions`
+- **Acceptance Criteria**: Captures clear photo, allows crop/rotate, attaches phone number and optional notes.
+- **Dependencies**: Phase 20.
+- **Status**: [ ] Not started
+
+### Phase 87: Uploaded Prescriptions List & Status Tracker
+- **Goal**: List customer's uploaded prescriptions with status (`PENDING`, `REVIEWED`, `ORDER_CREATED`, `REJECTED`).
+- **Files**: `bazar-shodai-app/app/(account)/prescriptions.tsx`
+- **API**: `GET /customer/prescriptions`
+- **Acceptance Criteria**: Displays thumbnail preview, admin feedback note, and associated order link if dispensed.
+- **Dependencies**: Phase 30.
+- **Status**: [ ] Not started
+
+### Phase 88: Prescription Fullscreen Image Viewer
+- **Goal**: Pinch-to-zoom modal viewer to review high-res prescription scans.
+- **Files**: `bazar-shodai-app/src/features/pharmacy/components/PrescriptionViewerModal.tsx`
+- **API**: None.
+- **Acceptance Criteria**: High resolution rendering with close action.
+- **Dependencies**: Phase 78.
+- **Status**: [ ] Not started
+
+### Phase 89: 1-Tap Prescription Order Re-order
+- **Goal**: Quickly create order from verified prescription items with pharmacist confirmation.
+- **Files**: `bazar-shodai-app/src/features/pharmacy/components/PrescriptionOrderButton.tsx`
+- **API**: `POST /customer/checkout`
+- **Acceptance Criteria**: Bypasses manual search and pre-fills approved medications.
+- **Dependencies**: Phase 87.
+- **Status**: [ ] Not started
+
+---
+
+## Milestone 12: Cart Engine & Stepper Synchronization (Phases 90-96)
+
+### Phase 90: Zustand Cart Store & Optimistic Updates
+- **Goal**: High-speed local cart store providing instantaneous UI updates before API roundtrip.
+- **Files**: `bazar-shodai-app/src/store/useCartStore.ts`
+- **API**: None.
+- **Acceptance Criteria**: Zero lag on tap; rolls back gracefully if backend rejects.
+- **Dependencies**: Phase 13.
+- **Status**: [ ] Not started
+
+### Phase 91: Cart Backend Synchronization Engine
+- **Goal**: Sync cart items with `POST /customer/cart/items` and handle `X-Guest-Token` header.
+- **Files**: `bazar-shodai-app/src/features/cart/api/cartApi.ts`
+- **API**: `GET /customer/cart`, `POST /customer/cart/items`, `PATCH /customer/cart/items/:id`, `DELETE /customer/cart/items/:id`
+- **Acceptance Criteria**: Keeps server and client cart state 100% in sync.
+- **Dependencies**: Phase 90.
+- **Status**: [ ] Not started
+
+### Phase 92: Full Cart Screen (Cart Tab)
+- **Goal**: Dedicated cart screen with list of items, unit details, stepper, subtotal, and checkout button.
+- **Files**: `bazar-shodai-app/app/(tabs)/cart.tsx`
+- **API**: `GET /customer/cart`
+- **Acceptance Criteria**: Shows order breakdown, estimated delivery charge, and free shipping progress bar.
+- **Dependencies**: Phase 40.
+- **Status**: [ ] Not started
+
+### Phase 93: Swipe-to-Remove Cart Item Gesture
+- **Goal**: Reanimated swipe-to-delete gesture on cart line items with red trash indicator.
+- **Files**: `bazar-shodai-app/src/features/cart/components/SwipeableCartItem.tsx`
+- **API**: `DELETE /customer/cart/items/:id`
+- **Acceptance Criteria**: Fluid swipe with confirmation haptic feedback.
+- **Dependencies**: Phase 40.
+- **Status**: [ ] Not started
+
+### Phase 94: Free Shipping Delivery Progress Bar
+- **Goal**: Dynamic progress bar calculating distance to free delivery threshold (e.g., "Add ৳120 more for Free Delivery!").
+- **Files**: `bazar-shodai-app/src/features/cart/components/FreeShippingProgressBar.tsx`
+- **API**: `GET /customer/settings`
+- **Acceptance Criteria**: Animates bar width dynamically as cart total changes.
+- **Dependencies**: Phase 90.
+- **Status**: [ ] Not started
+
+### Phase 95: Coupon Code Input & Instant Validation
+- **Goal**: Coupon promo input with instant server validation and applied discount banner.
+- **Files**: `bazar-shodai-app/src/features/cart/components/CouponInput.tsx`
+- **API**: `POST /customer/coupons/apply`
+- **Acceptance Criteria**: Shows exact discount amount; allows 1-tap remove coupon.
+- **Dependencies**: Phase 22.
+- **Status**: [ ] Not started
+
+### Phase 96: Clear Cart Confirmation Dialog
+- **Goal**: Modal to prevent accidental cart emptying.
+- **Files**: `bazar-shodai-app/src/features/cart/components/ClearCartDialog.tsx`
+- **API**: `DELETE /customer/cart`
+- **Acceptance Criteria**: Empties cart and clears server state on confirm.
+- **Dependencies**: Phase 38.
+- **Status**: [ ] Not started
+
+---
+
+## Milestone 13: Delivery Location & GPS Geocoding (Phases 97-101)
+
+### Phase 97: Expo Location Hardware Integration
+- **Goal**: Request OS location permissions and acquire high-accuracy GPS coordinates.
+- **Files**: `bazar-shodai-app/src/services/location.ts`
+- **API**: None.
+- **Acceptance Criteria**: Gracefully handles permission denied with manual map pin fallback.
+- **Dependencies**: Phase 6.
+- **Status**: [ ] Not started
+
+### Phase 98: Location Share & Real-Time Delivery Fee Calculation
+- **Goal**: Submit customer GPS coordinates to backend and calculate exact delivery charge and distance.
+- **Files**: `bazar-shodai-app/src/features/location/api/myLocation.ts`
+- **API**: `POST /customer/my-location`, `GET /customer/my-location`
+- **Acceptance Criteria**: Returns reverse-geocoded place name, zone, and delivery fee in BDT.
+- **Dependencies**: Phase 97.
+- **Status**: [ ] Not started
+
+### Phase 99: Interactive Delivery Map Pin Drop Screen
+- **Goal**: Fullscreen native map (`react-native-maps`) allowing drag-and-drop pin positioning.
+- **Files**: `bazar-shodai-app/app/location/picker.tsx`
+- **API**: `POST /customer/my-location`
+- **Acceptance Criteria**: Smooth pin movement with reverse-geocoding address preview at bottom.
+- **Dependencies**: Phase 98.
+- **Status**: [ ] Not started
+
+### Phase 100: Address Autocomplete & Search Picker
+- **Goal**: Search input to find locations by road, neighborhood, or area name in Bangladesh.
+- **Files**: `bazar-shodai-app/src/features/location/components/AddressSearchPicker.tsx`
+- **API**: OpenStreetMap reverse geocoding via server.
+- **Acceptance Criteria**: Selecting a result centers the map pin automatically.
+- **Dependencies**: Phase 99.
+- **Status**: [ ] Not started
+
+### Phase 101: Location Share via Link & Token Reader
+- **Goal**: Support opening shared location tokens (`/l/[token]`) from SMS or WhatsApp links.
+- **Files**: `bazar-shodai-app/app/location/[token].tsx`
+- **API**: `GET /customer/locations/request/:token`, `POST /customer/locations/share`
+- **Acceptance Criteria**: Deep link reads token and sends current GPS location to the courier.
+- **Dependencies**: Phase 98.
+- **Status**: [ ] Not started
+
+---
+
+## Milestone 14: Checkout & Mobile Financial Services (bKash/Nagad/Rocket/COD) (Phases 102-108)
+
+### Phase 102: Single-Screen Checkout Architecture
+- **Goal**: Keyboard-aware single screen orchestrating address selection, delivery time slot, payment, and order summary.
+- **Files**: `bazar-shodai-app/app/checkout/index.tsx`
+- **API**: `POST /customer/checkout`
+- **Acceptance Criteria**: Clean layout with sticky "Confirm Order" bottom button.
+- **Dependencies**: Phases 92, 98.
+- **Status**: [ ] Not started
+
+### Phase 103: Delivery Address Selector & Quick Add
+- **Goal**: Horizontal selector of saved addresses (Home, Office) with 1-tap "Add New Address" modal.
+- **Files**: `bazar-shodai-app/src/features/checkout/components/AddressSelector.tsx`
+- **API**: `GET /customer/addresses`, `POST /customer/addresses`
+- **Acceptance Criteria**: Pre-selects default address automatically.
+- **Dependencies**: Phase 102.
+- **Status**: [ ] Not started
+
+### Phase 104: Delivery Slot & Special Instructions Picker
+- **Goal**: Time slot radio picker (Immediate 1-2 hours, Express, Scheduled) and delivery notes text area.
+- **Files**: `bazar-shodai-app/src/features/checkout/components/DeliverySlotPicker.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Attaches instructions to checkout DTO.
+- **Dependencies**: Phase 102.
+- **Status**: [ ] Not started
+
+### Phase 105: Payment Method Selector (COD, bKash, Nagad, Rocket)
+- **Goal**: Radio selector with branded icons for Cash on Delivery, bKash, Nagad, and Rocket.
+- **Files**: `bazar-shodai-app/src/features/checkout/components/PaymentMethodSelector.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Toggling mobile banking expands the manual transaction form.
+- **Dependencies**: Phase 102.
+- **Status**: [ ] Not started
+
+### Phase 106: Mobile Banking Transaction ID Input & Copy-to-Clipboard
+- **Goal**: Instructions card showing merchant number with 1-tap copy, and verified Transaction ID input field.
+- **Files**: `bazar-shodai-app/src/features/checkout/components/MobileBankingForm.tsx`
+- **API**: None.
+- **Acceptance Criteria**: 1-tap clipboard copy with haptic feedback; TrxID validation.
+- **Dependencies**: Phase 105.
+- **Status**: [ ] Not started
+
+### Phase 107: Order Submission & Verification Mutation
+- **Goal**: Execute `POST /customer/checkout` with cart items, address, payment details, and guest token.
+- **Files**: `bazar-shodai-app/src/features/checkout/api/useSubmitOrder.ts`
+- **API**: `POST /customer/checkout`
+- **Acceptance Criteria**: Handles stock errors or redirects to order confirmation on success.
+- **Dependencies**: Phase 102.
+- **Status**: [ ] Not started
+
+### Phase 108: Order Confirmation Celebration Screen
+- **Goal**: Success screen with celebratory checkmark animation, order number, delivery estimate, and "Track Order" button.
+- **Files**: `bazar-shodai-app/app/order-confirmation/[id].tsx`
+- **API**: `GET /customer/orders/:id`
+- **Acceptance Criteria**: Clears local cart store and plays success haptic feedback.
+- **Dependencies**: Phase 107.
+- **Status**: [ ] Not started
+
+---
+
+## Milestone 15: Order Tracking, Timeline & Re-order (Phases 109-114)
+
+### Phase 109: Order History List Screen
+- **Goal**: List past orders categorized by status (Active / Completed / Cancelled).
+- **Files**: `bazar-shodai-app/app/(account)/orders.tsx`
+- **API**: `GET /customer/orders`
+- **Acceptance Criteria**: Pull-to-refresh, badge status color, order total, and date.
+- **Dependencies**: Phase 30.
+- **Status**: [ ] Not started
+
+### Phase 110: Live Order Details & Status Stepper
+- **Goal**: Full order breakdown with 7-step timeline (`PENDING` through `DELIVERED`).
+- **Files**: `bazar-shodai-app/app/orders/[id].tsx`
+- **API**: `GET /customer/orders/:id`
+- **Acceptance Criteria**: Visual progression with timestamps for each milestone reached.
+- **Dependencies**: Phase 109.
+- **Status**: [ ] Not started
+
+### Phase 111: Live Courier Map & Contact Action
+- **Goal**: Map showing delivery destination and courier marker when order is `OUT_FOR_DELIVERY`.
+- **Files**: `bazar-shodai-app/src/features/orders/components/LiveDeliveryMap.tsx`
+- **API**: `GET /customer/orders/:id`
+- **Acceptance Criteria**: "Call Courier" button triggers native phone dialer with rider number.
+- **Dependencies**: Phase 110.
+- **Status**: [ ] Not started
+
+### Phase 112: 1-Tap Re-order Engine
+- **Goal**: Add all items from a past order back into active shopping cart with 1 tap.
+- **Files**: `bazar-shodai-app/src/features/orders/api/reorder.ts`
+- **API**: `POST /customer/orders/:id/reorder` (or client cart push)
+- **Acceptance Criteria**: Checks stock availability before adding; redirects to Cart tab.
+- **Dependencies**: Phase 90.
+- **Status**: [ ] Not started
+
+### Phase 113: Customer Order Cancellation Dialog
+- **Goal**: Allow customer to cancel order before processing begins (`PENDING` status only).
+- **Files**: `bazar-shodai-app/src/features/orders/components/CancelOrderDialog.tsx`
+- **API**: `POST /customer/orders/:id/cancel`
+- **Acceptance Criteria**: Confirmation prompt; updates order status to `CANCELLED`.
+- **Dependencies**: Phase 38.
+- **Status**: [ ] Not started
+
+### Phase 114: PDF Invoice View & Share
+- **Goal**: Generate or download printable order receipt invoice.
+- **Files**: `bazar-shodai-app/src/features/orders/components/OrderInvoiceButton.tsx`
+- **API**: `GET /customer/orders/:id/invoice`
+- **Acceptance Criteria**: Opens native sharing sheet (`expo-sharing`) to save or print PDF.
+- **Dependencies**: Phase 110.
+- **Status**: [ ] Not started
+
+---
+
+## Milestone 16: Returns & Refund Claims Engine (Phases 115-119)
+
+### Phase 115: Return Requests List Screen
+- **Goal**: Screen listing customer return and refund claims with live review status.
+- **Files**: `bazar-shodai-app/app/(account)/returns.tsx`
+- **API**: `GET /customer/returns`
+- **Acceptance Criteria**: Displays status badge (`REQUESTED`, `APPROVED`, `COMPLETED`, `REJECTED`).
+- **Dependencies**: Phase 30.
+- **Status**: [ ] Not started
+
+### Phase 116: Create Return Claim Screen (`/returns/new`)
+- **Goal**: Form to select delivered order items, specify quantity, and choose return reason.
+- **Files**: `bazar-shodai-app/app/returns/new.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Reasons match enum (`DAMAGED`, `WRONG_ITEM`, `EXPIRED`, `NOT_AS_DESCRIBED`, `POOR_QUALITY`).
+- **Dependencies**: Phase 115.
+- **Status**: [ ] Not started
+
+### Phase 117: Return Photographic Evidence Camera Upload
+- **Goal**: Camera and gallery picker uploading photos of damaged goods to Cloudflare R2.
+- **Files**: `bazar-shodai-app/src/features/returns/components/ReturnPhotoUploader.tsx`
+- **API**: `POST /customer/uploads/review-images`
+- **Acceptance Criteria**: Attaches up to 4 photos to the claim request.
+- **Dependencies**: Phase 86.
+- **Status**: [ ] Not started
+
+### Phase 118: Refund Method Selection (bKash/Nagad/Rocket/Wallet)
+- **Goal**: Radio selector for customer's preferred refund payout account.
+- **Files**: `bazar-shodai-app/src/features/returns/components/RefundMethodPicker.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Collects account number and account type (Personal/Agent).
+- **Dependencies**: Phase 116.
+- **Status**: [ ] Not started
+
+### Phase 119: Submit Return Request Mutation
+- **Goal**: Execute `POST /customer/returns` with selected items, reason, photos, and refund details.
+- **Files**: `bazar-shodai-app/src/features/returns/api/useCreateReturn.ts`
+- **API**: `POST /customer/returns`
+- **Acceptance Criteria**: Navigates to return details screen upon success with tracking instructions.
+- **Dependencies**: Phase 116.
+- **Status**: [ ] Not started
+
+---
+
+## Milestone 17: User Profile, Addresses & Loyalty Rewards (Phases 120-125)
+
+### Phase 120: Customer Profile Screen (Account Tab)
+- **Goal**: Central account dashboard showing user info, quick links, order stats, and settings.
+- **Files**: `bazar-shodai-app/app/(tabs)/account.tsx`
+- **API**: `GET /customer/auth/profile`
+- **Acceptance Criteria**: Clean list grouping with icons and navigation chevrons.
+- **Dependencies**: Phase 45.
+- **Status**: [ ] Not started
+
+### Phase 121: Edit Profile Screen & Avatar Camera Upload
+- **Goal**: Update name, phone, email, bio, and upload avatar photo.
+- **Files**: `bazar-shodai-app/app/(account)/edit-profile.tsx`
+- **API**: `PATCH /customer/auth/profile`, `POST /customer/uploads/review-images`
+- **Acceptance Criteria**: Form validation; updates store and header immediately.
+- **Dependencies**: Phase 22.
+- **Status**: [ ] Not started
+
+### Phase 122: Saved Addresses Book Screen
+- **Goal**: Manage delivery addresses with Add, Edit, Delete, and Set Default actions.
+- **Files**: `bazar-shodai-app/app/(account)/addresses.tsx`
+- **API**: `GET /customer/addresses`, `POST /customer/addresses`, `PATCH /customer/addresses/:id`, `DELETE /customer/addresses/:id`
+- **Acceptance Criteria**: Default address highlighted with green badge.
+- **Dependencies**: Phase 30.
+- **Status**: [ ] Not started
+
+### Phase 123: Loyalty Rewards Points & History Screen
+- **Goal**: Customer points balance card with points-to-BDT conversion rate and transaction ledger.
+- **Files**: `bazar-shodai-app/app/(account)/rewards.tsx`
+- **API**: `GET /customer/loyalty`
+- **Acceptance Criteria**: Lists points earned per order and points redeemed on coupons.
+- **Dependencies**: Phase 30.
+- **Status**: [ ] Not started
+
+### Phase 124: Customer Wishlist Screen (Wishlist Tab)
+- **Goal**: Grid of customer's saved favorite items with 1-tap "Move to Bag" action.
+- **Files**: `bazar-shodai-app/app/(tabs)/wishlist.tsx`
+- **API**: `GET /customer/wishlist`, `POST /customer/wishlist`, `DELETE /customer/wishlist/:productId`
+- **Acceptance Criteria**: 1-tap heart toggle with micro-interaction scale animation.
+- **Dependencies**: Phase 39.
+- **Status**: [ ] Not started
+
+### Phase 125: App Settings, Language & Biometrics Screen
+- **Goal**: Preferences screen: Language toggle (Bangla / English), Dark mode, and Biometric login (Fingerprint / Face ID).
+- **Files**: `bazar-shodai-app/app/(account)/settings.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Language switch updates all UI strings instantly; biometrics integrate with `expo-local-authentication`.
+- **Dependencies**: Phase 10.
+- **Status**: [ ] Not started
+
+---
+
+## Milestone 18: Customer Care, Support Tickets & Contact (Phases 126-130)
+
+### Phase 126: Support Tickets List Screen
+- **Goal**: List open and resolved customer support tickets with status tags.
+- **Files**: `bazar-shodai-app/app/(account)/support.tsx`
+- **API**: `GET /customer/support`
+- **Acceptance Criteria**: Pull-to-refresh; "Open New Ticket" floating action button.
+- **Dependencies**: Phase 30.
+- **Status**: [ ] Not started
+
+### Phase 127: Create Support Ticket Screen (`/support/new`)
+- **Goal**: Form with category dropdown (`ORDER`, `PAYMENT`, `DELIVERY`, `PRODUCT`, `OTHER`), subject, and message.
+- **Files**: `bazar-shodai-app/app/support/new.tsx`
+- **API**: `POST /customer/support`
+- **Acceptance Criteria**: Validates inputs and creates ticket.
+- **Dependencies**: Phase 126.
+- **Status**: [ ] Not started
+
+### Phase 128: Interactive Support Ticket Chat Thread
+- **Goal**: Keyboard-aware messaging screen showing conversation between customer and support agent.
+- **Files**: `bazar-shodai-app/app/support/[id].tsx`
+- **API**: `GET /customer/support/:id`, `POST /customer/support/:id/messages`
+- **Acceptance Criteria**: Auto-scrolls to newest message; optimistic local message append.
+- **Dependencies**: Phase 127.
+- **Status**: [ ] Not started
+
+### Phase 129: Contact Us & Store Information Screen
+- **Goal**: Business hours, customer hotline call button, WhatsApp chat trigger, and contact message form.
+- **Files**: `bazar-shodai-app/app/contact.tsx`
+- **API**: `POST /customer/contact`
+- **Acceptance Criteria**: "Call Support" opens native phone dialer with official store phone number.
+- **Dependencies**: Phase 22.
+- **Status**: [ ] Not started
+
+### Phase 130: Notification Center Screen
+- **Goal**: Push & in-app notification list with unread indicators and 1-tap mark all as read.
+- **Files**: `bazar-shodai-app/app/notifications/index.tsx`
+- **API**: `GET /customer/notifications`, `PATCH /customer/notifications/:id/read`, `POST /customer/notifications/mark-all-read`
+- **Acceptance Criteria**: Deep links to relevant order or promotion when notification item is tapped.
+- **Dependencies**: Phase 30.
+- **Status**: [ ] Not started
+
+---
+
+## Milestone 19: Delivery Rider Portal (Staff Mode) (Phases 131-136)
+
+### Phase 131: Staff / Rider Authentication & Role Detection
+- **Goal**: Detect if logged in user has `STAFF` or `ADMIN` role with rider permissions.
+- **Files**: `bazar-shodai-app/src/features/rider/hooks/useRiderAccess.ts`
+- **API**: `GET /customer/auth/profile`
+- **Acceptance Criteria**: Reveals "Rider Dashboard" switch in Account screen for staff members.
+- **Dependencies**: Phase 51.
+- **Status**: [ ] Not started
+
+### Phase 132: Rider Deliveries Feed Screen
+- **Goal**: List active deliveries assigned to the logged-in rider with customer name, address, and total cash to collect.
+- **Files**: `bazar-shodai-app/app/(rider)/deliveries.tsx`
+- **API**: `GET /admin/deliveries/my-deliveries`
+- **Acceptance Criteria**: Filter by status: `ASSIGNED`, `ACCEPTED`, `ON_THE_WAY`, `DELIVERED`.
+- **Dependencies**: Phase 131.
+- **Status**: [ ] Not started
+
+### Phase 133: Rider Live Order Action Bar & Navigation
+- **Goal**: Order action screen with 1-tap "Navigate with Google Maps" and 1-tap "Call Customer".
+- **Files**: `bazar-shodai-app/app/(rider)/order/[id].tsx`
+- **API**: `GET /admin/orders/:id`
+- **Acceptance Criteria**: Launches Google Maps / Apple Maps with destination GPS coordinates.
+- **Dependencies**: Phase 132.
+- **Status**: [ ] Not started
+
+### Phase 134: Delivery Status Transition Mutation
+- **Goal**: Rider transitions order status (`ACCEPTED` → `PICKED_UP` → `ON_THE_WAY` → `DELIVERED`).
+- **Files**: `bazar-shodai-app/src/features/rider/api/useUpdateDeliveryStatus.ts`
+- **API**: `PATCH /admin/deliveries/:id/status`
+- **Acceptance Criteria**: Captures current rider GPS coordinates on transition.
+- **Dependencies**: Phase 133.
+- **Status**: [ ] Not started
+
+### Phase 135: Cash Collection Reconciliation Screen
+- **Goal**: Daily cash collection summary: total COD cash collected vs pending handover.
+- **Files**: `bazar-shodai-app/app/(rider)/settlements.tsx`
+- **API**: `GET /admin/deliveries/settlements`
+- **Acceptance Criteria**: Clear breakdown of cash received per order.
+- **Dependencies**: Phase 132.
+- **Status**: [ ] Not started
+
+### Phase 136: Delivery Failure & Reschedule Modal
+- **Goal**: Modal allowing rider to log delivery failure with reason (`CUSTOMER_UNREACHABLE`, `WRONG_ADDRESS`, `CUSTOMER_CANCELLED`).
+- **Files**: `bazar-shodai-app/src/features/rider/components/DeliveryFailedModal.tsx`
+- **API**: `PATCH /admin/deliveries/:id/status` (`FAILED`)
+- **Acceptance Criteria**: Updates order timeline and alerts dispatch staff.
+- **Dependencies**: Phase 38.
+- **Status**: [ ] Not started
+
+---
+
+## Milestone 20: Push Notifications, Deep Linking & Offline Cache (Phases 137-142)
+
+### Phase 137: Expo Notifications Device Token Registration
+- **Goal**: Register push notification token with backend upon customer login.
+- **Files**: `bazar-shodai-app/src/services/notifications.ts`
+- **API**: `POST /customer/notifications/token`
+- **Acceptance Criteria**: Obtains native Expo push token and handles Android notification channels.
+- **Dependencies**: Phase 51.
+- **Status**: [ ] Not started
+
+### Phase 138: Foreground & Background Push Notification Handlers
+- **Goal**: Handle in-app heads-up notification display and tap routing when app is killed/backgrounded.
+- **Files**: `bazar-shodai-app/src/services/notificationHandlers.ts`
+- **API**: None.
+- **Acceptance Criteria**: Tapping notification routes user directly to matching Order or Promotion.
+- **Dependencies**: Phase 137.
+- **Status**: [ ] Not started
+
+### Phase 139: Android Notification Channels Configuration
+- **Goal**: Setup Android 8.0+ notification channels (Orders, Deals & Discounts, Delivery Updates, Pharmacy).
+- **Files**: `bazar-shodai-app/src/constants/notificationChannels.ts`
+- **API**: None.
+- **Acceptance Criteria**: Proper importance levels, sound, and vibration patterns configured.
+- **Dependencies**: Phase 137.
+- **Status**: [ ] Not started
+
+### Phase 140: Offline Cart & Read-Only Catalog Caching
+- **Goal**: Allow browsing cached catalog and modifying cart while device is temporarily offline.
+- **Files**: `bazar-shodai-app/src/services/offlineSync.ts`
+- **API**: None.
+- **Acceptance Criteria**: Syncs queued cart operations automatically once connection resumes.
+- **Dependencies**: Phase 18.
+- **Status**: [ ] Not started
+
+### Phase 141: Localized Bengali & English Translation Engine
+- **Goal**: Dual-language dictionary (`bn.json` and `en.json`) mirroring web translations.
+- **Files**: `bazar-shodai-app/src/i18n/index.ts`, `bazar-shodai-app/src/i18n/locales/{bn,en}.json`
+- **API**: None.
+- **Acceptance Criteria**: 100% of UI strings translated with fallback to English.
+- **Dependencies**: Phase 6.
+- **Status**: [ ] Not started
+
+### Phase 142: In-App App Update Checker
+- **Goal**: Alert users when a mandatory app update is published.
+- **Files**: `bazar-shodai-app/src/services/versionCheck.ts`
+- **API**: `GET /common/storefront/content-version`
+- **Acceptance Criteria**: Modal redirecting to Google Play Store if minimum version not met.
+- **Dependencies**: Phase 38.
+- **Status**: [ ] Not started
+
+---
+
+## Milestone 21: Performance Hardening, Accessibility & EAS Build Pipeline (Phases 143-150)
+
+### Phase 143: Memory Leak & Image Cache Tuning
+- **Goal**: Configure disk cache limits for `expo-image` and profile unmount cleanup hooks.
+- **Files**: `bazar-shodai-app/src/utils/imageConfig.ts`
+- **API**: None.
+- **Acceptance Criteria**: App maintains stable memory consumption under continuous scrolling.
+- **Dependencies**: Phase 27.
+- **Status**: [ ] Not started
+
+### Phase 144: Accessibility (a11y) & Screen Reader Audit
+- **Goal**: Audit accessibility labels, hints, and minimum 44x44px touch targets across all components.
+- **Files**: Design system components.
+- **API**: None.
+- **Acceptance Criteria**: Full TalkBack (Android) screen reader pass with 0 unlabelled controls.
+- **Dependencies**: Phase 20.
+- **Status**: [ ] Not started
+
+### Phase 145: Jest Unit Tests for Core Business Logic
+- **Goal**: Write unit tests for cart calculation, fractional quantity steppers, and phone validation.
+- **Files**: `bazar-shodai-app/__tests__/cart.test.ts`, `bazar-shodai-app/__tests__/format.test.ts`
+- **API**: None.
+- **Acceptance Criteria**: All Jest unit tests pass with 100% assertions satisfied.
+- **Dependencies**: Phases 24, 35, 90.
+- **Status**: [ ] Not started
+
+### Phase 146: Component Integration Tests (RNTL)
+- **Goal**: React Native Testing Library tests for Login screen and Cart stepper flow.
+- **Files**: `bazar-shodai-app/__tests__/Login.test.tsx`, `bazar-shodai-app/__tests__/Cart.test.tsx`
+- **API**: None.
+- **Acceptance Criteria**: Integration tests pass cleanly.
+- **Dependencies**: Phases 52, 92.
+- **Status**: [ ] Not started
+
+### Phase 147: ProGuard & Android Production Shrinking
+- **Goal**: Enable ProGuard code shrinking, resource shrinking, and native architecture optimizations.
+- **Files**: `bazar-shodai-app/android/app/build.gradle` (via Expo config plugins).
+- **API**: None.
+- **Acceptance Criteria**: Generates minimal production APK/AAB bundle size.
+- **Dependencies**: Phase 1.
+- **Status**: [ ] Not started
+
+### Phase 148: EAS Build Configuration (`eas.json`)
+- **Goal**: Configure development, preview, and production build profiles in `eas.json`.
+- **Files**: `bazar-shodai-app/eas.json`
+- **API**: None.
+- **Acceptance Criteria**: Verified `eas.json` with proper Android credentials and environment targets.
+- **Dependencies**: Phase 1.
+- **Status**: [ ] Not started
+
+### Phase 149: Google Play Store Assets & Metadata Verification
+- **Goal**: Verify app icons, feature banners, privacy policy link, and permissions declarations.
+- **Files**: `bazar-shodai-app/app.json`
+- **API**: None.
+- **Acceptance Criteria**: All Google Play console submission criteria met.
+- **Dependencies**: Phase 12.
+- **Status**: [ ] Not started
+
+### Phase 150: Final E2E Smoke Test & Release Audit
+- **Goal**: Complete end-to-end user journey test: Boot → Catalog → Cart → GPS Location → bKash Checkout → Order Confirmation → Order Tracking.
+- **Files**: `bazar-shodai-app/README.md`, `PROGRESS.md`
+- **API**: Full backend suite.
+- **Acceptance Criteria**: 0 crashes, 60fps interaction speed, complete feature parity confirmed.
+- **Dependencies**: Phases 1-149.
+- **Status**: [ ] Not started

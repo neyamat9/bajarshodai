@@ -122,7 +122,6 @@ export default function CategoryNav({ categories, compact = false }: CategoryNav
           <div ref={row} data-cat-row="" className="relative mx-2 hidden min-w-0 flex-1 items-center xl:flex">
             {categories.map((cat, i) => {
               const isCatActive = pathname === `/category/${cat.slug}` || pathname.startsWith(`/category/${cat.slug}/`);
-              const isMedicine = cat.slug === "medicine";
               return (
                 <div
                   key={cat.slug}
@@ -135,14 +134,10 @@ export default function CategoryNav({ categories, compact = false }: CategoryNav
                     href={`/category/${cat.slug}`}
                     prefetch
                     aria-current={isCatActive ? "page" : undefined}
-                    className={`${baseLinkClass} ${
-                      isMedicine
-                        ? "font-bold text-emerald-600 dark:text-emerald-400 after:bg-emerald-600 dark:after:bg-emerald-400"
-                        : "after:bg-brand-fresh"
-                    } ${
+                    className={`${baseLinkClass} after:bg-brand-fresh ${
                       isCatActive
-                        ? `after:scale-x-100 ${!isMedicine ? "text-foreground" : ""}`
-                        : `after:scale-x-0 ${!isMedicine ? "text-muted-foreground hover:text-foreground" : ""}`
+                        ? "text-foreground after:scale-x-100"
+                        : "text-muted-foreground hover:text-foreground after:scale-x-0"
                     }`}
                   >
                     {cat.name.split(" & ")[0]}
