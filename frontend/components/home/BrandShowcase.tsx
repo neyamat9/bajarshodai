@@ -166,7 +166,7 @@ export default function BrandShowcase({ brands, productsByBrand }: BrandShowcase
             stagger: 0.08,
             clearProps: "transform",
             ...(isFirst
-              ? { scrollTrigger: { trigger: panel.current, start: "top 85%", end: "bottom top", toggleActions: "play reset play reset" } }
+              ? { scrollTrigger: { trigger: panel.current, start: "top 85%", once: true } }
               : {}),
           },
         );

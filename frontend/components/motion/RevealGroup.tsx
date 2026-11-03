@@ -58,8 +58,10 @@ export default function RevealGroup({ children, className }: RevealGroupProps) {
           // stay hidden because the page layout shifted after the triggers were measured.
           const io = new IntersectionObserver(
             ([entry]) => {
-              if (entry.isIntersecting) play(words);
-              else if (entry.boundingClientRect.bottom < 0 || entry.boundingClientRect.top > window.innerHeight) reset(words);
+              if (entry.isIntersecting) {
+                play(words);
+                io.unobserve(el);
+              }
             },
             { rootMargin: "0px 0px -10% 0px" },
           );
@@ -67,9 +69,6 @@ export default function RevealGroup({ children, className }: RevealGroupProps) {
           cleanups.push(() => io.disconnect());
           function play(w: NodeListOf<HTMLElement>) {
             gsap.to(w, { yPercent: 0, rotate: 0, duration: 1.15, ease: "expo.out", stagger: 0.07, overwrite: true });
-          }
-          function reset(w: NodeListOf<HTMLElement>) {
-            gsap.set(w, { yPercent: 118, rotate: 5 });
           }
         });
 
@@ -83,18 +82,14 @@ export default function RevealGroup({ children, className }: RevealGroupProps) {
           ScrollTrigger.create({
             trigger: el,
             start: "top 92%",
-            end: "bottom top",
+            once: true,
             onEnter: () => gsap.to(el, { scaleX: 1, duration: 1.1, ease: "expo.out", overwrite: true }),
-            onEnterBack: () => gsap.to(el, { scaleX: 1, duration: 1.1, ease: "expo.out", overwrite: true }),
-            onLeave: () => gsap.set(el, { scaleX: 0 }),
-            onLeaveBack: () => gsap.set(el, { scaleX: 0 }),
           });
         });
 
         // ── reveal styles, batched so each row/stagger fires as it enters view
-        // Every time an item enters the viewport (scrolling down OR back up) it plays;
-        // once it leaves, it resets so it can play again next time. Items that sit in the
-        // same row are staggered left → right.
+        // Items animate in once on first scroll view and remain revealed.
+        // Items that sit in the same row are staggered left → right.
         const batchOf = (sel: string, from: gsap.TweenVars, to: gsap.TweenVars, start = "top 90%") => {
           const items = gsap.utils.toArray<HTMLElement>(sel, root);
           if (!items.length) return;
@@ -103,18 +98,11 @@ export default function RevealGroup({ children, className }: RevealGroupProps) {
           const gap = typeof to.stagger === "number" ? to.stagger : 0.1;
           items.forEach((el, i) => {
             const play = () => gsap.to(el, { ...to, stagger: undefined, delay: (i % perRow) * gap, overwrite: true });
-            const reset = () => {
-              gsap.killTweensOf(el);
-              gsap.set(el, from);
-            };
             ScrollTrigger.create({
               trigger: el,
               start,
-              end: "bottom top",
+              once: true,
               onEnter: play,
-              onEnterBack: play,
-              onLeave: reset,
-              onLeaveBack: reset,
             });
           });
         };
@@ -149,11 +137,8 @@ export default function RevealGroup({ children, className }: RevealGroupProps) {
           ScrollTrigger.create({
             trigger: img.closest("[data-reveal]") as HTMLElement,
             start: "top 90%",
-            end: "bottom top",
+            once: true,
             onEnter: () => gsap.to(img, { scale: 1, duration: 1.8, ease: "expo.out", delay: 0.1, overwrite: true }),
-            onEnterBack: () => gsap.to(img, { scale: 1, duration: 1.8, ease: "expo.out", delay: 0.1, overwrite: true }),
-            onLeave: () => gsap.set(img, { scale: 1.35 }),
-            onLeaveBack: () => gsap.set(img, { scale: 1.35 }),
           });
         });
 

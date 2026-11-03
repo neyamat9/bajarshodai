@@ -470,14 +470,6 @@ export default function HeroSection({
       const mm = gsap.matchMedia();
       mm.add(MOTION_OK, () => {
         const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
-        // replay the intro whenever the hero scrolls back into view
-        ScrollTrigger.create({
-          trigger: root.current,
-          start: "top top",
-          end: "bottom 35%",
-          onLeave: () => tl.pause(0),
-          onEnterBack: () => tl.restart(),
-        });
         tl.fromTo("[data-hero-frame]", { y: 80, opacity: 0, scale: 0.95 }, { y: 0, opacity: 1, scale: 1, duration: 1.4 }, 0.05)
           .fromTo("[data-hero-item]", { y: 70, opacity: 0, scale: 0.94 }, { y: 0, opacity: 1, scale: 1, duration: 1.2, stagger: 0.16 }, 0.25);
 
