@@ -55,6 +55,15 @@ function RootNavigationLayout() {
           }}
         />
 
+        {/* Product Catalog Listing */}
+        <Stack.Screen
+          name="products/index"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+
         {/* Dynamic Category Drilldown Route */}
         <Stack.Screen
           name="category/[slug]"

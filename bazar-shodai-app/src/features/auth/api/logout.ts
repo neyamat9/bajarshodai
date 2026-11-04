@@ -12,4 +12,3 @@ export async function logoutApi(): Promise<void> {
     queryClient.clear();
   }
 }
-

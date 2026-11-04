@@ -33,7 +33,7 @@ export function HomeHeader({
     if (onLocationPress) {
       onLocationPress();
     } else {
-      router.push('/modal/address-picker');
+      router.push('/location/picker');
     }
   };
 

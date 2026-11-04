@@ -71,4 +71,3 @@ export interface HomeFeedData {
   categories: HomeCategoryData[];
   brands: HomeBrandData[];
 }
-

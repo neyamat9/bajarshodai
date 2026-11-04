@@ -1,38 +1,66 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  FlatList,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { SearchBar } from '@/components/ui/SearchBar';
-import { ProductGridCard } from '@/components/product/ProductGridCard';
-import { EmptyState } from '@/components/ui/EmptyState';
+import { ProductGridCard, ProductGridItem } from '@/components/product/ProductGridCard';
+import { NoProductsFound } from '@/features/products/components/NoProductsFound';
+import { useSearchSuggestions } from '@/features/search/api/useSearch';
+import {
+  getLocalRecentSearches,
+  recordSearchHistory,
+  removeLocalSearchQuery,
+  clearAllSearchHistory,
+} from '@/features/search/api/searchHistory';
 import { useCartStore } from '@/store/useCartStore';
 import { toast } from '@/store/useToastStore';
-
-const SEARCHABLE_ITEMS = [
-  { id: 's1', name: 'Deshi Potato (Alu)', slug: 'deshi-potato-alu', price: 35, unit: 'kg' },
-  { id: 's2', name: 'Fresh Deshi Tomato', slug: 'fresh-deshi-tomato', price: 60, unit: 'kg' },
-  { id: 's3', name: 'Red Deshi Carrots', slug: 'red-deshi-carrots', price: 75, unit: 'kg' },
-  { id: 's4', name: 'Green Chili (Kacha Morich)', slug: 'green-chili', price: 110, unit: 'kg' },
-  {
-    id: 's5',
-    name: 'River Hilsha Fish (Ilish)',
-    slug: 'river-hilsha-fish',
-    price: 1450,
-    unit: 'kg',
-  },
-  { id: 's6', name: 'Rui Fish Whole', slug: 'rui-fish-whole', price: 420, unit: 'kg' },
-  { id: 's7', name: 'Deshi Beef Curry Cut', slug: 'deshi-beef-curry-cut', price: 780, unit: 'kg' },
-];
+import { haptics } from '@/services/haptics';
 
 export default function SearchScreen() {
   const router = useRouter();
-  const [query, setQuery] = useState('');
   const addItem = useCartStore((s) => s.addItem);
+  const cartItems = useCartStore((s) => s.items);
 
-  const results = query.trim()
-    ? SEARCHABLE_ITEMS.filter((item) => item.name.toLowerCase().includes(query.toLowerCase()))
-    : [];
+  const [query, setQuery] = useState('');
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => getLocalRecentSearches());
+
+  const { data: suggestions, isLoading } = useSearchSuggestions(query);
+
+  const handleSearchSubmit = (searchTerm: string) => {
+    const term = searchTerm.trim();
+    if (!term) return;
+
+    recordSearchHistory(term);
+    setRecentSearches(getLocalRecentSearches());
+  };
+
+  const handleSelectRecent = (term: string) => {
+    haptics.selection();
+    setQuery(term);
+    handleSearchSubmit(term);
+  };
+
+  const handleRemoveRecent = (term: string) => {
+    haptics.light();
+    const updated = removeLocalSearchQuery(term);
+    setRecentSearches(updated);
+  };
+
+  const handleClearHistory = () => {
+    haptics.light();
+    clearAllSearchHistory();
+    setRecentSearches([]);
+  };
+
+  const products = suggestions?.products ?? [];
 
   return (
     <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-background">
@@ -49,57 +77,137 @@ export default function SearchScreen() {
         <View className="flex-1">
           <SearchBar
             value={query}
-            onChangeQuery={setQuery}
-            placeholder="Search groceries, fish, beef..."
+            onChangeQuery={(val) => setQuery(val)}
+            onSubmit={handleSearchSubmit}
+            placeholder="Search groceries, fish, beef, vegetables..."
           />
         </View>
       </View>
 
-      {/* Results / Empty */}
-      {query.trim().length === 0 ? (
-        <View className="p-6 items-center justify-center flex-1">
-          <Icon name="Search" size={40} color="#94a3b8" />
-          <Text className="text-base font-semibold text-foreground mt-3 mb-1">
-            Search Bazar Shodai
-          </Text>
-          <Text className="text-xs text-muted-foreground text-center">
-            Find fresh vegetables, river fish, halal beef, spices, and groceries in Shahrasti.
-          </Text>
+      {/* Query is Empty: Show Recent Searches */}
+      {query.trim().length < 2 ? (
+        <ScrollView contentContainerStyle={{ padding: 16 }}>
+          {recentSearches.length > 0 && (
+            <View className="mb-6">
+              <View className="flex-row items-center justify-between mb-3">
+                <Text className="text-xs font-bold text-foreground uppercase tracking-wider">
+                  Recent Searches
+                </Text>
+                <TouchableOpacity onPress={handleClearHistory} activeOpacity={0.7}>
+                  <Text className="text-xs text-brand-deep dark:text-brand-fresh font-semibold">
+                    Clear All
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <View className="flex-row flex-wrap gap-2">
+                {recentSearches.map((term) => (
+                  <View
+                    key={term}
+                    className="flex-row items-center bg-card border border-border rounded-full pl-3 pr-2 py-1.5"
+                  >
+                    <TouchableOpacity onPress={() => handleSelectRecent(term)}>
+                      <Text className="text-xs font-medium text-foreground mr-1.5">{term}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleRemoveRecent(term)} className="p-0.5">
+                      <Icon name="X" size={12} color="#94a3b8" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Quick Popular Keywords */}
+          <View>
+            <Text className="text-xs font-bold text-foreground uppercase tracking-wider mb-3">
+              Popular in Shahrasti
+            </Text>
+            <View className="flex-row flex-wrap gap-2">
+              {[
+                'দেশি টমেটো',
+                'চাঁদপুরের ইলিশ',
+                'গরুর মাংস',
+                'সয়াবিন তেল',
+                'ফার্মের ডিম',
+                'কাঁচা মরিচ',
+                'নাজিরশাইল চাল',
+              ].map((tag) => (
+                <TouchableOpacity
+                  key={tag}
+                  onPress={() => {
+                    haptics.selection();
+                    setQuery(tag);
+                    handleSearchSubmit(tag);
+                  }}
+                  className="px-3 py-1.5 rounded-full bg-brand-fresh/10 border border-brand-fresh/20"
+                >
+                  <Text className="text-xs font-medium text-brand-deep dark:text-brand-fresh">
+                    {tag}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </ScrollView>
+      ) : isLoading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#0b6234" />
         </View>
       ) : (
         <FlatList
-          data={results}
+          data={products}
           keyExtractor={(item) => item.id}
           numColumns={2}
-          contentContainerStyle={{ padding: 12 }}
+          contentContainerStyle={{ padding: 12, paddingBottom: 32 }}
           columnWrapperStyle={{ gap: 12, marginBottom: 12 }}
-          renderItem={({ item }) => (
-            <View style={{ flex: 1 }}>
-              <ProductGridCard
-                product={item}
-                onPress={() => router.push(`/product/${item.slug}`)}
-                onAddToCart={() => {
-                  addItem(
-                    {
-                      id: item.id,
-                      productId: item.id,
-                      name: item.name,
-                      price: item.price,
-                      unit: item.unit,
-                    },
-                    1,
-                  );
-                  toast.success('Cart', `${item.name} added`);
-                }}
-              />
-            </View>
-          )}
+          renderItem={({ item }) => {
+            const cartItem = cartItems.find((i) => i.productId === item.id);
+            const gridItem: ProductGridItem = {
+              id: item.id,
+              name: item.nameBn || item.name,
+              banglaName: item.nameBn ?? undefined,
+              slug: item.slug,
+              price: item.price,
+              originalPrice: item.regularPrice,
+              imageUrl: item.imageUrl || item.primaryImage?.url,
+              unit: item.unit?.shortLabel || 'kg',
+              stock: item.stock,
+              badge:
+                item.discountPercent && item.discountPercent > 0
+                  ? `${item.discountPercent}% OFF`
+                  : undefined,
+            };
+
+            return (
+              <View style={{ flex: 1 }}>
+                <ProductGridCard
+                  product={gridItem}
+                  quantityInCart={cartItem?.quantity}
+                  onPress={() => router.push(`/product/${item.slug}`)}
+                  onAddToCart={() => {
+                    addItem(
+                      {
+                        id: item.id,
+                        productId: item.id,
+                        name: gridItem.name,
+                        price: item.price,
+                        unit: gridItem.unit,
+                        imageUrl: gridItem.imageUrl,
+                      },
+                      item.unit?.minQty ?? 1,
+                    );
+                    haptics.selection();
+                    toast.success('Cart', `${gridItem.name} added`);
+                  }}
+                />
+              </View>
+            );
+          }}
           ListEmptyComponent={
-            <EmptyState
-              title="No Products Found"
-              description={`We couldn't find any results for "${query}". Try checking your spelling or use general keywords.`}
-              actionLabel="Clear Search"
-              onAction={() => setQuery('')}
+            <NoProductsFound
+              message={`No items matching "${query}".`}
+              onResetFilters={() => setQuery('')}
             />
           }
         />

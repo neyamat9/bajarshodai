@@ -1,93 +1,305 @@
-import React from 'react';
-import { View, Text, FlatList } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, FlatList, TouchableOpacity, RefreshControl, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useCartStore } from '@/store/useCartStore';
-import { ProductListCard } from '@/components/product/ProductListCard';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { Button } from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
 import { Price } from '@/components/ui/Price';
+import { Button } from '@/components/ui/Button';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Radius } from '@/constants/layout';
+import { useCartStore } from '@/store/useCartStore';
+import { useServerCart, clearServerCartApi } from '@/features/cart/api/cartApi';
+import { FreeShippingProgressBar } from '@/features/cart/components/FreeShippingProgressBar';
+import { CouponInput } from '@/features/cart/components/CouponInput';
+import { SwipeableCartItem } from '@/features/cart/components/SwipeableCartItem';
+import { ClearCartDialog } from '@/features/cart/components/ClearCartDialog';
 import { toast } from '@/store/useToastStore';
+import { haptics } from '@/services/haptics';
 
 export default function CartScreen() {
   const router = useRouter();
-  const { items, updateQuantity, removeItem, totalPrice } = useCartStore();
+  const [showClearDialog, setShowClearDialog] = useState(false);
 
-  const subtotal = totalPrice();
-  const deliveryFee = subtotal > 500 ? 0 : 30;
-  const grandTotal = subtotal + (subtotal > 0 ? deliveryFee : 0);
+  const {
+    items,
+    updateQuantity,
+    removeItem,
+    clearCart,
+    subtotal,
+    totalPrice,
+    coupon,
+    deliveryCharge,
+    freeDeliveryThreshold,
+  } = useCartStore();
+
+  const { refetch, isRefetching } = useServerCart();
+
+  const sub = subtotal();
+  const grandTotal = totalPrice();
+  const isFreeDelivery = sub >= freeDeliveryThreshold;
+  const currentDeliveryFee = sub > 0 ? (isFreeDelivery ? 0 : deliveryCharge) : 0;
+  const discountAmount = coupon?.discount ?? 0;
+
+  const handleClearConfirm = async () => {
+    try {
+      clearCart();
+      void clearServerCartApi().catch(() => {});
+      setShowClearDialog(false);
+      toast.info('Bag Cleared', 'All items have been removed');
+      haptics.selection();
+    } catch {
+      clearCart();
+      setShowClearDialog(false);
+    }
+  };
 
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-background">
-      {/* Header */}
-      <View className="px-4 py-3 border-b border-border bg-card">
-        <Text className="text-xl font-bold text-foreground">Shopping Cart ({items.length})</Text>
+    <SafeAreaView edges={['top']} style={styles.container}>
+      {/* Top Header */}
+      <View style={styles.header}>
+        <View style={styles.headerTitleRow}>
+          <Text style={styles.headerTitle}>Shopping Bag</Text>
+          {items.length > 0 && (
+            <View style={styles.countBadge}>
+              <Text style={styles.countBadgeText}>{items.length}</Text>
+            </View>
+          )}
+        </View>
+
+        {items.length > 0 && (
+          <TouchableOpacity
+            onPress={() => setShowClearDialog(true)}
+            style={styles.clearBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Clear cart"
+          >
+            <Icon name="Trash2" size={18} color="#ef4444" />
+            <Text style={styles.clearBtnText}>Clear</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
-      {/* Cart Items List */}
       <FlatList
         data={items}
         keyExtractor={(item) => item.productId}
-        contentContainerStyle={{ padding: 16, flexGrow: 1 }}
-        renderItem={({ item }) => (
-          <ProductListCard
-            product={{
-              id: item.productId,
-              name: item.name,
-              price: item.price,
-              unit: item.unit ?? 'kg',
-              imageUrl: item.imageUrl,
-              slug: item.productId,
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={() => {
+              void refetch();
             }}
-            quantity={item.quantity}
-            onQuantityChange={(qty) => updateQuantity(item.productId, qty)}
+            colors={['#0b6234']}
+            tintColor="#0b6234"
+          />
+        }
+        contentContainerStyle={styles.listContent}
+        ListHeaderComponent={
+          items.length > 0 ? (
+            <View style={styles.listHeader}>
+              <FreeShippingProgressBar subtotal={sub} threshold={freeDeliveryThreshold} />
+            </View>
+          ) : undefined
+        }
+        renderItem={({ item }) => (
+          <SwipeableCartItem
+            item={item}
+            onUpdateQuantity={(newQty) => updateQuantity(item.productId, newQty)}
             onRemove={() => {
               removeItem(item.productId);
-              toast.info('Item Removed', `${item.name} removed from your bag`);
+              toast.info('Removed', `${item.name} removed`);
             }}
           />
         )}
+        ListFooterComponent={
+          items.length > 0 ? (
+            <View style={styles.listFooter}>
+              <CouponInput />
+            </View>
+          ) : undefined
+        }
         ListEmptyComponent={
-          <EmptyState
-            title="Your Cart is Empty"
-            description="Looks like you haven't added anything to your cart yet. Explore our fresh grocery selection!"
-            actionLabel="Start Shopping"
-            onAction={() => router.push('/')}
-          />
+          <View style={styles.emptyWrap}>
+            <EmptyState
+              title="Your Shopping Bag is Empty"
+              description="Explore thousands of fresh vegetables, daily groceries, fish, and authentic spices!"
+              actionLabel="Start Shopping"
+              onAction={() => router.push('/')}
+            />
+          </View>
         }
       />
 
-      {/* Checkout Summary Footer */}
+      {/* Sticky Bottom Order Summary */}
       {items.length > 0 && (
-        <View className="p-4 bg-card border-t border-border">
-          <View className="flex-row items-center justify-between mb-2">
-            <Text className="text-xs text-muted-foreground">Subtotal</Text>
-            <Price amount={subtotal} size="sm" />
+        <View style={styles.footerSummary}>
+          <View style={styles.breakdownRow}>
+            <Text style={styles.breakdownLabel}>Subtotal ({items.length} items)</Text>
+            <Price amount={sub} size="sm" />
           </View>
-          <View className="flex-row items-center justify-between mb-3">
-            <Text className="text-xs text-muted-foreground">Delivery Charge</Text>
-            {deliveryFee === 0 ? (
-              <Text className="text-xs font-semibold text-brand-fresh">FREE</Text>
+
+          {discountAmount > 0 && (
+            <View style={styles.breakdownRow}>
+              <Text style={styles.discountLabel}>Coupon Discount ({coupon?.code})</Text>
+              <Text style={styles.discountValue}>-৳{discountAmount.toFixed(0)}</Text>
+            </View>
+          )}
+
+          <View style={styles.breakdownRow}>
+            <Text style={styles.breakdownLabel}>Estimated Delivery</Text>
+            {isFreeDelivery ? (
+              <Text style={styles.freeText}>FREE</Text>
             ) : (
-              <Price amount={deliveryFee} size="sm" />
+              <Price amount={currentDeliveryFee} size="sm" />
             )}
           </View>
-          <View className="flex-row items-center justify-between pt-2 border-t border-border mb-4">
-            <Text className="text-sm font-bold text-foreground">Total Payable</Text>
+
+          <View style={styles.divider} />
+
+          <View style={styles.totalRow}>
+            <View>
+              <Text style={styles.totalLabel}>Total Payable</Text>
+              <Text style={styles.vatNote}>VAT / Taxes Included</Text>
+            </View>
             <Price amount={grandTotal} size="lg" />
           </View>
 
           <Button
-            title="Proceed to Checkout"
+            title={`Checkout • ৳${grandTotal.toFixed(0)}`}
             variant="primary"
             size="lg"
             onPress={() => {
-              toast.success('Order Process', 'Proceeding to delivery address selection');
-              router.push('/modal/address-picker');
+              haptics.selection();
+              router.push('/checkout');
             }}
+            rightIcon={<Icon name="ArrowRight" size={18} color="#ffffff" />}
           />
         </View>
       )}
+
+      {/* Clear Cart Confirmation Dialog */}
+      <ClearCartDialog
+        visible={showClearDialog}
+        onConfirm={handleClearConfirm}
+        onCancel={() => setShowClearDialog(false)}
+      />
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  countBadge: {
+    backgroundColor: '#ecfdf5',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: '#a7f3d0',
+  },
+  countBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#0b6234',
+  },
+  clearBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    padding: 4,
+  },
+  clearBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#ef4444',
+  },
+  listContent: {
+    padding: 16,
+    flexGrow: 1,
+  },
+  listHeader: {
+    marginBottom: 12,
+  },
+  listFooter: {
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  emptyWrap: {
+    marginTop: 40,
+    alignItems: 'center',
+  },
+  footerSummary: {
+    backgroundColor: '#ffffff',
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+    padding: 16,
+    gap: 8,
+  },
+  breakdownRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  breakdownLabel: {
+    fontSize: 13,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  discountLabel: {
+    fontSize: 13,
+    color: '#059669',
+    fontWeight: '600',
+  },
+  discountValue: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#059669',
+  },
+  freeText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#059669',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#f3f4f6',
+    marginVertical: 4,
+  },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  totalLabel: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  vatNote: {
+    fontSize: 10,
+    color: '#9ca3af',
+  },
+});

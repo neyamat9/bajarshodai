@@ -665,7 +665,7 @@
 - **API**: `GET /customer/categories`, `GET /customer/products`
 - **Acceptance Criteria**: Smooth thumb navigation between parent categories and child products.
 - **Dependencies**: Phases 42, 45.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 69: Product Listing Screen (`/products`)
 
@@ -674,7 +674,7 @@
 - **API**: `GET /customer/products`
 - **Acceptance Criteria**: 60fps scrolling over 1,000+ items with optimized window recycling.
 - **Dependencies**: Phase 39.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 70: Full-Text Search Screen with Live Debounce
 
@@ -683,7 +683,7 @@
 - **API**: `GET /customer/products` (with `search` query param)
 - **Acceptance Criteria**: 300ms debounce prevents unnecessary API requests.
 - **Dependencies**: Phase 37.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 71: Search History Persistence & Suggestions
 
@@ -692,7 +692,7 @@
 - **API**: `GET /customer/search-history`, `POST /customer/search-history`, `DELETE /customer/search-history`
 - **Acceptance Criteria**: 1-tap re-search and 1-tap clear history.
 - **Dependencies**: Phase 70.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 72: Filter Bottom Sheet Modal
 
@@ -701,7 +701,7 @@
 - **API**: `GET /customer/brands`, `GET /customer/categories`
 - **Acceptance Criteria**: Dynamic active filter count badge; "Reset" and "Apply" buttons.
 - **Dependencies**: Phase 34.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 73: Sort Options Sheet
 
@@ -710,7 +710,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Updates query params and re-orders listing instantly.
 - **Dependencies**: Phase 34.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 74: Infinite Scroll & Pagination Engine
 
@@ -719,7 +719,7 @@
 - **API**: `GET /customer/products` (with `page` & `limit`)
 - **Acceptance Criteria**: Shows small bottom activity indicator during next page fetch.
 - **Dependencies**: Phase 69.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 75: Back-In-Stock Subscription Dialog
 
@@ -728,7 +728,7 @@
 - **API**: `POST /customer/back-in-stock`
 - **Acceptance Criteria**: Submits subscription and alerts user when confirmed.
 - **Dependencies**: Phase 38.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 76: Empty Search & Filter State
 
@@ -737,7 +737,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Features "Clear All Filters" button resetting state.
 - **Dependencies**: Phase 31.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ---
 
@@ -750,7 +750,7 @@
 - **API**: `GET /customer/products/:slug`
 - **Acceptance Criteria**: Smooth entry transition; back button returns to exact scroll position.
 - **Dependencies**: Phase 44.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 78: Fullscreen Multi-Image Swiper with Pinch-to-Zoom
 
@@ -759,7 +759,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Natural physics zoom with double-tap reset.
 - **Dependencies**: Phase 27.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 79: Unit Pricing & Quantity Stepper Bottom Action Bar
 
@@ -768,7 +768,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Always accessible above Android system navigation bar.
 - **Dependencies**: Phases 20, 35.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 80: Product Description, Nutrition & Specifications
 
@@ -777,7 +777,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Clean expandable panels with formatted typography.
 - **Dependencies**: Phase 21.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 81: Customer Reviews & Photo Rating Breakdown
 
@@ -786,7 +786,7 @@
 - **API**: `GET /customer/reviews/product/:productId`
 - **Acceptance Criteria**: Displays helpful vote counter with 1-tap helpful button.
 - **Dependencies**: Phase 36.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 82: Write Review & Photo Upload Sheet
 
@@ -795,7 +795,7 @@
 - **API**: `POST /customer/uploads/review-images`, `POST /customer/reviews`
 - **Acceptance Criteria**: Uses `expo-image-picker` to attach up to 5 photos from camera or gallery.
 - **Dependencies**: Phase 34.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 83: Related & Frequently Bought Together Products
 
@@ -804,7 +804,7 @@
 - **API**: `GET /customer/products` (same category filter)
 - **Acceptance Criteria**: 1-tap add directly from related list.
 - **Dependencies**: Phase 39.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ---
 
@@ -817,7 +817,7 @@
 - **API**: `GET /customer/products` (category=medicine, type=OTC/PRESCRIPTION)
 - **Acceptance Criteria**: Displays generic name, strength (e.g. 500mg), dosage form, and manufacturer.
 - **Dependencies**: Phase 69.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 85: Medicine Detail View & Generic Info
 
@@ -826,7 +826,7 @@
 - **API**: `GET /customer/products/:slug`
 - **Acceptance Criteria**: Clear warning banner for prescription-only pharmaceuticals.
 - **Dependencies**: Phase 77.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 86: Prescription Camera Capture & Upload Flow
 
@@ -835,7 +835,7 @@
 - **API**: `POST /prescriptions`
 - **Acceptance Criteria**: Captures clear photo, allows crop/rotate, attaches phone number and optional notes.
 - **Dependencies**: Phase 20.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 87: Uploaded Prescriptions List & Status Tracker
 
@@ -844,7 +844,7 @@
 - **API**: `GET /customer/prescriptions`
 - **Acceptance Criteria**: Displays thumbnail preview, admin feedback note, and associated order link if dispensed.
 - **Dependencies**: Phase 30.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 88: Prescription Fullscreen Image Viewer
 
@@ -853,7 +853,7 @@
 - **API**: None.
 - **Acceptance Criteria**: High resolution rendering with close action.
 - **Dependencies**: Phase 78.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 89: 1-Tap Prescription Order Re-order
 
@@ -862,7 +862,7 @@
 - **API**: `POST /customer/checkout`
 - **Acceptance Criteria**: Bypasses manual search and pre-fills approved medications.
 - **Dependencies**: Phase 87.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ---
 
@@ -875,7 +875,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Zero lag on tap; rolls back gracefully if backend rejects.
 - **Dependencies**: Phase 13.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 91: Cart Backend Synchronization Engine
 
@@ -884,7 +884,7 @@
 - **API**: `GET /customer/cart`, `POST /customer/cart/items`, `PATCH /customer/cart/items/:id`, `DELETE /customer/cart/items/:id`
 - **Acceptance Criteria**: Keeps server and client cart state 100% in sync.
 - **Dependencies**: Phase 90.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 92: Full Cart Screen (Cart Tab)
 
@@ -893,7 +893,7 @@
 - **API**: `GET /customer/cart`
 - **Acceptance Criteria**: Shows order breakdown, estimated delivery charge, and free shipping progress bar.
 - **Dependencies**: Phase 40.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 93: Swipe-to-Remove Cart Item Gesture
 
@@ -902,7 +902,7 @@
 - **API**: `DELETE /customer/cart/items/:id`
 - **Acceptance Criteria**: Fluid swipe with confirmation haptic feedback.
 - **Dependencies**: Phase 40.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 94: Free Shipping Delivery Progress Bar
 
@@ -911,7 +911,7 @@
 - **API**: `GET /customer/settings`
 - **Acceptance Criteria**: Animates bar width dynamically as cart total changes.
 - **Dependencies**: Phase 90.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 95: Coupon Code Input & Instant Validation
 
@@ -920,7 +920,7 @@
 - **API**: `POST /customer/coupons/apply`
 - **Acceptance Criteria**: Shows exact discount amount; allows 1-tap remove coupon.
 - **Dependencies**: Phase 22.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 96: Clear Cart Confirmation Dialog
 
@@ -929,7 +929,7 @@
 - **API**: `DELETE /customer/cart`
 - **Acceptance Criteria**: Empties cart and clears server state on confirm.
 - **Dependencies**: Phase 38.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ---
 
@@ -942,7 +942,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Gracefully handles permission denied with manual map pin fallback.
 - **Dependencies**: Phase 6.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 98: Location Share & Real-Time Delivery Fee Calculation
 
@@ -951,7 +951,7 @@
 - **API**: `POST /customer/my-location`, `GET /customer/my-location`
 - **Acceptance Criteria**: Returns reverse-geocoded place name, zone, and delivery fee in BDT.
 - **Dependencies**: Phase 97.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 99: Interactive Delivery Map Pin Drop Screen
 
@@ -960,7 +960,7 @@
 - **API**: `POST /customer/my-location`
 - **Acceptance Criteria**: Smooth pin movement with reverse-geocoding address preview at bottom.
 - **Dependencies**: Phase 98.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 100: Address Autocomplete & Search Picker
 
@@ -969,7 +969,7 @@
 - **API**: OpenStreetMap reverse geocoding via server.
 - **Acceptance Criteria**: Selecting a result centers the map pin automatically.
 - **Dependencies**: Phase 99.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 101: Location Share via Link & Token Reader
 
@@ -978,7 +978,7 @@
 - **API**: `GET /customer/locations/request/:token`, `POST /customer/locations/share`
 - **Acceptance Criteria**: Deep link reads token and sends current GPS location to the courier.
 - **Dependencies**: Phase 98.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ---
 
@@ -991,7 +991,7 @@
 - **API**: `POST /customer/checkout`
 - **Acceptance Criteria**: Clean layout with sticky "Confirm Order" bottom button.
 - **Dependencies**: Phases 92, 98.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 103: Delivery Address Selector & Quick Add
 
@@ -1000,7 +1000,7 @@
 - **API**: `GET /customer/addresses`, `POST /customer/addresses`
 - **Acceptance Criteria**: Pre-selects default address automatically.
 - **Dependencies**: Phase 102.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 104: Delivery Slot & Special Instructions Picker
 
@@ -1009,7 +1009,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Attaches instructions to checkout DTO.
 - **Dependencies**: Phase 102.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 105: Payment Method Selector (COD, bKash, Nagad, Rocket)
 
@@ -1018,7 +1018,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Toggling mobile banking expands the manual transaction form.
 - **Dependencies**: Phase 102.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 106: Mobile Banking Transaction ID Input & Copy-to-Clipboard
 
@@ -1027,7 +1027,7 @@
 - **API**: None.
 - **Acceptance Criteria**: 1-tap clipboard copy with haptic feedback; TrxID validation.
 - **Dependencies**: Phase 105.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 107: Order Submission & Verification Mutation
 
@@ -1036,7 +1036,7 @@
 - **API**: `POST /customer/checkout`
 - **Acceptance Criteria**: Handles stock errors or redirects to order confirmation on success.
 - **Dependencies**: Phase 102.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 108: Order Confirmation Celebration Screen
 
@@ -1045,7 +1045,7 @@
 - **API**: `GET /customer/orders/:id`
 - **Acceptance Criteria**: Clears local cart store and plays success haptic feedback.
 - **Dependencies**: Phase 107.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ---
 
@@ -1058,7 +1058,7 @@
 - **API**: `GET /customer/orders`
 - **Acceptance Criteria**: Pull-to-refresh, badge status color, order total, and date.
 - **Dependencies**: Phase 30.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 110: Live Order Details & Status Stepper
 
@@ -1067,7 +1067,7 @@
 - **API**: `GET /customer/orders/:id`
 - **Acceptance Criteria**: Visual progression with timestamps for each milestone reached.
 - **Dependencies**: Phase 109.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 111: Live Courier Map & Contact Action
 
@@ -1076,7 +1076,7 @@
 - **API**: `GET /customer/orders/:id`
 - **Acceptance Criteria**: "Call Courier" button triggers native phone dialer with rider number.
 - **Dependencies**: Phase 110.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 112: 1-Tap Re-order Engine
 
@@ -1085,7 +1085,7 @@
 - **API**: `POST /customer/orders/:id/reorder` (or client cart push)
 - **Acceptance Criteria**: Checks stock availability before adding; redirects to Cart tab.
 - **Dependencies**: Phase 90.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 113: Customer Order Cancellation Dialog
 
@@ -1094,7 +1094,7 @@
 - **API**: `POST /customer/orders/:id/cancel`
 - **Acceptance Criteria**: Confirmation prompt; updates order status to `CANCELLED`.
 - **Dependencies**: Phase 38.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 114: PDF Invoice View & Share
 
@@ -1103,7 +1103,7 @@
 - **API**: `GET /customer/orders/:id/invoice`
 - **Acceptance Criteria**: Opens native sharing sheet (`expo-sharing`) to save or print PDF.
 - **Dependencies**: Phase 110.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ---
 

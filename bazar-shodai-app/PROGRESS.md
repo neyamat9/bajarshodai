@@ -974,3 +974,649 @@
 - **Verification & Testing**:
   - Verified tab routing and active selection state.
 - **Known Issues**: None.
+
+## Milestone 9: Product Catalog, Facets & Search Engine (Phases 68-76)
+
+### Phase 68: Category Drilldown Screen (Categories Tab)
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: 2-column mobile layout: vertical category rail on left, subcategories and product grid on right.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/(tabs)/categories.tsx`
+- **Decisions Made**:
+  - Implemented dual-pane responsive layout with vertical parent category selector and right-hand product grid.
+  - Sourced categories from `GET /customer/categories` with graceful fallback to standard departments.
+- **Verification & Testing**:
+  - Tested thumb navigation between parent categories and child products; verified 0 TS errors.
+- **Known Issues**: None.
+
+### Phase 69: Product Listing Screen (`/products`)
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Infinite-scroll grid of products with sorting, count indicator, and active filters.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/products/index.tsx`
+- **Decisions Made**:
+  - Connected with `useInfiniteProducts` hook supporting pagination, pull-to-refresh, active filter badges, and sticky bottom bar integration.
+- **Verification & Testing**:
+  - Tested sorting by price, popularity, and new arrivals.
+- **Known Issues**: None.
+
+### Phase 70: Full-Text Search Screen with Live Debounce
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Instant search screen with recent searches history and live suggestions as user types.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/search/index.tsx`
+  - `bazar-shodai-app/src/features/search/api/useSearch.ts`
+- **Decisions Made**:
+  - Implemented 300ms debounce to avoid overwhelming the backend search autocomplete endpoint.
+- **Verification & Testing**:
+  - Verified debounced suggestions and keyword matching.
+- **Known Issues**: None.
+
+### Phase 71: Search History Persistence & Suggestions
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Persist recent search queries in MMKV and sync with backend history endpoint.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/search/api/searchHistory.ts`
+- **Decisions Made**:
+  - Recent searches are stored in MMKV with 1-tap re-search, individual deletion, and 1-tap "Clear All" action.
+- **Verification & Testing**:
+  - Verified local persistence across sessions.
+- **Known Issues**: None.
+
+### Phase 72: Filter Bottom Sheet Modal
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Slide-up filter panel with Price Range, Brand checkboxes, Category selector, and In-Stock toggle.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/products/components/FilterBottomSheet.tsx`
+- **Decisions Made**:
+  - Filter modal features active filter badge count, Min/Max price inputs, and "Reset" & "Apply" action buttons.
+- **Verification & Testing**:
+  - Verified filter state application and query parameter updates.
+- **Known Issues**: None.
+
+### Phase 73: Sort Options Sheet
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Quick-select bottom sheet for sorting (Relevance, Price: Low to High, Price: High to Low, Newest).
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/products/components/SortBottomSheet.tsx`
+- **Decisions Made**:
+  - Clean radio sheet with checkmark selection and haptic feedback.
+- **Verification & Testing**:
+  - Verified sort criteria trigger and instant grid reordering.
+- **Known Issues**: None.
+
+### Phase 74: Infinite Scroll & Pagination Engine
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Automatic page fetching when user reaches scroll depth of listing.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/products/hooks/useInfiniteProducts.ts`
+  - `bazar-shodai-app/src/features/products/api/productsApi.ts`
+- **Decisions Made**:
+  - TanStack Query `useInfiniteQuery` with `getNextPageParam` calculating `totalPages` and rendering bottom spinner.
+- **Verification & Testing**:
+  - Verified multi-page pagination.
+- **Known Issues**: None.
+
+### Phase 75: Back-In-Stock Subscription Dialog
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Modal allowing customers to subscribe via email/phone when an out-of-stock product is restocked.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/products/components/BackInStockDialog.tsx`
+- **Decisions Made**:
+  - Submits to `POST /customer/back-in-stock` and provides instant toast confirmation.
+- **Verification & Testing**:
+  - Verified phone/email submission and form dismissal.
+- **Known Issues**: None.
+
+### Phase 76: Empty Search & Filter State
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Helpful empty state suggesting alternative keywords or clearing active filters.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/products/components/NoProductsFound.tsx`
+- **Decisions Made**:
+  - Reusable component with "Clear All Filters" button and recommended search terms.
+- **Verification & Testing**:
+  - Verified reset action and button response.
+- **Known Issues**: None.
+
+---
+
+## Milestone 10: Product Details Screen & Image Gallery (Phases 77-83)
+
+### Phase 77: Product Details Layout & Header
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Fullscreen screen with collapsible hero image header, share button, and wishlist toggle.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/product/[slug].tsx`
+- **Decisions Made**:
+  - Composed full detail layout with `ProductImageGallery`, `ProductSpecs`, `ProductReviewsList`, `WriteReviewSheet`, `RelatedProducts`, and `ProductStickyBottomBar`.
+- **Verification & Testing**:
+  - Verified header share button via native share sheet and wishlist toast toggle.
+- **Known Issues**: None.
+
+### Phase 78: Fullscreen Multi-Image Swiper with Pinch-to-Zoom
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Reanimated image carousel supporting pinch-to-zoom gesture and thumbnail selector.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/products/components/ProductImageGallery.tsx`
+- **Decisions Made**:
+  - Thumbnail selector allows 1-tap switching; tapping main image opens high-res fullscreen preview with close action.
+- **Verification & Testing**:
+  - Verified horizontal paging and fullscreen modal presentation.
+- **Known Issues**: None.
+
+### Phase 79: Unit Pricing & Quantity Stepper Bottom Action Bar
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Sticky bottom bar displaying total price, fractional unit stepper, and Add to Bag button.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/products/components/ProductStickyBottomBar.tsx`
+- **Decisions Made**:
+  - Respects safe area insets on Android & iOS; includes live price multiplier `unitPrice * quantity`.
+- **Verification & Testing**:
+  - Tested stepper increments and dynamic button label calculation.
+- **Known Issues**: None.
+
+### Phase 80: Product Description, Nutrition & Specifications
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Accordion tabs for description, nutritional details, origin, and unit specifications in English/Bengali.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/products/components/ProductSpecs.tsx`
+- **Decisions Made**:
+  - Designed clean accordion cards with chevron indicator, haptic feedback, and localized labels (দেশ, ওজন, সংরক্ষণ).
+- **Verification & Testing**:
+  - Verified accordion toggling and typography layout.
+- **Known Issues**: None.
+
+### Phase 81: Customer Reviews & Photo Rating Breakdown
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Review list with star breakdown, verified purchase badge, and customer review images.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/reviews/components/ProductReviewsList.tsx`
+  - `bazar-shodai-app/src/features/reviews/api/reviewsApi.ts`
+- **Decisions Made**:
+  - Features overall score card (out of 5.0), 5-to-1 star horizontal breakdown bars, verified buyer badges, and 1-tap "Helpful" counter with haptic pulse.
+- **Verification & Testing**:
+  - Verified rating breakdown math and helpful vote increments.
+- **Known Issues**: None.
+
+### Phase 82: Write Review & Photo Upload Sheet
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Bottom sheet allowing customers who bought the item to rate, review, and upload photos.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/reviews/components/WriteReviewSheet.tsx`
+- **Decisions Made**:
+  - Integrated `expo-image-picker` allowing customers to attach up to 5 photos from camera or gallery; interactive 1-5 star selector with Bengali hint text.
+- **Verification & Testing**:
+  - Verified review submission mutation and image attachment.
+- **Known Issues**: None.
+
+### Phase 83: Related & Frequently Bought Together Products
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Horizontal product recommendation carousel at bottom of product detail page.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/products/components/RelatedProducts.tsx`
+- **Decisions Made**:
+  - Fetches category recommendations via `GET /customer/products/:slug/related`; allows 1-tap add to bag directly from recommendation cards.
+- **Verification & Testing**:
+  - Verified navigation to related items and stepper cart additions.
+- **Known Issues**: None.
+
+---
+
+## Milestone 11: Medicine, Pharmacy & Prescription Module (Phases 84-89)
+
+### Phase 84: Pharmacy & Medicine Catalog Screen
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Dedicated pharmacy landing view filtering OTC and Prescription drugs with dosage warnings.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/pharmacy/index.tsx`
+  - `bazar-shodai-app/src/features/pharmacy/api/pharmacyApi.ts`
+  - `bazar-shodai-app/src/features/pharmacy/types/index.ts`
+- **Decisions Made**:
+  - Rendered hero card for doctor prescription uploads; 3 filter tabs (All, OTC, Prescription Required); displays generic compound name, manufacturer, and dosage form.
+- **Verification & Testing**:
+  - Verified filter pills and search by generic/brand name.
+- **Known Issues**: None.
+
+### Phase 85: Medicine Detail View & Generic Info
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Medicine-specific details showing indications, precautions, and side effects from `MedicineMeta`.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/pharmacy/components/MedicineInfoSheet.tsx`
+- **Decisions Made**:
+  - Prominent red warning banner for prescription-required pharmaceuticals (Rx); displays indications, precautions, and side effects.
+- **Verification & Testing**:
+  - Verified modal presentation and CTA routing (Upload Rx vs Add to Bag).
+- **Known Issues**: None.
+
+### Phase 86: Prescription Camera Capture & Upload Flow
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Camera viewfinder and file picker allowing instant prescription upload.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/prescription/upload.tsx`
+- **Decisions Made**:
+  - Uses `expo-image-picker` with camera permission handling; preview with retake action; phone number validation (+880 prefix); sends multipart FormData to `POST /prescriptions`.
+- **Verification & Testing**:
+  - Verified submission mutation and redirect to customer prescriptions list.
+- **Known Issues**: None.
+
+### Phase 87: Uploaded Prescriptions List & Status Tracker
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: List customer's uploaded prescriptions with status (`PENDING`, `REVIEWED`, `ORDER_CREATED`, `REJECTED`).
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/(account)/prescriptions.tsx`
+- **Decisions Made**:
+  - Displays thumbnail, status badge, pharmacist feedback note, delete action for pending requests, and 1-tap ordering.
+- **Verification & Testing**:
+  - Verified pull-to-refresh and empty state CTA.
+- **Known Issues**: None.
+
+### Phase 88: Prescription Fullscreen Image Viewer
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Fullscreen modal viewer to review high-res prescription scans.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/pharmacy/components/PrescriptionViewerModal.tsx`
+- **Decisions Made**:
+  - Dark backdrop fullscreen viewer with close button, verification status badge, and pharmacist advice display.
+- **Verification & Testing**:
+  - Verified modal open/close and image rendering.
+- **Known Issues**: None.
+
+### Phase 89: 1-Tap Prescription Order Re-order
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Quickly create order from verified prescription items with pharmacist confirmation.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/pharmacy/components/PrescriptionOrderButton.tsx`
+- **Decisions Made**:
+  - Available for `REVIEWED` and `ORDER_CREATED` prescriptions; pushes approved medication package to cart and routes to Bag.
+- **Verification & Testing**:
+  - Verified cart state insertion and navigation.
+- **Known Issues**: None.
+
+---
+
+## Milestone 12: Cart Engine & Stepper Synchronization (Phases 90-96)
+
+### Phase 90: Zustand Cart Store & Optimistic Updates
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: High-speed local cart store providing instantaneous UI updates before API roundtrip.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/store/useCartStore.ts`
+- **Decisions Made**:
+  - Backed by MMKV storage via `storage.getObject` / `storage.setObject`; maintains applied coupon, delivery fee, and free delivery threshold.
+- **Verification & Testing**:
+  - Verified instant quantity updates, total calculation, and persistent storage.
+- **Known Issues**: None.
+
+### Phase 91: Cart Backend Synchronization Engine
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Sync cart items with `GET /customer/cart` and handle `X-Guest-Token` header.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/cart/api/cartApi.ts`
+- **Decisions Made**:
+  - Implemented `useServerCart`, `addServerCartItemApi`, `updateServerCartItemApi`, `removeServerCartItemApi`, and `applyCouponApi`.
+- **Verification & Testing**:
+  - Verified background sync and coupon validation mutations.
+- **Known Issues**: None.
+
+### Phase 92: Full Cart Screen (Cart Tab)
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Dedicated cart screen with list of items, unit details, stepper, subtotal, and checkout button.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/(tabs)/cart.tsx`
+- **Decisions Made**:
+  - Features Free Shipping progress bar header, line items with stepper, coupon input, clear cart dialog, and breakdown footer.
+- **Verification & Testing**:
+  - Verified subtotal, coupon discount, delivery fee calculations, and checkout routing.
+- **Known Issues**: None.
+
+### Phase 93: Swipe-to-Remove Cart Item Gesture
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Clean swipe/tap delete gesture on cart line items with red trash indicator.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/cart/components/SwipeableCartItem.tsx`
+- **Decisions Made**:
+  - Card shows product photo, Bangla name, unit pricing, embedded `QuantityStepper`, and red trash button with haptics.
+- **Verification & Testing**:
+  - Verified item deletion and zero-quantity removal.
+- **Known Issues**: None.
+
+### Phase 94: Free Shipping Delivery Progress Bar
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Dynamic progress bar calculating distance to free delivery threshold (e.g. ৳500).
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/cart/components/FreeShippingProgressBar.tsx`
+- **Decisions Made**:
+  - Calculates percentage fill dynamically; displays "Free Delivery Unlocked!" with green truck badge when subtotal >= ৳500.
+- **Verification & Testing**:
+  - Verified width recalculation on cart modification.
+- **Known Issues**: None.
+
+### Phase 95: Coupon Code Input & Instant Validation
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Coupon promo input with instant server validation and applied discount banner.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/cart/components/CouponInput.tsx`
+- **Decisions Made**:
+  - Auto-capitalizes input; executes `applyCouponApi`; shows green card with coupon name, discount amount, and 1-tap remove button.
+- **Verification & Testing**:
+  - Verified coupon application, error handling, and coupon removal.
+- **Known Issues**: None.
+
+### Phase 96: Clear Cart Confirmation Dialog
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Modal to prevent accidental cart emptying.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/cart/components/ClearCartDialog.tsx`
+- **Decisions Made**:
+  - Warning modal with red trash icon, "Keep Items" cancel button, and destructive "Clear Bag" confirm action.
+- **Verification & Testing**:
+  - Verified store clearing and server cart reset.
+- **Known Issues**: None.
+
+---
+
+## Milestone 13: Delivery Location & GPS Geocoding (Phases 97-101)
+
+### Phase 97: Expo Location Hardware Integration
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Request OS location permissions and acquire high-accuracy GPS coordinates.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/services/location.ts`
+- **Decisions Made**:
+  - Integrated `expo-location`; gracefully handles permission denial by falling back to Shahrasti Sadar hub coordinates; reverse geocodes latitude/longitude to road and district.
+- **Verification & Testing**:
+  - Tested coordinate retrieval and address formatting.
+- **Known Issues**: None.
+
+### Phase 98: Location Share & Real-Time Delivery Fee Calculation
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Submit customer GPS coordinates to backend and calculate exact delivery charge and distance.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/location/api/myLocation.ts`
+- **Decisions Made**:
+  - Integrated `POST /customer/my-location` and `GET /customer/my-location`; supports location requests and Bangladesh area search.
+- **Verification & Testing**:
+  - Verified query invalidation and delivery fee response.
+- **Known Issues**: None.
+
+### Phase 99: Interactive Delivery Map Pin Drop Screen
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Map pin drop screen with reverse-geocoding address preview at bottom.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/location/picker.tsx`
+- **Decisions Made**:
+  - Features GPS floating action button ("Locate Me"), address search bar, central delivery pin, delivery time pill, and "Confirm Delivery Location" CTA.
+- **Verification & Testing**:
+  - Verified address update and mutation execution.
+- **Known Issues**: None.
+
+### Phase 100: Address Autocomplete & Search Picker
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Search input to find locations by road, neighborhood, or area name in Bangladesh.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/location/components/AddressSearchPicker.tsx`
+- **Decisions Made**:
+  - Connects with `GET /customer/locations/search` for districts, upazilas, and thanas; displays English & Bengali names.
+- **Verification & Testing**:
+  - Verified autocomplete dropdown selection.
+- **Known Issues**: None.
+
+### Phase 101: Location Share via Link & Token Reader
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Support opening shared location tokens (`/l/[token]`) from SMS or WhatsApp links.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/location/[token].tsx`
+- **Decisions Made**:
+  - Reads token via `GET /customer/location-requests/:token`; acquires GPS position and sends one-time pin to courier via `POST /customer/location-requests/:token/submit`.
+- **Verification & Testing**:
+  - Verified celebration success card and return to Home.
+- **Known Issues**: None.
+
+---
+
+## Milestone 14: Checkout & Mobile Financial Services (bKash/Nagad/Rocket/COD) (Phases 102-108)
+
+### Phase 102: Single-Screen Checkout Architecture
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Keyboard-aware single screen orchestrating address selection, delivery time slot, payment, and order summary.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/checkout/index.tsx`
+- **Decisions Made**:
+  - Orchestrates `AddressSelector`, `DeliverySlotPicker`, `PaymentMethodSelector`, `MobileBankingForm`, items summary, and sticky bottom order confirmation bar.
+- **Verification & Testing**:
+  - Verified order placement and navigation to confirmation screen.
+- **Known Issues**: None.
+
+### Phase 103: Delivery Address Selector & Quick Add
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Horizontal selector of saved addresses (Home, Office) with 1-tap "Add New Address" modal.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/checkout/components/AddressSelector.tsx`
+- **Decisions Made**:
+  - Fetches saved addresses from `GET /customer/addresses`; provides slide-up modal with Home/Office pills, recipient phone, and street address.
+- **Verification & Testing**:
+  - Verified address selection and new address addition.
+- **Known Issues**: None.
+
+### Phase 104: Delivery Slot & Special Instructions Picker
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Time slot radio picker and delivery notes text area.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/checkout/components/DeliverySlotPicker.tsx`
+- **Decisions Made**:
+  - 3 options: Express (1-2 Hours), Evening Today, and Tomorrow Morning; instructions textarea for gate/rider notes.
+- **Verification & Testing**:
+  - Verified slot selection and text state binding.
+- **Known Issues**: None.
+
+### Phase 105: Payment Method Selector (COD, bKash, Nagad, Rocket)
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Radio selector with branded icons for Cash on Delivery, bKash, Nagad, and Rocket.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/checkout/components/PaymentMethodSelector.tsx`
+- **Decisions Made**:
+  - Displays branded provider themes (#e2136e for bKash, #f7941d for Nagad, #8c3494 for Rocket, #0b6234 for COD).
+- **Verification & Testing**:
+  - Verified radio toggling and state synchronization.
+- **Known Issues**: None.
+
+### Phase 106: Mobile Banking Transaction ID Input & Copy-to-Clipboard
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Instructions card showing merchant number with 1-tap copy, and verified Transaction ID input field.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/checkout/components/MobileBankingForm.tsx`
+- **Decisions Made**:
+  - Displays official merchant numbers; provides 1-tap copy action; collects customer's sender number and optional TrxID.
+- **Verification & Testing**:
+  - Verified copy feedback and uppercase TrxID formatting.
+- **Known Issues**: None.
+
+### Phase 107: Order Submission & Verification Mutation
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Execute `POST /customer/orders` with cart items, address, payment details, and guest token.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/checkout/api/useSubmitOrder.ts`
+  - `bazar-shodai-app/src/features/checkout/types/index.ts`
+- **Decisions Made**:
+  - Submits payload matching `PlaceOrderDto`; automatically clears cart store and invalidates queries on success.
+- **Verification & Testing**:
+  - Verified mutation execution and cache updates.
+- **Known Issues**: None.
+
+### Phase 108: Order Confirmation Celebration Screen
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Success screen with celebratory checkmark animation, order number, delivery estimate, and "Track Order" button.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/order-confirmation/[id].tsx`
+- **Decisions Made**:
+  - Displays checkmark icon with haptic feedback, order reference badge, delivery timeline explanation, and direct routing to live tracking.
+- **Verification & Testing**:
+  - Verified screen rendering and "Track Order Live" navigation.
+- **Known Issues**: None.
+
+---
+
+## Milestone 15: Order Tracking, Timeline & Re-order (Phases 109-114)
+
+### Phase 109: Order History List Screen
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: List past orders categorized by status (Active / Delivered / Cancelled).
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/(account)/orders.tsx`
+  - `bazar-shodai-app/src/features/orders/types/index.ts`
+- **Decisions Made**:
+  - Tabbed filter bar (All, Active, Delivered, Cancelled); pull-to-refresh; order cards showing order number, status badge, items preview, total amount, and 1-tap "Re-order" button.
+- **Verification & Testing**:
+  - Verified filter tabs and card press navigation.
+- **Known Issues**: None.
+
+### Phase 110: Live Order Details & Status Stepper
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Full order breakdown with 7-step timeline (`PENDING` through `DELIVERED`).
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/orders/[id].tsx`
+- **Decisions Made**:
+  - Live 7-step vertical timeline with check icons, connector lines, and localized step titles; items breakdown; payment summary; and cancellation button.
+- **Verification & Testing**:
+  - Verified timeline step indicators and status badge variants.
+- **Known Issues**: None.
+
+### Phase 111: Live Courier Map & Contact Action
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Map showing delivery destination and courier marker when order is `OUT_FOR_DELIVERY`.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/orders/components/LiveDeliveryMap.tsx`
+- **Decisions Made**:
+  - Displayed when order status is `OUT_FOR_DELIVERY`; shows pulsing "LIVE TRACKING" badge, delivery address, courier name, and "Call Courier" phone dialer button.
+- **Verification & Testing**:
+  - Verified telephone linking and visibility condition.
+- **Known Issues**: None.
+
+### Phase 112: 1-Tap Re-order Engine
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Add all items from a past order back into active shopping cart with 1 tap.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/orders/api/reorder.ts`
+  - `bazar-shodai-app/src/features/orders/api/ordersApi.ts`
+- **Decisions Made**:
+  - Syncs with `POST /customer/orders/:id/reorder` and pushes all line items to Zustand cart store, then navigates to Bag tab with success toast.
+- **Verification & Testing**:
+  - Verified cart store population and redirection.
+- **Known Issues**: None.
+
+### Phase 113: Customer Order Cancellation Dialog
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Allow customer to cancel order before processing begins (`PENDING` status only).
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/orders/components/CancelOrderDialog.tsx`
+- **Decisions Made**:
+  - Modal with reason selection (wrong address, item modification, ordered by mistake); executes `POST /customer/orders/:id/cancel` and refreshes order detail.
+- **Verification & Testing**:
+  - Verified cancellation mutation and status update.
+- **Known Issues**: None.
+
+### Phase 114: PDF Invoice View & Share
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Generate or download printable order receipt invoice.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/orders/components/OrderInvoiceButton.tsx`
+- **Decisions Made**:
+  - Connects to `GET /customer/orders/:id/invoice` using React Native Share API; allows customer to print, share, or save receipt.
+- **Verification & Testing**:
+  - Verified share dialog trigger and invoice URL generation.
+- **Known Issues**: None.

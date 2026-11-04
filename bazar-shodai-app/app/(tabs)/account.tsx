@@ -106,35 +106,50 @@ export default function AccountScreen() {
         {/* Quick Menu Options */}
         <View className="bg-card rounded-brand border border-border mb-4 overflow-hidden">
           <TouchableOpacity
-            onPress={() => handleAction('Orders', () => router.push('/orders'))}
+            onPress={() => handleAction('Orders', () => router.push('/(account)/orders'))}
             className="flex-row items-center justify-between p-4 border-b border-border"
           >
             <View className="flex-row items-center gap-3">
               <Icon name="Package" size={18} color="#0b6234" />
-              <Text className="text-sm font-medium text-foreground">Order History</Text>
+              <Text className="text-sm font-medium text-foreground">My Orders / অর্ডার সমূহ</Text>
             </View>
             <Icon name="ChevronRight" size={16} color="#94a3b8" />
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => handleAction('Address', () => router.push('/modal/address-picker'))}
+            onPress={() => handleAction('Address', () => router.push('/location/picker'))}
             className="flex-row items-center justify-between p-4 border-b border-border"
           >
             <View className="flex-row items-center gap-3">
               <Icon name="MapPin" size={18} color="#0b6234" />
-              <Text className="text-sm font-medium text-foreground">Saved Delivery Addresses</Text>
+              <Text className="text-sm font-medium text-foreground">Delivery Pin & Map</Text>
             </View>
             <Icon name="ChevronRight" size={16} color="#94a3b8" />
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => handleAction('Prescription', () => router.push('/modal/prescription'))}
+            onPress={() => handleAction('Pharmacy', () => router.push('/pharmacy'))}
+            className="flex-row items-center justify-between p-4 border-b border-border"
+          >
+            <View className="flex-row items-center gap-3">
+              <Icon name="PlusCircle" size={18} color="#0b6234" />
+              <Text className="text-sm font-medium text-foreground">
+                Online Pharmacy & Medicines
+              </Text>
+            </View>
+            <Icon name="ChevronRight" size={16} color="#94a3b8" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() =>
+              handleAction('Prescription', () => router.push('/(account)/prescriptions'))
+            }
             className="flex-row items-center justify-between p-4 border-b border-border"
           >
             <View className="flex-row items-center gap-3">
               <Icon name="FileText" size={18} color="#0b6234" />
               <Text className="text-sm font-medium text-foreground">
-                Upload Medicine Prescription
+                My Prescriptions / প্রেসক্রিপশন
               </Text>
             </View>
             <Icon name="ChevronRight" size={16} color="#94a3b8" />

@@ -5,4 +5,3 @@ export * from './resetPassword';
 export * from './getProfile';
 export * from './changePassword';
 export * from './logout';
-
