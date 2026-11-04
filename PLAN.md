@@ -141,7 +141,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Tokens encrypted on device Keystore/Keychain.
 - **Dependencies**: Phase 6.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 15: Guest Token UUID Engine
 - **Goal**: Implement persistent device UUID generator for anonymous guest shopping cart and location tracking.
@@ -149,7 +149,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Guest token persists across app restarts and attaches to `X-Guest-Token` header.
 - **Dependencies**: Phase 13.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 16: Axios Network Client & Interceptors
 - **Goal**: Create configured Axios instance with base URL, timeout, and automatic header injection.
@@ -157,7 +157,7 @@
 - **API**: `GET /ping`
 - **Acceptance Criteria**: Requests automatically attach `Authorization: Bearer <token>` and `X-Guest-Token`.
 - **Dependencies**: Phases 14, 15.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 17: Silent Token Refresh & Queue Interceptor
 - **Goal**: Handle 401 Unauthorized by executing `POST /customer/auth/refresh` and replaying queued requests.
@@ -165,7 +165,7 @@
 - **API**: `POST /customer/auth/refresh`
 - **Acceptance Criteria**: Seamless token renewal without kicking active users to login screen.
 - **Dependencies**: Phase 16.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 18: TanStack Query v5 Setup & Offline Persistence
 - **Goal**: Initialize `QueryClient` with exponential backoff retry and MMKV hydration.
@@ -173,7 +173,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Cached queries rehydrate instantly when app is launched offline.
 - **Dependencies**: Phase 13.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 19: Global API Error & Network Banner Handler
 - **Goal**: Standardize error normalization (validation errors, 500 server errors, offline state banner).
@@ -181,7 +181,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Shows smooth offline pill when device loses internet connectivity.
 - **Dependencies**: Phase 16.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ---
 

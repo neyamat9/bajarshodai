@@ -216,3 +216,87 @@
 - **Verification & Testing**:
   - `type-check`, `lint`, and `format` all verified with 0 errors.
 - **Known Issues**: None.
+
+### Phase 14: Secure Token Vault (Expo Secure Store)
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Setup hardware-backed encrypted storage for customer JWT access & refresh tokens.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/utils/secureStore.ts` (hardware Keystore/Keychain integration, fallback memory vault, helper methods for tokens and user IDs)
+  - `bazar-shodai-app/src/utils/index.ts` (exported `tokenVault`)
+- **Decisions Made**:
+  - Implemented graceful memory fallback for web and SSR test runners without throwing exceptions.
+- **Verification & Testing**:
+  - Verified compilation and strict type safety.
+- **Known Issues**: None.
+
+### Phase 15: Guest Token UUID Engine
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Implement persistent device UUID generator for anonymous guest shopping cart and location tracking.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/utils/guestToken.ts` (`GUEST_TOKEN_HEADER`, UUID regex validator, fallback UUID generator, persistent getters/setters via MMKV)
+  - `bazar-shodai-app/src/utils/index.ts` (exported guest token utilities)
+- **Decisions Made**:
+  - Aligned 1:1 with NestJS backend `GUEST_TOKEN_HEADER = 'x-guest-token'` and UUID format requirements.
+- **Verification & Testing**:
+  - Generated and validated UUID format against backend regular expression.
+- **Known Issues**: None.
+
+### Phase 16: Axios Network Client & Interceptors
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Create configured Axios instance with base URL, timeout, and automatic header injection.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/api/client.ts` (configured Axios instance, typed request methods, `api.ping()`)
+  - `bazar-shodai-app/src/api/index.ts` (exported client utilities)
+- **Decisions Made**:
+  - Configured 15s timeout with automatic JSON payload serialization and header injection.
+- **Verification & Testing**:
+  - Health ping `api.ping()` verified against backend endpoint.
+- **Known Issues**: None.
+
+### Phase 17: Silent Token Refresh & Queue Interceptor
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Handle 401 Unauthorized by executing `POST /customer/auth/refresh` and replaying queued requests.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/api/interceptors.ts` (asynchronous token injection, 401 interception, concurrency request queue, token refresh rotation)
+- **Decisions Made**:
+  - Excluded authentication endpoints from 401 retry logic to avoid recursive refresh loops.
+- **Verification & Testing**:
+  - Verified request queue resolution and token renewal logic.
+- **Known Issues**: None.
+
+### Phase 18: TanStack Query v5 Setup & Offline Persistence
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Initialize `QueryClient` with exponential backoff retry and MMKV hydration.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/api/queryClient.ts` (configured 5min staleTime, 24hr gcTime, exponential retry delay, MMKV persister)
+  - `bazar-shodai-app/src/components/providers/QueryProvider.tsx` (`PersistQueryClientProvider` wrapper)
+- **Decisions Made**:
+  - Leveraged synchronous MMKV storage to eliminate cache restoration delay on cold app start.
+- **Verification & Testing**:
+  - Verified query client and persister configuration.
+- **Known Issues**: None.
+
+### Phase 19: Global API Error & Network Banner Handler
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Standardize error normalization (validation errors, 500 server errors, offline state banner).
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/api/errorHandler.ts` (normalizes NestJS and Axios error structures)
+  - `bazar-shodai-app/src/components/ui/NetworkBanner.tsx` (real-time NetInfo subscriber with smooth online restoration pill)
+  - `bazar-shodai-app/App.tsx` (integrated `QueryProvider`, `NetworkBanner`, live API status ping)
+- **Decisions Made**:
+  - Subscribed to `NetInfo.addEventListener` with auto-dismissing restoration toast.
+- **Verification & Testing**:
+  - Passed all TypeScript strict checks, ESLint rules, and Prettier formatting with 0 errors.
+- **Known Issues**: None.
