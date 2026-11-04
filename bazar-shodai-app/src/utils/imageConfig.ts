@@ -36,4 +36,3 @@ export async function prefetchImages(urls: string[]): Promise<boolean[]> {
     return [];
   }
 }
-

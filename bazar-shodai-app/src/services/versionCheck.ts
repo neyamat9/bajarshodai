@@ -39,7 +39,7 @@ export async function checkAppVersion(): Promise<void> {
     const storeUrl =
       Platform.OS === 'ios'
         ? updateUrlIos || 'https://apps.apple.com'
-        : updateUrlAndroid || 'https://play.google.com/store/apps/details?id=com.bazarshodai.app';
+        : updateUrlAndroid || 'https://play.google.com/store/apps/details?id=com.bajarshodai.app';
 
     // 1. Mandatory hard update check
     if (forceUpdate || (minVersion && compareSemver(minVersion, APP_VERSION) > 0)) {

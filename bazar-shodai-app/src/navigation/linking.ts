@@ -1,7 +1,10 @@
 import * as Linking from 'expo-linking';
 
 export const LINKING_PREFIXES = [
+  'bajarshodai://',
   'bazarshodai://',
+  'https://bajarshodai.com',
+  'https://www.bajarshodai.com',
   'https://bazarshodai.com',
   'https://www.bazarshodai.com',
   'https://bazar-shodai-api.onrender.com',

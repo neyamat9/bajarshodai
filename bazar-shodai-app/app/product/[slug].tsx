@@ -87,7 +87,7 @@ export default function ProductDetailScreen() {
     try {
       await Share.share({
         title: name,
-        message: `Check out ${name} on Bazar Shodai: https://bazarshodai.com/products/${productSlug}`,
+        message: `Check out ${name} on Bazar Shodai: https://bajarshodai.com/products/${productSlug}`,
       });
       haptics.light();
     } catch {

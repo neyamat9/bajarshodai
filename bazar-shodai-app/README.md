@@ -110,4 +110,3 @@ eas build --platform android --profile production
 - **Hermes Engine**: Enabled for ultra-fast startup time and minimal memory footprint.
 - **ProGuard & Resource Shrinking**: Configured via `expo-build-properties` to strip unused native bytecode and drawable resources in release builds.
 - **Strict Network Boundary**: Guest token UUID warmth, token rotation interceptor, and hardware-backed credential storage in iOS Keychain / Android KeyStore.
-

@@ -27,4 +27,3 @@ describe('i18n translation engine', () => {
     expect(t('nonexistent.path.to.key')).toBe('nonexistent.path.to.key');
   });
 });
-

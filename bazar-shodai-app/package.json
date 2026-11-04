@@ -57,9 +57,11 @@
     "web": "expo start --web",
     "type-check": "tsc --noEmit",
     "lint": "expo lint",
-    "test": "jest",
+    "test": "jest --watchAll=false",
     "format": "prettier --check .",
-    "format:fix": "prettier --write ."
+    "format:fix": "prettier --write .",
+    "build:apk": "eas build -p android --profile preview",
+    "build:apk:local": "eas build -p android --profile preview --local"
   },
   "private": true
 }

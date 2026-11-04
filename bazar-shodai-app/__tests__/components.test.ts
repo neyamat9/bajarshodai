@@ -37,4 +37,3 @@ describe('design tokens & component layout integrity', () => {
     expect(isValidBdMobile('abcdefghijk')).toBe(false); // Non-numeric
   });
 });
-
