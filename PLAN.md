@@ -41,19 +41,19 @@
 
 ### Phase 3: ESLint, Prettier & Git Ignore Configuration
 - **Goal**: Establish deterministic code style, formatting, and ignore rules.
-- **Files**: `bazar-shodai-app/.eslintrc.js`, `bazar-shodai-app/.prettierrc`, `bazar-shodai-app/.gitignore`
+- **Files**: `bazar-shodai-app/eslint.config.js`, `bazar-shodai-app/.prettierrc`, `bazar-shodai-app/.gitignore`
 - **API**: None.
 - **Acceptance Criteria**: `npm run lint` passes with 0 warnings.
 - **Dependencies**: Phase 2.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 4: Environment Variables Setup (`.env`)
 - **Goal**: Configure environment support for dev, staging, and production API base URLs.
-- **Files**: `bazar-shodai-app/src/config/env.ts`, `bazar-shodai-app/.env.example`
+- **Files**: `bazar-shodai-app/src/config/env.ts`, `bazar-shodai-app/.env.example`, `bazar-shodai-app/.env`
 - **API**: None.
 - **Acceptance Criteria**: Typed `ENV.API_BASE_URL` validates using Zod at app launch.
 - **Dependencies**: Phase 1.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 5: New Architecture & Hermes Verification
 - **Goal**: Verify React Native New Architecture (Fabric + TurboModules) and Hermes engine enabled.
@@ -61,7 +61,7 @@
 - **API**: None.
 - **Acceptance Criteria**: App config has `newArchEnabled: true` and `jsEngine: "hermes"`.
 - **Dependencies**: Phase 1.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 6: Folder Structure Scaffolding
 - **Goal**: Establish the standard enterprise feature-based directory structure.
@@ -69,7 +69,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Clean directory layout matching architecture guidelines.
 - **Dependencies**: Phase 1.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ---
 
