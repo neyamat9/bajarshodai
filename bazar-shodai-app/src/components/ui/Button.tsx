@@ -5,10 +5,12 @@ import {
   TouchableOpacityProps,
   ActivityIndicator,
   View,
+  GestureResponderEvent,
 } from 'react-native';
 import { TouchTarget, Radius } from '@/constants/layout';
+import { haptics } from '@/services/haptics';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
+export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps extends TouchableOpacityProps {
@@ -20,6 +22,7 @@ export interface ButtonProps extends TouchableOpacityProps {
   rightIcon?: React.ReactNode;
   className?: string;
   textClassName?: string;
+  enableHaptics?: boolean;
 }
 
 export function Button({
@@ -31,25 +34,40 @@ export function Button({
   rightIcon,
   className = '',
   textClassName = '',
+  enableHaptics = true,
   disabled,
+  onPress,
   style,
   ...rest
 }: ButtonProps) {
   const isDisabled = disabled || loading;
 
-  // Base dimension styles ensuring WCAG min touch targets
+  const handlePress = (e: GestureResponderEvent) => {
+    if (isDisabled) return;
+    if (enableHaptics) {
+      if (variant === 'danger') {
+        haptics.warning();
+      } else if (variant === 'primary' || variant === 'secondary') {
+        haptics.medium();
+      } else {
+        haptics.light();
+      }
+    }
+    onPress?.(e);
+  };
+
   const sizeStyles = {
     sm: { minHeight: TouchTarget.min, paddingHorizontal: 12, paddingVertical: 8 },
     md: { minHeight: TouchTarget.comfortable, paddingHorizontal: 16, paddingVertical: 12 },
     lg: { minHeight: TouchTarget.prominent, paddingHorizontal: 24, paddingVertical: 14 },
   }[size];
 
-  // Tailwind class mapping
   const variantClassMap: Record<ButtonVariant, string> = {
     primary: 'bg-brand-deep active:bg-brand-deep-light border-transparent',
     secondary: 'bg-brand-fresh active:bg-brand-fresh-dark border-transparent',
     outline: 'bg-transparent border border-border active:bg-muted',
     ghost: 'bg-transparent border-transparent active:bg-muted',
+    danger: 'bg-destructive active:opacity-90 border-transparent',
   };
 
   const textVariantClassMap: Record<ButtonVariant, string> = {
@@ -57,6 +75,7 @@ export function Button({
     secondary: 'text-on-fresh font-semibold',
     outline: 'text-foreground font-medium',
     ghost: 'text-foreground font-medium',
+    danger: 'text-white font-semibold',
   };
 
   const textSizeClassMap: Record<ButtonSize, string> = {
@@ -65,12 +84,21 @@ export function Button({
     lg: 'text-base',
   };
 
+  const spinnerColor = {
+    primary: '#ffffff',
+    secondary: '#05260f',
+    outline: '#0b6234',
+    ghost: '#0b6234',
+    danger: '#ffffff',
+  }[variant];
+
   return (
     <TouchableOpacity
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       activeOpacity={0.75}
       disabled={isDisabled}
+      onPress={handlePress}
       style={[
         {
           borderRadius: Radius.brand,
@@ -86,12 +114,7 @@ export function Button({
       {...rest}
     >
       {loading ? (
-        <ActivityIndicator
-          size="small"
-          color={
-            variant === 'secondary' ? '#05260f' : variant === 'primary' ? '#ffffff' : '#0b6234'
-          }
-        />
+        <ActivityIndicator size="small" color={spinnerColor} />
       ) : (
         <>
           {leftIcon && <View style={{ marginRight: 8 }}>{leftIcon}</View>}

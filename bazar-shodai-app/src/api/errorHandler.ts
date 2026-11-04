@@ -73,4 +73,3 @@ export function getErrorMessage(error: unknown, fallback: string = 'Something we
   const normalized = normalizeApiError(error);
   return normalized.message || fallback;
 }
-

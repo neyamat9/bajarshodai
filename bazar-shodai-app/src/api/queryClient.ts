@@ -51,4 +51,3 @@ export const clientPersister: Persister = {
     storage.remove(QUERY_CACHE_KEY);
   },
 };
-

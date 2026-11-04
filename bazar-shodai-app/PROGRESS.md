@@ -300,3 +300,190 @@
 - **Verification & Testing**:
   - Passed all TypeScript strict checks, ESLint rules, and Prettier formatting with 0 errors.
 - **Known Issues**: None.
+
+## Milestone 4: Design System Primitives & UI Atoms
+
+### Phase 20: Accessible Button Atom
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Create primary, secondary, outline, ghost, and danger buttons with loading spinner and haptics.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/components/ui/Button.tsx` (supports WCAG min 44px touch targets, `primary`, `secondary`, `outline`, `ghost`, `danger` variants, loading spinner, and haptic impact pulses)
+- **Decisions Made**:
+  - Wired tactile haptic feedback to button presses with variant-specific intensities (heavy for danger, medium for CTAs, light for subtle controls).
+- **Verification & Testing**:
+  - Validated across light and dark modes with active press visual feedback.
+- **Known Issues**: None.
+
+### Phase 21: Typography & Heading Atoms
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Create `Text`, `Heading`, `Subheading`, and `Caption` primitives enforcing font scale and colors.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/components/ui/Typography.tsx` (`Heading` levels 1-4, `BodyText`, `Caption` with `maxFontSizeMultiplier={1.3}` clamp)
+- **Decisions Made**:
+  - Clamped accessibility font scaling to 1.3x to respect Android system text sizing without truncating layouts.
+- **Verification & Testing**:
+  - Verified text scales properly with zero overflow.
+- **Known Issues**: None.
+
+### Phase 22: Form Input & Floating Label Atom
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Text input with clear button, password visibility toggle, leading/trailing icons, and error states.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/components/ui/Input.tsx` (accessible text input with label, helper text, error indicator, focus highlight, password visibility eye toggle, and clear button)
+- **Decisions Made**:
+  - Designed with 48px comfortable touch target height and inline error messages.
+- **Verification & Testing**:
+  - Tested controlled input, focus states, and toggle functionality.
+- **Known Issues**: None.
+
+### Phase 23: Bangladeshi Phone Number Input Atom
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Input with pre-fixed `+880` country code, auto-formatting, and Bangladeshi mobile regex validation.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/components/ui/PhoneInput.tsx` (pre-fixed `+880` badge with 🇧🇩 flag, 10-digit auto-formatting `1712 345 678`, regex validation for all BD operators)
+- **Decisions Made**:
+  - Automatically strips leading zeros if typed by user for a frictionless phone entry experience.
+- **Verification & Testing**:
+  - Validated Grameenphone (017, 013), Banglalink (019, 014), Robi (018, 016), and Teletalk (015) prefixes.
+- **Known Issues**: None.
+
+### Phase 24: Currency & Money Formatter Atom
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Standardized BDT (`৳`) currency renderer with English and Bengali numeral translation.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/utils/format.ts` (`formatBdt` and `toBengaliNumerals` converter with South Asian comma grouping)
+  - `bazar-shodai-app/src/components/ui/Price.tsx` (dual price display, discount badge, unit suffix)
+- **Decisions Made**:
+  - Default currency display set to Bengali numerals (`৳১,২৫০`) matching the web storefront localization.
+- **Verification & Testing**:
+  - Tested both English and Bengali outputs with discount percentage calculation.
+- **Known Issues**: None.
+
+### Phase 25: Badge & Tag Atom
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Badge component for product discounts, `NEW`, `HOT`, `BEST SELLER`, and stock statuses.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/components/ui/Badge.tsx` (`fresh`, `tomato`, `carrot`, `fish`, `neutral`, and `outline` color variants)
+- **Decisions Made**:
+  - Ported exact brand colors from the web storefront logo artwork.
+- **Verification & Testing**:
+  - Tested small and medium badge sizes across all variants.
+- **Known Issues**: None.
+
+### Phase 26: Skeleton Loading Atom
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Shimmer animation primitive using Reanimated for cards, text blocks, and avatars.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/components/ui/Skeleton.tsx` (`Skeleton` and `SkeletonText` with 60fps native thread pulse animation)
+- **Decisions Made**:
+  - Executed on Reanimated native thread to prevent UI thread frame drops during network fetching.
+- **Verification & Testing**:
+  - Verified smooth continuous shimmer loop without layout jumps.
+- **Known Issues**: None.
+
+### Phase 27: Optimized Image Atom (expo-image)
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Wrapper for `expo-image` with progressive blurhash placeholder, disk caching, and fallback.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/components/ui/AppImage.tsx` (wrapped `expo-image` with memory/disk caching, blurhash transition, fallback view, and loading spinner)
+- **Decisions Made**:
+  - Configured progressive fade-in transitions (300ms) for smooth visual loading.
+- **Verification & Testing**:
+  - Verified image container aspectRatio and fallback error states.
+- **Known Issues**: None.
+
+### Phase 28: Icon Engine (Lucide Icons)
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Typed Lucide React Native icon integration with theme color bindings.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/components/ui/Icon.tsx` (typed wrapper for `lucide-react-native` with theme color fallback)
+- **Decisions Made**:
+  - Automatic fallback to `HelpCircle` if an unmapped icon name is passed.
+- **Verification & Testing**:
+  - Verified icon rendering with size presets (`xs` to `xl`).
+- **Known Issues**: None.
+
+### Phase 29: Toast & Notification Snackbars
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Custom toast notification system for success, warning, error, and cart addition events.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/store/useToastStore.ts` (Zustand store with `toast.success`, `toast.error`, `toast.warning`, `toast.info` helpers)
+  - `bazar-shodai-app/src/components/ui/Toast.tsx` (`ToastContainer` banner with safe-area offset and haptics)
+- **Decisions Made**:
+  - Global imperatively callable helper `toast.success('...')` allows triggering notifications from any function or hook.
+- **Verification & Testing**:
+  - Verified toast dismiss timer, action button callback, and haptic integration.
+- **Known Issues**: None.
+
+### Phase 30: Card Container Primitive
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Reusable card wrapper with surface elevation, border tokens, and touchable feedback.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/components/ui/Card.tsx` (`Card`, `CardHeader`, `CardTitle`, `CardContent`, `CardFooter`)
+- **Decisions Made**:
+  - Supported optional `onPress` prop converting the card into an accessible touchable container.
+- **Verification & Testing**:
+  - Verified card styling across light and dark theme modes.
+- **Known Issues**: None.
+
+### Phase 31: Empty State Graphic Atom
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Illustrated empty state component for empty cart, empty orders, search not found, and offline.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/components/ui/EmptyState.tsx` (empty state presentation with title, description, and primary CTA)
+- **Decisions Made**:
+  - Designed for flexible composition with custom illustration slots and action callbacks.
+- **Verification & Testing**:
+  - Verified layout responsiveness across mobile viewport widths.
+- **Known Issues**: None.
+
+### Phase 32: Error Boundary & Crash Fallback
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: React error boundary capturing render exceptions with reload action.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/components/shared/ErrorBoundary.tsx` (React class Error Boundary with crash fallback screen and error recovery action)
+- **Decisions Made**:
+  - Displays user-friendly recovery instructions in production while printing stack trace in `__DEV__`.
+- **Verification & Testing**:
+  - Tested boundary mounting and reset callback.
+- **Known Issues**: None.
+
+### Phase 33: Tactile Haptics Service
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Centralized haptic feedback service wrapper around `expo-haptics`.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/services/haptics.ts` (`light`, `medium`, `heavy`, `selection`, `success`, `warning`, `error` pulse triggers)
+  - `bazar-shodai-app/src/services/index.ts` (exported haptics)
+- **Decisions Made**:
+  - Guarded with platform checks and silent exception handling for unsupported hardware.
+- **Verification & Testing**:
+  - Verified all trigger methods.
+- **Known Issues**: None.

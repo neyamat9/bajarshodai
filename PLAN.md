@@ -193,7 +193,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Supports disabled state, size variants, minimum 44px touch target, and active press scale animation.
 - **Dependencies**: Phase 8.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 21: Typography & Heading Atoms
 - **Goal**: Create `Text`, `Heading`, `Subheading`, and `Caption` primitives enforcing font scale and colors.
@@ -201,7 +201,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Text respects Android system font scaling without breaking layouts.
 - **Dependencies**: Phase 9.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 22: Form Input & Floating Label Atom
 - **Goal**: Text input with clear button, password visibility toggle, leading/trailing icons, and error states.
@@ -209,7 +209,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Seamless keyboard interaction and inline error validation display.
 - **Dependencies**: Phase 20.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 23: Bangladeshi Phone Number Input Atom
 - **Goal**: Input with pre-fixed `+880` country code, auto-formatting, and Bangladeshi mobile regex validation.
@@ -217,7 +217,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Validates Grameenphone, Robi, Banglalink, Teletalk prefixes.
 - **Dependencies**: Phase 22.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 24: Currency & Money Formatter Atom
 - **Goal**: Standardized BDT (`৳`) currency renderer with English and Bengali numeral translation.
@@ -225,7 +225,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Correctly renders `৳১,২৫৫` in Bengali and `৳1,255` in English.
 - **Dependencies**: Phase 21.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 25: Badge & Tag Atom
 - **Goal**: Badge component for product discounts, `NEW`, `HOT`, `BEST SELLER`, and stock statuses.
@@ -233,7 +233,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Port exact color styles from web `BADGE_STYLES`.
 - **Dependencies**: Phase 8.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 26: Skeleton Loading Atom
 - **Goal**: Shimmer animation primitive using Reanimated for cards, text blocks, and avatars.
@@ -241,7 +241,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Smooth 60fps shimmer running on native thread.
 - **Dependencies**: Phase 8.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 27: Optimized Image Atom (expo-image)
 - **Goal**: Wrapper for `expo-image` with progressive blurhash placeholder, disk caching, and fallback.
@@ -249,7 +249,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Smooth fade-in on image load without visual jump.
 - **Dependencies**: Phase 6.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 28: Icon Engine (Lucide Icons)
 - **Goal**: Typed Lucide React Native icon integration with theme color bindings.
@@ -257,7 +257,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Seamless icon rendering with consistent sizing.
 - **Dependencies**: Phase 8.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 29: Toast & Notification Snackbars
 - **Goal**: Custom toast notification system for success, warning, error, and cart addition events.
@@ -265,7 +265,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Smooth slide-down banner dismissible by swipe gesture.
 - **Dependencies**: Phase 20.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 30: Card Container Primitive
 - **Goal**: Reusable card wrapper with surface elevation, border tokens, and touchable feedback.
@@ -273,7 +273,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Consistent padding, corner radius, and dark mode background.
 - **Dependencies**: Phase 11.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 31: Empty State Graphic Atom
 - **Goal**: Illustrated empty state component for empty cart, empty orders, search not found, and offline.
@@ -281,7 +281,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Features title, friendly description, and action button.
 - **Dependencies**: Phase 20.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 32: Error Boundary & Crash Fallback
 - **Goal**: React error boundary capturing render exceptions with reload action.
@@ -289,7 +289,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Gracefully prevents app white-screen crashes.
 - **Dependencies**: Phase 20.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 33: Tactile Haptics Service
 - **Goal**: Centralized haptic feedback service wrapper around `expo-haptics`.
@@ -297,7 +297,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Provides light, medium, heavy, success, and error tactile pulses.
 - **Dependencies**: Phase 6.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ---
 

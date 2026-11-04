@@ -20,4 +20,3 @@ export function QueryProvider({ children }: QueryProviderProps) {
     </PersistQueryClientProvider>
   );
 }
-
