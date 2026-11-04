@@ -2,6 +2,7 @@
   "expo": {
     "name": "Bazar Shodai",
     "slug": "bazar-shodai-app",
+    "scheme": "bazarshodai",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -31,6 +32,6 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-font", "expo-splash-screen", "expo-secure-store", "expo-image"]
+    "plugins": ["expo-font", "expo-splash-screen", "expo-secure-store", "expo-image", "expo-router"]
   }
 }

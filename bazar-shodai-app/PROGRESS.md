@@ -487,3 +487,250 @@
 - **Verification & Testing**:
   - Verified all trigger methods.
 - **Known Issues**: None.
+
+## Milestone 5: Complex UI Molecules & Bottom Sheets
+
+### Phase 34: Gorhom Bottom Sheet Engine Integration
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Setup `@gorhom/bottom-sheet` with backdrop, snap points, and keyboard avoidance.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/components/ui/BottomSheet.tsx`
+- **Decisions Made**:
+  - Configured `@gorhom/bottom-sheet` v5 with dimmed pressable backdrop, accessible drag handles, and adaptive theme backgrounds.
+- **Verification & Testing**:
+  - TypeScript types verified and gesture mechanics integrated.
+- **Known Issues**: None.
+
+### Phase 35: Quantity Stepper Molecule
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Reusable fractional/integer quantity stepper supporting unit steps.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/components/product/QuantityStepper.tsx`
+- **Decisions Made**:
+  - Supported decimal stepping (e.g. 0.5 kg for vegetables/fish), min/max clamping, disabling at boundary, and tactile haptic feedback on increments/decrements.
+- **Verification & Testing**:
+  - Verified edge values and disabled boundaries.
+- **Known Issues**: None.
+
+### Phase 36: Star Rating & Review Breakdown Molecule
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Interactive star selector (1-5) and display widget with review counts and average score.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/components/ui/StarRating.tsx`
+- **Decisions Made**:
+  - Handled fractional stars via SVG clipPaths, read-only vs interactive modes, and custom review count display.
+- **Verification & Testing**:
+  - Verified rating value calculation and visual precision.
+- **Known Issues**: None.
+
+### Phase 37: Search Bar with Voice / Scan Trigger
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Modern search input with instant clear, debounce trigger, and filter button.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/components/ui/SearchBar.tsx`
+- **Decisions Made**:
+  - Built-in debounced change callback, clear button, filter trigger, and React 19-compliant controlled/uncontrolled state synchronization without cascading renders.
+- **Verification & Testing**:
+  - Verified debounce timing and zero react-hooks warnings.
+- **Known Issues**: None.
+
+### Phase 38: Confirmation Modal Molecule
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Native modal dialog for destructive actions (remove item, cancel order, logout).
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/components/ui/ConfirmDialog.tsx`
+- **Decisions Made**:
+  - Modal with backdrop click dismissal, cancel and confirm buttons, destructive danger styling, and shadow elevation.
+- **Verification & Testing**:
+  - Verified open/close actions and destructive styling.
+- **Known Issues**: None.
+
+### Phase 39: Product Card Molecule (Grid Variant)
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: High-performance product card with image, badges, price, unit label, and 1-tap cart button.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/components/product/ProductGridCard.tsx`
+- **Decisions Made**:
+  - Displays product thumbnail, discount percentage badge, stock indicator, price in ৳ (BDT), and seamless transition to a quantity stepper once added to cart.
+- **Verification & Testing**:
+  - Verified layout responsiveness in a 2-column grid.
+- **Known Issues**: None.
+
+### Phase 40: Product Card Molecule (Horizontal List Variant)
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Compact horizontal product card for carts, checkout review, and search results.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/components/product/ProductListCard.tsx`
+- **Decisions Made**:
+  - Horizontal row with square thumbnail, unit price, quantity stepper, and quick trash/delete trigger for cart items.
+- **Verification & Testing**:
+  - Verified rendering in list views and delete callbacks.
+- **Known Issues**: None.
+
+### Phase 41: Product Quick View Bottom Sheet
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Mobile equivalent of the web quick view modal: image carousel, unit details, stepper, and "View Full Details" link.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/components/product/ProductQuickViewSheet.tsx`
+- **Decisions Made**:
+  - Integrated Gorhom Bottom Sheet with 60% and 85% snap points, full stock status, description preview, and "Add to Cart" CTA with quantity selector.
+- **Verification & Testing**:
+  - Verified open/close and snap point navigation.
+- **Known Issues**: None.
+
+### Phase 42: Category Tile Molecule
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Circular/rounded category icon tile with label and press feedback.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/components/category/CategoryTile.tsx`
+- **Decisions Made**:
+  - Rounded category badge tile with image support, fallback dynamic initial letters, item count chip, and active press scale feedback.
+- **Verification & Testing**:
+  - Verified with and without image URLs.
+- **Known Issues**: None.
+
+### Phase 43: Banner Carousel Molecule
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Auto-playing banner slider with pagination dots and smooth reanimated gesture swiping.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/components/home/BannerCarousel.tsx`
+- **Decisions Made**:
+  - Horizontal FlatList with snap-to-interval pagination, auto-scroll timer that pauses on user touch, active indicator dots, and deep link press handlers.
+- **Verification & Testing**:
+  - Verified auto-play timer, snap mechanics, and cleanup on unmount.
+- **Known Issues**: None.
+
+## Milestone 6: Navigation Architecture & Tab Shell
+
+### Phase 44: Expo Router File-Based Routing Setup
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Setup root layout (`app/_layout.tsx`) with SafeAreaProvider, GestureHandlerRootView, and fonts.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/package.json` (switched main entry to `expo-router/entry`)
+  - `bazar-shodai-app/app/_layout.tsx` (Root layout wrapping `GestureHandlerRootView`, `SafeAreaProvider`, `QueryProvider`, `ThemeProvider`, `ErrorBoundary`, `ToastContainer`, `NetworkBanner`)
+  - `bazar-shodai-app/app.json` (configured scheme `bazarshodai`)
+- **Decisions Made**:
+  - Leveraged Expo Router v58 NativeStack file-based routing architecture with Hermes and New Architecture Fabric integration.
+- **Verification & Testing**:
+  - Tested font loading lifecycle and splash screen hiding without visual shifts.
+- **Known Issues**: None.
+
+### Phase 45: Bottom Tab Navigator Architecture
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Create bottom tabs: Home, Categories, Cart, Wishlist, Account with custom badges.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/(tabs)/_layout.tsx` (5-tab definition)
+  - `bazar-shodai-app/src/navigation/TabBar.tsx` (custom animated bottom bar with active indicator, touchable feedback, and cart badge counter)
+  - `bazar-shodai-app/src/store/useCartStore.ts` (cart state management for dynamic badge counts)
+  - `bazar-shodai-app/app/(tabs)/index.tsx` (Home Screen)
+  - `bazar-shodai-app/app/(tabs)/categories.tsx` (Categories Screen)
+  - `bazar-shodai-app/app/(tabs)/cart.tsx` (Cart Screen)
+  - `bazar-shodai-app/app/(tabs)/wishlist.tsx` (Wishlist Screen)
+  - `bazar-shodai-app/app/(tabs)/account.tsx` (Account Screen)
+- **Decisions Made**:
+  - Built custom bottom bar with `expo-router/tabs` and React Navigation 7 navigation primitives with safe area insets and haptic selection feedback.
+- **Verification & Testing**:
+  - Verified tab routing, active tinting, and cart badge counter reactivity.
+- **Known Issues**: None.
+
+### Phase 46: Root Stack & Modal Screen Setup
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Configure modal routes (product quick view, address picker, prescription upload) and standard stack push routes.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/_layout.tsx` (Configured Stack routes and modal presentations)
+  - `bazar-shodai-app/app/modal/quick-view.tsx` (Slide-up quick view modal)
+  - `bazar-shodai-app/app/modal/address-picker.tsx` (Shahrasti delivery zone selector modal)
+  - `bazar-shodai-app/app/modal/prescription.tsx` (Doctor prescription upload modal)
+  - `bazar-shodai-app/app/product/[slug].tsx` (Product detail screen)
+  - `bazar-shodai-app/app/category/[slug].tsx` (Category drilldown screen)
+  - `bazar-shodai-app/app/search/index.tsx` (Search screen)
+  - `bazar-shodai-app/app/orders/index.tsx` (Order history screen)
+  - `bazar-shodai-app/app/orders/[id].tsx` (Order tracking screen)
+  - `bazar-shodai-app/app/(auth)/login.tsx` (Customer authentication screen)
+- **Decisions Made**:
+  - Modal presentations configured with native `presentation: 'modal'` and drag gesture dismissal on iOS/Android.
+- **Verification & Testing**:
+  - Verified route hierarchy and navigation stack pushing.
+- **Known Issues**: None.
+
+### Phase 47: Header & Navigation Bar Components
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Custom animated header with logo, location pill, search trigger, and notification bell.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/components/navigation/AppHeader.tsx`
+  - `bazar-shodai-app/src/components/navigation/index.ts`
+- **Decisions Made**:
+  - Integrated Shahrasti delivery location pill opening address modal, search input bar trigger, unread notification counter badge, and responsive safe area padding.
+- **Verification & Testing**:
+  - Verified light and dark mode appearance and press handlers.
+- **Known Issues**: None.
+
+### Phase 48: Deep Linking & Universal Links Configuration
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Configure scheme (`bazarshodai://`) and universal links for products, categories, orders, and reset password.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app.json` (configured `scheme: "bazarshodai"`)
+  - `bazar-shodai-app/src/navigation/linking.ts` (configured prefixes, route pattern matching, deep link builders)
+  - `bazar-shodai-app/src/navigation/index.ts`
+- **Decisions Made**:
+  - Supported universal URLs across `bazarshodai://` and `https://bazarshodai.com` for products, categories, and orders.
+- **Verification & Testing**:
+  - Verified link generation and URL parsing methods.
+- **Known Issues**: None.
+
+### Phase 49: Back-Button Android Hardware Navigation
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Intercept hardware back button to close bottom sheets and modals before navigating backwards.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/hooks/useHardwareBack.ts` (`useHardwareBack` and `useRootDoubleTapToExit`)
+  - `bazar-shodai-app/src/hooks/index.ts`
+- **Decisions Made**:
+  - Implemented 2-step back button logic: on root tab screen, initial back press triggers toast prompt "Press back again to exit Bazar Shodai" with a 2-second debounce window before exiting app.
+- **Verification & Testing**:
+  - Verified hardware back press event subscription and timer reset logic.
+- **Known Issues**: None.
+
+### Phase 50: Tab Transition Animations
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Configure lightweight subtle cross-fade transitions between bottom tabs.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/(tabs)/_layout.tsx` (configured `animation: 'fade'` and background styling)
+- **Decisions Made**:
+  - Set smooth cross-fade animation across all bottom tabs to ensure zero frame dropping or blank flashes on tab switches.
+- **Verification & Testing**:
+  - Verified tabs layout configuration and scene styling.
+- **Known Issues**: None.

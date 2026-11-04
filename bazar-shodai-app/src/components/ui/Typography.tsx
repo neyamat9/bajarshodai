@@ -92,4 +92,3 @@ export function Caption({ className = '', children, ...rest }: BaseTypographyPro
     </RNText>
   );
 }
-
