@@ -58,4 +58,3 @@ export function useAppTheme(): ThemeContextValue {
   }
   return context;
 }
-

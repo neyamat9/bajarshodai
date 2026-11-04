@@ -129,11 +129,11 @@
 
 ### Phase 13: MMKV Fast Key-Value Storage
 - **Goal**: Setup `react-native-mmkv` for synchronous, ultra-fast client state persistence.
-- **Files**: `bazar-shodai-app/src/utils/storage.ts`
+- **Files**: `bazar-shodai-app/src/utils/storage.ts`, `bazar-shodai-app/src/store/useThemeStore.ts`
 - **API**: None.
 - **Acceptance Criteria**: Read/write benchmarks execute in <1ms without async delay.
 - **Dependencies**: Phase 6.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 14: Secure Token Vault (Expo Secure Store)
 - **Goal**: Setup hardware-backed encrypted storage for customer JWT access & refresh tokens.

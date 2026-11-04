@@ -105,4 +105,3 @@ export const Typography: Record<string, TextStyle> = {
     lineHeight: 22,
   },
 };
-

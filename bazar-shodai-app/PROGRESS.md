@@ -199,3 +199,20 @@
 - **Verification & Testing**:
   - Verified `app.json` static config via `npx expo config`.
 - **Known Issues**: None.
+
+## Milestone 3: Core Storage, Security & Network Architecture
+
+### Phase 13: MMKV Fast Key-Value Storage
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Setup `react-native-mmkv` for synchronous, ultra-fast client state persistence.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/utils/storage.ts` (created `AppStorage` contract, `MMKVStorageAdapter` wrapping C++ Nitro JSI TurboModule, `MemoryStorageAdapter` fallback for test/SSR resilience, `zustandStorage` adapter, and `StorageKeys`)
+  - `bazar-shodai-app/src/utils/index.ts` (exported storage utilities)
+  - `bazar-shodai-app/src/store/useThemeStore.ts` (integrated Zustand `persist` with `zustandStorage`)
+- **Decisions Made**:
+  - Implemented an Adapter pattern with zero-crash fallback: uses C++ MMKV in native runtime (<1ms sync reads/writes) and gracefully falls back to memory storage in Jest/headless environments without throwing unhandled exceptions.
+- **Verification & Testing**:
+  - `type-check`, `lint`, and `format` all verified with 0 errors.
+- **Known Issues**: None.

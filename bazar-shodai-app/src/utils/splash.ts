@@ -15,4 +15,3 @@ export async function hideSplashScreen(): Promise<void> {
     console.warn('[SplashScreen] Error dismissing native splash:', err);
   }
 }
-

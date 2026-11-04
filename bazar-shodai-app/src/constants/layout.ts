@@ -132,4 +132,3 @@ export const Layout = {
   maxContentWidth: 480,
   cardAspectRatio: 1.35,
 } as const;
-
