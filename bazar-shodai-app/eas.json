@@ -21,7 +21,8 @@
       },
       "env": {
         "EXPO_PUBLIC_API_BASE_URL": "https://api.bajarshodai.com",
-        "EXPO_PUBLIC_SITE_URL": "https://bajarshodai.com"
+        "EXPO_PUBLIC_SITE_URL": "https://bajarshodai.com",
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
       }
     },
     "production": {
@@ -32,7 +33,8 @@
       },
       "env": {
         "EXPO_PUBLIC_API_BASE_URL": "https://api.bajarshodai.com",
-        "EXPO_PUBLIC_SITE_URL": "https://bajarshodai.com"
+        "EXPO_PUBLIC_SITE_URL": "https://bajarshodai.com",
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
       }
     }
   },
