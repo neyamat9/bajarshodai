@@ -9,7 +9,6 @@ import {
   Switch,
   StyleSheet,
 } from 'react-native';
-import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 import { Radius } from '@/constants/layout';
 import { haptics } from '@/services/haptics';
@@ -63,18 +62,9 @@ export function FilterBottomSheet({
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.overlay}>
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={onClose}
-          style={StyleSheet.absoluteFill}
-        />
+        <TouchableOpacity activeOpacity={1} onPress={onClose} style={StyleSheet.absoluteFill} />
         <View style={styles.sheet} className="bg-card border-t border-border">
           {/* Header */}
           <View className="flex-row items-center justify-between p-4 border-b border-border">
@@ -90,9 +80,7 @@ export function FilterBottomSheet({
             {/* In-Stock Toggle */}
             <View className="flex-row items-center justify-between py-3 border-b border-border mb-4">
               <View>
-                <Text className="text-sm font-semibold text-foreground">
-                  In Stock Only
-                </Text>
+                <Text className="text-sm font-semibold text-foreground">In Stock Only</Text>
                 <Text className="text-xs text-muted-foreground">
                   Hide currently unavailable items
                 </Text>
@@ -165,12 +153,7 @@ export function FilterBottomSheet({
               </View>
             </View>
 
-            <Button
-              title="Apply Filters"
-              variant="primary"
-              size="lg"
-              onPress={handleApply}
-            />
+            <Button title="Apply Filters" variant="primary" size="lg" onPress={handleApply} />
           </ScrollView>
         </View>
       </View>
@@ -193,4 +176,3 @@ const styles = StyleSheet.create({
     maxHeight: 450,
   },
 });
-

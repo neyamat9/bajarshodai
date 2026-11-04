@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { api } from '@/api/client';
 import { toast } from '@/store/useToastStore';
 import { haptics } from '@/services/haptics';
-import { Radius, TouchTarget } from '@/constants/layout';
+import { Radius } from '@/constants/layout';
 
 export interface BackInStockDialogProps {
   visible: boolean;
@@ -53,25 +53,14 @@ export function BackInStockDialog({
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={onClose}
-          style={StyleSheet.absoluteFill}
-        />
+        <TouchableOpacity activeOpacity={1} onPress={onClose} style={StyleSheet.absoluteFill} />
         <View style={styles.dialogCard} className="bg-card border border-border">
           <View className="flex-row items-center justify-between mb-3">
             <View className="flex-row items-center gap-2">
               <Icon name="BellRing" size={20} color="#0b6234" />
-              <Text className="text-base font-bold text-foreground">
-                Back in Stock Alert
-              </Text>
+              <Text className="text-base font-bold text-foreground">Back in Stock Alert</Text>
             </View>
             <TouchableOpacity onPress={onClose} className="p-1">
               <Icon name="X" size={18} color="#64748b" />
@@ -79,9 +68,8 @@ export function BackInStockDialog({
           </View>
 
           <Text className="text-xs text-muted-foreground mb-4 leading-relaxed">
-            <Text className="font-semibold text-foreground">{productName}</Text> is currently
-            sold out. Leave your contact info and we&apos;ll alert you immediately when it
-            arrives!
+            <Text className="font-semibold text-foreground">{productName}</Text> is currently sold
+            out. Leave your contact info and we&apos;ll alert you immediately when it arrives!
           </Text>
 
           <View className="mb-4">
@@ -98,12 +86,7 @@ export function BackInStockDialog({
           </View>
 
           <View className="flex-row gap-2 justify-end">
-            <Button
-              title="Cancel"
-              variant="outline"
-              size="sm"
-              onPress={onClose}
-            />
+            <Button title="Cancel" variant="outline" size="sm" onPress={onClose} />
             <Button
               title="Notify Me"
               variant="primary"
@@ -133,4 +116,3 @@ const styles = StyleSheet.create({
     padding: 20,
   },
 });
-

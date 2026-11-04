@@ -4,7 +4,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
 import { Price } from '@/components/ui/Price';
 import { QuantityStepper } from '@/components/product/QuantityStepper';
-import { Radius } from '@/constants/layout';
 
 export interface ProductStickyBottomBarProps {
   unitPrice: number;
@@ -34,10 +33,7 @@ export function ProductStickyBottomBar({
 
   return (
     <View
-      style={[
-        styles.container,
-        { paddingBottom: Math.max(insets.bottom, 12) },
-      ]}
+      style={[styles.container, { paddingBottom: Math.max(insets.bottom, 12) }]}
       className="bg-card border-t border-border"
     >
       <View style={styles.content}>
@@ -72,19 +68,10 @@ export function ProductStickyBottomBar({
         ) : (
           <View className="flex-row items-center justify-between w-full">
             <View>
-              <Text className="text-sm font-bold text-destructive">
-                Currently Out of Stock
-              </Text>
-              <Text className="text-[11px] text-muted-foreground">
-                Get an alert when available
-              </Text>
+              <Text className="text-sm font-bold text-destructive">Currently Out of Stock</Text>
+              <Text className="text-[11px] text-muted-foreground">Get an alert when available</Text>
             </View>
-            <Button
-              title="Notify Me"
-              variant="outline"
-              size="md"
-              onPress={onNotifyBackInStock}
-            />
+            <Button title="Notify Me" variant="outline" size="md" onPress={onNotifyBackInStock} />
           </View>
         )}
       </View>
@@ -115,4 +102,3 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
 });
-

@@ -1,0 +1,69 @@
+{
+  "common": {
+    "appName": "Bazar Shodai",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "search": "Search for vegetables, fish, groceries...",
+    "confirm": "Confirm",
+    "close": "Close"
+  },
+  "nav": {
+    "home": "Home",
+    "categories": "Categories",
+    "cart": "Bag",
+    "orders": "Orders",
+    "wishlist": "Wishlist",
+    "account": "Account"
+  },
+  "home": {
+    "deliveryTo": "Deliver to",
+    "freshDeals": "Fresh Market Deals",
+    "categories": "Popular Categories",
+    "popularProducts": "Popular Groceries",
+    "pharmacyBanner": "Prescription & Online Pharmacy"
+  },
+  "cart": {
+    "title": "My Shopping Bag",
+    "emptyTitle": "Your Bag is Empty",
+    "emptyDesc": "Add your daily vegetables, fresh fish and household groceries to begin.",
+    "subtotal": "Subtotal",
+    "deliveryCharge": "Delivery Charge",
+    "discount": "Discount",
+    "total": "Total Amount",
+    "proceedToCheckout": "Proceed to Checkout",
+    "freeDeliveryProgress": "Add ৳{amount} more for FREE delivery!"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "shippingAddress": "Delivery Address",
+    "paymentMethod": "Select Payment Method",
+    "cod": "Cash on Delivery",
+    "bkash": "bKash Online",
+    "nagad": "Nagad Online",
+    "placeOrder": "Place Order Now"
+  },
+  "account": {
+    "myAccount": "My Account",
+    "orders": "My Orders",
+    "returns": "Returns & Refund Claims",
+    "addresses": "Saved Delivery Addresses",
+    "rewards": "Loyalty Reward Points",
+    "settings": "App Settings",
+    "logout": "Log Out"
+  },
+  "rider": {
+    "portal": "Rider Delivery Portal",
+    "activeTasks": "Active Deliveries",
+    "completed": "Completed Deliveries",
+    "cashInHand": "Cash in Hand",
+    "navigate": "Google Maps",
+    "call": "Call Customer",
+    "markDelivered": "Delivered",
+    "markFailed": "Delivery Failed"
+  }
+}
+

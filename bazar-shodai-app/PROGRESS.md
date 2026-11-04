@@ -1620,3 +1620,377 @@
 - **Verification & Testing**:
   - Verified share dialog trigger and invoice URL generation.
 - **Known Issues**: None.
+
+## Milestone 16: Returns & Refund Claims Engine
+
+### Phase 115: Returns History & Status Tracker
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Full history of customer return claims with live review statuses (`REQUESTED`, `APPROVED`, `PICKUP_SCHEDULED`, `PICKED_UP`, `COMPLETED`, `REJECTED`, `CANCELLED`).
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/(account)/returns.tsx`
+  - `bazar-shodai-app/src/features/returns/types/index.ts`
+  - `bazar-shodai-app/src/features/returns/api/returnsApi.ts`
+- **Decisions Made**:
+  - Integrated with `GET /customer/returns` endpoint; displays claim date, order reference, return reason, refund amount, and pickup status.
+- **Verification & Testing**:
+  - Verified with mock and live server response schemas, badge colors per status, and pull-to-refresh.
+
+### Phase 116: Create Return Claim Form
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Form allowing customer to pick delivered orders, select items to return, specify quantities, and describe the issue.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/returns/new.tsx`
+  - `bazar-shodai-app/app/_layout.tsx`
+- **Decisions Made**:
+  - Supports return reasons: `DEFECTIVE`, `WRONG_ITEM`, `NOT_AS_DESCRIBED`, `DAMAGED_IN_TRANSIT`, `SIZE_ISSUE`, `NO_LONGER_NEEDED`.
+  - Item selector with quantity steppers constrained to original ordered quantity.
+- **Verification & Testing**:
+  - Verified delivered order filtering, quantity bounds, and validation checks.
+
+### Phase 117: Photo Evidence Upload
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Evidence photo uploader with camera and gallery integration for damaged/incorrect items.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/returns/components/ReturnPhotoUploader.tsx`
+- **Decisions Made**:
+  - Allows up to 4 photos using `expo-image-picker`; includes image thumbnails with remove badges and image selection haptic feedback.
+- **Verification & Testing**:
+  - Verified thumbnail gallery preview and removal action.
+
+### Phase 118: Refund Channel Selector
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Preferred refund channel selection: bKash, Nagad, Rocket, Bazar Shodai Wallet, or Original Payment Method.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/returns/components/RefundMethodPicker.tsx`
+- **Decisions Made**:
+  - Validates account number for MFS channels and displays store credit explanation for Wallet.
+- **Verification & Testing**:
+  - Verified channel toggling and dynamic account number field display.
+
+### Phase 119: Return Submission & Invalidation
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Mutation pipeline submitting claims to `POST /customer/returns` and invalidating React Query cache.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/returns/api/useCreateReturn.ts`
+  - `bazar-shodai-app/src/features/returns/api/returnsApi.ts`
+- **Decisions Made**:
+  - Automatically invalidates both `customer-returns` and `customer-orders` queries and shows success toast before redirecting to claims list.
+- **Verification & Testing**:
+  - Full end-to-end type checked with zero errors.
+
+---
+
+## Milestone 17: User Profile, Addresses & Loyalty Rewards
+
+### Phase 120: Central Account Dashboard
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Rebuilt central account screen linking profile, orders, addresses, rewards, settings, and staff mode.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/(tabs)/account.tsx`
+- **Decisions Made**:
+  - Profile card with avatar initials, loyalty points counter, total orders counter, and conditional "Delivery Rider Portal" entrance for staff users.
+- **Verification & Testing**:
+  - Verified role-based badge rendering, guest vs authenticated state, and clean navigation routing.
+
+### Phase 121: Edit Profile Screen
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Profile editor for full name, phone number, email address, language preference, and avatar photo.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/(account)/edit-profile.tsx`
+  - `bazar-shodai-app/src/features/account/api/accountApi.ts`
+- **Decisions Made**:
+  - Integrated `expo-image-picker` with 1:1 avatar cropping; submits to `PATCH /customer/auth/profile` and synchronizes Zustand auth store.
+- **Verification & Testing**:
+  - Verified form validation, photo selection, and auth store synchronization.
+
+### Phase 122: Saved Address Book
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Saved delivery address management with Home, Office, Other categorization, Add, Edit, Delete, and Set Default.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/(account)/addresses.tsx`
+  - `bazar-shodai-app/src/features/account/types/index.ts`
+  - `bazar-shodai-app/src/features/account/api/accountApi.ts`
+- **Decisions Made**:
+  - Full CRUD operations connected to `GET`, `POST`, `PATCH`, `DELETE /customer/addresses`. Includes slide-up modal for adding/editing addresses.
+- **Verification & Testing**:
+  - Verified default address toggling, CRUD mutations, and empty state CTA.
+
+### Phase 123: Loyalty Rewards & Milestone Tracker
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Loyalty points balance card, points-to-BDT conversion rate, free shipping milestone progress bar, and transaction ledger.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/(account)/rewards.tsx`
+  - `bazar-shodai-app/src/features/account/api/accountApi.ts`
+- **Decisions Made**:
+  - Integrated with `GET /customer/loyalty` summary; calculates points worth in BDT, shows orders remaining until free shipping milestone, and lists points ledger.
+- **Verification & Testing**:
+  - Verified balance calculation, progress bar width clamping, and ledger rendering.
+
+### Phase 124: Wishlist Tab & Quick Add to Bag
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Wishlist 2-column grid with 1-tap "Move to Bag" and heart toggle removal.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/(tabs)/wishlist.tsx`
+  - `bazar-shodai-app/src/features/account/api/accountApi.ts`
+- **Decisions Made**:
+  - Connects to `GET`, `POST`, `DELETE /customer/wishlist`; 1-tap "Move to Bag" pushes product into Zustand cart store with haptic feedback.
+- **Verification & Testing**:
+  - Verified add/remove toggle, cart synchronization, and guest authentication prompt.
+
+### Phase 125: App Settings & Biometric Lock
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Settings screen with language toggle (EN / বাং), dark mode toggle, biometric authentication, and cache clearing.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/(account)/settings.tsx`
+- **Decisions Made**:
+  - Leverages `expo-local-authentication` to check biometric hardware enrollment (fingerprint/face); stores preferences in MMKV; includes cache clear dialog.
+- **Verification & Testing**:
+  - Verified theme toggling, language pills, biometric prompt, and cache wipe alert.
+
+---
+
+## Milestone 18: Customer Care, Support Tickets & Contact
+
+### Phase 126: Support Tickets List Screen
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Screen listing customer support tickets with filters for All, Active, and Resolved.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/(account)/support.tsx`
+  - `bazar-shodai-app/src/features/support/types/index.ts`
+  - `bazar-shodai-app/src/features/support/api/supportApi.ts`
+- **Decisions Made**:
+  - Fetches tickets from `GET /customer/support-tickets`; displays category tag, status badge (`OPEN`, `IN_PROGRESS`, `WAITING_CUSTOMER`, `RESOLVED`, `CLOSED`), and relative timestamps.
+- **Verification & Testing**:
+  - Verified filter tabs, pull-to-refresh, and empty state.
+
+### Phase 127: Create Support Ticket Screen
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Form allowing customers to open support tickets with category selector, optional order picker, subject, and detailed message.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/support/new.tsx`
+- **Decisions Made**:
+  - Categories: `ORDER`, `DELIVERY`, `PAYMENT`, `RETURN_WARRANTY`, `PRODUCT`, `OTHER`; validates character minimums and redirects directly into the conversation thread on success.
+- **Verification & Testing**:
+  - Verified category selection, order attachment chip, and validation guards.
+
+### Phase 128: Interactive Message Chat Thread
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Live two-way message chat thread between customer and customer support agent.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/support/[id].tsx`
+  - `bazar-shodai-app/src/features/support/api/supportApi.ts`
+- **Decisions Made**:
+  - 10-second polling during active conversation; differentiates customer bubbles (green, right-aligned) from support agent bubbles (white with shield badge, left-aligned); includes auto-scroll to bottom and "Close Ticket" action.
+- **Verification & Testing**:
+  - Verified message sending, keyboard avoiding behavior, and ticket closing.
+
+### Phase 129: Contact Us & Hotline Screen
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Contact screen with 1-tap phone dialer, WhatsApp direct chat link, physical store information, and message submission form.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/contact.tsx`
+- **Decisions Made**:
+  - 1-tap `tel:` dialer for hotline and `https://wa.me/` for WhatsApp; includes quick message form submitting to `POST /customer/contact`.
+- **Verification & Testing**:
+  - Verified external link handlers, hotline dialer trigger, and form submission.
+
+### Phase 130: Notification Center Screen
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Central notification inbox with read/unread visual styling, "Mark All as Read", and deep link routing.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/notifications/index.tsx`
+- **Decisions Made**:
+  - Fetches notifications from `GET /customer/notifications`; tap marks single item read via `PATCH /customer/notifications/:id/read` and routes to target order, return, or deal screen.
+- **Verification & Testing**:
+  - Verified mark-all-read mutation, unread dot indicators, and deep link navigation.
+
+---
+
+## Milestone 19: Delivery Rider Portal (Staff Mode)
+
+### Phase 131: Rider Role & Access Gate
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Role-based access hook detecting if authenticated customer is a delivery rider or store staff.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/rider/hooks/useRiderAccess.ts`
+  - `bazar-shodai-app/src/features/rider/types/index.ts`
+- **Decisions Made**:
+  - Checks `user.role === 'STAFF' || user.role === 'ADMIN' || user.role === 'SUPER_ADMIN'` or permissions including `'staff'`.
+- **Verification & Testing**:
+  - Verified staff conditional rendering on Account dashboard.
+
+### Phase 132: Rider Deliveries Feed & Task Board
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Live feed for riders showing active deliveries and completed deliveries from the last 7 days.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/(rider)/deliveries.tsx`
+  - `bazar-shodai-app/src/features/rider/api/riderApi.ts`
+- **Decisions Made**:
+  - 15-second live polling against `GET /admin/my-deliveries`; includes top KPI banner with active dropoffs, deliveries completed today, and current cash holding in hand.
+- **Verification & Testing**:
+  - Verified scope toggling (`active` vs `done`), status badge variants, and quick action buttons.
+
+### Phase 133: Rider Live Order Action Screen
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Dedicated delivery action screen with customer contact, 1-tap Google Maps turn-by-turn navigation, and parcel contents.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/(rider)/order/[id].tsx`
+- **Decisions Made**:
+  - 1-tap "Call Customer" and 1-tap "Start Navigation" launching Google Maps with latitude/longitude destination; includes cash collected input for COD orders and delivery note field.
+- **Verification & Testing**:
+  - Verified deep linking to phone dialer, navigation URLs, and status progression.
+
+### Phase 134: Delivery Status Progression & GPS Capture
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Status progression mutations capturing live GPS coordinates before updating delivery milestones.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/rider/api/riderApi.ts`
+- **Decisions Made**:
+  - Integrates `expo-location` to sample device GPS coordinates prior to executing `accept`, `picked-up`, `on-the-way`, `delivered`, and `failed` API calls.
+- **Verification & Testing**:
+  - Verified location permission handling and graceful fallback if location services are disabled.
+
+### Phase 135: Rider Daily Cash Settlements Screen
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Reconciliation screen showing daily COD cash collection totals, unsettled cash due, and settlement history.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/(rider)/settlements.tsx`
+- **Decisions Made**:
+  - Connected to `GET /admin/deliveries/settlements` and rider summary; provides breakdown of cash in hand and instructions for shift handover at Shahrasti hub.
+- **Verification & Testing**:
+  - Verified cash in hand calculation, status badges (`SETTLED` vs `PENDING`), and pull-to-refresh.
+
+### Phase 136: Delivery Failure Logger
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Modal component for delivery riders to record failure reasons and customer refusal notes.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/rider/components/DeliveryFailedModal.tsx`
+- **Decisions Made**:
+  - Reasons supported: `CUSTOMER_NOT_REACHABLE`, `CUSTOMER_REFUSED`, `WRONG_ADDRESS`, `NOBODY_HOME`, `PAYMENT_PROBLEM`, `OTHER`; submits to `POST /admin/my-deliveries/:id/failed`.
+- **Verification & Testing**:
+  - Verified reason selection, note capture, and mutation handling.
+
+---
+
+## Milestone 20: Push Notifications, Deep Linking & Offline Cache
+
+### Phase 137: Push Notification Token Registration
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Register device push notification token via `expo-notifications` and synchronize with backend server.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/services/notifications.ts`
+  - `bazar-shodai-app/app/_layout.tsx`
+- **Decisions Made**:
+  - Configured foreground notification behavior (alert, banner, sound, badge); requests permissions; caches push token in MMKV and posts to `POST /customer/notifications/token`.
+- **Verification & Testing**:
+  - Verified token retrieval, storage persistence, and app layout invocation.
+
+### Phase 138: Foreground & Tap Event Listeners with Deep Linking
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Push notification event listeners displaying foreground toast alerts and routing user on tap.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/services/notificationHandlers.ts`
+  - `bazar-shodai-app/app/_layout.tsx`
+- **Decisions Made**:
+  - Foreground notifications trigger haptic feedback and in-app toast banners; notification taps route automatically to `/orders/[id]`, `/product/[slug]`, `/category/[slug]`, `/(account)/returns`, `/support/[id]`, or rider drop-offs.
+- **Verification & Testing**:
+  - Verified event subscription setup and teardown on unmount.
+
+### Phase 139: Android 8.0+ Notification Channels
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Dedicated notification channels configured with appropriate importance, sound, vibration, and light colors on Android.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/constants/notificationChannels.ts`
+- **Decisions Made**:
+  - Channels configured: `orders` (High priority with vibration), `rider` (Max priority for assignments), `deals` (Default priority for sales), and `pharmacy` (High priority for prescription alerts).
+- **Verification & Testing**:
+  - Verified Android platform guard and channel definitions.
+
+### Phase 140: Offline Cache & Mutation Sync Engine
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Network connectivity monitoring and offline queueing engine for seamless offline experience.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/services/offlineSync.ts`
+- **Decisions Made**:
+  - Uses `@react-native-community/netinfo` to provide `useNetworkStatus()`; includes MMKV caching utilities `cacheData` / `getCachedData` and offline mutation queue.
+- **Verification & Testing**:
+  - Verified network status subscription, queueing mechanism, and queue clearing.
+
+### Phase 141: Dual-Language Internationalization Engine
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Complete English and Bengali (বাংলা) translation dictionaries and reactive translation hook.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/i18n/locales/en.json`
+  - `bazar-shodai-app/src/i18n/locales/bn.json`
+  - `bazar-shodai-app/src/i18n/index.ts`
+- **Decisions Made**:
+  - Lightweight, reactive i18n implementation with zero heavy external dependencies; supports dot-notation lookup (`t('cart.proceedToCheckout')`), string interpolation (`{amount}`), and reactive re-renders across components upon language change.
+- **Verification & Testing**:
+  - Verified dictionary completeness, fallback to English when keys are absent, and MMKV language preference persistence.
+
+### Phase 142: In-App Version & Compatibility Checker
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: In-app version checker comparing installed client version against minimum supported API version.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/services/versionCheck.ts`
+  - `bazar-shodai-app/app/_layout.tsx`
+- **Decisions Made**:
+  - Compares semantic versioning (`APP_VERSION = '1.0.0'`); triggers non-dismissable mandatory update dialog if client is below `minVersion`, or polite soft update dialog if below `latestVersion`.
+- **Verification & Testing**:
+  - Verified semver comparison logic (`compareSemver`) and Google Play / App Store redirect links.

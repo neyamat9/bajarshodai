@@ -1116,7 +1116,7 @@
 - **API**: `GET /customer/returns`
 - **Acceptance Criteria**: Displays status badge (`REQUESTED`, `APPROVED`, `COMPLETED`, `REJECTED`).
 - **Dependencies**: Phase 30.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ### Phase 116: Create Return Claim Screen (`/returns/new`)
 
@@ -1125,7 +1125,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Reasons match enum (`DAMAGED`, `WRONG_ITEM`, `EXPIRED`, `NOT_AS_DESCRIBED`, `POOR_QUALITY`).
 - **Dependencies**: Phase 115.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ### Phase 117: Return Photographic Evidence Camera Upload
 
@@ -1134,7 +1134,7 @@
 - **API**: `POST /customer/uploads/review-images`
 - **Acceptance Criteria**: Attaches up to 4 photos to the claim request.
 - **Dependencies**: Phase 86.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ### Phase 118: Refund Method Selection (bKash/Nagad/Rocket/Wallet)
 
@@ -1143,7 +1143,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Collects account number and account type (Personal/Agent).
 - **Dependencies**: Phase 116.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ### Phase 119: Submit Return Request Mutation
 
@@ -1152,7 +1152,7 @@
 - **API**: `POST /customer/returns`
 - **Acceptance Criteria**: Navigates to return details screen upon success with tracking instructions.
 - **Dependencies**: Phase 116.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ---
 
@@ -1165,7 +1165,7 @@
 - **API**: `GET /customer/auth/profile`
 - **Acceptance Criteria**: Clean list grouping with icons and navigation chevrons.
 - **Dependencies**: Phase 45.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ### Phase 121: Edit Profile Screen & Avatar Camera Upload
 
@@ -1174,7 +1174,7 @@
 - **API**: `PATCH /customer/auth/profile`, `POST /customer/uploads/review-images`
 - **Acceptance Criteria**: Form validation; updates store and header immediately.
 - **Dependencies**: Phase 22.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ### Phase 122: Saved Addresses Book Screen
 
@@ -1183,7 +1183,7 @@
 - **API**: `GET /customer/addresses`, `POST /customer/addresses`, `PATCH /customer/addresses/:id`, `DELETE /customer/addresses/:id`
 - **Acceptance Criteria**: Default address highlighted with green badge.
 - **Dependencies**: Phase 30.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ### Phase 123: Loyalty Rewards Points & History Screen
 
@@ -1192,7 +1192,7 @@
 - **API**: `GET /customer/loyalty`
 - **Acceptance Criteria**: Lists points earned per order and points redeemed on coupons.
 - **Dependencies**: Phase 30.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ### Phase 124: Customer Wishlist Screen (Wishlist Tab)
 
@@ -1201,7 +1201,7 @@
 - **API**: `GET /customer/wishlist`, `POST /customer/wishlist`, `DELETE /customer/wishlist/:productId`
 - **Acceptance Criteria**: 1-tap heart toggle with micro-interaction scale animation.
 - **Dependencies**: Phase 39.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ### Phase 125: App Settings, Language & Biometrics Screen
 
@@ -1210,7 +1210,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Language switch updates all UI strings instantly; biometrics integrate with `expo-local-authentication`.
 - **Dependencies**: Phase 10.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ---
 
@@ -1223,7 +1223,7 @@
 - **API**: `GET /customer/support`
 - **Acceptance Criteria**: Pull-to-refresh; "Open New Ticket" floating action button.
 - **Dependencies**: Phase 30.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ### Phase 127: Create Support Ticket Screen (`/support/new`)
 
@@ -1232,7 +1232,7 @@
 - **API**: `POST /customer/support`
 - **Acceptance Criteria**: Validates inputs and creates ticket.
 - **Dependencies**: Phase 126.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ### Phase 128: Interactive Support Ticket Chat Thread
 
@@ -1241,7 +1241,7 @@
 - **API**: `GET /customer/support/:id`, `POST /customer/support/:id/messages`
 - **Acceptance Criteria**: Auto-scrolls to newest message; optimistic local message append.
 - **Dependencies**: Phase 127.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ### Phase 129: Contact Us & Store Information Screen
 
@@ -1250,7 +1250,7 @@
 - **API**: `POST /customer/contact`
 - **Acceptance Criteria**: "Call Support" opens native phone dialer with official store phone number.
 - **Dependencies**: Phase 22.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ### Phase 130: Notification Center Screen
 
@@ -1259,7 +1259,7 @@
 - **API**: `GET /customer/notifications`, `PATCH /customer/notifications/:id/read`, `POST /customer/notifications/mark-all-read`
 - **Acceptance Criteria**: Deep links to relevant order or promotion when notification item is tapped.
 - **Dependencies**: Phase 30.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ---
 
@@ -1272,7 +1272,7 @@
 - **API**: `GET /customer/auth/profile`
 - **Acceptance Criteria**: Reveals "Rider Dashboard" switch in Account screen for staff members.
 - **Dependencies**: Phase 51.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ### Phase 132: Rider Deliveries Feed Screen
 
@@ -1281,7 +1281,7 @@
 - **API**: `GET /admin/deliveries/my-deliveries`
 - **Acceptance Criteria**: Filter by status: `ASSIGNED`, `ACCEPTED`, `ON_THE_WAY`, `DELIVERED`.
 - **Dependencies**: Phase 131.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ### Phase 133: Rider Live Order Action Bar & Navigation
 
@@ -1290,7 +1290,7 @@
 - **API**: `GET /admin/orders/:id`
 - **Acceptance Criteria**: Launches Google Maps / Apple Maps with destination GPS coordinates.
 - **Dependencies**: Phase 132.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ### Phase 134: Delivery Status Transition Mutation
 
@@ -1299,7 +1299,7 @@
 - **API**: `PATCH /admin/deliveries/:id/status`
 - **Acceptance Criteria**: Captures current rider GPS coordinates on transition.
 - **Dependencies**: Phase 133.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ### Phase 135: Cash Collection Reconciliation Screen
 
@@ -1308,7 +1308,7 @@
 - **API**: `GET /admin/deliveries/settlements`
 - **Acceptance Criteria**: Clear breakdown of cash received per order.
 - **Dependencies**: Phase 132.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ### Phase 136: Delivery Failure & Reschedule Modal
 
@@ -1317,7 +1317,7 @@
 - **API**: `PATCH /admin/deliveries/:id/status` (`FAILED`)
 - **Acceptance Criteria**: Updates order timeline and alerts dispatch staff.
 - **Dependencies**: Phase 38.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ---
 
@@ -1330,7 +1330,7 @@
 - **API**: `POST /customer/notifications/token`
 - **Acceptance Criteria**: Obtains native Expo push token and handles Android notification channels.
 - **Dependencies**: Phase 51.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ### Phase 138: Foreground & Background Push Notification Handlers
 
@@ -1339,7 +1339,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Tapping notification routes user directly to matching Order or Promotion.
 - **Dependencies**: Phase 137.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ### Phase 139: Android Notification Channels Configuration
 
@@ -1348,7 +1348,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Proper importance levels, sound, and vibration patterns configured.
 - **Dependencies**: Phase 137.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ### Phase 140: Offline Cart & Read-Only Catalog Caching
 
@@ -1357,7 +1357,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Syncs queued cart operations automatically once connection resumes.
 - **Dependencies**: Phase 18.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ### Phase 141: Localized Bengali & English Translation Engine
 
@@ -1366,7 +1366,7 @@
 - **API**: None.
 - **Acceptance Criteria**: 100% of UI strings translated with fallback to English.
 - **Dependencies**: Phase 6.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ### Phase 142: In-App App Update Checker
 
@@ -1375,7 +1375,7 @@
 - **API**: `GET /common/storefront/content-version`
 - **Acceptance Criteria**: Modal redirecting to Google Play Store if minimum version not met.
 - **Dependencies**: Phase 38.
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 ---
 

@@ -72,4 +72,3 @@ export interface PlacedOrderResponse {
   createdAt: string;
   estimatedDelivery?: string;
 }
-

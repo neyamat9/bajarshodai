@@ -53,4 +53,3 @@ export interface CustomerOrderRecord {
   deliveredAt?: string;
   cancelledAt?: string;
 }
-

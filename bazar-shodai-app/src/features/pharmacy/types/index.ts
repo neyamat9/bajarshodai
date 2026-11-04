@@ -32,4 +32,3 @@ export interface UploadPrescriptionPayload {
   phone: string;
   notes?: string;
 }
-

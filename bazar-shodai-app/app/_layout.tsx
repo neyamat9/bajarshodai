@@ -14,6 +14,9 @@ import { useAppFonts } from '@/hooks/useFonts';
 import { hideSplashScreen } from '@/utils/splash';
 import { getOrCreateGuestToken } from '@/utils/guestToken';
 import { useAuthStore } from '@/store/useAuthStore';
+import { registerForPushNotificationsAsync } from '@/services/notifications';
+import { setupNotificationListeners } from '@/services/notificationHandlers';
+import { checkAppVersion } from '@/services/versionCheck';
 
 function RootNavigationLayout() {
   const { isDark, colors } = useAppTheme();
@@ -23,6 +26,17 @@ function RootNavigationLayout() {
     getOrCreateGuestToken();
     // Restore persistent authenticated customer session from SecureStore
     useAuthStore.getState().restoreSession();
+
+    // Register push notification token & configure event listeners
+    void registerForPushNotificationsAsync();
+    const cleanupNotifications = setupNotificationListeners();
+
+    // Check version compatibility
+    void checkAppVersion();
+
+    return () => {
+      cleanupNotifications();
+    };
   }, []);
 
   return (
@@ -131,6 +145,108 @@ function RootNavigationLayout() {
         {/* Account Flow */}
         <Stack.Screen
           name="(account)/change-password"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="(account)/edit-profile"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="(account)/addresses"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="(account)/rewards"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="(account)/settings"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="(account)/returns"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="returns/new"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+
+        {/* Customer Care & Support Flow */}
+        <Stack.Screen
+          name="(account)/support"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="support/new"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="support/[id]"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="contact"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="notifications/index"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+
+        {/* Delivery Rider Staff Portal */}
+        <Stack.Screen
+          name="(rider)/deliveries"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="(rider)/order/[id]"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="(rider)/settlements"
           options={{
             headerShown: false,
             animation: 'slide_from_right',
