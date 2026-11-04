@@ -77,19 +77,19 @@
 
 ### Phase 7: NativeWind v4 Installation & Configuration
 - **Goal**: Install and configure NativeWind v4 with Tailwind CSS compiler and Metro plugins.
-- **Files**: `bazar-shodai-app/tailwind.config.js`, `bazar-shodai-app/metro.config.js`, `bazar-shodai-app/global.css`
+- **Files**: `bazar-shodai-app/tailwind.config.js`, `bazar-shodai-app/metro.config.js`, `bazar-shodai-app/global.css`, `bazar-shodai-app/babel.config.js`, `bazar-shodai-app/nativewind-env.d.ts`
 - **API**: None.
 - **Acceptance Criteria**: Test component renders styled with Tailwind utility classes.
 - **Dependencies**: Phase 6.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 8: Color Tokens Porting from Web Storefront
 - **Goal**: Port exact web color tokens (`brand-fresh`, `brand-charcoal`, `primary`, `secondary`, `card`, `border`) into mobile theme.
-- **Files**: `bazar-shodai-app/src/constants/colors.ts`, `bazar-shodai-app/tailwind.config.js`
+- **Files**: `bazar-shodai-app/src/constants/colors.ts`, `bazar-shodai-app/tailwind.config.js`, `bazar-shodai-app/global.css`
 - **API**: None.
 - **Acceptance Criteria**: Color palettes match `frontend/tailwind.config.ts` 1:1.
 - **Dependencies**: Phase 7.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 9: Typography & Font Scaling System
 - **Goal**: Configure Outfit and Inter font families with accessibility-aware dynamic font scaling.
@@ -97,7 +97,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Fonts load via `expo-font` before splash screen dismisses.
 - **Dependencies**: Phase 8.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 10: Dark Mode Theme Provider
 - **Goal**: Implement system-preference dark mode with manual toggle (Light / Dark / System).
@@ -105,7 +105,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Dark mode toggles instantly without layout flicker.
 - **Dependencies**: Phase 8.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 11: Spacing, Radius & Elevation Tokens
 - **Goal**: Standardize touch target dimensions (min 44px), border radii, and native Android elevation shadows.
@@ -113,15 +113,15 @@
 - **API**: None.
 - **Acceptance Criteria**: Reusable layout constants exported and typed.
 - **Dependencies**: Phase 8.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 12: Splash Screen & App Icon Branding
 - **Goal**: Configure native splash screen with logo and color-matched Android adaptive icons.
-- **Files**: `bazar-shodai-app/assets/icon.png`, `bazar-shodai-app/assets/splash.png`, `bazar-shodai-app/app.json`
+- **Files**: `bazar-shodai-app/assets/icon.png`, `bazar-shodai-app/assets/splash-icon.png`, `bazar-shodai-app/src/utils/splash.ts`, `bazar-shodai-app/app.json`
 - **API**: None.
 - **Acceptance Criteria**: Smooth transition from OS boot to React Native mount.
 - **Dependencies**: Phase 9.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ---
 

@@ -57,4 +57,3 @@ export const ENV = {
 } as const;
 
 export type AppEnvironment = typeof ENV;
-

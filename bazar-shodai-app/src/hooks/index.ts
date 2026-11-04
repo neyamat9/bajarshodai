@@ -1,5 +1,1 @@
-/**
- * Global and reusable custom React hooks
- */
-export {};
-
+export * from './useFonts';

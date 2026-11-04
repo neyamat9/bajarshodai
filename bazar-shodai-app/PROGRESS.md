@@ -110,3 +110,92 @@
 - **Verification & Testing**:
   - Full suite verification: `npm run type-check`, `npm run lint`, and `npm run format` all passed with 0 errors.
 - **Known Issues**: None.
+
+## Milestone 2: Design Tokens, Theme & NativeWind Setup
+
+### Phase 7: NativeWind v4 Installation & Configuration
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Install and configure NativeWind v4 with Tailwind CSS compiler and Metro plugins.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/metro.config.js` (wrapped with `withNativeWind` and `global.css` input)
+  - `bazar-shodai-app/babel.config.js` (configured `nativewind/babel` and `react-native-reanimated/plugin`)
+  - `bazar-shodai-app/global.css` (Tailwind root layers and CSS custom variable definitions)
+  - `bazar-shodai-app/tailwind.config.js` (configured NativeWind preset and theme extensions)
+  - `bazar-shodai-app/nativewind-env.d.ts` (NativeWind type declarations and `*.css` module definitions)
+- **Decisions Made**:
+  - Adopted NativeWind v4.2.7 paired with Tailwind CSS v3 compiler for stable React 19 / RN 0.88 compatibility.
+- **Verification & Testing**:
+  - Type-check and Metro configuration verified cleanly with zero errors.
+- **Known Issues**: None.
+
+### Phase 8: Color Tokens Porting from Web Storefront
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Port exact web color tokens into mobile theme.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/constants/colors.ts` (1:1 port of `frontend/app/globals.css`: `brandDeep` `#0b6234`, `brandFresh` `#45a22c`, tomato, carrot, fish, dark theme variants)
+  - `bazar-shodai-app/global.css` (configured CSS variables for both `:root` and `.dark`)
+  - `bazar-shodai-app/tailwind.config.js` (mapped CSS variables to Tailwind color classes)
+- **Decisions Made**:
+  - Preserved brand heritage by referencing exact HEX color codes from the web storefront logo artwork.
+- **Verification & Testing**:
+  - Strongly typed `ThemeColors` contract guarantees consistency across light and dark palettes.
+- **Known Issues**: None.
+
+### Phase 9: Typography & Font Scaling System
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Configure Outfit and Inter font families with accessibility-aware dynamic font scaling.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/constants/typography.ts` (Outfit 400-700, Inter 400-700, clamped accessible dynamic font scaler `scaleFont`, standardized typography scale)
+  - `bazar-shodai-app/src/hooks/useFonts.ts` (hook for asynchronous font loading)
+- **Decisions Made**:
+  - Applied upper scale clamping (1.3x) on dynamic scaling to prevent text truncation while respecting user accessibility preferences.
+- **Verification & Testing**:
+  - Verified `@expo-google-fonts/outfit` and `@expo-google-fonts/inter` resolve and compile.
+- **Known Issues**: None.
+
+### Phase 10: Dark Mode Theme Provider
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Implement system-preference dark mode with manual toggle (Light / Dark / System).
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/store/useThemeStore.ts` (Zustand store managing `themeMode`: `'light' | 'dark' | 'system'`)
+  - `bazar-shodai-app/src/components/theme/ThemeProvider.tsx` (synchronizes device OS preference, Zustand store, and NativeWind `colorScheme`)
+- **Decisions Made**:
+  - Context provides seamless theme switching without full component tree re-mounting or flickering.
+- **Verification & Testing**:
+  - Verified toggle functionality in `App.tsx` with instant dynamic class updates.
+- **Known Issues**: None.
+
+### Phase 11: Spacing, Radius & Elevation Tokens
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Standardize touch target dimensions (min 44px), border radii, and native Android elevation shadows.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/constants/layout.ts` (`Spacing`, `Radius` with uniform 4px brand radius, `TouchTarget` with 44px minimum, `Shadows` elevation mappings for Android/iOS)
+- **Decisions Made**:
+  - Standardized on 4px unified brand radius to mirror the web storefront geometry.
+- **Verification & Testing**:
+  - Component touch targets validated against WCAG 2.1 AA accessibility guidelines.
+- **Known Issues**: None.
+
+### Phase 12: Splash Screen & App Icon Branding
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Configure native splash screen with logo and color-matched Android adaptive icons.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app.json` (configured brand background `#0b6234`, adaptive icon colors, and splash config)
+  - `bazar-shodai-app/src/utils/splash.ts` (asynchronous splash hide controller)
+- **Decisions Made**:
+  - Splash screen auto-hiding is prevented on app launch until custom fonts and theme stores are completely ready.
+- **Verification & Testing**:
+  - Verified `app.json` static config via `npx expo config`.
+- **Known Issues**: None.

@@ -1,71 +1,97 @@
+import './global.css';
+import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View, ScrollView } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
+import { ThemeProvider, useAppTheme } from '@/components/theme/ThemeProvider';
+import { useAppFonts } from '@/hooks/useFonts';
+import { hideSplashScreen } from '@/utils/splash';
 import { ENV } from '@/config/env';
 
-export default function App() {
+function AppContent() {
+  const { isDark, themeMode, toggleTheme } = useAppTheme();
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Bazar Shodai Mobile</Text>
-      <Text style={styles.subtitle}>Fresh grocery delivered in Shahrasti</Text>
-      <View style={styles.envBadge}>
-        <Text style={styles.envLabel}>API Target:</Text>
-        <Text style={styles.envValue} numberOfLines={1}>
-          {ENV.API_BASE_URL}
+    <SafeAreaView className="flex-1 bg-background">
+      <ScrollView contentContainerStyle={{ padding: 24, alignItems: 'center' }}>
+        {/* Brand Header */}
+        <Text className="text-3xl font-bold text-brand-deep dark:text-brand-fresh mt-4 mb-1">
+          বাজার সদাই
         </Text>
-      </View>
-      <Button
-        title="Explore Products"
-        onPress={() => console.log('Connected to API:', ENV.API_BASE_URL)}
-        style={styles.button}
-      />
-      <StatusBar style="auto" />
-    </View>
+        <Text className="text-base text-foreground font-medium mb-1">Bazar Shodai Mobile</Text>
+        <Text className="text-xs text-muted-foreground mb-6">
+          Fresh grocery delivered directly to your doorstep in Shahrasti
+        </Text>
+
+        {/* Live Backend Connection Card */}
+        <View className="w-full bg-card border border-border rounded-brand p-4 mb-6">
+          <Text className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1">
+            Backend API Target
+          </Text>
+          <Text
+            className="text-sm font-semibold text-brand-fresh dark:text-accent-text"
+            numberOfLines={1}
+          >
+            {ENV.API_BASE_URL}
+          </Text>
+        </View>
+
+        {/* Theme Status & Actions */}
+        <View className="w-full bg-card border border-border rounded-brand p-4 mb-6">
+          <View className="flex-row justify-between items-center mb-3">
+            <Text className="text-sm text-foreground font-medium">Active Theme</Text>
+            <Text className="text-xs font-semibold px-2 py-1 rounded bg-secondary text-secondary-foreground">
+              {themeMode.toUpperCase()} ({isDark ? 'Dark Mode' : 'Light Mode'})
+            </Text>
+          </View>
+          <Button
+            title={`Switch to ${isDark ? 'Light' : 'Dark'} Mode`}
+            variant="outline"
+            onPress={toggleTheme}
+            className="w-full"
+          />
+        </View>
+
+        {/* Buttons Design Tokens Showcase */}
+        <View className="w-full space-y-3 gap-3">
+          <Button
+            title="Primary CTA (বাজার Deep Green)"
+            variant="primary"
+            size="lg"
+            onPress={() => console.log('Primary CTA pressed')}
+          />
+          <Button
+            title="Fresh Accent CTA (সদাই Fresh Green)"
+            variant="secondary"
+            size="lg"
+            onPress={() => console.log('Secondary CTA pressed')}
+          />
+        </View>
+      </ScrollView>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+    </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#0f172a',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#64748b',
-    marginBottom: 16,
-  },
-  envBadge: {
-    backgroundColor: '#f1f5f9',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 6,
-    marginBottom: 24,
-    alignItems: 'center',
-  },
-  envLabel: {
-    fontSize: 11,
-    color: '#64748b',
-    textTransform: 'uppercase',
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  envValue: {
-    fontSize: 12,
-    color: '#059669',
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  button: {
-    width: '100%',
-    maxWidth: 280,
-  },
-});
+export default function App() {
+  const { fontsLoaded, fontError } = useAppFonts();
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      hideSplashScreen();
+    }
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
+
+  return (
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <AppContent />
+      </ThemeProvider>
+    </SafeAreaProvider>
+  );
+}
