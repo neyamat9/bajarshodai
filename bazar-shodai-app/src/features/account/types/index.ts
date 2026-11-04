@@ -102,4 +102,3 @@ export interface WishlistItem {
     reviewsCount?: number;
   };
 }
-

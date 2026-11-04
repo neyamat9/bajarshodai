@@ -17,9 +17,19 @@
     },
     "ios": {
       "supportsTablet": true,
-      "jsEngine": "hermes"
+      "bundleIdentifier": "com.bazarshodai.app",
+      "buildNumber": "1",
+      "jsEngine": "hermes",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Bazar Shodai needs camera access so you can take photos of damaged items for refund claims and upload medicine prescriptions.",
+        "NSPhotoLibraryUsageDescription": "Bazar Shodai needs photo library access so you can upload medicine prescriptions, avatar pictures, and return evidence.",
+        "NSLocationWhenInUseUsageDescription": "Bazar Shodai needs your location to deliver fresh groceries directly to your exact doorstep in Shahrasti.",
+        "NSFaceIDUsageDescription": "Bazar Shodai uses Face ID for fast and secure biometric checkout authentication."
+      }
     },
     "android": {
+      "package": "com.bazarshodai.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#0b6234",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -27,11 +37,62 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "jsEngine": "hermes"
+      "jsEngine": "hermes",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
+        "POST_NOTIFICATIONS",
+        "VIBRATE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-font", "expo-splash-screen", "expo-secure-store", "expo-image", "expo-router"]
+    "plugins": [
+      "expo-font",
+      "expo-splash-screen",
+      "expo-secure-store",
+      "expo-image",
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Bazar Shodai needs your location to deliver fresh groceries directly to your exact doorstep."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Bazar Shodai needs photo library access to upload prescriptions and return evidence photos."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#0b6234"
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow Bazar Shodai to use Face ID for biometric authentication."
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          }
+        }
+      ]
+    ]
   }
 }

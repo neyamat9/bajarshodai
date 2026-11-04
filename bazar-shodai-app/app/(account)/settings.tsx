@@ -9,6 +9,7 @@ import { useAppTheme } from '@/components/theme/ThemeProvider';
 import { toast } from '@/store/useToastStore';
 import { haptics } from '@/services/haptics';
 import { storage } from '@/utils/storage';
+import { clearAppImageCache } from '@/utils/imageConfig';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -64,7 +65,8 @@ export default function SettingsScreen() {
         {
           text: 'Clear Cache',
           style: 'destructive',
-          onPress: () => {
+          onPress: async () => {
+            await clearAppImageCache();
             haptics.success();
             toast.success('Cache Cleared', 'App cache has been refreshed successfully.');
           },

@@ -73,4 +73,3 @@ export function useNetworkStatus() {
     isOffline: isConnected === false || isInternetReachable === false,
   };
 }
-
