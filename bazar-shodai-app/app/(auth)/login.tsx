@@ -1,35 +1,79 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
-import { PhoneInput } from '@/components/ui/PhoneInput';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/store/useToastStore';
 import { haptics } from '@/services/haptics';
+import { loginApi } from '@/features/auth/api/login';
+import { useAuthStore } from '@/store/useAuthStore';
+import { getOrCreateGuestToken } from '@/utils/guestToken';
+import { Radius, TouchTarget } from '@/constants/layout';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const login = useAuthStore((s) => s.login);
 
-  const handleSendOtp = () => {
-    if (phoneNumber.length < 10) {
-      toast.error('Invalid Phone', 'Please enter a valid 10-digit mobile number');
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const handleLogin = async () => {
+    setErrorMessage(null);
+
+    const trimmedId = identifier.trim();
+    if (!trimmedId) {
+      setErrorMessage('Please enter your mobile number or email');
       return;
     }
 
-    haptics.selection();
-    setIsSubmitting(true);
-    setTimeout(() => {
+    if (password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      haptics.light();
+
+      const guestToken = getOrCreateGuestToken();
+      const session = await loginApi({
+        identifier: trimmedId,
+        password,
+        guestToken,
+      });
+
+      await login(session);
+      haptics.success();
+      toast.success(
+        'Welcome Back!',
+        session.user?.name ? `Logged in as ${session.user.name}` : 'Login successful',
+      );
+
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace('/(tabs)');
+      }
+    } catch (error: unknown) {
+      haptics.error();
+      const msg =
+        error instanceof Error
+          ? error.message
+          : 'Invalid credentials. Please verify your phone/email and password.';
+      setErrorMessage(msg);
+      toast.error('Login Failed', msg);
+    } finally {
       setIsSubmitting(false);
-      toast.success('OTP Sent', `Verification code sent to +880 ${phoneNumber}`);
-    }, 600);
+    }
   };
 
   return (
     <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-background">
-      {/* Header */}
+      {/* Top Header */}
       <View className="flex-row items-center justify-between px-4 py-3 border-b border-border bg-card">
         <TouchableOpacity
           onPress={() => router.back()}
@@ -43,7 +87,7 @@ export default function LoginScreen() {
         <View className="w-8" />
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
+      <ScrollView contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
         <View className="items-center my-6">
           <View className="w-16 h-16 rounded-full bg-brand-fresh/15 items-center justify-center mb-3">
             <Icon name="ShoppingBag" size={32} color="#0b6234" />
@@ -51,30 +95,113 @@ export default function LoginScreen() {
           <Text className="text-2xl font-bold text-brand-deep dark:text-brand-fresh">
             বাজার সদাই
           </Text>
-          <Text className="text-xs text-muted-foreground mt-1">
-            Sign in to track orders, save addresses, and earn rewards
+          <Text className="text-xs text-muted-foreground mt-1 text-center">
+            Log in to manage orders, addresses, and delivery preferences in Shahrasti
           </Text>
         </View>
 
-        <View className="mb-6">
-          <Text className="text-xs font-semibold text-foreground mb-2">
-            Mobile Number (Bangladesh)
+        {errorMessage ? (
+          <View className="p-3 mb-4 rounded-brand bg-destructive/10 border border-destructive/20">
+            <Text className="text-xs text-destructive font-medium">{errorMessage}</Text>
+          </View>
+        ) : null}
+
+        {/* Identifier Field */}
+        <View className="mb-4">
+          <Text className="text-xs font-semibold text-foreground mb-1.5">
+            Mobile Number or Email
           </Text>
-          <PhoneInput
-            value={phoneNumber}
-            onChangePhone={setPhoneNumber}
-            helperText="Enter 10-digit number without country code"
-          />
+          <View style={styles.inputBox} className="bg-card border border-border">
+            <Icon name="Phone" size={16} color="#64748b" style={styles.inputIcon} />
+            <TextInput
+              value={identifier}
+              onChangeText={(text) => {
+                setIdentifier(text);
+                if (errorMessage) setErrorMessage(null);
+              }}
+              placeholder="e.g. 01712345678 or user@mail.com"
+              placeholderTextColor="#94a3b8"
+              autoCapitalize="none"
+              keyboardType="email-address"
+              className="flex-1 text-sm text-foreground"
+            />
+          </View>
         </View>
 
+        {/* Password Field */}
+        <View className="mb-2">
+          <Text className="text-xs font-semibold text-foreground mb-1.5">Password</Text>
+          <View style={styles.inputBox} className="bg-card border border-border">
+            <Icon name="Lock" size={16} color="#64748b" style={styles.inputIcon} />
+            <TextInput
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                if (errorMessage) setErrorMessage(null);
+              }}
+              placeholder="Enter your password"
+              placeholderTextColor="#94a3b8"
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              className="flex-1 text-sm text-foreground"
+            />
+            <TouchableOpacity
+              onPress={() => setShowPassword(!showPassword)}
+              style={styles.eyeButton}
+            >
+              <Icon name={showPassword ? 'EyeOff' : 'Eye'} size={18} color="#64748b" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Forgot Password */}
+        <View className="items-end mb-6">
+          <TouchableOpacity
+            onPress={() => router.push('/(auth)/forgot-password')}
+            activeOpacity={0.7}
+          >
+            <Text className="text-xs font-medium text-brand-deep dark:text-brand-fresh">
+              Forgot Password?
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Submit Button */}
         <Button
-          title="Send Verification Code"
+          title="Sign In"
           variant="primary"
           size="lg"
           loading={isSubmitting}
-          onPress={handleSendOtp}
+          onPress={handleLogin}
+          className="mb-6"
         />
+
+        {/* Sign Up Navigation */}
+        <View className="flex-row items-center justify-center gap-1.5">
+          <Text className="text-xs text-muted-foreground">Don&apos;t have an account?</Text>
+          <TouchableOpacity onPress={() => router.push('/(auth)/register')} activeOpacity={0.7}>
+            <Text className="text-xs font-bold text-brand-deep dark:text-brand-fresh">
+              Create Account
+            </Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  inputBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: Radius.brand,
+    minHeight: TouchTarget.comfortable,
+    paddingHorizontal: 12,
+  },
+  inputIcon: {
+    marginRight: 8,
+  },
+  eyeButton: {
+    padding: 6,
+  },
+});

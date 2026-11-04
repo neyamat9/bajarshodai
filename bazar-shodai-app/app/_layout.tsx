@@ -13,6 +13,7 @@ import { NetworkBanner } from '@/components/ui/NetworkBanner';
 import { useAppFonts } from '@/hooks/useFonts';
 import { hideSplashScreen } from '@/utils/splash';
 import { getOrCreateGuestToken } from '@/utils/guestToken';
+import { useAuthStore } from '@/store/useAuthStore';
 
 function RootNavigationLayout() {
   const { isDark, colors } = useAppTheme();
@@ -20,6 +21,8 @@ function RootNavigationLayout() {
   useEffect(() => {
     // Warm up anonymous guest identity for persistent cart and location
     getOrCreateGuestToken();
+    // Restore persistent authenticated customer session from SecureStore
+    useAuthStore.getState().restoreSession();
   }, []);
 
   return (
@@ -94,6 +97,36 @@ function RootNavigationLayout() {
             animation: 'slide_from_bottom',
           }}
         />
+        <Stack.Screen
+          name="(auth)/register"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="(auth)/forgot-password"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="(auth)/reset-password"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+
+        {/* Account Flow */}
+        <Stack.Screen
+          name="(account)/change-password"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
 
         {/* Native Slide-up Modals */}
         <Stack.Screen
@@ -149,4 +182,3 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   );
 }
-

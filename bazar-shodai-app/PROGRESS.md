@@ -734,3 +734,243 @@
 - **Verification & Testing**:
   - Verified tabs layout configuration and scene styling.
 - **Known Issues**: None.
+
+## Milestone 7: Customer Authentication & Session Management
+
+### Phase 51: Auth Store & State Management
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Implement Zustand store for user profile, authentication status, and token lifecycle.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/store/useAuthStore.ts` (Zustand auth store synchronizing SecureStore tokens, MMKV cached profile, and React state)
+  - `bazar-shodai-app/src/features/auth/types/index.ts` (TypeScript interfaces for UserProfile, UserAddress, AuthSession, AuthPayloads)
+  - `bazar-shodai-app/src/store/index.ts`
+- **Decisions Made**:
+  - Encrypted JWT tokens stored in hardware Keystore/Keychain via `tokenVault`, while the serialized user profile is cached in MMKV for zero-latency offline boot.
+- **Verification & Testing**:
+  - Tested store state transitions (`login`, `logout`, `setProfile`, `restoreSession`).
+- **Known Issues**: None.
+
+### Phase 52: Customer Login Screen
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Mobile login screen accepting Bangladeshi mobile phone or email + password.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/(auth)/login.tsx` (Login screen with validation, password visibility toggle, forgot password and register links)
+  - `bazar-shodai-app/src/features/auth/api/login.ts` (`loginApi` targeting `POST /customer/auth/login`)
+- **Decisions Made**:
+  - Automatically attached anonymous `guestToken` to login payload so that backend transparently merges the guest shopping basket into the customer account.
+- **Verification & Testing**:
+  - Form validation for empty inputs and password length (<6 chars) verified.
+- **Known Issues**: None.
+
+### Phase 53: Customer Registration Screen
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Signup screen with Name, Phone (+880), Email (optional), Password, and terms confirmation.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/(auth)/register.tsx` (Registration screen with Bangladeshi phone input, password visibility toggle, terms agreement)
+  - `bazar-shodai-app/src/features/auth/api/register.ts` (`registerApi` targeting `POST /customer/auth/register`)
+- **Decisions Made**:
+  - Standardized Bangladeshi mobile number normalization (01XXXXXXXXX) and default language `'bn'`.
+- **Verification & Testing**:
+  - Verified input constraints and terms toggle.
+- **Known Issues**: None.
+
+### Phase 54: Forgot Password Screen
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Request password recovery link/token via customer email or phone.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/(auth)/forgot-password.tsx` (Password recovery request screen)
+  - `bazar-shodai-app/src/features/auth/api/forgotPassword.ts` (`forgotPasswordApi` targeting `POST /customer/auth/forgot-password`)
+- **Decisions Made**:
+  - Returned friendly informational state informing customer to inspect their email or SMS for reset token.
+- **Verification & Testing**:
+  - Verified request submission state and navigation flow.
+- **Known Issues**: None.
+
+### Phase 55: Reset Password Screen
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Token verification and new password entry screen.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/(auth)/reset-password.tsx` (Screen accepting token via search params or manual entry, new password, confirmation)
+  - `bazar-shodai-app/src/features/auth/api/resetPassword.ts` (`verifyResetTokenApi` and `resetPasswordApi` targeting `GET /customer/auth/reset-password/verify` and `POST /customer/auth/reset-password`)
+- **Decisions Made**:
+  - Pre-fills token when navigating from deep link `bazarshodai://auth/reset-password?token=...`.
+- **Verification & Testing**:
+  - Verified password matching validation and token submission.
+- **Known Issues**: None.
+
+### Phase 56: User Profile Fetch & Background Sync
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Fetch current authenticated customer profile on startup and cache in store.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/auth/api/getProfile.ts` (`useUserProfile` hook and `getProfileApi` targeting `GET /customer/auth/profile`)
+  - `bazar-shodai-app/app/(tabs)/account.tsx` (Integrated `useUserProfile` hook to display loyalty points, order counts, and address details)
+- **Decisions Made**:
+  - Hook runs only when `isAuthenticated` is true, automatically syncing remote profile updates to the local Zustand store and MMKV cache.
+- **Verification & Testing**:
+  - Stale time set to 5 minutes to prevent unnecessary network overhead.
+- **Known Issues**: None.
+
+### Phase 57: Change Password Screen
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: In-app password change screen requiring current password and new password confirmation.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/(account)/change-password.tsx` (Change password form with current password, new password, and confirmation)
+  - `bazar-shodai-app/src/features/auth/api/changePassword.ts` (`changePasswordApi` targeting `POST /customer/auth/change-password`)
+- **Decisions Made**:
+  - Protected route only accessible from the Account tab when authenticated.
+- **Verification & Testing**:
+  - Verified password validation and error feedback.
+- **Known Issues**: None.
+
+### Phase 58: Logout & Guest Session Reset
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Invalidate server session, clear tokens, and generate fresh guest cart token.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/auth/api/logout.ts` (`logoutApi` targeting `POST /customer/auth/logout`)
+  - `bazar-shodai-app/src/store/useAuthStore.ts` (`logout` action)
+  - `bazar-shodai-app/app/(tabs)/account.tsx` (Confirmation modal dialog for destructive logout action)
+- **Decisions Made**:
+  - Even if server logout fails (e.g. offline), client-side tokens are wiped from SecureStore, query client cache is cleared, and a fresh guest token UUID is generated.
+- **Verification & Testing**:
+  - Verified confirmation dialog flow and session reset.
+- **Known Issues**: None.
+
+---
+
+## Milestone 8: Home Screen Experience & Sliders
+
+### Phase 59: Home Screen Data Aggregator Hook
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Unified TanStack Query hook fetching banners, featured products, categories, and best sellers.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/home/api/useHomeData.ts` (`useHomeFeed`, `useHomeBanners`, `useHomeCategories`, `useHomeData`)
+  - `bazar-shodai-app/src/features/home/types/index.ts` (TypeScript definitions for banners, feed, categories, and products)
+- **Decisions Made**:
+  - Executed parallel requests with individual stale times (3 min for products, 5 min for banners, 10 min for categories) and combined refresh handler.
+- **Verification & Testing**:
+  - TypeScript types verified against NestJS `HomeController` and `BannersController`.
+- **Known Issues**: None.
+
+### Phase 60: Home Sticky Header with Location Pill
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: App header showing active delivery zone / address, search bar trigger, and shopping bag icon.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/home/components/HomeHeader.tsx`
+- **Decisions Made**:
+  - Displays localized Shahrasti delivery estimate (e.g. "৩০-৬০ মিনিট ডেলিভারি"), clickable address modal trigger, and dynamic cart item counter badge.
+- **Verification & Testing**:
+  - Tested cart badge updates and touch handlers.
+- **Known Issues**: None.
+
+### Phase 61: Promotional Hero Slider Section
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Dynamic hero banner carousel with autoplay, manual swipe, and deep link routing.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/home/components/HeroSliderSection.tsx`
+- **Decisions Made**:
+  - Formatted dynamic banners from `GET /customer/banners` (`HERO_MAIN`), falling back gracefully to curated local banners if the API is offline.
+- **Verification & Testing**:
+  - Verified banner click link routing and autoplay timer.
+- **Known Issues**: None.
+
+### Phase 62: Category Circular Grid Section
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Horizontal scrolling or 2-row grid of popular categories with icons.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/home/components/CategoryGridSection.tsx`
+- **Decisions Made**:
+  - Displays localized Bengali category names (`nameBn` || `name`), item count chips, and "সব দেখুন" button routing to the Categories tab.
+- **Verification & Testing**:
+  - Tested category tile click navigation.
+- **Known Issues**: None.
+
+### Phase 63: Featured Products (_আজকের তাজা বাজার_) Section
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: FlashList horizontal/2-column grid showing fresh daily items with live steppers.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/home/components/FeaturedProductsSection.tsx`
+- **Decisions Made**:
+  - Directly connected to Zustand cart store so tapping "Add to Bag" immediately reflects quantity and morphs into a stepper.
+- **Verification & Testing**:
+  - Tested fractional step handling (e.g. 0.5 kg for vegetables).
+- **Known Issues**: None.
+
+### Phase 64: Best Selling Products Section
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Visual section highlighting top-selling grocery essentials.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/home/components/BestSellersSection.tsx`
+- **Decisions Made**:
+  - Highlighted top consumer groceries with "BEST SELLER" badges and strikethrough original prices.
+- **Verification & Testing**:
+  - Tested discount calculation and item additions.
+- **Known Issues**: None.
+
+### Phase 65: Brand Showcase Section
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Interactive brand pill selector filtering products by brand with smooth transitions.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/home/components/BrandShowcaseSection.tsx`
+- **Decisions Made**:
+  - Horizontal pill selector for top Bangladeshi grocery brands (Teer, Radhuni, Fresh, Pran, Aarong Dairy, Dano, Rupchanda, Ispahani) with active selection state.
+- **Verification & Testing**:
+  - Tested pill toggling and haptic feedback.
+- **Known Issues**: None.
+
+### Phase 66: Home Pull-to-Refresh & Skeleton State
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: RefreshControl updating all home queries with haptic feedback, and skeleton placeholder layout.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/app/(tabs)/index.tsx` (Full home feed composition with `HomeSkeleton` and `RefreshControl`)
+- **Decisions Made**:
+  - Seamless skeleton placeholder shown while initial home data loads to avoid jarring content jumps.
+- **Verification & Testing**:
+  - Verified pull-to-refresh execution, haptic pulse, and query cache invalidation.
+- **Known Issues**: None.
+
+### Phase 67: Quick Category Quick-Jump Sticky Bar
+
+- **Status**: Completed [x]
+- **Timestamp**: 2026-11-04
+- **Goal**: Subtle pill bar below search allowing 1-tap jump to Vegetables, Fish, Meat, Dairy, Fruits.
+- **Files Created/Modified**:
+  - `bazar-shodai-app/src/features/home/components/QuickJumpBar.tsx`
+  - `bazar-shodai-app/src/features/home/components/index.ts`
+  - `bazar-shodai-app/src/features/index.ts`
+- **Decisions Made**:
+  - Rendered quick jump pill chips (সবজি, মাছ, মাংস, ফলমূল, দুধ ও ডিম, মসলা) with Lucide icons for rapid 1-tap category drilldown.
+- **Verification & Testing**:
+  - Verified tab routing and active selection state.
+- **Known Issues**: None.

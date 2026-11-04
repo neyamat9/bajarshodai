@@ -504,7 +504,7 @@
 - **API**: None.
 - **Acceptance Criteria**: Syncs auth state seamlessly between MMKV, SecureStore, and React state.
 - **Dependencies**: Phases 13, 14.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 52: Customer Login Screen
 
@@ -513,7 +513,7 @@
 - **API**: `POST /customer/auth/login`
 - **Acceptance Criteria**: Validates inputs with Zod, sends `guestToken` for automatic cart merge, saves tokens.
 - **Dependencies**: Phases 23, 51.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 53: Customer Registration Screen
 
@@ -522,7 +522,7 @@
 - **API**: `POST /customer/auth/register`
 - **Acceptance Criteria**: Merges guest cart on backend, logs customer in, navigates to Home.
 - **Dependencies**: Phases 23, 51.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 54: Forgot Password Screen
 
@@ -531,7 +531,7 @@
 - **API**: `POST /customer/auth/forgot-password`
 - **Acceptance Criteria**: Shows success message and instructions to check inbox.
 - **Dependencies**: Phase 52.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 55: Reset Password Screen
 
@@ -540,7 +540,7 @@
 - **API**: `GET /customer/auth/reset-password/verify`, `POST /customer/auth/reset-password`
 - **Acceptance Criteria**: Validates token; submits new password with min 6 characters.
 - **Dependencies**: Phase 54.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 56: User Profile Fetch & Background Sync
 
@@ -549,7 +549,7 @@
 - **API**: `GET /customer/auth/profile`
 - **Acceptance Criteria**: Updates user points, avatar, and default address.
 - **Dependencies**: Phase 51.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 57: Change Password Screen
 
@@ -558,7 +558,7 @@
 - **API**: `POST /customer/auth/change-password`
 - **Acceptance Criteria**: Shows error on incorrect current password; confirms success.
 - **Dependencies**: Phase 51.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 58: Logout & Guest Session Reset
 
@@ -567,7 +567,7 @@
 - **API**: `POST /customer/auth/logout`
 - **Acceptance Criteria**: Cleans secure store and resets app state without stale user data.
 - **Dependencies**: Phase 51.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ---
 
@@ -580,7 +580,7 @@
 - **API**: `GET /customer/products/home`, `GET /customer/banners`, `GET /customer/categories`
 - **Acceptance Criteria**: Parallel execution with cached fallback for instant rendering.
 - **Dependencies**: Phase 18.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 60: Home Sticky Header with Location Pill
 
@@ -589,7 +589,7 @@
 - **API**: `GET /customer/my-location`
 - **Acceptance Criteria**: Location pill displays delivery estimate (e.g. "১-২ ঘণ্টা ডেলিভারি").
 - **Dependencies**: Phase 47.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 61: Promotional Hero Slider Section
 
@@ -598,7 +598,7 @@
 - **API**: `GET /customer/banners`
 - **Acceptance Criteria**: Respects banner position `HERO_MAIN` and `HERO_SIDE`.
 - **Dependencies**: Phase 43.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 62: Category Circular Grid Section
 
@@ -607,7 +607,7 @@
 - **API**: `GET /customer/categories`
 - **Acceptance Criteria**: Displays top 16 categories; "View All" navigates to Categories tab.
 - **Dependencies**: Phase 42.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 63: Featured Products (_আজকের তাজা বাজার_) Section
 
@@ -616,7 +616,7 @@
 - **API**: `GET /customer/products/home` (`featured`)
 - **Acceptance Criteria**: Seamless add-to-cart directly from home feed.
 - **Dependencies**: Phase 39.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 64: Best Selling Products Section
 
@@ -625,7 +625,7 @@
 - **API**: `GET /customer/products/home` (`bestSellers`)
 - **Acceptance Criteria**: Includes "Top Seller" badges and discount percentages.
 - **Dependencies**: Phase 39.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 65: Brand Showcase Section
 
@@ -634,7 +634,7 @@
 - **API**: `GET /customer/brands`
 - **Acceptance Criteria**: Tapping a brand updates the product carousel instantly.
 - **Dependencies**: Phase 39.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 66: Home Pull-to-Refresh & Skeleton State
 
@@ -643,7 +643,7 @@
 - **API**: All home APIs.
 - **Acceptance Criteria**: Refreshes data cleanly without layout jumping.
 - **Dependencies**: Phases 26, 59.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ### Phase 67: Quick Category Quick-Jump Sticky Bar
 
@@ -652,7 +652,7 @@
 - **API**: `GET /customer/categories`
 - **Acceptance Criteria**: Highlights active category as user scrolls.
 - **Dependencies**: Phase 62.
-- **Status**: [ ] Not started
+- **Status**: [x] Done
 
 ---
 
