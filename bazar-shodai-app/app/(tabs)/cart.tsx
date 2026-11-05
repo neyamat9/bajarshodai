@@ -16,6 +16,7 @@ import { SwipeableCartItem } from '@/features/cart/components/SwipeableCartItem'
 import { ClearCartDialog } from '@/features/cart/components/ClearCartDialog';
 import { toast } from '@/store/useToastStore';
 import { haptics } from '@/services/haptics';
+import { formatBdt } from '@/utils/format';
 
 export default function CartScreen() {
   const router = useRouter();
@@ -36,11 +37,13 @@ export default function CartScreen() {
 
   const { refetch, isRefetching } = useServerCart();
 
-  const sub = subtotal();
-  const grandTotal = totalPrice();
+  const rawSub = subtotal();
+  const sub = typeof rawSub === 'number' && !isNaN(rawSub) ? rawSub : 0;
+  const rawTotal = totalPrice();
+  const grandTotal = typeof rawTotal === 'number' && !isNaN(rawTotal) ? rawTotal : 0;
   const isFreeDelivery = sub >= freeDeliveryThreshold;
   const currentDeliveryFee = sub > 0 ? (isFreeDelivery ? 0 : deliveryCharge) : 0;
-  const discountAmount = coupon?.discount ?? 0;
+  const discountAmount = Number(coupon?.discount) || 0;
 
   const handleClearConfirm = async () => {
     try {
@@ -166,7 +169,7 @@ export default function CartScreen() {
           </View>
 
           <Button
-            title={`Checkout • ৳${grandTotal.toFixed(0)}`}
+            title={`Checkout • ${formatBdt(grandTotal)}`}
             variant="primary"
             size="lg"
             onPress={() => {

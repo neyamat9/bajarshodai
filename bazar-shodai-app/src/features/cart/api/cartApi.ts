@@ -99,23 +99,58 @@ export function useServerCart() {
         const res = await fetchServerCartApi();
 
         if (res && Array.isArray(res.items) && res.items.length > 0) {
-          // Sync server items
-          const mapped = res.items.map((it) => ({
-            id: it.product.id,
-            productId: it.product.id,
-            serverItemId: it.id,
-            name: it.product.name,
-            banglaName: it.product.nameBn,
-            price: it.unitPrice || it.product.price,
-            quantity: it.quantity,
-            imageUrl: it.product.imageUrl || it.product.primaryImage?.url,
-            unit: it.product.unit?.shortLabel || 'kg',
-            stock: it.product.stock,
-          }));
+          // Sync server items with robust price and field extraction
+          const mapped = res.items.map((it: any) => {
+            const rawPrice =
+              it.variant?.price ??
+              it.product?.sellingPrice ??
+              it.product?.price ??
+              it.unitPrice ??
+              it.price ??
+              0;
+            const price = typeof rawPrice === 'number' && !isNaN(rawPrice) ? rawPrice : Number(rawPrice) || 0;
+            const rawOriginalPrice =
+              it.product?.regularPrice ??
+              it.product?.priceBeforeDiscount ??
+              it.originalPrice ??
+              undefined;
+            const originalPrice = rawOriginalPrice ? Number(rawOriginalPrice) || undefined : undefined;
+            const quantity = Math.max(1, Number(it.quantity) || 1);
+
+            return {
+              id: it.product?.id || it.productId || it.id,
+              productId: it.product?.id || it.productId || it.id,
+              serverItemId: it.id,
+              name: it.product?.name || it.name || 'Product',
+              banglaName: it.product?.nameBn || it.banglaName || undefined,
+              price,
+              originalPrice,
+              quantity,
+              imageUrl:
+                it.product?.imageUrl ||
+                it.product?.primaryImage?.url ||
+                it.product?.images?.[0]?.url ||
+                it.imageUrl ||
+                '',
+              unit:
+                it.product?.unit?.shortLabelBn ||
+                it.product?.unit?.shortLabel ||
+                it.unit ||
+                'pc',
+              stock: it.variant ? Number(it.variant.stock) : Number(it.product?.stock ?? 999),
+            };
+          });
 
           // Merge any local items that haven't synced to server yet
           const serverProductIds = new Set(mapped.map((m) => m.productId));
-          const unsyncedLocal = localItems.filter((l) => !serverProductIds.has(l.productId));
+          const unsyncedLocal = localItems
+            .filter((l) => !serverProductIds.has(l.productId))
+            .map((l) => ({
+              ...l,
+              price:
+                typeof l.price === 'number' && !isNaN(l.price) ? l.price : Number(l.price) || 0,
+              quantity: Math.max(1, Number(l.quantity) || 1),
+            }));
 
           // Sync unsynced local items to the server in the background
           for (const it of unsyncedLocal) {
@@ -132,7 +167,14 @@ export function useServerCart() {
         // CRITICAL: If server cart is empty but local cart has items, NEVER wipe out local items!
         // Push local items to server instead so they persist across refreshes!
         if (localItems.length > 0) {
-          for (const it of localItems) {
+          const sanitized = localItems.map((it) => ({
+            ...it,
+            price:
+              typeof it.price === 'number' && !isNaN(it.price) ? it.price : Number(it.price) || 0,
+            quantity: Math.max(1, Number(it.quantity) || 1),
+          }));
+          setItems(sanitized);
+          for (const it of sanitized) {
             void addServerCartItemApi({ productId: it.productId, quantity: it.quantity }).catch(
               () => {},
             );

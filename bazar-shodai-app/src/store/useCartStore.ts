@@ -44,10 +44,21 @@ interface CartState {
 const STORAGE_KEY = 'bazar_cart_items';
 const COUPON_STORAGE_KEY = 'bazar_cart_coupon';
 
-// Helper to load initial state from MMKV
+// Helper to load initial state from MMKV with full data sanitization
 function loadSavedCart(): CartItem[] {
   try {
-    return storage.getObject<CartItem[]>(STORAGE_KEY) || [];
+    const raw = storage.getObject<CartItem[]>(STORAGE_KEY) || [];
+    if (!Array.isArray(raw)) return [];
+    return raw.map((item: any) => {
+      const rawPrice = item.price ?? item.sellingPrice ?? 0;
+      const price = typeof rawPrice === 'number' && !isNaN(rawPrice) ? rawPrice : Number(rawPrice) || 0;
+      const quantity = Math.max(1, Number(item.quantity) || 1);
+      return {
+        ...item,
+        price,
+        quantity,
+      };
+    });
   } catch {
     return [];
   }
@@ -89,31 +100,44 @@ export const useCartStore = create<CartState>((set, get) => ({
   freeDeliveryThreshold: 500,
 
   totalItems: () => {
-    return get().items.reduce((total, item) => total + item.quantity, 0);
+    return get().items.reduce((total, item) => total + (Number(item.quantity) || 1), 0);
   },
 
   subtotal: () => {
-    return get().items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    return get().items.reduce((sum, item) => {
+      const p = typeof item.price === 'number' && !isNaN(item.price) ? item.price : Number(item.price) || 0;
+      const q = typeof item.quantity === 'number' && !isNaN(item.quantity) ? item.quantity : Number(item.quantity) || 1;
+      return sum + p * q;
+    }, 0);
   },
 
   totalPrice: () => {
     const sub = get().subtotal();
-    const discount = get().coupon?.discount ?? 0;
-    const isFreeDelivery = sub >= get().freeDeliveryThreshold;
-    const delivery = sub > 0 ? (isFreeDelivery ? 0 : get().deliveryCharge) : 0;
+    const discount = Number(get().coupon?.discount) || 0;
+    const threshold = Number(get().freeDeliveryThreshold) || 500;
+    const charge = Number(get().deliveryCharge) || 40;
+    const isFreeDelivery = sub >= threshold;
+    const delivery = sub > 0 ? (isFreeDelivery ? 0 : charge) : 0;
     return Math.max(0, sub - discount + delivery);
   },
 
   addItem: (item, quantity = 1) => {
+    const rawPrice = item.price ?? (item as any).sellingPrice ?? 0;
+    const price = typeof rawPrice === 'number' && !isNaN(rawPrice) ? rawPrice : Number(rawPrice) || 0;
+    const cleanQty = Math.max(1, Number(quantity) || 1);
+    const cleanItem = { ...item, price };
+
     set((state) => {
       const existing = state.items.find((i) => i.productId === item.productId);
       let updated: CartItem[];
       if (existing) {
         updated = state.items.map((i) =>
-          i.productId === item.productId ? { ...i, quantity: i.quantity + quantity } : i,
+          i.productId === item.productId
+            ? { ...i, price, quantity: (Number(i.quantity) || 1) + cleanQty }
+            : i,
         );
       } else {
-        updated = [...state.items, { ...item, quantity }];
+        updated = [...state.items, { ...cleanItem, quantity: cleanQty }];
       }
       persistCartAsync(updated);
       return { items: updated };

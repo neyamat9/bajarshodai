@@ -7,6 +7,7 @@ import { QuantityStepper } from '@/components/product/QuantityStepper';
 import { CartItem } from '@/store/useCartStore';
 import { Radius } from '@/constants/layout';
 import { haptics } from '@/services/haptics';
+import { formatBdt } from '@/utils/format';
 
 export interface SwipeableCartItemProps {
   item: CartItem;
@@ -15,7 +16,9 @@ export interface SwipeableCartItemProps {
 }
 
 export function SwipeableCartItem({ item, onUpdateQuantity, onRemove }: SwipeableCartItemProps) {
-  const lineTotal = item.price * item.quantity;
+  const price = typeof item.price === 'number' && !isNaN(item.price) ? item.price : Number(item.price) || 0;
+  const quantity = typeof item.quantity === 'number' && !isNaN(item.quantity) ? item.quantity : Number(item.quantity) || 1;
+  const lineTotal = price * quantity;
 
   const handleRemove = () => {
     haptics.warning();
@@ -64,7 +67,7 @@ export function SwipeableCartItem({ item, onUpdateQuantity, onRemove }: Swipeabl
             <View>
               <Price amount={lineTotal} size="sm" />
               <Text style={styles.unitPrice}>
-                ৳{item.price}/{item.unit || 'unit'}
+                {formatBdt(price)} / {item.unit || 'unit'}
               </Text>
             </View>
 

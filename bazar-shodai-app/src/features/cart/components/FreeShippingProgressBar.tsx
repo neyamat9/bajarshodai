@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
 import { Radius } from '@/constants/layout';
+import { formatBdt } from '@/utils/format';
 
 export interface FreeShippingProgressBarProps {
   subtotal: number;
@@ -12,9 +13,11 @@ export function FreeShippingProgressBar({
   subtotal,
   threshold = 500,
 }: FreeShippingProgressBarProps) {
-  const isUnlocked = subtotal >= threshold;
-  const remaining = Math.max(0, threshold - subtotal);
-  const percentage = Math.min(100, Math.round((subtotal / threshold) * 100));
+  const safeSubtotal = typeof subtotal === 'number' && !isNaN(subtotal) ? subtotal : 0;
+  const safeThreshold = typeof threshold === 'number' && !isNaN(threshold) ? threshold : 500;
+  const isUnlocked = safeSubtotal >= safeThreshold;
+  const remaining = Math.max(0, safeThreshold - safeSubtotal);
+  const percentage = Math.min(100, Math.round((safeSubtotal / (safeThreshold || 1)) * 100));
 
   return (
     <View style={styles.container}>
@@ -29,12 +32,11 @@ export function FreeShippingProgressBar({
         <View style={styles.textCol}>
           {isUnlocked ? (
             <Text style={styles.unlockedText}>
-              Free Delivery Unlocked! / আপনি ফ্রি ডেলিভারি পাচ্ছেন!
+              ফ্রি ডেলিভারি আনলক হয়েছে! (Free Delivery Unlocked)
             </Text>
           ) : (
             <Text style={styles.progressText}>
-              Add <Text style={styles.highlightText}>৳{remaining.toFixed(0)}</Text> more for Free
-              Delivery
+              ফ্রি ডেলিভারির জন্য আরও <Text style={styles.highlightText}>{formatBdt(remaining)}</Text> টাকার পণ্য যোগ করুন
             </Text>
           )}
         </View>

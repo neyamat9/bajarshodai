@@ -29,12 +29,13 @@ export function toBengaliNumerals(num: number | string): string {
  * Formats a currency amount into standard BDT currency string (e.g. ৳1,250 or ৳১,২৫০)
  */
 export function formatBdt(
-  amount: number,
+  amount: number | string,
   options?: { locale?: 'en' | 'bn'; showDecimals?: boolean },
 ): string {
   const { locale = 'bn', showDecimals = false } = options ?? {};
 
-  const rounded = showDecimals ? amount.toFixed(2) : Math.round(amount).toString();
+  const num = typeof amount === 'number' && !isNaN(amount) ? amount : Number(amount) || 0;
+  const rounded = showDecimals ? num.toFixed(2) : Math.round(num).toString();
   const parts = rounded.split('.');
   const intPart = parts[0] ?? '0';
   const decPart = parts[1];
