@@ -1,4 +1,4 @@
-import { createMMKV, MMKV } from 'react-native-mmkv';
+import type { MMKV } from 'react-native-mmkv';
 
 export interface AppStorage {
   getString(key: string): string | undefined;
@@ -144,12 +144,16 @@ class MMKVStorageAdapter implements AppStorage {
 
 function initializeStorage(): AppStorage {
   try {
+    // Dynamically require so environments without native NitroModules (like Expo Go or web)
+    // gracefully fall back to MemoryStorageAdapter without crashing the runtime on startup.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { createMMKV } = require('react-native-mmkv');
     const instance = createMMKV({ id: 'bazar-shodai-fast-storage' });
     return new MMKVStorageAdapter(instance);
   } catch (error) {
     if (__DEV__) {
       console.warn(
-        '[Storage] MMKV native module not available in this environment. Falling back to MemoryStorageAdapter.',
+        '[Storage] MMKV native module not available in this client (e.g. running in Expo Go). Falling back to MemoryStorageAdapter.',
         error,
       );
     }

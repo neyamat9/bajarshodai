@@ -280,6 +280,8 @@ function RootNavigationLayout() {
   );
 }
 
+export { ErrorBoundary } from '@/components/shared/ErrorBoundary';
+
 export default function RootLayout() {
   const { fontsLoaded, fontError } = useAppFonts();
 
