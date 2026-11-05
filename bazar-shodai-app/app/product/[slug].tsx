@@ -31,6 +31,8 @@ import { useCartStore } from '@/store/useCartStore';
 import { toast } from '@/store/useToastStore';
 import { haptics } from '@/services/haptics';
 import { assetUrl } from '@/utils/format';
+import { useTranslation } from '@/i18n';
+import { getLocalizedDescription } from '@/utils/localizedDescription';
 
 function ProductDetailSkeleton() {
   return (
@@ -101,6 +103,7 @@ function ProductDetailSkeleton() {
 
 export default function ProductDetailScreen() {
   const router = useRouter();
+  const { isBn } = useTranslation();
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const productSlug = typeof slug === 'string' ? slug : '';
 
@@ -305,19 +308,31 @@ export default function ProductDetailScreen() {
           {/* Status Badges */}
           <View style={styles.badgeRow}>
             {inStock ? (
-              <Badge label="IN STOCK" variant="fresh" size="sm" />
+              <Badge
+                label={isBn ? 'স্টকে আছে' : 'IN STOCK'}
+                variant="fresh"
+                size="sm"
+              />
             ) : (
-              <Badge label="OUT OF STOCK" variant="tomato" size="sm" />
+              <Badge
+                label={isBn ? 'স্টক আউট' : 'OUT OF STOCK'}
+                variant="tomato"
+                size="sm"
+              />
             )}
             {discountPercent ? (
-              <Badge label={`${discountPercent}% OFF`} variant="carrot" size="sm" />
+              <Badge
+                label={isBn ? `${discountPercent}% ছাড়` : `${discountPercent}% OFF`}
+                variant="carrot"
+                size="sm"
+              />
             ) : null}
           </View>
 
           {/* Product Title & Bangla Name */}
-          <Text style={styles.productName}>{nameBn || name}</Text>
+          <Text style={styles.productName}>{isBn ? nameBn || name : name}</Text>
           {nameBn && product?.name && nameBn !== product.name ? (
-            <Text style={styles.productNameBn}>{product.name}</Text>
+            <Text style={styles.productNameBn}>{isBn ? product.name : nameBn}</Text>
           ) : null}
 
           {/* Ratings & Reviews summary */}
@@ -327,7 +342,9 @@ export default function ProductDetailScreen() {
               size={15}
             />
             <Text style={styles.reviewCountText}>
-              ({product?.reviewCount ?? reviewsData?.total ?? 0} reviews)
+              {isBn
+                ? `(${product?.reviewCount ?? reviewsData?.total ?? 0} টি রিভিউ)`
+                : `(${product?.reviewCount ?? reviewsData?.total ?? 0} reviews)`}
             </Text>
           </View>
 
@@ -336,12 +353,13 @@ export default function ProductDetailScreen() {
             <Price amount={price} originalAmount={regularPrice} unit={unitCode} size="lg" />
           </View>
 
-          {/* Specifications Accordion with Real DB Description */}
+          {/* Specifications Accordion with Localized Description */}
           <ProductSpecs
-            description={product?.descriptionBn || product?.description || product?.shortDescriptionBn || product?.shortDescription}
+            description={getLocalizedDescription(product, isBn)}
             origin="Bangladesh"
             unit={unitCode}
             weight={product?.packSize || undefined}
+            isBn={isBn}
           />
 
           {/* Out of stock alert button */}
@@ -352,7 +370,9 @@ export default function ProductDetailScreen() {
               activeOpacity={0.8}
             >
               <Icon name="Bell" size={16} color="#0b6234" />
-              <Text style={styles.notifyBtnText}>Notify Me When Available</Text>
+              <Text style={styles.notifyBtnText}>
+                {isBn ? 'পণ্যটি স্টকে আসলে আমাকে জানান' : 'Notify Me When Available'}
+              </Text>
             </TouchableOpacity>
           )}
 

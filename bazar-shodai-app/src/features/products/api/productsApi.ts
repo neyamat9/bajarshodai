@@ -8,6 +8,8 @@ export interface ProductsQueryParams {
   category?: string;
   subCategory?: string;
   brand?: string;
+  generic?: string;
+  medicineType?: 'ALL' | 'OTC' | 'PRESCRIPTION' | string;
   minPrice?: number;
   maxPrice?: number;
   inStock?: boolean;
@@ -23,11 +25,14 @@ export interface ProductsResponse {
 }
 
 export interface FilterFacetsResponse {
-  categories: { id: string; name: string; slug: string; count: number }[];
-  brands: { id: string; name: string; slug: string; count: number }[];
-  priceRange: { min: number; max: number };
-  inStockCount: number;
-  outOfStockCount: number;
+  total?: number;
+  categories?: { id: string; name: string; slug: string; count: number }[];
+  brands?: { id: string; name: string; slug: string; count: number; logo?: string | null }[];
+  generics?: { name: string; count: number }[];
+  priceRange?: { min: number; max: number };
+  price?: { min: number; max: number };
+  inStockCount?: number;
+  outOfStockCount?: number;
 }
 
 export async function fetchProductsApi(
@@ -41,6 +46,9 @@ export async function fetchProductsApi(
   if (params.category) queryParts.push(`category=${encodeURIComponent(params.category)}`);
   if (params.subCategory) queryParts.push(`subCategory=${encodeURIComponent(params.subCategory)}`);
   if (params.brand) queryParts.push(`brand=${encodeURIComponent(params.brand)}`);
+  if (params.generic) queryParts.push(`generic=${encodeURIComponent(params.generic)}`);
+  if (params.medicineType && params.medicineType !== 'ALL')
+    queryParts.push(`medicineType=${encodeURIComponent(params.medicineType)}`);
   if (params.minPrice !== undefined) queryParts.push(`minPrice=${params.minPrice}`);
   if (params.maxPrice !== undefined) queryParts.push(`maxPrice=${params.maxPrice}`);
   if (params.inStock !== undefined) queryParts.push(`inStock=${params.inStock}`);

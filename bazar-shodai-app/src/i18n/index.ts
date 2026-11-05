@@ -80,5 +80,6 @@ export function useTranslation() {
     language: lang,
     setLanguage: setAppLanguage,
     isBengali: lang === 'bn',
+    isBn: lang === 'bn',
   };
 }

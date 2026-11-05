@@ -12,6 +12,7 @@ export interface ProductSpecsProps {
   weight?: string;
   storageInstructions?: string;
   organic?: boolean;
+  isBn?: boolean;
 }
 
 export function ProductSpecs({
@@ -22,10 +23,33 @@ export function ProductSpecs({
   weight,
   storageInstructions = 'Keep in a cool and dry place away from direct sunlight.',
   organic,
+  isBn = true,
 }: ProductSpecsProps) {
   const [expandedSection, setExpandedSection] = useState<'desc' | 'specs' | 'nutrition' | null>(
     'desc',
   );
+
+  const headerDesc = isBn ? 'বিবরণ ও বিস্তারিত' : 'Description & Details';
+  const headerSpecs = isBn ? 'স্পেসিফিকেশন' : 'Specifications';
+  const originKey = isBn ? 'উৎস / দেশ' : 'Origin / দেশ';
+  const originVal = isBn ? (origin === 'Bangladesh' ? 'বাংলাদেশ' : origin) : origin;
+  const unitKey = isBn ? 'মূল একক' : 'Base Unit';
+  const weightKey = isBn ? 'ওজন / পরিমাণ' : 'Weight / Quantity';
+  const typeKey = isBn ? 'ধরন' : 'Category Type';
+  const typeVal = isBn
+    ? organic
+      ? 'অর্গানিক / রাসায়নিকমুক্ত'
+      : 'ফার্মের তাজা পণ্য'
+    : organic
+      ? 'Organic / রাসায়নিকমুক্ত'
+      : 'Standard Farm';
+  const storageKey = isBn ? 'সংরক্ষণ' : 'Storage';
+  const storageVal = isBn
+    ? 'সরাসরি সূর্যালোক থেকে দূরে ঠাণ্ডা ও শুকনো স্থানে সংরক্ষণ করুন।'
+    : storageInstructions;
+  const fallbackDesc = isBn
+    ? '১০০% তাজা ও স্বাস্থ্যসম্মত পণ্য। পরিবারের সুস্বাস্থ্য নিশ্চিত করতে বিশেষ যত্নসহকারে বাছাই ও সরবরাহকৃত।'
+    : '100% fresh, farm-sourced produce harvested daily. Sorted and packed under hygienic standards to retain natural vitamins, moisture, and crisp taste for your family meals.';
 
   const toggleSection = (section: 'desc' | 'specs' | 'nutrition') => {
     haptics.selection();
@@ -45,7 +69,7 @@ export function ProductSpecs({
         >
           <View style={styles.titleRow}>
             <Icon name="Info" size={18} color="#0b6234" />
-            <Text style={styles.headerTitle}>Description & Details</Text>
+            <Text style={styles.headerTitle}>{headerDesc}</Text>
           </View>
           <Icon
             name={expandedSection === 'desc' ? 'ChevronUp' : 'ChevronDown'}
@@ -57,8 +81,7 @@ export function ProductSpecs({
         {expandedSection === 'desc' && (
           <View style={styles.contentBody}>
             <Text style={styles.bodyText}>
-              {description ||
-                '100% fresh, farm-sourced produce harvested daily. Sorted and packed under hygienic standards to retain natural vitamins, moisture, and crisp taste for your family meals.'}
+              {description || fallbackDesc}
             </Text>
           </View>
         )}
@@ -75,7 +98,7 @@ export function ProductSpecs({
         >
           <View style={styles.titleRow}>
             <Icon name="Sliders" size={18} color="#0b6234" />
-            <Text style={styles.headerTitle}>Specifications</Text>
+            <Text style={styles.headerTitle}>{headerSpecs}</Text>
           </View>
           <Icon
             name={expandedSection === 'specs' ? 'ChevronUp' : 'ChevronDown'}
@@ -87,29 +110,27 @@ export function ProductSpecs({
         {expandedSection === 'specs' && (
           <View style={styles.contentBody}>
             <View style={styles.specRow}>
-              <Text style={styles.specKey}>Origin / দেশ</Text>
-              <Text style={styles.specVal}>{origin}</Text>
+              <Text style={styles.specKey}>{originKey}</Text>
+              <Text style={styles.specVal}>{originVal}</Text>
             </View>
             <View style={styles.specRow}>
-              <Text style={styles.specKey}>Base Unit</Text>
+              <Text style={styles.specKey}>{unitKey}</Text>
               <Text style={styles.specVal}>{unit}</Text>
             </View>
             {weight && (
               <View style={styles.specRow}>
-                <Text style={styles.specKey}>Weight / Quantity</Text>
+                <Text style={styles.specKey}>{weightKey}</Text>
                 <Text style={styles.specVal}>{weight}</Text>
               </View>
             )}
             <View style={styles.specRow}>
-              <Text style={styles.specKey}>Category Type</Text>
-              <Text style={styles.specVal}>
-                {organic ? 'Organic / রাসায়নিকমুক্ত' : 'Standard Farm'}
-              </Text>
+              <Text style={styles.specKey}>{typeKey}</Text>
+              <Text style={styles.specVal}>{typeVal}</Text>
             </View>
             <View style={[styles.specRow, { borderBottomWidth: 0 }]}>
-              <Text style={styles.specKey}>Storage</Text>
+              <Text style={styles.specKey}>{storageKey}</Text>
               <Text style={styles.specVal} numberOfLines={2}>
-                {storageInstructions}
+                {storageVal}
               </Text>
             </View>
           </View>

@@ -330,14 +330,6 @@ function QuickViewModalContent({
                       -{formatNumber(product.discount ?? Math.round((saveAmount / originalPrice!) * 100), locale, 0)}%
                     </span>
                   )}
-                  {product.badges?.filter((b) => b !== "HOT").map((b) => (
-                    <span
-                      key={b}
-                      className="rounded bg-brand-fresh px-2 py-0.5 text-[11px] font-bold text-on-fresh shadow-sm"
-                    >
-                      {t(`badges.${b.replace(" ", "_")}`)}
-                    </span>
-                  ))}
                 </div>
 
                 {/* Stock Out Overlay */}

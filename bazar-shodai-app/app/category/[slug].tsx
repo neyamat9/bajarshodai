@@ -7,10 +7,14 @@ export default function CategoryDetailScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
 
   useEffect(() => {
-    router.replace({
-      pathname: '/(tabs)/categories',
-      params: { category: slug || '' },
-    });
+    if (slug === 'medicine' || slug?.includes('medicine')) {
+      router.replace('/pharmacy');
+    } else {
+      router.replace({
+        pathname: '/(tabs)/categories',
+        params: { category: slug || '' },
+      });
+    }
   }, [router, slug]);
 
   return (

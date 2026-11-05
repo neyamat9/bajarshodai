@@ -14,7 +14,6 @@ import { useQuery } from '@tanstack/react-query';
 import { Icon } from '@/components/ui/Icon';
 import { AppImage } from '@/components/ui/AppImage';
 import { ProductGridCard, ProductGridItem } from '@/components/product/ProductGridCard';
-import { MedicineListItem, MedicineItemData } from '@/components/medicine/MedicineListItem';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useHomeCategories } from '@/features/home/api/useHomeData';
 import { fetchProductsApi } from '@/features/products/api/productsApi';
@@ -22,7 +21,6 @@ import { useCartStore } from '@/store/useCartStore';
 import { toast } from '@/store/useToastStore';
 import { haptics } from '@/services/haptics';
 import { assetUrl } from '@/utils/format';
-import { Radius } from '@/constants/layout';
 
 type SortOption = 'popular' | 'newest' | 'price_asc' | 'price_desc';
 
@@ -42,14 +40,25 @@ export default function ShopScreen() {
   const cartItems = useCartStore((s) => s.items);
 
   const { data: rawCategories = [], isLoading: categoriesLoading } = useHomeCategories();
+  // Filter out medicine completely from shop page (medicine has its own dedicated page)
   const categories = useMemo(
-    () => (Array.isArray(rawCategories) ? rawCategories : []),
+    () =>
+      Array.isArray(rawCategories)
+        ? rawCategories.filter(
+            (c) =>
+              c.slug !== 'medicine' &&
+              !c.slug.includes('medicine') &&
+              !c.name.toLowerCase().includes('medicine') &&
+              !c.nameBn?.includes('ওষুধ') &&
+              !c.nameBn?.includes('ঔষধ'),
+          )
+        : [],
     [rawCategories],
   );
 
   const [prevParams, setPrevParams] = useState({ category: params.category, sub: params.sub });
   const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | null>(
-    params.category || null,
+    params.category === 'medicine' ? null : params.category || null,
   );
   const [selectedSubCategorySlug, setSelectedSubCategorySlug] = useState<string | null>(
     params.sub || null,
@@ -58,10 +67,15 @@ export default function ShopScreen() {
   const [onlyInStock, setOnlyInStock] = useState(false);
   const [onlyOnSale, setOnlyOnSale] = useState(false);
 
+  // If medicine is opened via category query, seamlessly route to dedicated pharmacy screen
+  if (params.category === 'medicine' || selectedCategorySlug === 'medicine') {
+    router.replace('/pharmacy');
+  }
+
   // Synchronize when navigating from homepage or drawer (state adjustment pattern)
   if (params.category !== prevParams.category || params.sub !== prevParams.sub) {
     setPrevParams({ category: params.category, sub: params.sub });
-    if (params.category) {
+    if (params.category && params.category !== 'medicine') {
       setSelectedCategorySlug(params.category);
       if (params.sub) {
         setSelectedSubCategorySlug(params.sub);
@@ -72,13 +86,6 @@ export default function ShopScreen() {
   const activeCategory = selectedCategorySlug
     ? categories.find((c) => c.slug === selectedCategorySlug)
     : null;
-
-  const isMedicineView =
-    selectedCategorySlug === 'medicine' ||
-    activeCategory?.slug === 'medicine' ||
-    (activeCategory as any)?.name?.toLowerCase() === 'medicine' ||
-    (activeCategory as any)?.nameBn?.includes('ওষুধ') ||
-    (activeCategory as any)?.nameBn?.includes('ঔষধ');
 
   const subCategories =
     activeCategory?.children || (activeCategory as any)?.subCategories || [];
@@ -99,7 +106,7 @@ export default function ShopScreen() {
         sortBy,
         inStock: onlyInStock ? true : undefined,
         limit: 50,
-        excludeMedicine: !selectedCategorySlug,
+        excludeMedicine: true,
       }),
     staleTime: 1000 * 60 * 2,
   });
@@ -333,131 +340,12 @@ export default function ShopScreen() {
         </ScrollView>
       </View>
 
-      {/* ── Prescription Upload CTA Banner (shown when Medicine category is active) ── */}
-      {isMedicineView && (
-        <View style={styles.rxBannerContainer}>
-          <View style={styles.rxBannerCard}>
-            <View style={styles.rxIconBox}>
-              <Icon name="Upload" size={18} color="#ffffff" />
-            </View>
-            <View style={{ flex: 1, marginRight: 8 }}>
-              <Text style={styles.rxBannerTitle}>প্রেসক্রিপশন আপলোড করুন</Text>
-              <Text style={styles.rxBannerSubtitle}>
-                ছবি তুলে পাঠান, আমাদের রেজিস্টার্ড ফার্মাসিস্ট দ্রুত ওষুধ প্রস্তুত করবেন
-              </Text>
-            </View>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              delayPressIn={0}
-              onPress={() => router.push('/prescription/upload')}
-              style={styles.rxUploadBtn}
-              accessibilityRole="button"
-              accessibilityLabel="Upload Prescription"
-            >
-              <Text style={styles.rxUploadBtnText}>আপলোড</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-
-      {/* ── Products List: Medicine 1-Column List or Grocery 2-Column Grid ── */}
+      {/* ── Products List: Grocery 2-Column Grid ── */}
       {productsLoading ? (
         <View style={styles.loaderCenter}>
           <ActivityIndicator size="large" color="#0b6234" />
           <Text style={styles.loaderText}>পণ্য লোড হচ্ছে...</Text>
         </View>
-      ) : isMedicineView ? (
-        <FlatList
-          key="medicine-list"
-          data={products}
-          keyExtractor={(item) => item.id}
-          numColumns={1}
-          contentContainerStyle={styles.medicineListContent}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => {
-            const cartItem = cartItems.find((i) => i.productId === item.id);
-            const rawImage =
-              item.image ||
-              item.imageUrl ||
-              item.images?.[0]?.url ||
-              item.primaryImage?.url;
-
-            const price = Number(item.price ?? item.sellingPrice ?? 0);
-            const regularPrice = item.regularPrice ? Number(item.regularPrice) : undefined;
-            const isUntracked = item.trackStock === false;
-            const inStock =
-              item.inStock !== false &&
-              (isUntracked || item.stock === undefined || Number(item.stock) > 0);
-
-            const medData: MedicineItemData = {
-              id: item.id,
-              name: item.name,
-              nameBn: item.nameBn ?? undefined,
-              slug: item.slug,
-              price,
-              originalPrice: regularPrice,
-              genericName: item.medicineMeta?.genericName || (item as any).genericName || undefined,
-              dosageForm: item.medicineMeta?.dosageForm || (item as any).dosageForm || 'Tablet',
-              strength: item.medicineMeta?.strength || (item as any).strength || undefined,
-              manufacturer:
-                item.medicineMeta?.manufacturer ||
-                item.brand?.name ||
-                (item as any).manufacturer ||
-                undefined,
-              isPrescriptionRequired: Boolean(
-                item.medicineMeta?.isPrescriptionRequired ?? (item as any).isPrescriptionRequired,
-              ),
-              unit: item.unit?.shortLabelBn || item.unit?.shortLabel || 'pack',
-              stock: item.stock ? Number(item.stock) : undefined,
-              trackStock: item.trackStock,
-              inStock,
-              imageUrl: assetUrl(rawImage),
-            };
-
-            return (
-              <MedicineListItem
-                product={medData}
-                quantityInCart={cartItem?.quantity}
-                onPress={() => router.push(`/product/${item.slug}`)}
-                onAddToCart={() => {
-                  addItem(
-                    {
-                      id: item.id,
-                      productId: item.id,
-                      name: medData.nameBn || medData.name,
-                      price: medData.price,
-                      unit: medData.unit,
-                      imageUrl: medData.imageUrl,
-                    },
-                    1,
-                  );
-                  toast.success('Cart', `${medData.nameBn || medData.name} ব্যাগে যোগ করা হয়েছে`);
-                }}
-                onQuantityChange={(newQty) => {
-                  if (!cartItem) return;
-                  if (newQty <= 0) {
-                    removeItem(cartItem.id);
-                  } else {
-                    updateQuantity(cartItem.id, newQty);
-                  }
-                }}
-              />
-            );
-          }}
-          ListEmptyComponent={
-            <EmptyState
-              title="কোনো ওষুধ পাওয়া যায়নি"
-              description="আপনার বাছাই করা ফিল্টারে বর্তমানে কোনো ওষুধ নেই।"
-              actionLabel="সব ওষুধ দেখুন"
-              onAction={() => {
-                setSelectedCategorySlug('medicine');
-                setSelectedSubCategorySlug(null);
-                setOnlyOnSale(false);
-                setOnlyInStock(false);
-              }}
-            />
-          }
-        />
       ) : (
         <FlatList
           key="product-grid"
@@ -726,52 +614,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#64748b',
     fontWeight: '500',
-  },
-  rxBannerContainer: {
-    paddingHorizontal: 12,
-    paddingTop: 10,
-    paddingBottom: 4,
-  },
-  rxBannerCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#0b6234',
-    padding: 12,
-    borderRadius: Radius.brand,
-  },
-  rxIconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  rxBannerTitle: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#ffffff',
-  },
-  rxBannerSubtitle: {
-    fontSize: 10,
-    color: '#dcfce7',
-    marginTop: 2,
-    lineHeight: 14,
-  },
-  rxUploadBtn: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 6,
-  },
-  rxUploadBtnText: {
-    color: '#0b6234',
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  medicineListContent: {
-    padding: 12,
-    paddingBottom: 40,
   },
 });

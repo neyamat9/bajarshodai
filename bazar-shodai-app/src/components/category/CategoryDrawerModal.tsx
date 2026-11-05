@@ -87,10 +87,14 @@ export function CategoryDrawerModal({ visible, onClose }: CategoryDrawerModalPro
   const handleNavigateCategory = (slug: string) => {
     haptics.light();
     handleDismiss();
-    router.push({
-      pathname: '/(tabs)/categories',
-      params: { category: slug },
-    });
+    if (slug === 'medicine' || slug.includes('medicine')) {
+      router.push('/pharmacy');
+    } else {
+      router.push({
+        pathname: '/(tabs)/categories',
+        params: { category: slug },
+      });
+    }
   };
 
   const handleQuickNav = (path: string) => {

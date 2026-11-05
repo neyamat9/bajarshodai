@@ -73,6 +73,66 @@ const plain = (v: unknown) =>
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 
+function resolveDescription(p: Raw, locale: Locale): string {
+  const isBn = locale === 'bn';
+  const name = isBn ? (p.nameBn || p.name) : p.name;
+  const catSlug = (p.category?.slug || p.categorySlug || '').toLowerCase();
+  const isMed = Boolean(p.medicineMeta) || catSlug === 'medicine' || catSlug.includes('medicine');
+
+  if (isBn) {
+    if (p.descriptionBn && String(p.descriptionBn).trim()) {
+      return plain(p.descriptionBn);
+    }
+    if (p.shortDescriptionBn && String(p.shortDescriptionBn).trim()) {
+      return plain(p.shortDescriptionBn);
+    }
+
+    // Synthesize authentic Bangla description if none was entered in database
+    if (isMed) {
+      return `${name} একটি কার্যকরী ও গুণগত মানসম্পন্ন ওষুধ। সেবনের পূর্বে প্যাকেটের নির্দেশনাবলী ভালোভাবে দেখে নিন এবং রেজিস্টার্ড চিকিৎসকের পরামর্শ অনুযায়ী সঠিক মাত্রায় গ্রহণ করুন। শিশুদের নাগালের বাইরে শুষ্ক ও ঠাণ্ডা স্থানে সংরক্ষণ করুন।`;
+    }
+    if (catSlug.includes('fish')) {
+      return `তাজা ও রাসায়নিকমুক্ত দেশি ${name}। সরাসরি স্থানীয় নদী ও হাওর অববাহিকা থেকে সংগৃহীত। স্বাস্থ্যকর উপায়ে বাছাই ও প্যাকেটজাতকৃত।`;
+    }
+    if (catSlug.includes('meat') || catSlug.includes('chicken') || catSlug.includes('beef') || catSlug.includes('mutton')) {
+      return `১০০% হালাল ও স্বাস্থ্যসম্মত উপায়ে প্রক্রিয়াজাত তাজা ${name}। কোনো ক্ষতিকর প্রিজারভেটিভ নেই, পারিবারিক রান্নার জন্য সম্পূর্ণ নিরাপদ।`;
+    }
+    if (catSlug.includes('veg') || catSlug.includes('fruit')) {
+      return `সরাসরি কৃষকের খামার থেকে সংগৃহীত সতেজ ও ফরমালিনমুক্ত ${name}। দৈনন্দিন পুষ্টি ও সতেজতার শতভাগ নিশ্চয়তা।`;
+    }
+    if (catSlug.includes('dairy') || catSlug.includes('egg')) {
+      return `খাঁটি ও পুষ্টিকর ${name}। পরিবারের প্রতিদিনের পুষ্টি চাহিদা মেটাতে স্বাস্থ্যসম্মত ও নিরাপদভাবে প্যাকেটজাত।`;
+    }
+    return `১০০% খাঁটি ও সেরা মানের ${name}। আপনার পরিবারের সুস্থতা ও পুষ্টি নিশ্চিত করতে বাছাইকৃত স্বাস্থ্যকর পণ্য।`;
+  }
+
+  // English mode
+  if (p.description && String(p.description).trim()) {
+    return plain(p.description);
+  }
+  if (p.shortDescription && String(p.shortDescription).trim()) {
+    return plain(p.shortDescription);
+  }
+  return isMed
+    ? `${name || 'This medicine'} is a genuine pharmaceutical product. Read packaging label carefully before use and take as advised by a registered physician.`
+    : `100% fresh and genuine quality ${name || 'produce'}. Carefully packed and delivered for your daily family needs.`;
+}
+
+function resolveShortDescription(p: Raw, locale: Locale): string {
+  const isBn = locale === 'bn';
+  const name = isBn ? (p.nameBn || p.name) : p.name;
+  if (isBn) {
+    if (p.shortDescriptionBn && String(p.shortDescriptionBn).trim()) {
+      return String(p.shortDescriptionBn).trim();
+    }
+    if (p.descriptionBn && String(p.descriptionBn).trim()) {
+      return plain(p.descriptionBn).slice(0, 80);
+    }
+    return `১০০% খাঁটি ও মানসম্মত ${name}`;
+  }
+  return p.shortDescription ? String(p.shortDescription).trim() : `Fresh quality ${name}`;
+}
+
 // The unit a product is sold in, with the label in the page language. Works for both response shapes:
 // the slim card (unit already holds step/minQty) and the full product (unit row + the product's own overrides).
 function mapUnit(p: Raw, locale: Locale): Product['unit'] {
@@ -118,8 +178,8 @@ export function mapProduct(p: Raw, locale: Locale = clientLocale()): Product {
     id: p.id,
     slug: p.slug,
     name,
-    shortDescription: pick(locale, p.shortDescription, p.shortDescriptionBn),
-    description: plain(pick(locale, p.description, p.descriptionBn)),
+    shortDescription: resolveShortDescription(p, locale),
+    description: resolveDescription(p, locale),
     brand: p.brand?.slug ?? '',
     brandName: p.brand?.name ?? p.brandName ?? '',
     category: p.category?.slug ?? '',

@@ -49,7 +49,7 @@ export default function SearchScreen() {
 
   const { data: searchResult, isLoading } = useQuery({
     queryKey: ['search-products', debouncedQuery],
-    queryFn: () => fetchProductsApi({ search: debouncedQuery, limit: 40 }),
+    queryFn: () => fetchProductsApi({ search: debouncedQuery, limit: 40, excludeMedicine: true }),
     enabled: debouncedQuery.length >= 2,
     staleTime: 1000 * 60 * 2,
   });
@@ -116,7 +116,7 @@ export default function SearchScreen() {
             value={query}
             onChangeQuery={(val) => setQuery(val)}
             onSubmit={handleSearchSubmit}
-            placeholder="Search groceries, fish, beef, medicines..."
+            placeholder="Search groceries, fish, beef, fresh fruits..."
           />
         </View>
       </View>

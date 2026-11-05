@@ -56,12 +56,16 @@ export function CategoryGridSection({ categories, className = '' }: CategoryGrid
                 iconUrl: cat.image || cat.icon || undefined,
                 productCount: cat.productCount,
               }}
-              onPress={() =>
-                router.push({
-                  pathname: '/(tabs)/categories',
-                  params: { category: cat.slug },
-                })
-              }
+              onPress={() => {
+                if (cat.slug === 'medicine' || cat.slug.includes('medicine')) {
+                  router.push('/pharmacy');
+                } else {
+                  router.push({
+                    pathname: '/(tabs)/categories',
+                    params: { category: cat.slug },
+                  });
+                }
+              }}
             />
           ))}
         </View>
