@@ -11,95 +11,18 @@ export interface BestSellersSectionProps {
   className?: string;
 }
 
-const DEFAULT_BEST_SELLERS: ProductCardData[] = [
-  {
-    id: 'b1',
-    name: 'Teer Fortified Soybean Oil (তীর সয়াবিন তেল)',
-    nameBn: 'তীর সয়াবিন তেল ৫ লিটার',
-    slug: 'teer-fortified-soybean-oil-5l',
-    price: 890,
-    regularPrice: 930,
-    discountPercent: 4,
-    unit: {
-      code: 'bottle',
-      shortLabel: 'bottle',
-      shortLabelBn: 'বোতল',
-      allowDecimal: false,
-      step: 1,
-      minQty: 1,
-    },
-    avgRating: 4.9,
-    reviewCount: 112,
-    isBestSeller: true,
-  },
-  {
-    id: 'b2',
-    name: 'Nazirshail Premium Rice (নাজিরশাইল চাল)',
-    nameBn: 'নাজিরশাইল চাল ২৫ কেজি',
-    slug: 'nazirshail-premium-rice-25kg',
-    price: 1850,
-    regularPrice: 1950,
-    discountPercent: 5,
-    unit: {
-      code: 'sack',
-      shortLabel: 'sack',
-      shortLabelBn: 'বস্তা',
-      allowDecimal: false,
-      step: 1,
-      minQty: 1,
-    },
-    avgRating: 4.8,
-    reviewCount: 94,
-    isBestSeller: true,
-  },
-  {
-    id: 'b3',
-    name: 'Farm Fresh Brown Eggs (ফার্মের লাল ডিম)',
-    nameBn: 'ফার্মের লাল ডিম ১ ডজন',
-    slug: 'farm-fresh-brown-eggs-12pc',
-    price: 155,
-    regularPrice: 165,
-    discountPercent: 6,
-    unit: {
-      code: 'dz',
-      shortLabel: 'dz',
-      shortLabelBn: 'ডজন',
-      allowDecimal: false,
-      step: 1,
-      minQty: 1,
-    },
-    avgRating: 4.9,
-    reviewCount: 78,
-    isBestSeller: true,
-  },
-  {
-    id: 'b4',
-    name: 'Radhuni Pure Mustard Oil (রাধুনী সরিষার তেল)',
-    nameBn: 'রাধুনী খাঁটি সরিষার তেল ১ লিটার',
-    slug: 'radhuni-pure-mustard-oil-1l',
-    price: 340,
-    regularPrice: 360,
-    discountPercent: 5,
-    unit: {
-      code: 'bottle',
-      shortLabel: 'bottle',
-      shortLabelBn: 'বোতল',
-      allowDecimal: false,
-      step: 1,
-      minQty: 1,
-    },
-    avgRating: 4.8,
-    reviewCount: 65,
-    isBestSeller: true,
-  },
-];
-
 export function BestSellersSection({ products, className = '' }: BestSellersSectionProps) {
   const router = useRouter();
   const addItem = useCartStore((s) => s.addItem);
+  const updateQuantity = useCartStore((s) => s.updateQuantity);
+  const removeItem = useCartStore((s) => s.removeItem);
   const cartItems = useCartStore((s) => s.items);
 
-  const displayProducts = products.length > 0 ? products : DEFAULT_BEST_SELLERS;
+  const displayProducts = Array.isArray(products) ? products : [];
+
+  if (displayProducts.length === 0) {
+    return null;
+  }
 
   return (
     <View className={`px-4 mb-5 ${className}`}>
@@ -123,21 +46,29 @@ export function BestSellersSection({ products, className = '' }: BestSellersSect
         <View className="flex-row gap-3">
           {displayProducts.map((p) => {
             const cartItem = cartItems.find((i) => i.productId === p.id);
+            const rawImage =
+              p.image ||
+              p.imageUrl ||
+              (p as any).primaryImage?.url ||
+              (p as any).images?.[0]?.url;
+
             const gridItem: ProductGridItem = {
               id: p.id,
-              name: p.nameBn || p.name,
+              name: p.name,
               banglaName: p.nameBn ?? undefined,
               slug: p.slug,
-              price: p.price,
-              originalPrice: p.regularPrice,
-              imageUrl: p.imageUrl || p.primaryImage?.url,
-              unit: p.unit?.shortLabel || 'pc',
+              price: Number(p.price),
+              originalPrice: p.regularPrice ? Number(p.regularPrice) : undefined,
+              imageUrl: rawImage,
+              unit: p.unit?.shortLabelBn || p.unit?.shortLabel || 'pc',
+              packSize: p.packSize ?? undefined,
               stock: p.stock,
+              discountPercent: p.discountPercent,
               badge: 'BEST SELLER',
             };
 
             return (
-              <View key={p.id} style={{ width: 165 }}>
+              <View key={p.id} style={{ width: 155 }}>
                 <ProductGridCard
                   product={gridItem}
                   quantityInCart={cartItem?.quantity}
@@ -147,14 +78,22 @@ export function BestSellersSection({ products, className = '' }: BestSellersSect
                       {
                         id: p.id,
                         productId: p.id,
-                        name: gridItem.name,
-                        price: p.price,
+                        name: gridItem.banglaName || gridItem.name,
+                        price: gridItem.price,
                         unit: gridItem.unit,
                         imageUrl: gridItem.imageUrl,
                       },
                       p.unit?.minQty ?? 1,
                     );
-                    toast.success('Cart', `${gridItem.name} added to cart`);
+                    toast.success('Cart', `${gridItem.banglaName || gridItem.name} added`);
+                  }}
+                  onQuantityChange={(newQty) => {
+                    if (!cartItem) return;
+                    if (newQty <= 0) {
+                      removeItem(cartItem.id);
+                    } else {
+                      updateQuantity(cartItem.id, newQty);
+                    }
                   }}
                 />
               </View>

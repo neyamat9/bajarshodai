@@ -11,24 +11,17 @@ export interface BrandShowcaseSectionProps {
   className?: string;
 }
 
-const DEFAULT_BRANDS: HomeBrandData[] = [
-  { name: 'Teer (তীর)', slug: 'teer' },
-  { name: 'Radhuni (রাধুনী)', slug: 'radhuni' },
-  { name: 'Fresh (ফ্রেশ)', slug: 'fresh' },
-  { name: 'Pran (প্রাণ)', slug: 'pran' },
-  { name: 'Aarong Dairy (আড়ং)', slug: 'aarong-dairy' },
-  { name: 'Dano (ডানো)', slug: 'dano' },
-  { name: 'Rupchanda (রূপচাঁদা)', slug: 'rupchanda' },
-  { name: 'Ispahani (ইস্পাহানী)', slug: 'ispahani' },
-];
-
 export function BrandShowcaseSection({
   brands,
   onSelectBrand,
   className = '',
 }: BrandShowcaseSectionProps) {
   const [selectedBrandSlug, setSelectedBrandSlug] = useState<string | null>(null);
-  const displayBrands = brands.length > 0 ? brands : DEFAULT_BRANDS;
+  const displayBrands = Array.isArray(brands) ? brands : [];
+
+  if (displayBrands.length === 0) {
+    return null;
+  }
 
   const handleBrandPress = (brand: HomeBrandData) => {
     haptics.selection();

@@ -1,4 +1,22 @@
+import { ENV } from '@/config/env';
+
 const BENGALI_NUMERALS = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+
+/**
+ * Converts a raw image URL/path from the API into a fully-qualified URL.
+ * Handles absolute URLs, relative /uploads paths, and cleans local dev hosts.
+ */
+export function assetUrl(url?: string | null): string {
+  if (!url) return '';
+  if (url.startsWith('data:') || url.startsWith('blob:')) return url;
+  const clean = url.replace(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/i, '');
+  if (/^https?:\/\//i.test(clean)) return clean;
+  const assetBase = (ENV.API_BASE_URL || 'https://bazar-shodai-api.onrender.com/api').replace(
+    /\/api\/?$/,
+    '',
+  );
+  return `${assetBase}${clean.startsWith('/') ? '' : '/'}${clean}`;
+}
 
 /**
  * Converts English number/string to Bengali numerals

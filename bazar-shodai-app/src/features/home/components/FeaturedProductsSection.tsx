@@ -11,97 +11,21 @@ export interface FeaturedProductsSectionProps {
   className?: string;
 }
 
-const DEFAULT_FEATURED: ProductCardData[] = [
-  {
-    id: 'f1',
-    name: 'Fresh Deshi Tomato (দেশি টমেটো)',
-    nameBn: 'দেশি টমেটো',
-    slug: 'fresh-deshi-tomato',
-    price: 60,
-    regularPrice: 80,
-    discountPercent: 25,
-    unit: {
-      code: 'kg',
-      shortLabel: 'kg',
-      shortLabelBn: 'কেজি',
-      allowDecimal: true,
-      step: 0.5,
-      minQty: 0.5,
-    },
-    avgRating: 4.8,
-    reviewCount: 38,
-    isHot: true,
-  },
-  {
-    id: 'f2',
-    name: 'River Hilsha Fish (মেঘনার তাজা ইলিশ)',
-    nameBn: 'চাঁদপুরের তাজা ইলিশ',
-    slug: 'river-hilsha-fish',
-    price: 1450,
-    regularPrice: 1600,
-    discountPercent: 10,
-    unit: {
-      code: 'kg',
-      shortLabel: 'kg',
-      shortLabelBn: 'কেজি',
-      allowDecimal: false,
-      step: 1,
-      minQty: 1,
-    },
-    avgRating: 4.9,
-    reviewCount: 52,
-    isFeatured: true,
-  },
-  {
-    id: 'f3',
-    name: 'Fresh Deshi Cucumbers (শসা)',
-    nameBn: 'দেশি শসা',
-    slug: 'fresh-deshi-cucumbers',
-    price: 45,
-    regularPrice: 55,
-    discountPercent: 18,
-    unit: {
-      code: 'kg',
-      shortLabel: 'kg',
-      shortLabelBn: 'কেজি',
-      allowDecimal: true,
-      step: 0.5,
-      minQty: 0.5,
-    },
-    avgRating: 4.6,
-    reviewCount: 19,
-  },
-  {
-    id: 'f4',
-    name: 'Halal Beef Curry Cut (দেশি গরুর মাংস)',
-    nameBn: 'দেশি গরুর মাংস',
-    slug: 'halal-beef-curry-cut',
-    price: 780,
-    regularPrice: 820,
-    discountPercent: 5,
-    unit: {
-      code: 'kg',
-      shortLabel: 'kg',
-      shortLabelBn: 'কেজি',
-      allowDecimal: true,
-      step: 0.5,
-      minQty: 1,
-    },
-    avgRating: 4.9,
-    reviewCount: 84,
-    isHot: true,
-  },
-];
-
 export function FeaturedProductsSection({
   products,
   className = '',
 }: FeaturedProductsSectionProps) {
   const router = useRouter();
   const addItem = useCartStore((s) => s.addItem);
+  const updateQuantity = useCartStore((s) => s.updateQuantity);
+  const removeItem = useCartStore((s) => s.removeItem);
   const cartItems = useCartStore((s) => s.items);
 
-  const displayProducts = products.length > 0 ? products : DEFAULT_FEATURED;
+  const displayProducts = Array.isArray(products) ? products : [];
+
+  if (displayProducts.length === 0) {
+    return null;
+  }
 
   return (
     <View className={`px-4 mb-5 ${className}`}>
@@ -125,24 +49,29 @@ export function FeaturedProductsSection({
         <View className="flex-row gap-3">
           {displayProducts.map((p) => {
             const cartItem = cartItems.find((i) => i.productId === p.id);
+            const rawImage =
+              p.image ||
+              p.imageUrl ||
+              (p as any).primaryImage?.url ||
+              (p as any).images?.[0]?.url;
+
             const gridItem: ProductGridItem = {
               id: p.id,
-              name: p.nameBn || p.name,
+              name: p.name,
               banglaName: p.nameBn ?? undefined,
               slug: p.slug,
-              price: p.price,
-              originalPrice: p.regularPrice,
-              imageUrl: p.imageUrl || p.primaryImage?.url,
-              unit: p.unit?.shortLabel || 'kg',
+              price: Number(p.price),
+              originalPrice: p.regularPrice ? Number(p.regularPrice) : undefined,
+              imageUrl: rawImage,
+              unit: p.unit?.shortLabelBn || p.unit?.shortLabel || 'kg',
+              packSize: p.packSize ?? undefined,
               stock: p.stock,
-              badge:
-                p.discountPercent && p.discountPercent > 0
-                  ? `${p.discountPercent}% OFF`
-                  : undefined,
+              discountPercent: p.discountPercent,
+              badge: p.isHot ? 'HOT' : p.isNew ? 'NEW' : undefined,
             };
 
             return (
-              <View key={p.id} style={{ width: 165 }}>
+              <View key={p.id} style={{ width: 155 }}>
                 <ProductGridCard
                   product={gridItem}
                   quantityInCart={cartItem?.quantity}
@@ -152,14 +81,22 @@ export function FeaturedProductsSection({
                       {
                         id: p.id,
                         productId: p.id,
-                        name: gridItem.name,
-                        price: p.price,
+                        name: gridItem.banglaName || gridItem.name,
+                        price: gridItem.price,
                         unit: gridItem.unit,
                         imageUrl: gridItem.imageUrl,
                       },
                       p.unit?.minQty ?? 1,
                     );
-                    toast.success('Cart', `${gridItem.name} added to your basket`);
+                    toast.success('Cart', `${gridItem.banglaName || gridItem.name} added`);
+                  }}
+                  onQuantityChange={(newQty) => {
+                    if (!cartItem) return;
+                    if (newQty <= 0) {
+                      removeItem(cartItem.id);
+                    } else {
+                      updateQuantity(cartItem.id, newQty);
+                    }
                   }}
                 />
               </View>

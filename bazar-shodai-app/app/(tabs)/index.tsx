@@ -2,7 +2,6 @@ import React from 'react';
 import { View, Text, ScrollView, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { HomeHeader } from '@/features/home/components/HomeHeader';
-import { QuickJumpBar } from '@/features/home/components/QuickJumpBar';
 import { HeroSliderSection } from '@/features/home/components/HeroSliderSection';
 import { CategoryGridSection } from '@/features/home/components/CategoryGridSection';
 import { FeaturedProductsSection } from '@/features/home/components/FeaturedProductsSection';
@@ -67,9 +66,6 @@ export default function HomeScreen() {
     <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       {/* Sticky Top Header */}
       <HomeHeader />
-
-      {/* Quick Jump Pill Bar */}
-      <QuickJumpBar />
 
       <ScrollView
         showsVerticalScrollIndicator={false}

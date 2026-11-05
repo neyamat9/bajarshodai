@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Image, ImageProps } from 'expo-image';
 import { Radius } from '@/constants/layout';
+import { assetUrl } from '@/utils/format';
+import { Icon } from '@/components/ui/Icon';
 
 // Soft neutral brand blurhash
 const DEFAULT_BLURHASH = 'L5H2EC=PM+yV0g-mq.wG9c010J}Z';
@@ -27,8 +29,17 @@ export function AppImage({
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Normalize image source
-  const normalizedSource = typeof source === 'string' ? { uri: source } : source;
+  // Normalize and qualify image URI through assetUrl
+  let normalizedSource: ImageProps['source'] = undefined;
+  if (typeof source === 'string') {
+    const qualified = assetUrl(source);
+    normalizedSource = qualified ? { uri: qualified } : undefined;
+  } else if (source && typeof source === 'object' && 'uri' in source) {
+    const qualified = assetUrl(source.uri);
+    normalizedSource = qualified ? { uri: qualified } : undefined;
+  } else if (typeof source === 'number') {
+    normalizedSource = source;
+  }
 
   return (
     <View
@@ -53,7 +64,7 @@ export function AppImage({
         />
       ) : (
         <View style={styles.fallbackContainer}>
-          <View style={styles.fallbackGraphic} />
+          <Icon name="ShoppingBag" size={24} color="#0b6234" />
         </View>
       )}
 
@@ -83,11 +94,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#edf3e8',
-  },
-  fallbackGraphic: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#c3d4b9',
   },
 });

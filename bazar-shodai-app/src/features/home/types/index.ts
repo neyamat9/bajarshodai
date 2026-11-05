@@ -22,6 +22,7 @@ export interface HomeCategoryData {
   icon?: string | null;
   productCount?: number;
   children?: HomeCategoryData[];
+  subCategories?: HomeCategoryData[];
 }
 
 export interface HomeBrandData {
@@ -57,7 +58,10 @@ export interface ProductCardData {
   isFeatured?: boolean;
   isBestSeller?: boolean;
   unit?: ProductUnitData | null;
+  image?: string | null;
   imageUrl?: string;
+  packSize?: string | null;
+  images?: { id?: string; url: string; alt?: string | null; isMain?: boolean }[];
   primaryImage?: { url: string; alt?: string | null } | null;
   category?: { id: string; name: string; slug: string } | null;
   brand?: { id: string; name: string; slug: string; logo?: string | null } | null;

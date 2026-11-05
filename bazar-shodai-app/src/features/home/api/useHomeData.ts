@@ -62,10 +62,15 @@ export function useHomeData() {
 
   return {
     feed: feedQuery.data,
-    banners: bannersQuery.data ?? [],
-    categories: categoriesQuery.data ?? feedQuery.data?.categories ?? [],
-    brands: feedQuery.data?.brands ?? [],
-    featured: feedQuery.data?.featured ?? [],
+    banners: Array.isArray(bannersQuery.data) ? bannersQuery.data : [],
+    categories:
+      Array.isArray(categoriesQuery.data) && categoriesQuery.data.length > 0
+        ? categoriesQuery.data
+        : Array.isArray(feedQuery.data?.categories)
+          ? feedQuery.data.categories
+          : [],
+    brands: Array.isArray(feedQuery.data?.brands) ? feedQuery.data.brands : [],
+    featured: Array.isArray(feedQuery.data?.featured) ? feedQuery.data.featured : [],
     bestSellers: Array.isArray(feedQuery.data?.bestSellers)
       ? feedQuery.data.bestSellers
       : (feedQuery.data?.bestSellers?.data ?? []),

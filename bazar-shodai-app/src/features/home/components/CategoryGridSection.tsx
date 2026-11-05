@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { CategoryTile } from '@/components/category/CategoryTile';
+import { CategoryDrawerModal } from '@/components/category/CategoryDrawerModal';
 import { HomeCategoryData } from '../types';
 import { haptics } from '@/services/haptics';
 
@@ -10,25 +11,20 @@ export interface CategoryGridSectionProps {
   className?: string;
 }
 
-const DEFAULT_CATEGORIES: HomeCategoryData[] = [
-  { id: 'c1', name: 'Vegetables', nameBn: 'সবজি', slug: 'vegetables', productCount: 48 },
-  { id: 'c2', name: 'Fresh Fish', nameBn: 'তাজা মাছ', slug: 'fish', productCount: 26 },
-  { id: 'c3', name: 'Halal Meat', nameBn: 'মাংস', slug: 'meat', productCount: 19 },
-  { id: 'c4', name: 'Fruits', nameBn: 'ফলমূল', slug: 'fruits', productCount: 34 },
-  { id: 'c5', name: 'Dairy & Eggs', nameBn: 'দুধ ও ডিম', slug: 'dairy', productCount: 16 },
-  { id: 'c6', name: 'Cooking Oil', nameBn: 'তেল ও ঘি', slug: 'oil', productCount: 22 },
-  { id: 'c7', name: 'Spices', nameBn: 'মসলা', slug: 'spices', productCount: 45 },
-  { id: 'c8', name: 'Rice & Dal', nameBn: 'চাল ও ডাল', slug: 'grains', productCount: 30 },
-];
-
 export function CategoryGridSection({ categories, className = '' }: CategoryGridSectionProps) {
   const router = useRouter();
-  const displayList = categories.length > 0 ? categories.slice(0, 16) : DEFAULT_CATEGORIES;
+  const [drawerVisible, setDrawerVisible] = useState(false);
 
-  const handleViewAll = () => {
+  const displayList = Array.isArray(categories) ? categories.slice(0, 16) : [];
+
+  const handleOpenDrawer = () => {
     haptics.light();
-    router.push('/(tabs)/categories');
+    setDrawerVisible(true);
   };
+
+  if (displayList.length === 0) {
+    return null;
+  }
 
   return (
     <View className={`px-4 mb-5 ${className}`}>
@@ -39,7 +35,7 @@ export function CategoryGridSection({ categories, className = '' }: CategoryGrid
           <Text className="text-[11px] text-muted-foreground">Shop by Category</Text>
         </View>
 
-        <TouchableOpacity onPress={handleViewAll} activeOpacity={0.7} className="py-1 px-2">
+        <TouchableOpacity onPress={handleOpenDrawer} activeOpacity={0.7} className="py-1 px-2">
           <Text className="text-xs font-bold text-brand-deep dark:text-brand-fresh">
             সব দেখুন ›
           </Text>
@@ -65,6 +61,12 @@ export function CategoryGridSection({ categories, className = '' }: CategoryGrid
           ))}
         </View>
       </ScrollView>
+
+      {/* Side Drawer Modal */}
+      <CategoryDrawerModal
+        visible={drawerVisible}
+        onClose={() => setDrawerVisible(false)}
+      />
     </View>
   );
 }

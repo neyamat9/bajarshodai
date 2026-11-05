@@ -24,33 +24,43 @@ export interface PingResponse {
 }
 
 /**
+ * Unwraps standard NestJS API envelop: { success: boolean, message: string, data: T }
+ */
+function unwrapResponse<T>(resData: unknown): T {
+  if (resData && typeof resData === 'object' && 'success' in resData && 'data' in resData) {
+    return (resData as { data: T }).data;
+  }
+  return resData as T;
+}
+
+/**
  * Type-safe API Request Helpers
  */
 export const api = {
   get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    return apiClient.get<T>(url, config).then((res) => res.data);
+    return apiClient.get(url, config).then((res) => unwrapResponse<T>(res.data));
   },
 
   post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
-    return apiClient.post<T>(url, data, config).then((res) => res.data);
+    return apiClient.post(url, data, config).then((res) => unwrapResponse<T>(res.data));
   },
 
   put<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
-    return apiClient.put<T>(url, data, config).then((res) => res.data);
+    return apiClient.put(url, data, config).then((res) => unwrapResponse<T>(res.data));
   },
 
   patch<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
-    return apiClient.patch<T>(url, data, config).then((res) => res.data);
+    return apiClient.patch(url, data, config).then((res) => unwrapResponse<T>(res.data));
   },
 
   delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    return apiClient.delete<T>(url, config).then((res) => res.data);
+    return apiClient.delete(url, config).then((res) => unwrapResponse<T>(res.data));
   },
 
   /**
    * Health ping to verify backend connectivity
    */
   ping(): Promise<PingResponse> {
-    return api.get<PingResponse>('/ping');
+    return apiClient.get('/ping').then((res) => res.data);
   },
 };

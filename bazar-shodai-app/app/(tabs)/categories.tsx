@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -23,16 +23,24 @@ import { haptics } from '@/services/haptics';
 export default function CategoriesScreen() {
   const router = useRouter();
   const addItem = useCartStore((s) => s.addItem);
+  const updateQuantity = useCartStore((s) => s.updateQuantity);
+  const removeItem = useCartStore((s) => s.removeItem);
   const cartItems = useCartStore((s) => s.items);
 
-  const { data: categories = [], isLoading: categoriesLoading } = useHomeCategories();
+  const { data: rawCategories = [], isLoading: categoriesLoading } = useHomeCategories();
+  const categories = useMemo(
+    () => (Array.isArray(rawCategories) ? rawCategories : []),
+    [rawCategories],
+  );
 
-  const [selectedCategorySlug, setSelectedCategorySlug] = useState<string>('vegetables');
+  const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | null>(null);
   const [selectedSubCategorySlug, setSelectedSubCategorySlug] = useState<string | null>(null);
 
-  const activeCategory = categories.find((c) => c.slug === selectedCategorySlug) || categories[0];
+  const activeCategory =
+    (selectedCategorySlug ? categories.find((c) => c.slug === selectedCategorySlug) : null) ||
+    categories[0];
 
-  const currentCategorySlug = activeCategory?.slug || selectedCategorySlug;
+  const currentCategorySlug = activeCategory?.slug || '';
 
   const { data: productsData, isLoading: productsLoading } = useQuery({
     queryKey: ['category-products', currentCategorySlug, selectedSubCategorySlug],
@@ -40,12 +48,15 @@ export default function CategoriesScreen() {
       fetchProductsApi({
         category: currentCategorySlug,
         subCategory: selectedSubCategorySlug ?? undefined,
-        limit: 30,
+        limit: 40,
       }),
     enabled: Boolean(currentCategorySlug),
   });
 
-  const products = productsData?.data ?? [];
+  const products = (productsData as any)?.data ?? (Array.isArray(productsData) ? productsData : []);
+
+  const subCategories =
+    activeCategory?.children || (activeCategory as any)?.subCategories || [];
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-background">
@@ -73,7 +84,7 @@ export default function CategoriesScreen() {
           ) : (
             <ScrollView showsVerticalScrollIndicator={false}>
               {categories.map((cat) => {
-                const isSelected = (activeCategory?.slug || selectedCategorySlug) === cat.slug;
+                const isSelected = activeCategory?.slug === cat.slug;
                 return (
                   <TouchableOpacity
                     key={cat.id}
@@ -107,7 +118,7 @@ export default function CategoriesScreen() {
         {/* Right Products Pane */}
         <View style={styles.rightPane}>
           {/* Subcategories Chips if available */}
-          {activeCategory?.children && activeCategory.children.length > 0 && (
+          {subCategories.length > 0 && (
             <View className="py-2 px-3 border-b border-border bg-card">
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <View className="flex-row gap-2">
@@ -124,14 +135,14 @@ export default function CategoriesScreen() {
                         selectedSubCategorySlug === null ? 'text-white' : 'text-foreground'
                       }`}
                     >
-                      All
+                      সব
                     </Text>
                   </TouchableOpacity>
-                  {activeCategory.children.map((sub) => {
+                  {subCategories.map((sub: any) => {
                     const isSubSelected = selectedSubCategorySlug === sub.slug;
                     return (
                       <TouchableOpacity
-                        key={sub.id}
+                        key={sub.id || sub.slug}
                         onPress={() => {
                           haptics.selection();
                           setSelectedSubCategorySlug(sub.slug);
@@ -171,20 +182,32 @@ export default function CategoriesScreen() {
               columnWrapperStyle={{ gap: 8, marginBottom: 8 }}
               renderItem={({ item }) => {
                 const cartItem = cartItems.find((i) => i.productId === item.id);
+                const rawImage =
+                  item.image ||
+                  item.imageUrl ||
+                  item.images?.[0]?.url ||
+                  item.primaryImage?.url;
+
+                const price = Number(item.price ?? item.sellingPrice ?? 0);
+                const regularPrice = item.regularPrice ? Number(item.regularPrice) : undefined;
+                const discount =
+                  item.discountPercent ??
+                  (regularPrice && regularPrice > price
+                    ? Math.round(((regularPrice - price) / regularPrice) * 100)
+                    : undefined);
+
                 const gridItem: ProductGridItem = {
                   id: item.id,
-                  name: item.nameBn || item.name,
+                  name: item.name,
                   banglaName: item.nameBn ?? undefined,
                   slug: item.slug,
-                  price: item.price,
-                  originalPrice: item.regularPrice,
-                  imageUrl: item.imageUrl || item.primaryImage?.url,
-                  unit: item.unit?.shortLabel || 'kg',
-                  stock: item.stock,
-                  badge:
-                    item.discountPercent && item.discountPercent > 0
-                      ? `${item.discountPercent}% OFF`
-                      : undefined,
+                  price,
+                  originalPrice: regularPrice,
+                  imageUrl: rawImage,
+                  unit: item.unit?.shortLabelBn || item.unit?.shortLabel || 'kg',
+                  packSize: item.packSize ?? undefined,
+                  stock: item.stock ? Number(item.stock) : undefined,
+                  discountPercent: discount,
                 };
 
                 return (
@@ -198,14 +221,22 @@ export default function CategoriesScreen() {
                           {
                             id: item.id,
                             productId: item.id,
-                            name: gridItem.name,
-                            price: item.price,
+                            name: gridItem.banglaName || gridItem.name,
+                            price: gridItem.price,
                             unit: gridItem.unit,
                             imageUrl: gridItem.imageUrl,
                           },
-                          item.unit?.minQty ?? 1,
+                          item.unit?.minQty ? Number(item.unit.minQty) : 1,
                         );
-                        toast.success('Cart', `${gridItem.name} added`);
+                        toast.success('Cart', `${gridItem.banglaName || gridItem.name} added`);
+                      }}
+                      onQuantityChange={(newQty) => {
+                        if (!cartItem) return;
+                        if (newQty <= 0) {
+                          removeItem(cartItem.id);
+                        } else {
+                          updateQuantity(cartItem.id, newQty);
+                        }
                       }}
                     />
                   </View>
@@ -213,9 +244,9 @@ export default function CategoriesScreen() {
               }}
               ListEmptyComponent={
                 <EmptyState
-                  title="No Items Found"
-                  description="Currently no available items in this category."
-                  actionLabel="Back to All"
+                  title="কোন পণ্য পাওয়া যায়নি"
+                  description="এই ক্যাটাগরিতে বর্তমানে কোনো পণ্য পাওয়া যায়নি।"
+                  actionLabel="সব ক্যাটাগরি দেখুন"
                   onAction={() => setSelectedSubCategorySlug(null)}
                 />
               }

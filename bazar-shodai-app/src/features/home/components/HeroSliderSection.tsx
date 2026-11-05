@@ -9,33 +9,22 @@ export interface HeroSliderSectionProps {
   className?: string;
 }
 
-const DEFAULT_FALLBACK_BANNERS: BannerItem[] = [
-  {
-    id: 'hero-1',
-    title: 'আজকের তাজা বাজার',
-    imageUrl:
-      'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80',
-    linkUrl: 'bazarshodai://category/vegetables',
-  },
-  {
-    id: 'hero-2',
-    title: 'চাঁদপুরের তাজা ইলিশ ও দেশি মাছ',
-    imageUrl:
-      'https://images.unsplash.com/photo-1534483509719-3feaee7c30da?auto=format&fit=crop&w=800&q=80',
-    linkUrl: 'bazarshodai://category/fish',
-  },
-];
-
 export function HeroSliderSection({ banners, className = '' }: HeroSliderSectionProps) {
-  const formattedBanners: BannerItem[] =
-    banners.length > 0
-      ? banners.map((b) => ({
-          id: b.id,
-          title: b.title,
-          imageUrl: b.mobileImageUrl || b.imageUrl,
-          linkUrl: b.linkUrl || undefined,
-        }))
-      : DEFAULT_FALLBACK_BANNERS;
+  // Only display verified HERO_MAIN banners from the public store
+  const mainBanners = (Array.isArray(banners) ? banners : []).filter(
+    (b) => !b.position || b.position === 'HERO_MAIN',
+  );
+
+  if (mainBanners.length === 0) {
+    return null;
+  }
+
+  const formattedBanners: BannerItem[] = mainBanners.map((b) => ({
+    id: b.id,
+    title: b.title || '',
+    imageUrl: b.mobileImageUrl || b.imageUrl,
+    linkUrl: b.linkUrl || undefined,
+  }));
 
   const handleBannerPress = (banner: BannerItem) => {
     if (banner.linkUrl) {
