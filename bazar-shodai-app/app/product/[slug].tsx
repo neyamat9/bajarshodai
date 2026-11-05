@@ -177,7 +177,7 @@ export default function ProductDetailScreen() {
         unit: p.unit?.shortLabelBn || p.unit?.shortLabel || 'kg',
         packSize: p.packSize ?? undefined,
         stock: p.stock ? Number(p.stock) : undefined,
-        trackStock: pUntracked,
+        trackStock: p.trackStock,
         inStock: p.inStock !== false && (pUntracked || Number(p.stock ?? 0) > 0),
         discountPercent:
           p.discountPercent ??
@@ -247,7 +247,6 @@ export default function ProductDetailScreen() {
             ) : (
               <Badge label="OUT OF STOCK" variant="tomato" size="sm" />
             )}
-            <Badge label="100% FRESH" variant="fresh" size="sm" />
             {discountPercent ? (
               <Badge label={`${discountPercent}% OFF`} variant="carrot" size="sm" />
             ) : null}

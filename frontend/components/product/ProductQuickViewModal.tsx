@@ -58,6 +58,7 @@ export function ProductQuickViewProvider({
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   const [product, setProduct] = useState<Product | null>(null);
 
   const openQuickView = useCallback((prod: Product) => {
@@ -83,6 +84,21 @@ export function ProductQuickViewProvider({
     }
   }, []);
 
+  const navigateToProduct = useCallback(
+    (slug: string) => {
+      setProduct(null);
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        if (url.searchParams.has("preview")) {
+          url.searchParams.delete("preview");
+          window.history.replaceState({}, "", url.toString());
+        }
+      }
+      router.push(`/products/${slug}`);
+    },
+    [router]
+  );
+
   // Listen for browser popstate (phone back button or browser back arrow)
   useEffect(() => {
     const handlePopState = () => {
@@ -100,7 +116,11 @@ export function ProductQuickViewProvider({
     >
       {children}
       {product && (
-        <QuickViewModalContent product={product} onClose={closeQuickView} />
+        <QuickViewModalContent
+          product={product}
+          onClose={closeQuickView}
+          onNavigate={navigateToProduct}
+        />
       )}
     </ProductQuickViewContext.Provider>
   );
@@ -109,9 +129,11 @@ export function ProductQuickViewProvider({
 function QuickViewModalContent({
   product,
   onClose,
+  onNavigate,
 }: {
   product: Product;
   onClose: () => void;
+  onNavigate?: (slug: string) => void;
 }) {
   const router = useRouter();
   const t = useTranslations("Product");
@@ -239,8 +261,12 @@ function QuickViewModalContent({
 
   // Navigate to full details page
   function handleGoToFullDetails() {
-    onClose();
-    router.push(`/products/${product.slug}`);
+    if (onNavigate) {
+      onNavigate(product.slug);
+    } else {
+      onClose();
+      router.push(`/products/${product.slug}`);
+    }
   }
 
   // Pack / Size text

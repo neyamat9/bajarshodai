@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,11 +9,12 @@ import {
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Icon } from '@/components/ui/Icon';
 import { AppImage } from '@/components/ui/AppImage';
 import { ProductGridCard, ProductGridItem } from '@/components/product/ProductGridCard';
+import { MedicineListItem, MedicineItemData } from '@/components/medicine/MedicineListItem';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useHomeCategories } from '@/features/home/api/useHomeData';
 import { fetchProductsApi } from '@/features/products/api/productsApi';
@@ -33,6 +34,7 @@ const SORT_OPTIONS: { id: SortOption; label: string; icon: string }[] = [
 
 export default function ShopScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ category?: string; sub?: string }>();
   const addItem = useCartStore((s) => s.addItem);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
@@ -44,15 +46,36 @@ export default function ShopScreen() {
     [rawCategories],
   );
 
-  const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | null>(null);
-  const [selectedSubCategorySlug, setSelectedSubCategorySlug] = useState<string | null>(null);
+  const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | null>(
+    params.category || null,
+  );
+  const [selectedSubCategorySlug, setSelectedSubCategorySlug] = useState<string | null>(
+    params.sub || null,
+  );
   const [sortBy, setSortBy] = useState<SortOption>('popular');
   const [onlyInStock, setOnlyInStock] = useState(false);
   const [onlyOnSale, setOnlyOnSale] = useState(false);
 
+  // Synchronize when navigating from homepage or drawer
+  useEffect(() => {
+    if (params.category) {
+      setSelectedCategorySlug(params.category);
+      if (params.sub) {
+        setSelectedSubCategorySlug(params.sub);
+      }
+    }
+  }, [params.category, params.sub]);
+
   const activeCategory = selectedCategorySlug
     ? categories.find((c) => c.slug === selectedCategorySlug)
     : null;
+
+  const isMedicineView =
+    selectedCategorySlug === 'medicine' ||
+    activeCategory?.slug === 'medicine' ||
+    (activeCategory as any)?.name?.toLowerCase() === 'medicine' ||
+    (activeCategory as any)?.nameBn?.includes('ওষুধ') ||
+    (activeCategory as any)?.nameBn?.includes('ঔষধ');
 
   const subCategories =
     activeCategory?.children || (activeCategory as any)?.subCategories || [];
@@ -73,6 +96,7 @@ export default function ShopScreen() {
         sortBy,
         inStock: onlyInStock ? true : undefined,
         limit: 50,
+        excludeMedicine: !selectedCategorySlug,
       }),
     staleTime: 1000 * 60 * 2,
   });
@@ -121,6 +145,8 @@ export default function ShopScreen() {
         <TouchableOpacity
           onPress={() => router.push('/search')}
           style={styles.searchBtn}
+          delayPressIn={0}
+          activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Search products"
         >
@@ -137,6 +163,7 @@ export default function ShopScreen() {
             {/* "All" Chip */}
             <TouchableOpacity
               onPress={() => handleSelectCategory(null)}
+              delayPressIn={0}
               style={[
                 styles.categoryChip,
                 selectedCategorySlug === null ? styles.categoryChipActive : null,
@@ -160,6 +187,7 @@ export default function ShopScreen() {
                 <TouchableOpacity
                   key={cat.id}
                   onPress={() => handleSelectCategory(cat.slug)}
+                  delayPressIn={0}
                   style={[styles.categoryChip, isSelected ? styles.categoryChipActive : null]}
                   activeOpacity={0.7}
                 >
@@ -193,6 +221,7 @@ export default function ShopScreen() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.subCategoryBarContent}>
             <TouchableOpacity
               onPress={() => handleSelectSubCategory(null)}
+              delayPressIn={0}
               style={[
                 styles.subCategoryChip,
                 selectedSubCategorySlug === null ? styles.subCategoryChipActive : null,
@@ -215,6 +244,7 @@ export default function ShopScreen() {
                 <TouchableOpacity
                   key={sub.id || sub.slug}
                   onPress={() => handleSelectSubCategory(sub.slug)}
+                  delayPressIn={0}
                   style={[styles.subCategoryChip, isSelected ? styles.subCategoryChipActive : null]}
                   activeOpacity={0.7}
                 >
@@ -243,6 +273,7 @@ export default function ShopScreen() {
               <TouchableOpacity
                 key={opt.id}
                 onPress={() => handleToggleSort(opt.id)}
+                delayPressIn={0}
                 style={[styles.filterPill, isSelected ? styles.filterPillActive : null]}
                 activeOpacity={0.7}
               >
@@ -266,6 +297,7 @@ export default function ShopScreen() {
               haptics.selection();
               setOnlyOnSale(!onlyOnSale);
             }}
+            delayPressIn={0}
             style={[styles.filterPill, onlyOnSale ? styles.filterPillActiveRed : null]}
             activeOpacity={0.7}
           >
@@ -286,6 +318,7 @@ export default function ShopScreen() {
               haptics.selection();
               setOnlyInStock(!onlyInStock);
             }}
+            delayPressIn={0}
             style={[styles.filterPill, onlyInStock ? styles.filterPillActive : null]}
             activeOpacity={0.7}
           >
@@ -297,14 +330,134 @@ export default function ShopScreen() {
         </ScrollView>
       </View>
 
-      {/* ── Full Width 2-Column Product Grid ────────────────────────── */}
+      {/* ── Prescription Upload CTA Banner (shown when Medicine category is active) ── */}
+      {isMedicineView && (
+        <View style={styles.rxBannerContainer}>
+          <View style={styles.rxBannerCard}>
+            <View style={styles.rxIconBox}>
+              <Icon name="Upload" size={18} color="#ffffff" />
+            </View>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <Text style={styles.rxBannerTitle}>প্রেসক্রিপশন আপলোড করুন</Text>
+              <Text style={styles.rxBannerSubtitle}>
+                ছবি তুলে পাঠান, আমাদের রেজিস্টার্ড ফার্মাসিস্ট দ্রুত ওষুধ প্রস্তুত করবেন
+              </Text>
+            </View>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              delayPressIn={0}
+              onPress={() => router.push('/prescription/upload')}
+              style={styles.rxUploadBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Upload Prescription"
+            >
+              <Text style={styles.rxUploadBtnText}>আপলোড</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* ── Products List: Medicine 1-Column List or Grocery 2-Column Grid ── */}
       {productsLoading ? (
         <View style={styles.loaderCenter}>
           <ActivityIndicator size="large" color="#0b6234" />
           <Text style={styles.loaderText}>পণ্য লোড হচ্ছে...</Text>
         </View>
+      ) : isMedicineView ? (
+        <FlatList
+          key="medicine-list"
+          data={products}
+          keyExtractor={(item) => item.id}
+          numColumns={1}
+          contentContainerStyle={styles.medicineListContent}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => {
+            const cartItem = cartItems.find((i) => i.productId === item.id);
+            const rawImage =
+              item.image ||
+              item.imageUrl ||
+              item.images?.[0]?.url ||
+              item.primaryImage?.url;
+
+            const price = Number(item.price ?? item.sellingPrice ?? 0);
+            const regularPrice = item.regularPrice ? Number(item.regularPrice) : undefined;
+            const isUntracked = item.trackStock === false;
+            const inStock =
+              item.inStock !== false &&
+              (isUntracked || item.stock === undefined || Number(item.stock) > 0);
+
+            const medData: MedicineItemData = {
+              id: item.id,
+              name: item.name,
+              nameBn: item.nameBn ?? undefined,
+              slug: item.slug,
+              price,
+              originalPrice: regularPrice,
+              genericName: item.medicineMeta?.genericName || (item as any).genericName || undefined,
+              dosageForm: item.medicineMeta?.dosageForm || (item as any).dosageForm || 'Tablet',
+              strength: item.medicineMeta?.strength || (item as any).strength || undefined,
+              manufacturer:
+                item.medicineMeta?.manufacturer ||
+                item.brand?.name ||
+                (item as any).manufacturer ||
+                undefined,
+              isPrescriptionRequired: Boolean(
+                item.medicineMeta?.isPrescriptionRequired ?? (item as any).isPrescriptionRequired,
+              ),
+              unit: item.unit?.shortLabelBn || item.unit?.shortLabel || 'pack',
+              stock: item.stock ? Number(item.stock) : undefined,
+              trackStock: item.trackStock,
+              inStock,
+              imageUrl: assetUrl(rawImage),
+            };
+
+            return (
+              <MedicineListItem
+                product={medData}
+                quantityInCart={cartItem?.quantity}
+                onPress={() => router.push(`/product/${item.slug}`)}
+                onAddToCart={() => {
+                  addItem(
+                    {
+                      id: item.id,
+                      productId: item.id,
+                      name: medData.nameBn || medData.name,
+                      price: medData.price,
+                      unit: medData.unit,
+                      imageUrl: medData.imageUrl,
+                    },
+                    1,
+                  );
+                  toast.success('Cart', `${medData.nameBn || medData.name} ব্যাগে যোগ করা হয়েছে`);
+                }}
+                onQuantityChange={(newQty) => {
+                  if (!cartItem) return;
+                  if (newQty <= 0) {
+                    removeItem(cartItem.id);
+                  } else {
+                    updateQuantity(cartItem.id, newQty);
+                  }
+                }}
+              />
+            );
+          }}
+          ListEmptyComponent={
+            <EmptyState
+              title="কোনো ওষুধ পাওয়া যায়নি"
+              description="আপনার বাছাই করা ফিল্টারে বর্তমানে কোনো ওষুধ নেই।"
+              actionLabel="সব ওষুধ দেখুন"
+              onAction={() => {
+                setSelectedCategorySlug('medicine');
+                setSelectedSubCategorySlug(null);
+                setOnlyOnSale(false);
+                setOnlyInStock(false);
+              }}
+            />
+          }
+        />
       ) : (
         <FlatList
+          key="product-grid"
           data={products}
           keyExtractor={(item) => item.id}
           numColumns={2}
@@ -343,10 +496,9 @@ export default function ShopScreen() {
               unit: item.unit?.shortLabelBn || item.unit?.shortLabel || 'kg',
               packSize: item.packSize ?? undefined,
               stock: item.stock ? Number(item.stock) : undefined,
-              trackStock: isUntracked,
+              trackStock: item.trackStock,
               inStock,
               discountPercent: discount,
-              badge: item.isHot ? 'HOT' : item.isNew ? 'NEW' : undefined,
             };
 
             return (
@@ -367,7 +519,7 @@ export default function ShopScreen() {
                       },
                       item.unit?.minQty ? Number(item.unit.minQty) : 1,
                     );
-                    toast.success('Cart', `${gridItem.banglaName || gridItem.name} added`);
+                    toast.success('Cart', `${gridItem.banglaName || gridItem.name} যোগ করা হয়েছে`);
                   }}
                   onQuantityChange={(newQty) => {
                     if (!cartItem) return;
@@ -571,5 +723,52 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#64748b',
     fontWeight: '500',
+  },
+  rxBannerContainer: {
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: 4,
+  },
+  rxBannerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0b6234',
+    padding: 12,
+    borderRadius: Radius.brand,
+  },
+  rxIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  rxBannerTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#ffffff',
+  },
+  rxBannerSubtitle: {
+    fontSize: 10,
+    color: '#dcfce7',
+    marginTop: 2,
+    lineHeight: 14,
+  },
+  rxUploadBtn: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 6,
+  },
+  rxUploadBtnText: {
+    color: '#0b6234',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  medicineListContent: {
+    padding: 12,
+    paddingBottom: 40,
   },
 });

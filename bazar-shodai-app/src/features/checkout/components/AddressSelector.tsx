@@ -62,8 +62,8 @@ export function AddressSelector({ selectedAddress, onSelectAddress }: AddressSel
       // Local fallback address
       const fallback: CustomerAddress = {
         id: `addr-${Date.now()}`,
-        fullName: fullName.trim() || 'Customer',
-        phone: phone.trim() || '01700000000',
+        fullName: fullName.trim() || user?.name || 'Customer',
+        phone: phone.trim() || user?.phone || '',
         address: addressLine.trim() || 'Shahrasti, Chandpur',
         city,
         latitude: 23.2185,

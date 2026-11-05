@@ -69,7 +69,6 @@ export function FeaturedProductsSection({
               trackStock: (p as any).trackStock,
               inStock: (p as any).inStock,
               discountPercent: p.discountPercent,
-              badge: p.isHot ? 'HOT' : p.isNew ? 'NEW' : undefined,
             };
 
             return (

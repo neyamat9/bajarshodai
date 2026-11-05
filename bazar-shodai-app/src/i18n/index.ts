@@ -12,7 +12,7 @@ const translations: Record<AppLanguage, Record<string, any>> = {
   bn,
 };
 
-let currentLanguage: AppLanguage = (storage.getString(STORAGE_LANG_KEY) as AppLanguage) || 'en';
+let currentLanguage: AppLanguage = (storage.getString(STORAGE_LANG_KEY) as AppLanguage) || 'bn';
 
 const listeners = new Set<(lang: AppLanguage) => void>();
 

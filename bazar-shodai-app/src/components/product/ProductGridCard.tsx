@@ -88,6 +88,7 @@ export function ProductGridCard({
   return (
     <TouchableOpacity
       activeOpacity={0.9}
+      delayPressIn={0}
       onPress={onPress}
       style={[styles.card, Shadows.sm]}
       className={`bg-card border border-border ${className}`}
@@ -110,16 +111,11 @@ export function ProductGridCard({
           </View>
         )}
 
-        {/* Badges: Discount & Status (Top-Left) */}
+        {/* Badges: Only Discount Percentage Badge (Top-Left) */}
         <View style={styles.badgesTopLeft}>
           {discount > 0 ? (
             <View style={styles.discountBadge}>
               <Text style={styles.discountText}>-{discount}%</Text>
-            </View>
-          ) : null}
-          {product.badge && !isOutOfStock ? (
-            <View style={styles.tagBadge}>
-              <Text style={styles.tagText}>{product.badge}</Text>
             </View>
           ) : null}
         </View>
@@ -127,6 +123,7 @@ export function ProductGridCard({
         {/* Wishlist Heart Toggle (Top-Right) */}
         <TouchableOpacity
           activeOpacity={0.7}
+          delayPressIn={0}
           onPress={handleWishlist}
           style={styles.wishlistBtn}
           accessibilityRole="button"
@@ -154,6 +151,7 @@ export function ProductGridCard({
             <View style={styles.stepperContainer}>
               <TouchableOpacity
                 activeOpacity={0.7}
+                delayPressIn={0}
                 onPress={handleDecrease}
                 style={styles.stepperBtn}
                 accessibilityLabel="Decrease quantity"
@@ -163,6 +161,7 @@ export function ProductGridCard({
               <Text style={styles.stepperQty}>{quantityInCart}</Text>
               <TouchableOpacity
                 activeOpacity={0.7}
+                delayPressIn={0}
                 onPress={handleIncrease}
                 style={styles.stepperBtn}
                 accessibilityLabel="Increase quantity"
@@ -173,6 +172,7 @@ export function ProductGridCard({
           ) : (
             <TouchableOpacity
               activeOpacity={0.8}
+              delayPressIn={0}
               onPress={handleAddToCart}
               style={styles.cartBtn}
               accessibilityRole="button"

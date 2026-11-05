@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/api/client';
 import { Icon } from '@/components/ui/Icon';
 import { Price } from '@/components/ui/Price';
 import { Button } from '@/components/ui/Button';
@@ -27,21 +29,54 @@ import { haptics } from '@/services/haptics';
 
 export default function CheckoutScreen() {
   const router = useRouter();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const user = useAuthStore((s) => s.user);
   const { items, subtotal, totalPrice, coupon, deliveryCharge, freeDeliveryThreshold } =
     useCartStore();
 
-  const [selectedAddress, setSelectedAddress] = useState<CustomerAddress | null>({
-    id: 'default-current',
-    fullName: user?.name || 'Customer',
-    phone: user?.phone || '01700000000',
-    address: 'Shahrasti, Chandpur',
-    city: 'Shahrasti',
-    district: 'Chandpur',
-    latitude: 23.2185,
-    longitude: 90.9525,
-    label: 'HOME',
+  useEffect(() => {
+    if (!isAuthenticated) {
+      toast.warning('লগইন প্রয়োজন', 'অর্ডার সম্পন্ন করতে প্রথমে আপনার অ্যাকাউন্টে লগইন করুন');
+      router.replace('/(auth)/login?redirect=/checkout');
+    }
+  }, [isAuthenticated, router]);
+
+  const [selectedAddress, setSelectedAddress] = useState<CustomerAddress | null>(null);
+
+  const { data: addresses = [] } = useQuery({
+    queryKey: ['customer-addresses'],
+    queryFn: async () => {
+      try {
+        const res = await api.get<CustomerAddress[]>('/customer/addresses');
+        return Array.isArray(res) ? res : [];
+      } catch {
+        return [];
+      }
+    },
+    enabled: isAuthenticated,
+    staleTime: 1000 * 60 * 5,
   });
+
+  const effectiveAddress = useMemo(() => {
+    if (selectedAddress) return selectedAddress;
+    if (addresses.length > 0) {
+      return addresses.find((a) => a.isDefault) || addresses[0] || null;
+    }
+    if (user?.phone) {
+      return {
+        id: 'user-profile-default',
+        fullName: user.name || '',
+        phone: user.phone,
+        address: (user as any).address || 'Shahrasti Sadar, Chandpur',
+        city: 'Shahrasti',
+        district: 'Chandpur',
+        latitude: 23.2185,
+        longitude: 90.9525,
+        label: 'HOME' as const,
+      };
+    }
+    return null;
+  }, [selectedAddress, addresses, user]);
 
   const [deliverySlot, setDeliverySlot] = useState('EXPRESS_1_2_HRS');
   const [deliveryNotes, setDeliveryNotes] = useState('');
@@ -64,7 +99,7 @@ export default function CheckoutScreen() {
       return;
     }
 
-    if (!selectedAddress) {
+    if (!effectiveAddress) {
       toast.warning('Address required', 'Please select or add a delivery address');
       return;
     }
@@ -81,13 +116,13 @@ export default function CheckoutScreen() {
       const order = await submitOrderMutation.mutateAsync({
         paymentMethod,
         shippingAddress: {
-          fullName: selectedAddress.fullName,
-          phone: selectedAddress.phone,
-          address: selectedAddress.address,
-          latitude: selectedAddress.latitude,
-          longitude: selectedAddress.longitude,
-          city: selectedAddress.city,
-          district: selectedAddress.district,
+          fullName: effectiveAddress.fullName,
+          phone: effectiveAddress.phone,
+          address: effectiveAddress.address,
+          latitude: effectiveAddress.latitude,
+          longitude: effectiveAddress.longitude,
+          city: effectiveAddress.city,
+          district: effectiveAddress.district,
           locationSource: 'PIN',
         },
         deliverySlot,
@@ -133,7 +168,7 @@ export default function CheckoutScreen() {
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {/* Section 1: Address Selector */}
-          <AddressSelector selectedAddress={selectedAddress} onSelectAddress={setSelectedAddress} />
+          <AddressSelector selectedAddress={effectiveAddress} onSelectAddress={setSelectedAddress} />
 
           <View style={styles.sectionDivider} />
 

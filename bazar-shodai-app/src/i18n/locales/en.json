@@ -13,7 +13,8 @@
   },
   "nav": {
     "home": "Home",
-    "categories": "Categories",
+    "shop": "Shop",
+    "categories": "Shop",
     "cart": "Bag",
     "orders": "Orders",
     "wishlist": "Wishlist",

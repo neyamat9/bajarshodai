@@ -17,8 +17,9 @@ export default function PrescriptionUploadScreen() {
   const user = useAuthStore((s) => s.user);
 
   const [imageUri, setImageUri] = useState<string | null>(null);
-  const [phone, setPhone] = useState(user?.phone || '01700000000');
+  const [phone, setPhone] = useState(user?.phone || '');
   const [notes, setNotes] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const uploadMutation = useUploadPrescription();
 
@@ -85,10 +86,12 @@ export default function PrescriptionUploadScreen() {
     }
 
     try {
+      setUploadProgress(0);
       await uploadMutation.mutateAsync({
         fileUri: imageUri,
         phone: phone.trim(),
         notes: notes.trim() || undefined,
+        onProgress: (pct) => setUploadProgress(pct),
       });
 
       haptics.success();
@@ -217,6 +220,28 @@ export default function PrescriptionUploadScreen() {
             onChangeText={setNotes}
           />
         </View>
+
+        {/* Upload Progress Bar (0% - 100%) */}
+        {uploadMutation.isPending && (
+          <View style={styles.progressContainer}>
+            <View style={styles.progressTextRow}>
+              <Text style={styles.progressStatusText}>
+                {uploadProgress < 100
+                  ? 'প্রেসক্রিপশন আপলোড হচ্ছে...'
+                  : 'যাচাই সম্পন্ন হচ্ছে...'}
+              </Text>
+              <Text style={styles.progressPercentText}>{uploadProgress}%</Text>
+            </View>
+            <View style={styles.progressBarTrack}>
+              <View
+                style={[
+                  styles.progressBarFill,
+                  { width: `${Math.max(5, uploadProgress)}%` },
+                ]}
+              />
+            </View>
+          </View>
+        )}
 
         {/* Submit Button */}
         <View style={styles.submitContainer}>
@@ -414,6 +439,41 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#9ca3af',
     marginTop: 2,
+  },
+  progressContainer: {
+    backgroundColor: '#ffffff',
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    padding: 14,
+    gap: 8,
+  },
+  progressTextRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  progressStatusText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  progressPercentText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0b6234',
+  },
+  progressBarTrack: {
+    height: 8,
+    width: '100%',
+    backgroundColor: '#e5e7eb',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#0b6234',
+    borderRadius: 4,
   },
   submitContainer: {
     marginTop: 8,

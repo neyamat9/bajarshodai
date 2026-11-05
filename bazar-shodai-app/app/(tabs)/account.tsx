@@ -15,11 +15,13 @@ import { getOrCreateGuestToken } from '@/utils/guestToken';
 import { haptics } from '@/services/haptics';
 import { toast } from '@/store/useToastStore';
 import { Radius } from '@/constants/layout';
+import { useTranslation } from '@/i18n';
 
 export default function AccountScreen() {
   const router = useRouter();
   const { isDark } = useAppTheme();
   const { isAuthenticated, user } = useAuthStore();
+  const { isBengali, setLanguage } = useTranslation();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -297,6 +299,7 @@ export default function AccountScreen() {
           <TouchableOpacity
             onPress={() => handleAction('Settings', () => router.push('/(account)/settings'))}
             style={styles.menuRow}
+            delayPressIn={0}
           >
             <View style={styles.menuIconBox}>
               <Icon name="Settings" size={18} color="#0b6234" />
@@ -304,6 +307,49 @@ export default function AccountScreen() {
             <Text style={styles.menuTitle}>App Settings & Biometrics</Text>
             <Icon name="ChevronRight" size={16} color="#94a3b8" />
           </TouchableOpacity>
+
+          <View style={styles.menuDivider} />
+
+          {/* Quick Language Toggle Row */}
+          <View style={styles.menuRow}>
+            <View style={styles.menuIconBox}>
+              <Icon name="Globe" size={18} color="#0b6234" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.menuTitle}>ভাষা / Language</Text>
+              <Text style={{ fontSize: 11, color: '#64748b' }}>
+                {isBengali ? 'বাংলা (ডিফল্ট)' : 'English (Active)'}
+              </Text>
+            </View>
+            <View style={styles.langPills}>
+              <TouchableOpacity
+                onPress={() => {
+                  haptics.selection();
+                  setLanguage('bn');
+                  toast.info('ভাষা পরিবর্তন', 'বাংলা ভাষা সক্রিয় করা হয়েছে');
+                }}
+                delayPressIn={0}
+                style={[styles.langPill, isBengali && styles.langPillActive]}
+              >
+                <Text style={[styles.langPillText, isBengali && styles.langPillTextActive]}>
+                  বাং
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  haptics.selection();
+                  setLanguage('en');
+                  toast.info('Language Changed', 'English language activated');
+                }}
+                delayPressIn={0}
+                style={[styles.langPill, !isBengali && styles.langPillActive]}
+              >
+                <Text style={[styles.langPillText, !isBengali && styles.langPillTextActive]}>
+                  EN
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
 
           {isAuthenticated && (
             <>
@@ -511,6 +557,30 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#f1f5f9',
     marginLeft: 56,
+  },
+  langPills: {
+    flexDirection: 'row',
+    gap: 6,
+    backgroundColor: '#f1f5f9',
+    padding: 3,
+    borderRadius: Radius.full,
+  },
+  langPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: Radius.full,
+  },
+  langPillActive: {
+    backgroundColor: '#0b6234',
+  },
+  langPillText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  langPillTextActive: {
+    color: '#ffffff',
+    fontWeight: '700',
   },
   footerInfo: {
     alignItems: 'center',

@@ -87,7 +87,10 @@ export function CategoryDrawerModal({ visible, onClose }: CategoryDrawerModalPro
   const handleNavigateCategory = (slug: string) => {
     haptics.light();
     handleDismiss();
-    router.push(`/category/${slug}`);
+    router.push({
+      pathname: '/(tabs)/categories',
+      params: { category: slug },
+    });
   };
 
   const handleQuickNav = (path: string) => {
@@ -256,7 +259,7 @@ export function CategoryDrawerModal({ visible, onClose }: CategoryDrawerModalPro
             {/* Bottom Footer Actions */}
             <View style={styles.footer}>
               <TouchableOpacity
-                onPress={() => handleQuickNav('/search')}
+                onPress={() => handleQuickNav('/(tabs)/categories')}
                 style={styles.browseAllBtn}
                 activeOpacity={0.8}
               >

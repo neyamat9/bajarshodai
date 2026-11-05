@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Radius } from '@/constants/layout';
 import { useCartStore } from '@/store/useCartStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import { useServerCart, clearServerCartApi } from '@/features/cart/api/cartApi';
 import { FreeShippingProgressBar } from '@/features/cart/components/FreeShippingProgressBar';
 import { CouponInput } from '@/features/cart/components/CouponInput';
@@ -18,6 +19,7 @@ import { haptics } from '@/services/haptics';
 
 export default function CartScreen() {
   const router = useRouter();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const [showClearDialog, setShowClearDialog] = useState(false);
 
   const {
@@ -169,6 +171,14 @@ export default function CartScreen() {
             size="lg"
             onPress={() => {
               haptics.selection();
+              if (!isAuthenticated) {
+                toast.warning(
+                  'লগইন প্রয়োজন',
+                  'অর্ডার সম্পন্ন করতে প্রথমে আপনার অ্যাকাউন্টে লগইন করুন',
+                );
+                router.push('/(auth)/login?redirect=/checkout');
+                return;
+              }
               router.push('/checkout');
             }}
             rightIcon={<Icon name="ArrowRight" size={18} color="#ffffff" />}

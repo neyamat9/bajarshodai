@@ -13,7 +13,8 @@
   },
   "nav": {
     "home": "হোম",
-    "categories": "ক্যাটাগরি",
+    "shop": "শপ",
+    "categories": "শপ",
     "cart": "ব্যাগ",
     "orders": "অর্ডার",
     "wishlist": "উইশলিস্ট",

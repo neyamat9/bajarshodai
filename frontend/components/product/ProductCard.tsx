@@ -245,18 +245,13 @@ export default function ProductCard({
           </div>
         )}
 
-        {/* Badges: the discount first, then one of new / best seller / limited */}
+        {/* Badges: only the discount percentage badge */}
         <div className="absolute left-2 top-2 z-10 flex flex-col items-start gap-1">
           {product.discount && product.discount > 0 ? (
             <span className="rounded bg-destructive px-1.5 py-0.5 text-[10px] font-bold leading-none text-white shadow-sm">
               -{formatNumber(product.discount, locale, 0)}%
             </span>
           ) : null}
-          {badge && !outOfStock && (
-            <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold leading-none ${BADGE_STYLES[badge] ?? "bg-secondary text-foreground"}`}>
-              {t(`badges.${badge.replace(" ", "_")}`)}
-            </span>
-          )}
         </div>
 
         {/* Wishlist */}

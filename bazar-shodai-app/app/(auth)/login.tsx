@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, TextInput, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/store/useToastStore';
@@ -13,6 +13,7 @@ import { Radius, TouchTarget } from '@/constants/layout';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ redirect?: string }>();
   const login = useAuthStore((s) => s.login);
 
   const [identifier, setIdentifier] = useState('');
@@ -53,7 +54,9 @@ export default function LoginScreen() {
         session.user?.name ? `Logged in as ${session.user.name}` : 'Login successful',
       );
 
-      if (router.canGoBack()) {
+      if (params.redirect) {
+        router.replace(params.redirect as any);
+      } else if (router.canGoBack()) {
         router.back();
       } else {
         router.replace('/(tabs)');

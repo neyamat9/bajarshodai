@@ -56,7 +56,12 @@ export function CategoryGridSection({ categories, className = '' }: CategoryGrid
                 iconUrl: cat.image || cat.icon || undefined,
                 productCount: cat.productCount,
               }}
-              onPress={() => router.push(`/category/${cat.slug}`)}
+              onPress={() =>
+                router.push({
+                  pathname: '/(tabs)/categories',
+                  params: { category: cat.slug },
+                })
+              }
             />
           ))}
         </View>

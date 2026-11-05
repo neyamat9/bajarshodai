@@ -6,27 +6,46 @@ import { Icon, IconName } from '@/components/ui/Icon';
 import { useAppTheme } from '@/components/theme/ThemeProvider';
 import { haptics } from '@/services/haptics';
 import { useCartStore } from '@/store/useCartStore';
+import { useTranslation } from '@/i18n';
 
 interface TabConfig {
   icon: IconName;
-  label: string;
+  fallbackLabel: string;
 }
 
 const TAB_CONFIG: Record<string, TabConfig> = {
-  index: { icon: 'Home', label: 'Home' },
-  categories: { icon: 'Store', label: 'Shop' },
-  cart: { icon: 'ShoppingBag', label: 'Cart' },
-  wishlist: { icon: 'Heart', label: 'Wishlist' },
-  account: { icon: 'User', label: 'Account' },
+  index: { icon: 'Home', fallbackLabel: 'Home' },
+  categories: { icon: 'Store', fallbackLabel: 'Shop' },
+  cart: { icon: 'ShoppingBag', fallbackLabel: 'Cart' },
+  wishlist: { icon: 'Heart', fallbackLabel: 'Wishlist' },
+  account: { icon: 'User', fallbackLabel: 'Account' },
 };
 
-export function TabBar({ state, descriptors, navigateToTab }: BottomTabBarProps) {
+export function TabBar({ state, descriptors, navigateToTab, emitter }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const { isDark } = useAppTheme();
+  const { t } = useTranslation();
   const cartItemCount = useCartStore((s) => s.items.reduce((sum, item) => sum + item.quantity, 0));
 
   const activeColor = isDark ? '#45a22c' : '#0b6234';
   const inactiveColor = isDark ? '#94a3b8' : '#64748b';
+
+  const getTabLabel = (routeName: string, fallback: string): string => {
+    switch (routeName) {
+      case 'index':
+        return t('nav.home');
+      case 'categories':
+        return t('nav.shop');
+      case 'cart':
+        return t('nav.cart');
+      case 'wishlist':
+        return t('nav.wishlist');
+      case 'account':
+        return t('nav.account');
+      default:
+        return fallback;
+    }
+  };
 
   return (
     <View
@@ -43,15 +62,22 @@ export function TabBar({ state, descriptors, navigateToTab }: BottomTabBarProps)
           const descriptor = descriptors[route.key];
           const isFocused = state.index === index;
           const config = TAB_CONFIG[route.name] || {
-            icon: 'Circle',
-            label: descriptor?.options?.title || route.name,
+            icon: 'Circle' as IconName,
+            fallbackLabel: descriptor?.options?.title || route.name,
           };
+          const label = getTabLabel(route.name, config.fallbackLabel);
 
           const isCart = route.name === 'cart';
 
           const onPress = () => {
             haptics.selection();
-            if (!isFocused) {
+            const event = emitter?.emit?.({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
+
+            if (!isFocused && (!event || !event.defaultPrevented)) {
               navigateToTab(route.key);
             }
           };
@@ -59,9 +85,10 @@ export function TabBar({ state, descriptors, navigateToTab }: BottomTabBarProps)
           return (
             <TouchableOpacity
               key={route.key}
+              delayPressIn={0}
               accessibilityRole="tab"
               accessibilityState={{ selected: isFocused }}
-              accessibilityLabel={descriptor?.options?.tabBarAccessibilityLabel || config.label}
+              accessibilityLabel={descriptor?.options?.tabBarAccessibilityLabel || label}
               onPress={onPress}
               activeOpacity={0.7}
               style={styles.tabButton}
@@ -89,7 +116,7 @@ export function TabBar({ state, descriptors, navigateToTab }: BottomTabBarProps)
                   },
                 ]}
               >
-                {config.label}
+                {label}
               </Text>
               {isFocused && <View style={[styles.indicator, { backgroundColor: activeColor }]} />}
             </TouchableOpacity>

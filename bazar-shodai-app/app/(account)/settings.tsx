@@ -10,17 +10,18 @@ import { toast } from '@/store/useToastStore';
 import { haptics } from '@/services/haptics';
 import { storage } from '@/utils/storage';
 import { clearAppImageCache } from '@/utils/imageConfig';
+import { useTranslation } from '@/i18n';
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { isDark, toggleTheme } = useAppTheme();
+  const { language: appLang, setLanguage } = useTranslation();
 
   const [biometricsAvailable, setBiometricsAvailable] = useState(false);
   const [biometricsEnabled, setBiometricsEnabled] = useState(
     () => storage.getBoolean('settings_biometrics_enabled') ?? false,
   );
   const [pushEnabled, setPushEnabled] = useState(true);
-  const [appLang, setAppLang] = useState<'en' | 'bn'>('en');
 
   useEffect(() => {
     // Check hardware biometrics capability
@@ -136,9 +137,10 @@ export default function SettingsScreen() {
               <TouchableOpacity
                 onPress={() => {
                   haptics.selection();
-                  setAppLang('en');
+                  setLanguage('en');
                   toast.info('Language Updated', 'App language set to English');
                 }}
+                delayPressIn={0}
                 style={[styles.langPill, appLang === 'en' && styles.langPillActive]}
               >
                 <Text style={[styles.langPillText, appLang === 'en' && styles.langPillTextActive]}>
@@ -149,9 +151,10 @@ export default function SettingsScreen() {
               <TouchableOpacity
                 onPress={() => {
                   haptics.selection();
-                  setAppLang('bn');
+                  setLanguage('bn');
                   toast.info('ভাষা পরিবর্তন', 'ভাষা বাংলায় সেট করা হয়েছে');
                 }}
+                delayPressIn={0}
                 style={[styles.langPill, appLang === 'bn' && styles.langPillActive]}
               >
                 <Text style={[styles.langPillText, appLang === 'bn' && styles.langPillTextActive]}>

@@ -66,7 +66,6 @@ export function BestSellersSection({ products, className = '' }: BestSellersSect
               trackStock: (p as any).trackStock,
               inStock: (p as any).inStock,
               discountPercent: p.discountPercent,
-              badge: 'BEST SELLER',
             };
 
             return (
