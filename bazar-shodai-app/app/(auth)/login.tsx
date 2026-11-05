@@ -10,6 +10,7 @@ import { loginApi } from '@/features/auth/api/login';
 import { useAuthStore } from '@/store/useAuthStore';
 import { getOrCreateGuestToken } from '@/utils/guestToken';
 import { Radius, TouchTarget } from '@/constants/layout';
+import { getErrorMessage } from '@/api/errorHandler';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -63,12 +64,9 @@ export default function LoginScreen() {
       }
     } catch (error: unknown) {
       haptics.error();
-      const msg =
-        error instanceof Error
-          ? error.message
-          : 'Invalid credentials. Please verify your phone/email and password.';
+      const msg = getErrorMessage(error, 'ফোন নম্বর বা পাসওয়ার্ড ঠিক নয়। আবার চেষ্টা করুন।');
       setErrorMessage(msg);
-      toast.error('Login Failed', msg);
+      toast.error('লগইন ব্যর্থ', msg);
     } finally {
       setIsSubmitting(false);
     }

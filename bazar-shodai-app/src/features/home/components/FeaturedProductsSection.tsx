@@ -32,14 +32,9 @@ export function FeaturedProductsSection({
       {/* Section Header */}
       <View className="flex-row items-center justify-between mb-3">
         <View>
-          <View className="flex-row items-center gap-1.5">
-            <Text className="text-base font-bold text-foreground">আজকের তাজা বাজার</Text>
-            <View className="px-1.5 py-0.5 rounded bg-brand-fresh/15">
-              <Text className="text-[10px] font-bold text-brand-fresh">DAILY FRESH</Text>
-            </View>
-          </View>
-          <Text className="text-[11px] text-muted-foreground">
-            Fresh harvest directly from Shahrasti growers
+          <Text className="text-base font-bold text-foreground">আজকের তাজা বাজার</Text>
+          <Text className="text-[11px] text-muted-foreground mt-0.5">
+            শাহরাস্তির স্থানীয় কৃষকদের কাছ থেকে সরাসরি সংগৃহীত তাজা পণ্য
           </Text>
         </View>
       </View>

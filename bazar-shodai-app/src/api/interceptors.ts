@@ -2,6 +2,7 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'ax
 import { tokenVault } from '@/utils/secureStore';
 import { getOrCreateGuestToken, GUEST_TOKEN_HEADER } from '@/utils/guestToken';
 import { ENV } from '@/config/env';
+import { normalizeApiError } from './errorHandler';
 
 interface RetryableRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
@@ -58,7 +59,9 @@ export function setupInterceptors(client: AxiosInstance): void {
 
       // Handle network errors or missing request
       if (!originalRequest) {
-        return Promise.reject(error);
+        const normalized = normalizeApiError(error);
+      error.message = normalized.message;
+      return Promise.reject(error);
       }
 
       // Do not attempt refresh on auth endpoints to prevent infinite loops
@@ -91,7 +94,9 @@ export function setupInterceptors(client: AxiosInstance): void {
         if (!refreshToken || !userId) {
           isRefreshing = false;
           await tokenVault.clearTokens();
-          return Promise.reject(error);
+          const normalized = normalizeApiError(error);
+      error.message = normalized.message;
+      return Promise.reject(error);
         }
 
         try {
@@ -126,6 +131,8 @@ export function setupInterceptors(client: AxiosInstance): void {
         }
       }
 
+      const normalized = normalizeApiError(error);
+      error.message = normalized.message;
       return Promise.reject(error);
     },
   );

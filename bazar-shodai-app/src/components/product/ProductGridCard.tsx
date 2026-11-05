@@ -184,16 +184,18 @@ function ProductGridCardComponent({
         </View>
       </View>
 
-      {/* ── Product Info Beneath Image ─────────────────────────── */}
+      {/* ── Product Info Beneath Image (Strict Uniform Height) ── */}
       <View style={styles.infoArea}>
-        <Text numberOfLines={2} style={styles.titleText} className="text-foreground">
-          {displayTitle}
-        </Text>
-        {displayUnit ? (
-          <Text numberOfLines={1} style={styles.unitText} className="text-muted-foreground">
-            {displayUnit}
+        <View style={styles.titleContainer}>
+          <Text numberOfLines={2} style={styles.titleText} className="text-foreground">
+            {displayTitle}
           </Text>
-        ) : null}
+        </View>
+        <View style={styles.unitContainer}>
+          <Text numberOfLines={1} style={styles.unitText} className="text-muted-foreground">
+            {displayUnit || ' '}
+          </Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -374,14 +376,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingTop: 7,
     paddingBottom: 9,
+    height: 66,
+    justifyContent: 'space-between',
+  },
+  titleContainer: {
+    height: 32,
+    justifyContent: 'flex-start',
   },
   titleText: {
     fontSize: 12,
     fontWeight: '600',
     lineHeight: 16,
   },
+  unitContainer: {
+    height: 15,
+    justifyContent: 'center',
+    marginTop: 3,
+  },
   unitText: {
     fontSize: 10.5,
-    marginTop: 2.5,
+    lineHeight: 14,
   },
 });

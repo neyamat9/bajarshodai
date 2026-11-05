@@ -95,9 +95,11 @@ export function useServerCart() {
     queryKey: ['server-cart'],
     queryFn: async () => {
       try {
+        const localItems = useCartStore.getState().items;
         const res = await fetchServerCartApi();
-        if (res && res.items) {
-          // Sync to local store
+
+        if (res && Array.isArray(res.items) && res.items.length > 0) {
+          // Sync server items
           const mapped = res.items.map((it) => ({
             id: it.product.id,
             productId: it.product.id,
@@ -110,11 +112,37 @@ export function useServerCart() {
             unit: it.product.unit?.shortLabel || 'kg',
             stock: it.product.stock,
           }));
-          setItems(mapped);
+
+          // Merge any local items that haven't synced to server yet
+          const serverProductIds = new Set(mapped.map((m) => m.productId));
+          const unsyncedLocal = localItems.filter((l) => !serverProductIds.has(l.productId));
+
+          // Sync unsynced local items to the server in the background
+          for (const it of unsyncedLocal) {
+            void addServerCartItemApi({ productId: it.productId, quantity: it.quantity }).catch(
+              () => {},
+            );
+          }
+
+          const combined = [...mapped, ...unsyncedLocal];
+          setItems(combined);
+          return res;
         }
+
+        // CRITICAL: If server cart is empty but local cart has items, NEVER wipe out local items!
+        // Push local items to server instead so they persist across refreshes!
+        if (localItems.length > 0) {
+          for (const it of localItems) {
+            void addServerCartItemApi({ productId: it.productId, quantity: it.quantity }).catch(
+              () => {},
+            );
+          }
+          return { id: '', items: [], subtotal: 0, itemCount: 0 };
+        }
+
         return res;
       } catch {
-        // Fallback to local cart store silently
+        // Fallback to local cart store silently - never wipe local cart on network/server error!
         return null;
       }
     },

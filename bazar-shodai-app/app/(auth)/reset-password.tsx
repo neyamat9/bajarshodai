@@ -8,6 +8,7 @@ import { toast } from '@/store/useToastStore';
 import { haptics } from '@/services/haptics';
 import { resetPasswordApi } from '@/features/auth/api/resetPassword';
 import { Radius, TouchTarget } from '@/constants/layout';
+import { getErrorMessage } from '@/api/errorHandler';
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
@@ -53,12 +54,12 @@ export default function ResetPasswordScreen() {
       router.replace('/(auth)/login');
     } catch (error: unknown) {
       haptics.error();
-      const msg =
-        error instanceof Error
-          ? error.message
-          : 'Failed to reset password. The token may be expired or invalid.';
+      const msg = getErrorMessage(
+        error,
+        'পাসওয়ার্ড পরিবর্তন ব্যর্থ হয়েছে। লিংকটি মেয়াদোত্তীর্ণ বা অকার্যকর হতে পারে।',
+      );
       setErrorMessage(msg);
-      toast.error('Reset Failed', msg);
+      toast.error('রিসেট ব্যর্থ', msg);
     } finally {
       setIsSubmitting(false);
     }

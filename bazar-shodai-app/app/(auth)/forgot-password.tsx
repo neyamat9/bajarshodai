@@ -8,6 +8,7 @@ import { toast } from '@/store/useToastStore';
 import { haptics } from '@/services/haptics';
 import { forgotPasswordApi } from '@/features/auth/api/forgotPassword';
 import { Radius, TouchTarget } from '@/constants/layout';
+import { getErrorMessage } from '@/api/errorHandler';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -38,12 +39,9 @@ export default function ForgotPasswordScreen() {
       );
     } catch (error: unknown) {
       haptics.error();
-      const msg =
-        error instanceof Error
-          ? error.message
-          : 'Unable to process recovery request. Please try again.';
+      const msg = getErrorMessage(error, 'পাসওয়ার্ড পুনরুদ্ধারের অনুরোধ ব্যর্থ হয়েছে। আবার চেষ্টা করুন।');
       setErrorMessage(msg);
-      toast.error('Recovery Failed', msg);
+      toast.error('অনুরোধ ব্যর্থ', msg);
     } finally {
       setIsSubmitting(false);
     }

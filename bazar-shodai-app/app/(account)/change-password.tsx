@@ -8,6 +8,7 @@ import { toast } from '@/store/useToastStore';
 import { haptics } from '@/services/haptics';
 import { changePasswordApi } from '@/features/auth/api/changePassword';
 import { Radius, TouchTarget } from '@/constants/layout';
+import { getErrorMessage } from '@/api/errorHandler';
 
 export default function ChangePasswordScreen() {
   const router = useRouter();
@@ -51,12 +52,12 @@ export default function ChangePasswordScreen() {
       router.back();
     } catch (error: unknown) {
       haptics.error();
-      const msg =
-        error instanceof Error
-          ? error.message
-          : 'Unable to change password. Please check your current password.';
+      const msg = getErrorMessage(
+        error,
+        'পাসওয়ার্ড পরিবর্তন ব্যর্থ হয়েছে। বর্তমান পাসওয়ার্ড সঠিক আছে কিনা দেখুন।',
+      );
       setErrorMessage(msg);
-      toast.error('Failed', msg);
+      toast.error('ব্যর্থ', msg);
     } finally {
       setIsSubmitting(false);
     }

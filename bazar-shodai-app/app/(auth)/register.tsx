@@ -11,6 +11,7 @@ import { registerApi } from '@/features/auth/api/register';
 import { useAuthStore } from '@/store/useAuthStore';
 import { getOrCreateGuestToken } from '@/utils/guestToken';
 import { Radius, TouchTarget } from '@/constants/layout';
+import { getErrorMessage } from '@/api/errorHandler';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -76,12 +77,12 @@ export default function RegisterScreen() {
       router.replace('/(tabs)');
     } catch (error: unknown) {
       haptics.error();
-      const msg =
-        error instanceof Error
-          ? error.message
-          : 'Registration failed. A customer with this phone number may already exist.';
+      const msg = getErrorMessage(
+        error,
+        'এই ফোন নম্বরে আগেই অ্যাকাউন্ট আছে। অনুগ্রহ করে লগইন করুন।',
+      );
       setErrorMessage(msg);
-      toast.error('Registration Failed', msg);
+      toast.error('নিবন্ধন ব্যর্থ', msg);
     } finally {
       setIsSubmitting(false);
     }

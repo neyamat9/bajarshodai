@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { storage } from '@/utils/storage';
+import { api } from '@/api/client';
 
 export interface CartItem {
   id: string;
@@ -117,17 +118,38 @@ export const useCartStore = create<CartState>((set, get) => ({
       persistCartAsync(updated);
       return { items: updated };
     });
+
+    // Background sync to server so cart persists on server & refresh
+    void api
+      .post<{ id?: string }>('/customer/cart', { productId: item.productId, quantity })
+      .then((res) => {
+        if (res?.id) {
+          set((state) => {
+            const synced = state.items.map((i) =>
+              i.productId === item.productId ? { ...i, serverItemId: res.id } : i,
+            );
+            persistCartAsync(synced);
+            return { items: synced };
+          });
+        }
+      })
+      .catch(() => {});
   },
 
   removeItem: (productId) => {
+    const item = get().items.find((i) => i.productId === productId);
     set((state) => {
       const updated = state.items.filter((i) => i.productId !== productId);
       persistCartAsync(updated);
       return { items: updated };
     });
+
+    const targetId = item?.serverItemId || productId;
+    void api.delete(`/customer/cart/${encodeURIComponent(targetId)}`).catch(() => {});
   },
 
   updateQuantity: (productId, quantity) => {
+    const item = get().items.find((i) => i.productId === productId);
     set((state) => {
       let updated: CartItem[];
       if (quantity <= 0) {
@@ -138,12 +160,20 @@ export const useCartStore = create<CartState>((set, get) => ({
       persistCartAsync(updated);
       return { items: updated };
     });
+
+    if (quantity <= 0) {
+      const targetId = item?.serverItemId || productId;
+      void api.delete(`/customer/cart/${encodeURIComponent(targetId)}`).catch(() => {});
+    } else {
+      void api.post('/customer/cart', { productId, quantity }).catch(() => {});
+    }
   },
 
   clearCart: () => {
     storage.remove(STORAGE_KEY);
     storage.remove(COUPON_STORAGE_KEY);
     set({ items: [], coupon: null });
+    void api.delete('/customer/cart').catch(() => {});
   },
 
   setItems: (items) => {
