@@ -85,54 +85,6 @@ export default function OrderDetailScreen() {
 
   const { data: serverOrder, isLoading, refetch } = useOrderDetail(orderId);
 
-  // Fallback mock order if offline or newly created
-  const order: CustomerOrderRecord = serverOrder || {
-    id: orderId,
-    orderNumber: orderId.startsWith('ORD-') ? orderId : `BS-${orderId.slice(0, 8).toUpperCase()}`,
-    status: 'OUT_FOR_DELIVERY',
-    paymentMethod: 'CASH_ON_DELIVERY',
-    paymentStatus: 'PENDING',
-    totalAmount: 620,
-    subtotal: 580,
-    deliveryFee: 40,
-    discountAmount: 0,
-    shippingAddress: {
-      fullName: 'Tanvir Ahmed',
-      phone: '01712345678',
-      address: 'House #12, Road #4, Shahrasti Bazar, Chandpur',
-      city: 'Shahrasti',
-      district: 'Chandpur',
-    },
-    items: [
-      {
-        id: 'oi-1',
-        productId: 'fresh-tomatoes',
-        productName: 'Deshi Fresh Tomatoes',
-        productNameBn: 'দেশি পাকা টমেটো',
-        quantity: 2,
-        unitPrice: 60,
-        totalPrice: 120,
-        unit: 'kg',
-      },
-      {
-        id: 'oi-2',
-        productId: 'rui-fish',
-        productName: 'River Rui Fish Whole',
-        productNameBn: 'মেঘনার তাজা রুই মাছ',
-        quantity: 1,
-        unitPrice: 500,
-        totalPrice: 500,
-        unit: 'kg',
-      },
-    ],
-    createdAt: new Date().toISOString(),
-  };
-
-  const currentStepIndex = ORDER_STATUS_ORDER.indexOf(order.status);
-  const isCancelled = order.status === 'CANCELLED';
-  const canCancel = order.status === 'PENDING' || order.status === 'CONFIRMED';
-  const isOutForDelivery = order.status === 'OUT_FOR_DELIVERY';
-
   const getStatusBadgeVariant = (status: OrderStatus): BadgeVariant => {
     switch (status) {
       case 'DELIVERED':
@@ -158,6 +110,45 @@ export default function OrderDetailScreen() {
       </SafeAreaView>
     );
   }
+
+  if (!serverOrder) {
+    return (
+      <SafeAreaView edges={['top']} style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+          >
+            <Icon name="ArrowLeft" size={22} color="#0b6234" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Order Details</Text>
+          <View style={{ width: 40 }} />
+        </View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+          <Icon name="Package" size={56} color="#94a3b8" />
+          <Text style={{ fontSize: 18, fontWeight: '700', color: '#1e293b', marginTop: 16 }}>
+            অর্ডারটি পাওয়া যায়নি
+          </Text>
+          <Text style={{ fontSize: 13, color: '#64748b', textAlign: 'center', marginTop: 8, marginBottom: 24 }}>
+            এই অর্ডার নম্বরে কোনো তথ্য খুঁজে পাওয়া যায়নি অথবা আপনি লগইন করেননি।
+          </Text>
+          <Button
+            title="সকল অর্ডার দেখুন"
+            onPress={() => router.replace('/(account)/orders')}
+            variant="primary"
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const order: CustomerOrderRecord = serverOrder;
+  const currentStepIndex = ORDER_STATUS_ORDER.indexOf(order.status);
+  const isCancelled = order.status === 'CANCELLED';
+  const canCancel = order.status === 'PENDING' || order.status === 'CONFIRMED';
+  const isOutForDelivery = order.status === 'OUT_FOR_DELIVERY';
 
   return (
     <SafeAreaView edges={['top']} style={styles.container}>

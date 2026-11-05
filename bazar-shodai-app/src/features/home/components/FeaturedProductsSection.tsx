@@ -66,6 +66,8 @@ export function FeaturedProductsSection({
               unit: p.unit?.shortLabelBn || p.unit?.shortLabel || 'kg',
               packSize: p.packSize ?? undefined,
               stock: p.stock,
+              trackStock: (p as any).trackStock,
+              inStock: (p as any).inStock,
               discountPercent: p.discountPercent,
               badge: p.isHot ? 'HOT' : p.isNew ? 'NEW' : undefined,
             };

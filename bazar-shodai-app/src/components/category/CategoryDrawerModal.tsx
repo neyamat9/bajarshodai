@@ -9,6 +9,7 @@ import {
   StyleSheet,
   useWindowDimensions,
   TouchableWithoutFeedback,
+  Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -38,33 +39,42 @@ export function CategoryDrawerModal({ visible, onClose }: CategoryDrawerModalPro
 
   useEffect(() => {
     if (visible) {
+      slideAnim.setValue(-drawerWidth);
+      opacityAnim.setValue(0);
       Animated.parallel([
         Animated.timing(slideAnim, {
           toValue: 0,
-          duration: 280,
+          duration: 260,
+          easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
         Animated.timing(opacityAnim, {
           toValue: 1,
-          duration: 250,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.timing(slideAnim, {
-          toValue: -drawerWidth,
-          duration: 220,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacityAnim, {
-          toValue: 0,
-          duration: 200,
+          duration: 240,
           useNativeDriver: true,
         }),
       ]).start();
     }
   }, [visible, drawerWidth, slideAnim, opacityAnim]);
+
+  const handleDismiss = () => {
+    haptics.light();
+    Animated.parallel([
+      Animated.timing(slideAnim, {
+        toValue: -drawerWidth,
+        duration: 200,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 0,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      onClose();
+    });
+  };
 
   const toggleExpand = (catId: string) => {
     haptics.selection();
@@ -76,13 +86,13 @@ export function CategoryDrawerModal({ visible, onClose }: CategoryDrawerModalPro
 
   const handleNavigateCategory = (slug: string) => {
     haptics.light();
-    onClose();
+    handleDismiss();
     router.push(`/category/${slug}`);
   };
 
   const handleQuickNav = (path: string) => {
     haptics.light();
-    onClose();
+    handleDismiss();
     router.push(path as any);
   };
 
@@ -91,12 +101,12 @@ export function CategoryDrawerModal({ visible, onClose }: CategoryDrawerModalPro
       visible={visible}
       transparent
       animationType="none"
-      onRequestClose={onClose}
+      onRequestClose={handleDismiss}
       statusBarTranslucent
     >
       <View style={styles.modalRoot}>
         {/* Backdrop */}
-        <TouchableWithoutFeedback onPress={onClose}>
+        <TouchableWithoutFeedback onPress={handleDismiss}>
           <Animated.View style={[styles.backdrop, { opacity: opacityAnim }]} />
         </TouchableWithoutFeedback>
 
@@ -123,7 +133,7 @@ export function CategoryDrawerModal({ visible, onClose }: CategoryDrawerModalPro
               </View>
 
               <TouchableOpacity
-                onPress={onClose}
+                onPress={handleDismiss}
                 style={styles.closeBtn}
                 accessibilityRole="button"
                 accessibilityLabel="Close"

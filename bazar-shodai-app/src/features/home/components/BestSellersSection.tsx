@@ -63,6 +63,8 @@ export function BestSellersSection({ products, className = '' }: BestSellersSect
               unit: p.unit?.shortLabelBn || p.unit?.shortLabel || 'pc',
               packSize: p.packSize ?? undefined,
               stock: p.stock,
+              trackStock: (p as any).trackStock,
+              inStock: (p as any).inStock,
               discountPercent: p.discountPercent,
               badge: 'BEST SELLER',
             };

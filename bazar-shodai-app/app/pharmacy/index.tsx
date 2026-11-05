@@ -26,94 +26,6 @@ import { haptics } from '@/services/haptics';
 
 type FilterType = 'ALL' | 'OTC' | 'PRESCRIPTION';
 
-interface MockMedicine {
-  id: string;
-  name: string;
-  nameBn?: string;
-  genericName: string;
-  dosageForm: string;
-  strength: string;
-  manufacturer: string;
-  price: number;
-  isPrescriptionRequired: boolean;
-  unit: string;
-}
-
-const FALLBACK_MEDICINES: MockMedicine[] = [
-  {
-    id: 'med-1',
-    name: 'Napa Extra',
-    nameBn: 'নাপা এক্সট্রা',
-    genericName: 'Paracetamol + Caffeine',
-    dosageForm: 'Tablet',
-    strength: '500mg + 65mg',
-    manufacturer: 'Beximco Pharmaceuticals Ltd.',
-    price: 35,
-    isPrescriptionRequired: false,
-    unit: 'strip (10 pcs)',
-  },
-  {
-    id: 'med-2',
-    name: 'Seclo 20',
-    nameBn: 'সেকলো ২০',
-    genericName: 'Omeprazole',
-    dosageForm: 'Capsule',
-    strength: '20mg',
-    manufacturer: 'Square Pharmaceuticals Ltd.',
-    price: 70,
-    isPrescriptionRequired: false,
-    unit: 'strip (10 pcs)',
-  },
-  {
-    id: 'med-3',
-    name: 'Azithromycin 500',
-    nameBn: 'অ্যাজিথ্রোমাইসিন ৫০০',
-    genericName: 'Azithromycin',
-    dosageForm: 'Tablet',
-    strength: '500mg',
-    manufacturer: 'Square Pharmaceuticals Ltd.',
-    price: 180,
-    isPrescriptionRequired: true,
-    unit: 'strip (6 pcs)',
-  },
-  {
-    id: 'med-4',
-    name: 'Fexo 120',
-    nameBn: 'ফেক্সো ১২০',
-    genericName: 'Fexofenadine Hydrochloride',
-    dosageForm: 'Tablet',
-    strength: '120mg',
-    manufacturer: 'Square Pharmaceuticals Ltd.',
-    price: 90,
-    isPrescriptionRequired: false,
-    unit: 'strip (10 pcs)',
-  },
-  {
-    id: 'med-5',
-    name: 'Montene 10',
-    nameBn: 'মন্টিন ১০',
-    genericName: 'Montelukast Sodium',
-    dosageForm: 'Tablet',
-    strength: '10mg',
-    manufacturer: 'Incepta Pharmaceuticals Ltd.',
-    price: 160,
-    isPrescriptionRequired: true,
-    unit: 'strip (10 pcs)',
-  },
-  {
-    id: 'med-6',
-    name: 'Ceevit',
-    nameBn: 'সিভিট',
-    genericName: 'Ascorbic Acid (Vitamin C)',
-    dosageForm: 'Chewable Tablet',
-    strength: '250mg',
-    manufacturer: 'Square Pharmaceuticals Ltd.',
-    price: 25,
-    isPrescriptionRequired: false,
-    unit: 'strip (10 pcs)',
-  },
-];
-
 export default function PharmacyCatalogScreen() {
   const router = useRouter();
   const addItem = useCartStore((s) => s.addItem);
@@ -137,37 +49,20 @@ export default function PharmacyCatalogScreen() {
     staleTime: 1000 * 60 * 5,
   });
 
-  // Combine API results with fallback if empty
   const medicinesList = React.useMemo(() => {
-    if (apiMedicines.length > 0) {
-      return apiMedicines.map((m: any) => ({
-        id: m.id,
-        name: m.name,
-        nameBn: m.nameBn,
-        genericName: m.medicineMeta?.genericName || 'General Medicine',
-        dosageForm: m.medicineMeta?.dosageForm || 'Unit',
-        strength: m.medicineMeta?.strength || '',
-        manufacturer: m.medicineMeta?.manufacturer || m.brand?.name || 'Licensed Pharma',
-        price: m.price,
-        isPrescriptionRequired: Boolean(m.medicineMeta?.isPrescriptionRequired),
-        unit: m.unit?.shortLabel || 'pack',
-      }));
-    }
-
-    return FALLBACK_MEDICINES.filter((item) => {
-      if (activeFilter === 'OTC' && item.isPrescriptionRequired) return false;
-      if (activeFilter === 'PRESCRIPTION' && !item.isPrescriptionRequired) return false;
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        return (
-          item.name.toLowerCase().includes(q) ||
-          item.genericName.toLowerCase().includes(q) ||
-          (item.nameBn && item.nameBn.includes(q))
-        );
-      }
-      return true;
-    });
-  }, [apiMedicines, activeFilter, searchQuery]);
+    return apiMedicines.map((m: any) => ({
+      id: m.id,
+      name: m.name,
+      nameBn: m.nameBn,
+      genericName: m.medicineMeta?.genericName || m.brand?.name || 'General Medicine',
+      dosageForm: m.medicineMeta?.dosageForm || 'Unit',
+      strength: m.medicineMeta?.strength || '',
+      manufacturer: m.medicineMeta?.manufacturer || m.brand?.name || 'Licensed Pharma',
+      price: Number(m.sellingPrice ?? m.price ?? 0),
+      isPrescriptionRequired: Boolean(m.medicineMeta?.isPrescriptionRequired),
+      unit: m.unit?.shortLabel || m.unit || 'unit',
+    }));
+  }, [apiMedicines]);
 
   const handleAddToCart = (item: (typeof medicinesList)[0]) => {
     if (item.isPrescriptionRequired) {

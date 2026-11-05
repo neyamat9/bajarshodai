@@ -25,8 +25,8 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="categories"
         options={{
-          title: 'Categories',
-          tabBarAccessibilityLabel: 'Categories Tab',
+          title: 'Shop',
+          tabBarAccessibilityLabel: 'Shop Tab',
         }}
       />
       <Tabs.Screen

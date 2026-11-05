@@ -30,6 +30,7 @@ import { useProductReviews } from '@/features/reviews/api/reviewsApi';
 import { useCartStore } from '@/store/useCartStore';
 import { toast } from '@/store/useToastStore';
 import { haptics } from '@/services/haptics';
+import { assetUrl } from '@/utils/format';
 
 export default function ProductDetailScreen() {
   const router = useRouter();
@@ -43,13 +44,15 @@ export default function ProductDetailScreen() {
 
   const { addItem } = useCartStore();
 
-  // Fetch product detail
-  const { data: product, isLoading } = useQuery({
+  // Fetch product detail from live backend API
+  const { data: rawProduct, isLoading } = useQuery({
     queryKey: ['product-detail', productSlug],
     queryFn: () => fetchProductDetailApi(productSlug),
     enabled: Boolean(productSlug),
     staleTime: 1000 * 60 * 5,
   });
+
+  const product = rawProduct as any;
 
   // Fetch related products
   const { data: relatedProducts = [] } = useQuery({
@@ -64,20 +67,48 @@ export default function ProductDetailScreen() {
 
   const name = product?.name || productSlug.replace(/-/g, ' ');
   const nameBn = product?.nameBn;
-  const price = product?.price ?? 120;
-  const regularPrice = product?.regularPrice;
-  const inStock = product?.inStock ?? (product?.stock ? product.stock > 0 : true);
-  const unitCode = product?.unit?.code || 'kg';
-  const step = product?.unit?.step || 1;
-  const minQty = product?.unit?.minQty || 1;
 
-  // Derive images array
+  // Real backend price fields
+  const price = Number(product?.sellingPrice ?? product?.price ?? 0);
+  const regularPrice = product?.regularPrice ? Number(product.regularPrice) : undefined;
+  const discountPercent =
+    product?.discountPercent ??
+    (regularPrice && regularPrice > price
+      ? Math.round(((regularPrice - price) / regularPrice) * 100)
+      : undefined);
+
+  // Real stock logic: trackStock === false means untracked/unlimited stock
+  const isUntracked = product?.trackStock === false;
+  const inStock = product
+    ? product.inStock !== false &&
+      (isUntracked || product.stock === undefined || Number(product.stock) > 0)
+    : true;
+
+  const unitCode =
+    product?.unit?.shortLabelBn ||
+    product?.unit?.shortLabel ||
+    product?.unit?.code ||
+    'kg';
+  const step = Number(product?.unit?.defaultStep ?? product?.unit?.step ?? 1);
+  const minQty = Number(product?.unit?.defaultMinQty ?? product?.unit?.minQty ?? 1);
+
+  // Derive real image URLs from API response
   const images = React.useMemo(() => {
     const list: string[] = [];
-    if (product?.primaryImage?.url) list.push(product.primaryImage.url);
-    if (product?.imageUrl && !list.includes(product.imageUrl)) list.push(product.imageUrl);
-    if (list.length === 0) {
-      list.push('https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&q=80');
+    if (Array.isArray(product?.images) && product.images.length > 0) {
+      product.images.forEach((img: any) => {
+        const raw = typeof img === 'string' ? img : img?.url;
+        const resolved = assetUrl(raw);
+        if (resolved && !list.includes(resolved)) list.push(resolved);
+      });
+    }
+    if (product?.image) {
+      const resolved = assetUrl(product.image);
+      if (resolved && !list.includes(resolved)) list.push(resolved);
+    }
+    if (product?.imageUrl) {
+      const resolved = assetUrl(product.imageUrl);
+      if (resolved && !list.includes(resolved)) list.push(resolved);
     }
     return list;
   }, [product]);
@@ -86,8 +117,8 @@ export default function ProductDetailScreen() {
   const handleShare = async () => {
     try {
       await Share.share({
-        title: name,
-        message: `Check out ${name} on Bazar Shodai: https://bajarshodai.com/products/${productSlug}`,
+        title: nameBn || name,
+        message: `Check out ${nameBn || name} on Bazar Shodai: https://bajarshodai.com/products/${productSlug}`,
       });
       haptics.light();
     } catch {
@@ -101,9 +132,9 @@ export default function ProductDetailScreen() {
     setIsWishlisted((prev) => {
       const next = !prev;
       if (next) {
-        toast.success('Wishlist', `${name} saved to wishlist`);
+        toast.success('Wishlist', `${nameBn || name} saved to wishlist`);
       } else {
-        toast.info('Wishlist', `${name} removed from wishlist`);
+        toast.info('Wishlist', `${nameBn || name} removed from wishlist`);
       }
       return next;
     });
@@ -115,31 +146,46 @@ export default function ProductDetailScreen() {
       {
         id: productId,
         productId,
-        name,
+        name: nameBn || name,
         price,
         originalPrice: regularPrice,
         imageUrl: images[0],
         unit: unitCode,
-        stock: product?.stock,
+        stock: product?.stock ? Number(product.stock) : undefined,
       },
       quantity,
     );
-    toast.success('Added to Bag', `${quantity}${unitCode} ${name} added to your bag`);
+    toast.success('Added to Bag', `${quantity} ${unitCode} ${nameBn || name} added to your bag`);
   };
 
-  // Convert related products to ProductGridItem
+  // Convert related products to ProductGridItem with real data
   const relatedGridItems = React.useMemo(() => {
-    return relatedProducts.map((p) => ({
-      id: p.id,
-      name: p.name,
-      banglaName: p.nameBn ?? undefined,
-      slug: p.slug,
-      price: p.price,
-      originalPrice: p.regularPrice,
-      imageUrl: p.imageUrl || p.primaryImage?.url,
-      unit: p.unit?.shortLabel || 'kg',
-      stock: p.stock,
-    }));
+    return (Array.isArray(relatedProducts) ? relatedProducts : []).map((p: any) => {
+      const pPrice = Number(p.sellingPrice ?? p.price ?? 0);
+      const pRegular = p.regularPrice ? Number(p.regularPrice) : undefined;
+      const rawImg = p.image || p.imageUrl || p.images?.[0]?.url || p.primaryImage?.url;
+      const pUntracked = p.trackStock === false;
+
+      return {
+        id: p.id,
+        name: p.name,
+        banglaName: p.nameBn ?? undefined,
+        slug: p.slug,
+        price: pPrice,
+        originalPrice: pRegular,
+        imageUrl: assetUrl(rawImg),
+        unit: p.unit?.shortLabelBn || p.unit?.shortLabel || 'kg',
+        packSize: p.packSize ?? undefined,
+        stock: p.stock ? Number(p.stock) : undefined,
+        trackStock: pUntracked,
+        inStock: p.inStock !== false && (pUntracked || Number(p.stock ?? 0) > 0),
+        discountPercent:
+          p.discountPercent ??
+          (pRegular && pRegular > pPrice
+            ? Math.round(((pRegular - pPrice) / pRegular) * 100)
+            : undefined),
+      };
+    });
   }, [relatedProducts]);
 
   if (isLoading) {
@@ -165,7 +211,7 @@ export default function ProductDetailScreen() {
         </TouchableOpacity>
 
         <Text style={styles.headerTitle} numberOfLines={1}>
-          {name}
+          {nameBn || name}
         </Text>
 
         <View style={styles.headerActions}>
@@ -202,19 +248,21 @@ export default function ProductDetailScreen() {
               <Badge label="OUT OF STOCK" variant="tomato" size="sm" />
             )}
             <Badge label="100% FRESH" variant="fresh" size="sm" />
-            {product?.discountPercent ? (
-              <Badge label={`${product.discountPercent}% OFF`} variant="carrot" size="sm" />
+            {discountPercent ? (
+              <Badge label={`${discountPercent}% OFF`} variant="carrot" size="sm" />
             ) : null}
           </View>
 
           {/* Product Title & Bangla Name */}
-          <Text style={styles.productName}>{name}</Text>
-          {nameBn && <Text style={styles.productNameBn}>{nameBn}</Text>}
+          <Text style={styles.productName}>{nameBn || name}</Text>
+          {nameBn && product?.name && nameBn !== product.name ? (
+            <Text style={styles.productNameBn}>{product.name}</Text>
+          ) : null}
 
           {/* Ratings & Reviews summary */}
           <View style={styles.ratingRow}>
             <StarRating
-              rating={product?.avgRating ?? reviewsData?.averageRating ?? 4.8}
+              rating={Number(product?.avgRating ?? reviewsData?.averageRating ?? 4.8)}
               size={15}
             />
             <Text style={styles.reviewCountText}>
@@ -227,8 +275,13 @@ export default function ProductDetailScreen() {
             <Price amount={price} originalAmount={regularPrice} unit={unitCode} size="lg" />
           </View>
 
-          {/* Specifications Accordion */}
-          <ProductSpecs origin="Bangladesh" unit={unitCode} />
+          {/* Specifications Accordion with Real DB Description */}
+          <ProductSpecs
+            description={product?.descriptionBn || product?.description || product?.shortDescriptionBn || product?.shortDescription}
+            origin="Bangladesh"
+            unit={unitCode}
+            weight={product?.packSize || undefined}
+          />
 
           {/* Out of stock alert button */}
           {!inStock && (
@@ -253,7 +306,7 @@ export default function ProductDetailScreen() {
           />
 
           {/* Related Products Carousel */}
-          <RelatedProducts products={relatedGridItems} />
+          {relatedGridItems.length > 0 && <RelatedProducts products={relatedGridItems} />}
         </View>
       </ScrollView>
 
@@ -273,7 +326,7 @@ export default function ProductDetailScreen() {
       <WriteReviewSheet
         visible={isWriteReviewOpen}
         productId={productId}
-        productName={name}
+        productName={nameBn || name}
         onClose={() => setIsWriteReviewOpen(false)}
       />
 
@@ -281,7 +334,7 @@ export default function ProductDetailScreen() {
       <BackInStockDialog
         visible={isBackInStockOpen}
         productId={productId}
-        productName={name}
+        productName={nameBn || name}
         onClose={() => setIsBackInStockOpen(false)}
       />
     </SafeAreaView>

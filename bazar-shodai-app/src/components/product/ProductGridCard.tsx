@@ -17,6 +17,8 @@ export interface ProductGridItem {
   unit: string;
   packSize?: string;
   stock?: number;
+  trackStock?: boolean;
+  inStock?: boolean;
   discountPercent?: number;
   badge?: string;
   isWishlisted?: boolean;
@@ -41,7 +43,10 @@ export function ProductGridCard({
   onToggleWishlist,
   className = '',
 }: ProductGridCardProps) {
-  const isOutOfStock = product.stock !== undefined && product.stock <= 0;
+  const isUntracked = product.trackStock === false;
+  const isOutOfStock =
+    product.inStock === false ||
+    (!isUntracked && product.stock !== undefined && product.stock <= 0);
   const discount =
     product.discountPercent ??
     (product.originalPrice && product.originalPrice > product.price

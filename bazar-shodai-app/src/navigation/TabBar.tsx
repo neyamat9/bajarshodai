@@ -14,7 +14,7 @@ interface TabConfig {
 
 const TAB_CONFIG: Record<string, TabConfig> = {
   index: { icon: 'Home', label: 'Home' },
-  categories: { icon: 'LayoutGrid', label: 'Categories' },
+  categories: { icon: 'Store', label: 'Shop' },
   cart: { icon: 'ShoppingBag', label: 'Cart' },
   wishlist: { icon: 'Heart', label: 'Wishlist' },
   account: { icon: 'User', label: 'Account' },

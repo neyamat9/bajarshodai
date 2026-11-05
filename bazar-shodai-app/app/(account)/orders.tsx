@@ -16,96 +16,21 @@ import { Price } from '@/components/ui/Price';
 import { Button } from '@/components/ui/Button';
 import { Radius } from '@/constants/layout';
 import { useCustomerOrders } from '@/features/orders/api/ordersApi';
-import { CustomerOrderRecord, OrderStatus } from '@/features/orders/types';
+import { OrderStatus } from '@/features/orders/types';
 import { executeReorder } from '@/features/orders/api/reorder';
 import { haptics } from '@/services/haptics';
 
 type OrderFilter = 'ALL' | 'ACTIVE' | 'DELIVERED' | 'CANCELLED';
 
-const MOCK_ORDERS: CustomerOrderRecord[] = [
-  {
-    id: 'ord-1',
-    orderNumber: 'BS-20261104-0012',
-    status: 'OUT_FOR_DELIVERY',
-    paymentMethod: 'CASH_ON_DELIVERY',
-    paymentStatus: 'PENDING',
-    totalAmount: 620,
-    subtotal: 580,
-    deliveryFee: 40,
-    discountAmount: 0,
-    shippingAddress: {
-      fullName: 'Tanvir Ahmed',
-      phone: '01712345678',
-      address: 'House #12, Road #4, Shahrasti Bazar',
-      city: 'Shahrasti',
-    },
-    items: [
-      {
-        id: 'oi-1',
-        productId: 'fresh-tomatoes',
-        productName: 'Deshi Fresh Tomatoes',
-        productNameBn: 'দেশি পাকা টমেটো',
-        quantity: 2,
-        unitPrice: 60,
-        totalPrice: 120,
-        unit: 'kg',
-      },
-      {
-        id: 'oi-2',
-        productId: 'rui-fish',
-        productName: 'Meghna River Rui Fish',
-        productNameBn: 'মেঘনার রুই মাছ',
-        quantity: 1,
-        unitPrice: 500,
-        totalPrice: 500,
-        unit: 'kg',
-      },
-    ],
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'ord-2',
-    orderNumber: 'BS-20261101-0089',
-    status: 'DELIVERED',
-    paymentMethod: 'BKASH',
-    paymentStatus: 'PAID',
-    totalAmount: 350,
-    subtotal: 350,
-    deliveryFee: 0,
-    discountAmount: 50,
-    shippingAddress: {
-      fullName: 'Tanvir Ahmed',
-      phone: '01712345678',
-      address: 'House #12, Road #4, Shahrasti Bazar',
-      city: 'Shahrasti',
-    },
-    items: [
-      {
-        id: 'oi-3',
-        productId: 'deshi-potatoes',
-        productName: 'Deshi Red Potatoes (লাল আলু)',
-        quantity: 5,
-        unitPrice: 70,
-        totalPrice: 350,
-        unit: 'kg',
-      },
-    ],
-    createdAt: '2026-11-01T14:20:00Z',
-    deliveredAt: '2026-11-01T15:45:00Z',
-  },
-];
-
 export default function OrderHistoryScreen() {
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<OrderFilter>('ALL');
 
-  const { data: serverOrders = [], isLoading, refetch, isRefetching } = useCustomerOrders();
+  const { data: rawOrders = [], isLoading, refetch, isRefetching } = useCustomerOrders();
 
-  // Combine server orders with mock fallback if empty
   const ordersList = React.useMemo(() => {
-    const list = serverOrders.length > 0 ? serverOrders : MOCK_ORDERS;
-
-    return list.filter((order) => {
+    const serverOrders = Array.isArray(rawOrders) ? rawOrders : [];
+    return serverOrders.filter((order) => {
       if (activeFilter === 'ACTIVE') {
         return (
           order.status === 'PENDING' ||
@@ -123,7 +48,7 @@ export default function OrderHistoryScreen() {
       }
       return true;
     });
-  }, [serverOrders, activeFilter]);
+  }, [rawOrders, activeFilter]);
 
   const getStatusBadgeVariant = (status: OrderStatus): BadgeVariant => {
     switch (status) {

@@ -2,9 +2,8 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Image } from 'expo-image';
 import { Icon } from '@/components/ui/Icon';
-import { useAppTheme } from '@/components/theme/ThemeProvider';
-import { useCartStore } from '@/store/useCartStore';
 import { haptics } from '@/services/haptics';
 import { Radius } from '@/constants/layout';
 
@@ -13,7 +12,7 @@ export interface HomeHeaderProps {
   deliveryTimeEstimate?: string;
   onLocationPress?: () => void;
   onSearchPress?: () => void;
-  onCartPress?: () => void;
+  onNotificationPress?: () => void;
 }
 
 export function HomeHeader({
@@ -21,12 +20,10 @@ export function HomeHeader({
   deliveryTimeEstimate = '৩০-৬০ মিনিট ডেলিভারি',
   onLocationPress,
   onSearchPress,
-  onCartPress,
+  onNotificationPress,
 }: HomeHeaderProps) {
   const insets = useSafeAreaInsets();
-  const { isDark } = useAppTheme();
   const router = useRouter();
-  const cartCount = useCartStore((s) => s.items.reduce((sum, item) => sum + item.quantity, 0));
 
   const handleLocationPress = () => {
     haptics.light();
@@ -46,12 +43,12 @@ export function HomeHeader({
     }
   };
 
-  const handleCartPress = () => {
-    haptics.selection();
-    if (onCartPress) {
-      onCartPress();
+  const handleNotificationPress = () => {
+    haptics.light();
+    if (onNotificationPress) {
+      onNotificationPress();
     } else {
-      router.push('/(tabs)/cart');
+      router.push('/notifications');
     }
   };
 
@@ -62,16 +59,20 @@ export function HomeHeader({
     >
       {/* Top Identity & Action Row */}
       <View style={styles.topRow}>
-        {/* Brand & Location Column */}
+        {/* Brand Logo & Location Column */}
         <View style={styles.leftCol}>
-          <View className="flex-row items-center gap-1.5">
-            <Text className="text-lg font-black text-brand-deep dark:text-brand-fresh tracking-tight">
-              বাজার সদাই
-            </Text>
-            <View className="px-1.5 py-0.5 rounded bg-brand-fresh/15">
-              <Text className="text-[10px] font-bold text-brand-fresh">FRESH</Text>
-            </View>
-          </View>
+          <TouchableOpacity
+            onPress={() => router.push('/(tabs)')}
+            activeOpacity={0.8}
+            style={styles.logoWrapper}
+          >
+            <Image
+              source={require('../../../../assets/images/logo-wide.webp')}
+              style={styles.logoImage}
+              contentFit="contain"
+              accessibilityLabel="Bazar Shodai Logo"
+            />
+          </TouchableOpacity>
 
           {/* Delivery Zone Pill */}
           <TouchableOpacity
@@ -95,22 +96,17 @@ export function HomeHeader({
           </TouchableOpacity>
         </View>
 
-        {/* Right Header Buttons */}
+        {/* Right Header Buttons: Notification Bell (No duplicate cart icon) */}
         <View style={styles.rightActions}>
           <TouchableOpacity
-            onPress={handleCartPress}
+            onPress={handleNotificationPress}
             activeOpacity={0.7}
             style={styles.actionBtn}
             className="bg-muted/30 border border-border"
             accessibilityRole="button"
-            accessibilityLabel="Shopping Cart"
+            accessibilityLabel="Notifications"
           >
-            <Icon name="ShoppingBag" size={18} color={isDark ? '#45a22c' : '#0b6234'} />
-            {cartCount > 0 && (
-              <View style={styles.cartBadge} className="bg-destructive">
-                <Text style={styles.cartBadgeText}>{cartCount > 99 ? '99+' : cartCount}</Text>
-              </View>
-            )}
+            <Icon name="Bell" size={18} color="#0b6234" />
           </TouchableOpacity>
         </View>
       </View>
@@ -153,6 +149,15 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 8,
   },
+  logoWrapper: {
+    height: 30,
+    width: 130,
+    justifyContent: 'center',
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
+  },
   locationPill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -164,28 +169,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   actionBtn: {
-    width: 38,
-    height: 38,
+    width: 36,
+    height: 36,
     borderRadius: Radius.brand,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-  },
-  cartBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 3,
-  },
-  cartBadgeText: {
-    color: '#ffffff',
-    fontSize: 9,
-    fontWeight: '700',
   },
   searchBar: {
     flexDirection: 'row',

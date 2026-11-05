@@ -15,35 +15,13 @@ import { Badge, BadgeVariant } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Radius } from '@/constants/layout';
 import { useCustomerReturns } from '@/features/returns/api/returnsApi';
-import { ReturnRequestItem, ReturnStatus } from '@/features/returns/types';
-
-const MOCK_RETURNS: ReturnRequestItem[] = [
-  {
-    id: 'ret-1',
-    orderId: 'ord-1',
-    orderNumber: 'BS-20261101-0089',
-    status: 'REQUESTED',
-    reason: 'DEFECTIVE',
-    detail: '2 pieces of tomatoes were bruised during delivery.',
-    items: [
-      {
-        id: 'ri-1',
-        orderItemId: 'oi-1',
-        productName: 'Deshi Fresh Tomatoes',
-        quantity: 1,
-        unitPrice: 60,
-      },
-    ],
-    refundAmount: 60,
-    createdAt: new Date().toISOString(),
-  },
-];
+import { ReturnStatus } from '@/features/returns/types';
 
 export default function ReturnsListScreen() {
   const router = useRouter();
   const { data: serverReturns = [], isLoading, refetch, isRefetching } = useCustomerReturns();
 
-  const returnsList = serverReturns.length > 0 ? serverReturns : MOCK_RETURNS;
+  const returnsList = serverReturns;
 
   const getStatusBadgeVariant = (status: ReturnStatus): BadgeVariant => {
     switch (status) {

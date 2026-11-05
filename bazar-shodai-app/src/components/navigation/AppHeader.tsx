@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Image } from 'expo-image';
 import { Icon } from '@/components/ui/Icon';
 import { useAppTheme } from '@/components/theme/ThemeProvider';
 import { haptics } from '@/services/haptics';
@@ -51,7 +52,7 @@ export function AppHeader({
     if (onNotificationPress) {
       onNotificationPress();
     } else {
-      // Future notifications route
+      router.push('/notifications');
     }
   };
 
@@ -62,33 +63,38 @@ export function AppHeader({
     >
       {/* Top Row: Brand & Location & Notifications */}
       <View style={styles.topRow}>
-        {/* Left: Brand Identity */}
+        {/* Left: Brand Identity with official logo */}
         <View style={styles.brandContainer}>
-          <View style={styles.logoBadge} className="bg-brand-fresh/15">
-            <Icon name="ShoppingBag" size={18} color={isDark ? '#45a22c' : '#0b6234'} />
-          </View>
-          <View>
-            <Text className="text-base font-extrabold text-brand-deep dark:text-brand-fresh leading-tight">
-              বাজার সদাই
-            </Text>
-            {/* Delivery Location Pill */}
-            <TouchableOpacity
-              onPress={handleLocationPress}
-              activeOpacity={0.7}
-              style={styles.locationPill}
-              accessibilityRole="button"
-              accessibilityLabel={`Delivering to ${location}`}
+          <TouchableOpacity
+            onPress={() => router.push('/(tabs)')}
+            activeOpacity={0.8}
+            style={styles.logoWrapper}
+          >
+            <Image
+              source={require('../../../assets/images/logo-wide.webp')}
+              style={styles.logoImage}
+              contentFit="contain"
+              accessibilityLabel="Bazar Shodai Logo"
+            />
+          </TouchableOpacity>
+
+          {/* Delivery Location Pill */}
+          <TouchableOpacity
+            onPress={handleLocationPress}
+            activeOpacity={0.7}
+            style={styles.locationPill}
+            accessibilityRole="button"
+            accessibilityLabel={`Delivering to ${location}`}
+          >
+            <Icon name="MapPin" size={11} color="#e53e3e" />
+            <Text
+              className="text-[11px] text-muted-foreground font-medium ml-1 mr-0.5"
+              numberOfLines={1}
             >
-              <Icon name="MapPin" size={11} color="#e53e3e" />
-              <Text
-                className="text-[11px] text-muted-foreground font-medium ml-1 mr-0.5"
-                numberOfLines={1}
-              >
-                {location}
-              </Text>
-              <Icon name="ChevronDown" size={12} color="#94a3b8" />
-            </TouchableOpacity>
-          </View>
+              {location}
+            </Text>
+            <Icon name="ChevronDown" size={12} color="#94a3b8" />
+          </TouchableOpacity>
         </View>
 
         {/* Right: Notification Bell */}
@@ -146,17 +152,16 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   brandContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
     flex: 1,
   },
-  logoBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.brand,
-    alignItems: 'center',
+  logoWrapper: {
+    height: 28,
+    width: 120,
     justifyContent: 'center',
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
   },
   locationPill: {
     flexDirection: 'row',
@@ -165,8 +170,8 @@ const styles = StyleSheet.create({
     maxWidth: 200,
   },
   iconButton: {
-    width: 38,
-    height: 38,
+    width: 36,
+    height: 36,
     borderRadius: Radius.brand,
     alignItems: 'center',
     justifyContent: 'center',

@@ -101,12 +101,13 @@ export default function CheckoutScreen() {
       haptics.success();
       toast.success('Order Placed!', `Your order #${order.orderNumber} has been received.`);
       router.replace(`/order-confirmation/${order.id || order.orderNumber}` as any);
-    } catch {
-      // Graceful offline fallback order creation
-      const mockOrderId = `ORD-${Date.now().toString().slice(-6)}`;
-      haptics.success();
-      toast.success('Order Confirmed!', `Order #${mockOrderId} placed successfully.`);
-      router.replace(`/order-confirmation/${mockOrderId}` as any);
+    } catch (err: any) {
+      haptics.error();
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        'অর্ডার সম্পন্ন করা সম্ভব হয়নি। অনুগ্রহ করে আপনার তথ্য যাচাই করে আবার চেষ্টা করুন।';
+      toast.error('Order Failed', message);
     }
   };
 
