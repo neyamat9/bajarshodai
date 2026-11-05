@@ -40,21 +40,28 @@ export function TabBar({ state, descriptors, navigateToTab, emitter }: BottomTab
   const { t } = useTranslation();
   const cartItemCount = useCartStore((s) => s.items.reduce((sum, item) => sum + item.quantity, 0));
 
-  const routesCount = state.routes.length;
-  const tabWidth = width / routesCount;
-
   // Active tab spring animator (runs 100% on Native Driver)
-  const [activeAnim] = useState(() => new Animated.Value(state.index));
+  const [activeAnim] = useState(() => new Animated.Value(state?.index ?? 0));
 
   useEffect(() => {
-    Animated.spring(activeAnim, {
-      toValue: state.index,
-      damping: 18,
-      stiffness: 180,
-      mass: 0.8,
-      useNativeDriver: true,
-    }).start();
-  }, [state.index, activeAnim]);
+    if (typeof state?.index === 'number') {
+      Animated.spring(activeAnim, {
+        toValue: state.index,
+        damping: 18,
+        stiffness: 180,
+        mass: 0.8,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [state?.index, activeAnim]);
+
+  if (!state?.routes || state.routes.length === 0) {
+    return null;
+  }
+
+  const routesCount = Math.max(1, state.routes.length);
+  const safeWidth = width > 0 ? width : 360;
+  const tabWidth = safeWidth / routesCount;
 
   const activeColor = isDark ? '#45a22c' : '#0b6234';
   const inactiveColor = isDark ? '#94a3b8' : '#64748b';
@@ -78,9 +85,10 @@ export function TabBar({ state, descriptors, navigateToTab, emitter }: BottomTab
   };
 
   // Dimensions for SVG notch
-  const SVG_WIDTH = width * 3;
-  const C = width;
-  const totalBarHeight = BAR_HEIGHT + Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 12);
+  const SVG_WIDTH = safeWidth * 3;
+  const C = safeWidth;
+  const bottomInset = insets?.bottom ?? 0;
+  const totalBarHeight = BAR_HEIGHT + Math.max(bottomInset, Platform.OS === 'android' ? 8 : 12);
 
   // Exact cubic bezier curved notch matching reference design
   const notchPath = `
@@ -94,16 +102,17 @@ export function TabBar({ state, descriptors, navigateToTab, emitter }: BottomTab
     Z
   `;
 
+  const maxRange = Math.max(1, routesCount - 1);
   const notchTranslateX = activeAnim.interpolate({
-    inputRange: [0, Math.max(1, routesCount - 1)],
+    inputRange: [0, maxRange],
     outputRange: [
-      tabWidth / 2 - width,
-      (routesCount - 1) * tabWidth + tabWidth / 2 - width,
+      tabWidth / 2 - safeWidth,
+      (routesCount - 1) * tabWidth + tabWidth / 2 - safeWidth,
     ],
   });
 
   const bubbleTranslateX = activeAnim.interpolate({
-    inputRange: [0, Math.max(1, routesCount - 1)],
+    inputRange: [0, maxRange],
     outputRange: [
       tabWidth / 2 - BUBBLE_SIZE / 2,
       (routesCount - 1) * tabWidth + tabWidth / 2 - BUBBLE_SIZE / 2,
@@ -177,7 +186,9 @@ export function TabBar({ state, descriptors, navigateToTab, emitter }: BottomTab
             });
 
             if (!isFocused && (!event || !event.defaultPrevented)) {
-              navigateToTab(route.key);
+              if (typeof navigateToTab === 'function') {
+                navigateToTab(route.key);
+              }
             }
           };
 

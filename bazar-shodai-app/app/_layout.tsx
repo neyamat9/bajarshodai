@@ -96,6 +96,21 @@ function RootNavigationLayout() {
           }}
         />
 
+        {/* Dedicated Pharmacy & Medicine Catalog */}
+        <Stack.Screen
+          name="pharmacy/index"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="medicine/index"
+          options={{
+            headerShown: false,
+          }}
+        />
+
         {/* Order History & Tracking */}
         <Stack.Screen
           name="orders/index"

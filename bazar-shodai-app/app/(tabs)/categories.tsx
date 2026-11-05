@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -68,9 +68,11 @@ export default function ShopScreen() {
   const [onlyOnSale, setOnlyOnSale] = useState(false);
 
   // If medicine is opened via category query, seamlessly route to dedicated pharmacy screen
-  if (params.category === 'medicine' || selectedCategorySlug === 'medicine') {
-    router.replace('/pharmacy');
-  }
+  useEffect(() => {
+    if (params.category === 'medicine' || selectedCategorySlug === 'medicine') {
+      router.replace('/pharmacy');
+    }
+  }, [params.category, selectedCategorySlug, router]);
 
   // Synchronize when navigating from homepage or drawer (state adjustment pattern)
   if (params.category !== prevParams.category || params.sub !== prevParams.sub) {
