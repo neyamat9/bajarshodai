@@ -60,6 +60,27 @@ function loadSavedCoupon(): AppliedCoupon | null {
   }
 }
 
+// Background persistence to guarantee 0ms touch response
+function persistCartAsync(items: CartItem[]) {
+  if (typeof queueMicrotask === 'function') {
+    queueMicrotask(() => {
+      try {
+        storage.setObject(STORAGE_KEY, items);
+      } catch {
+        // ignore
+      }
+    });
+  } else {
+    setTimeout(() => {
+      try {
+        storage.setObject(STORAGE_KEY, items);
+      } catch {
+        // ignore
+      }
+    }, 0);
+  }
+}
+
 export const useCartStore = create<CartState>((set, get) => ({
   items: loadSavedCart(),
   coupon: loadSavedCoupon(),
@@ -93,7 +114,7 @@ export const useCartStore = create<CartState>((set, get) => ({
       } else {
         updated = [...state.items, { ...item, quantity }];
       }
-      storage.setObject(STORAGE_KEY, updated);
+      persistCartAsync(updated);
       return { items: updated };
     });
   },
@@ -101,7 +122,7 @@ export const useCartStore = create<CartState>((set, get) => ({
   removeItem: (productId) => {
     set((state) => {
       const updated = state.items.filter((i) => i.productId !== productId);
-      storage.setObject(STORAGE_KEY, updated);
+      persistCartAsync(updated);
       return { items: updated };
     });
   },
@@ -114,7 +135,7 @@ export const useCartStore = create<CartState>((set, get) => ({
       } else {
         updated = state.items.map((i) => (i.productId === productId ? { ...i, quantity } : i));
       }
-      storage.setObject(STORAGE_KEY, updated);
+      persistCartAsync(updated);
       return { items: updated };
     });
   },
@@ -126,7 +147,7 @@ export const useCartStore = create<CartState>((set, get) => ({
   },
 
   setItems: (items) => {
-    storage.setObject(STORAGE_KEY, items);
+    persistCartAsync(items);
     set({ items });
   },
 

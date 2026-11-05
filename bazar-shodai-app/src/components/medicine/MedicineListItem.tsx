@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Icon, IconName } from '@/components/ui/Icon';
-import { Price } from '@/components/ui/Price';
 import { formatBdt } from '@/utils/format';
 import { Radius } from '@/constants/layout';
 import { haptics } from '@/services/haptics';
@@ -61,7 +60,7 @@ function getDosageVisual(form?: string): DosageVisual {
   return { icon: 'CircleDot', bg: '#ecfdf5', border: '#a7f3d0', color: '#059669' };
 }
 
-export function MedicineListItem({
+function MedicineListItemComponent({
   product,
   quantityInCart = 0,
   onPress,
@@ -79,13 +78,13 @@ export function MedicineListItem({
   const handleAddToCart = (e: any) => {
     e?.stopPropagation?.();
     if (isOutOfStock) return;
-    haptics.selection();
+    void haptics.selection().catch(() => {});
     onAddToCart?.();
   };
 
   const handleDecrease = (e: any) => {
     e?.stopPropagation?.();
-    haptics.selection();
+    void haptics.selection().catch(() => {});
     if (onQuantityChange && quantityInCart > 0) {
       onQuantityChange(quantityInCart - 1);
     }
@@ -93,7 +92,7 @@ export function MedicineListItem({
 
   const handleIncrease = (e: any) => {
     e?.stopPropagation?.();
-    haptics.selection();
+    void haptics.selection().catch(() => {});
     if (onQuantityChange) {
       onQuantityChange(quantityInCart + 1);
     }
@@ -205,6 +204,16 @@ export function MedicineListItem({
     </TouchableOpacity>
   );
 }
+
+export const MedicineListItem = React.memo(
+  MedicineListItemComponent,
+  (prev, next) =>
+    prev.product.id === next.product.id &&
+    prev.product.price === next.product.price &&
+    prev.product.stock === next.product.stock &&
+    prev.product.inStock === next.product.inStock &&
+    prev.quantityInCart === next.quantityInCart,
+);
 
 const styles = StyleSheet.create({
   card: {

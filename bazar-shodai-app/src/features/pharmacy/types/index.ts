@@ -31,4 +31,5 @@ export interface UploadPrescriptionPayload {
   mimeType?: string;
   phone: string;
   notes?: string;
+  onProgress?: (percent: number) => void;
 }

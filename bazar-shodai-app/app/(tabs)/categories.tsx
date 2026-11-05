@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -22,6 +22,7 @@ import { useCartStore } from '@/store/useCartStore';
 import { toast } from '@/store/useToastStore';
 import { haptics } from '@/services/haptics';
 import { assetUrl } from '@/utils/format';
+import { Radius } from '@/constants/layout';
 
 type SortOption = 'popular' | 'newest' | 'price_asc' | 'price_desc';
 
@@ -46,6 +47,7 @@ export default function ShopScreen() {
     [rawCategories],
   );
 
+  const [prevParams, setPrevParams] = useState({ category: params.category, sub: params.sub });
   const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | null>(
     params.category || null,
   );
@@ -56,15 +58,16 @@ export default function ShopScreen() {
   const [onlyInStock, setOnlyInStock] = useState(false);
   const [onlyOnSale, setOnlyOnSale] = useState(false);
 
-  // Synchronize when navigating from homepage or drawer
-  useEffect(() => {
+  // Synchronize when navigating from homepage or drawer (state adjustment pattern)
+  if (params.category !== prevParams.category || params.sub !== prevParams.sub) {
+    setPrevParams({ category: params.category, sub: params.sub });
     if (params.category) {
       setSelectedCategorySlug(params.category);
       if (params.sub) {
         setSelectedSubCategorySlug(params.sub);
       }
     }
-  }, [params.category, params.sub]);
+  }
 
   const activeCategory = selectedCategorySlug
     ? categories.find((c) => c.slug === selectedCategorySlug)

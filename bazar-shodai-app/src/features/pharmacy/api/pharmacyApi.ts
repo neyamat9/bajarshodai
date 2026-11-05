@@ -24,7 +24,6 @@ export async function fetchCustomerPrescriptionsApi(): Promise<PrescriptionRecor
 
 export async function uploadPrescriptionApi(
   payload: UploadPrescriptionPayload,
-  onProgress?: (percent: number) => void,
 ): Promise<PrescriptionRecord> {
   const formData = new FormData();
   formData.append('phone', payload.phone);
@@ -52,7 +51,7 @@ export async function uploadPrescriptionApi(
           100,
           Math.round((progressEvent.loaded / progressEvent.total) * 100),
         );
-        onProgress?.(percent);
+        payload.onProgress?.(percent);
       }
     },
   });

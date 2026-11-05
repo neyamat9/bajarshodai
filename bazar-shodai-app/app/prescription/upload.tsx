@@ -91,7 +91,7 @@ export default function PrescriptionUploadScreen() {
         fileUri: imageUri,
         phone: phone.trim(),
         notes: notes.trim() || undefined,
-        onProgress: (pct) => setUploadProgress(pct),
+        onProgress: (pct: number) => setUploadProgress(pct),
       });
 
       haptics.success();

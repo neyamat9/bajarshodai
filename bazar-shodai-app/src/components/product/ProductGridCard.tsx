@@ -34,7 +34,7 @@ export interface ProductGridCardProps {
   className?: string;
 }
 
-export function ProductGridCard({
+function ProductGridCardComponent({
   product,
   quantityInCart = 0,
   onPress,
@@ -56,13 +56,13 @@ export function ProductGridCard({
   const handleAddToCart = (e: any) => {
     e?.stopPropagation?.();
     if (isOutOfStock) return;
-    haptics.selection();
+    void haptics.selection().catch(() => {});
     onAddToCart?.();
   };
 
   const handleDecrease = (e: any) => {
     e?.stopPropagation?.();
-    haptics.selection();
+    void haptics.selection().catch(() => {});
     if (onQuantityChange) {
       onQuantityChange(Math.max(0, quantityInCart - 1));
     }
@@ -70,7 +70,7 @@ export function ProductGridCard({
 
   const handleIncrease = (e: any) => {
     e?.stopPropagation?.();
-    haptics.selection();
+    void haptics.selection().catch(() => {});
     if (onQuantityChange) {
       onQuantityChange(quantityInCart + 1);
     }
@@ -78,7 +78,7 @@ export function ProductGridCard({
 
   const handleWishlist = (e: any) => {
     e?.stopPropagation?.();
-    haptics.selection();
+    void haptics.selection().catch(() => {});
     onToggleWishlist?.();
   };
 
@@ -198,6 +198,19 @@ export function ProductGridCard({
     </TouchableOpacity>
   );
 }
+
+export const ProductGridCard = React.memo(
+  ProductGridCardComponent,
+  (prev, next) =>
+    prev.product.id === next.product.id &&
+    prev.product.price === next.product.price &&
+    prev.product.originalPrice === next.product.originalPrice &&
+    prev.product.stock === next.product.stock &&
+    prev.product.inStock === next.product.inStock &&
+    prev.product.isWishlisted === next.product.isWishlisted &&
+    prev.quantityInCart === next.quantityInCart &&
+    prev.className === next.className,
+);
 
 const styles = StyleSheet.create({
   card: {

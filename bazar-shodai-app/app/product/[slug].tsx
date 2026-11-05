@@ -5,7 +5,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Share,
-  ActivityIndicator,
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,6 +14,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Price } from '@/components/ui/Price';
 import { Badge } from '@/components/ui/Badge';
 import { StarRating } from '@/components/ui/StarRating';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { ProductImageGallery } from '@/features/products/components/ProductImageGallery';
 import { ProductSpecs } from '@/features/products/components/ProductSpecs';
 import { ProductStickyBottomBar } from '@/features/products/components/ProductStickyBottomBar';
@@ -31,6 +31,73 @@ import { useCartStore } from '@/store/useCartStore';
 import { toast } from '@/store/useToastStore';
 import { haptics } from '@/services/haptics';
 import { assetUrl } from '@/utils/format';
+
+function ProductDetailSkeleton() {
+  return (
+    <SafeAreaView edges={['top']} style={styles.container}>
+      {/* Top Header Placeholder */}
+      <View style={styles.header}>
+        <Skeleton width={32} height={32} borderRadius={16} />
+        <Skeleton width={180} height={20} style={{ marginHorizontal: 12 }} />
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <Skeleton width={32} height={32} borderRadius={16} />
+          <Skeleton width={32} height={32} borderRadius={16} />
+        </View>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Large Image Box */}
+        <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
+          <Skeleton width="100%" height={300} borderRadius={12} />
+        </View>
+
+        {/* Product Details Section */}
+        <View style={styles.mainInfo}>
+          {/* Badges */}
+          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+            <Skeleton width={80} height={22} borderRadius={4} />
+            <Skeleton width={60} height={22} borderRadius={4} />
+          </View>
+
+          {/* Titles */}
+          <Skeleton width="90%" height={26} borderRadius={6} style={{ marginBottom: 8 }} />
+          <Skeleton width="55%" height={18} borderRadius={6} style={{ marginBottom: 14 }} />
+
+          {/* Rating */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+            <Skeleton width={100} height={16} borderRadius={4} />
+            <Skeleton width={60} height={16} borderRadius={4} />
+          </View>
+
+          {/* Price */}
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10, marginBottom: 20 }}>
+            <Skeleton width={110} height={32} borderRadius={8} />
+            <Skeleton width={70} height={20} borderRadius={6} />
+          </View>
+
+          {/* Specs Card */}
+          <Skeleton width="100%" height={90} borderRadius={8} style={{ marginBottom: 16 }} />
+
+          {/* Reviews Card */}
+          <Skeleton width="100%" height={120} borderRadius={8} style={{ marginBottom: 16 }} />
+
+          {/* Related Products Title & Cards */}
+          <Skeleton width={150} height={20} borderRadius={6} style={{ marginBottom: 12 }} />
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <Skeleton width={150} height={200} borderRadius={8} />
+            <Skeleton width={150} height={200} borderRadius={8} />
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Sticky Bottom Bar Skeleton */}
+      <View style={styles.stickyBarSkeleton}>
+        <Skeleton width={100} height={32} borderRadius={6} />
+        <Skeleton width={140} height={44} borderRadius={8} />
+      </View>
+    </SafeAreaView>
+  );
+}
 
 export default function ProductDetailScreen() {
   const router = useRouter();
@@ -189,12 +256,7 @@ export default function ProductDetailScreen() {
   }, [relatedProducts]);
 
   if (isLoading) {
-    return (
-      <SafeAreaView edges={['top']} style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0b6234" />
-        <Text style={styles.loadingText}>Loading product details...</Text>
-      </SafeAreaView>
-    );
+    return <ProductDetailSkeleton />;
   }
 
   return (
@@ -436,5 +498,19 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: '#0b6234',
+  },
+  stickyBarSkeleton: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#ffffff',
+    borderTopWidth: 1,
+    borderTopColor: '#f3f4f6',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
   },
 });
