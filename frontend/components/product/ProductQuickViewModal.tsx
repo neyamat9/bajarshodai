@@ -61,33 +61,15 @@ export function ProductQuickViewProvider({
 
   const openQuickView = useCallback((prod: Product) => {
     setProduct(prod);
-
-    // Push history state WITHOUT changing URL search params, so phone back button closes the modal
-    // without triggering Next.js searchParams navigation or scroll-to-top!
-    if (typeof window !== "undefined") {
-      window.history.pushState({ quickViewModal: true }, "", window.location.href);
-    }
   }, []);
 
   const closeQuickView = useCallback(() => {
     setProduct(null);
-
-    // If modal pushed a history state, step back to clean it up
-    if (typeof window !== "undefined") {
-      if ((window.history.state as { quickViewModal?: boolean } | null)?.quickViewModal) {
-        window.history.back();
-      }
-    }
   }, []);
 
   const navigateToProduct = useCallback(
     (slug: string) => {
       setProduct(null);
-      if (typeof window !== "undefined") {
-        if ((window.history.state as { quickViewModal?: boolean } | null)?.quickViewModal) {
-          window.history.back();
-        }
-      }
       router.push(`/products/${slug}`);
     },
     [router]
@@ -151,6 +133,7 @@ function QuickViewModalContent({
 
   const [quantity, setQuantity] = useState(startQty(unit));
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isNavigatingRef = useRef(false);
 
   // Lock body and Lenis smooth scrolling while modal is visible
   useEffect(() => {
@@ -189,11 +172,13 @@ function QuickViewModalContent({
       w.__lenis?.start();
       window.removeEventListener("wheel", handleWheel);
 
-      // Restore exact scroll position seamlessly
-      if (w.__lenis) {
-        w.__lenis.scrollTo(scrollY, { immediate: true, force: true });
+      // Restore exact scroll position seamlessly when modal is closed (not when navigating away to product page)
+      if (!isNavigatingRef.current) {
+        if (w.__lenis) {
+          w.__lenis.scrollTo(scrollY, { immediate: true, force: true });
+        }
+        window.scrollTo({ top: scrollY, left: 0, behavior: "instant" });
       }
-      window.scrollTo({ top: scrollY, left: 0, behavior: "instant" });
     };
   }, []);
 
@@ -288,6 +273,7 @@ function QuickViewModalContent({
 
   // Navigate to full details page
   function handleGoToFullDetails() {
+    isNavigatingRef.current = true;
     if (onNavigate) {
       onNavigate(product.slug);
     } else {

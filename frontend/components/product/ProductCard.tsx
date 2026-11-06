@@ -1,6 +1,6 @@
 "use client";
 
-import { Link, useRouter } from "@/i18n/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { useCart, useCartActions } from "@/lib/hooks/use-cart";
 import { useQuickAdd } from "@/lib/hooks/use-quick-add";
 import { getProductBySlug } from "@/lib/services/products.service";
@@ -28,13 +28,6 @@ interface ProductCardProps {
   onMedicineClick?: (product: Product) => void;
 }
 
-const BADGE_STYLES: Record<string, string> = {
-  NEW: "bg-primary text-primary-foreground",
-  HOT: "bg-brand-fresh text-on-fresh",
-  "BEST SELLER": "bg-brand-fresh text-on-fresh",
-  "LIMITED STOCK": "bg-destructive text-white",
-};
-
 /**
  * A small product card: photo, name, the unit it is sold in, the price and one button.
  * After the first tap the button becomes a − quantity + stepper that follows the unit (0.5 kg steps for fish,
@@ -59,9 +52,12 @@ export default function ProductCard({
   const router = useRouter();
 
   const handleCardClick = (e: React.MouseEvent) => {
-    if (e.ctrlKey || e.metaKey || e.button === 1) return;
+    if (e.ctrlKey || e.metaKey || e.button === 1) {
+      window.open(`/${locale}/products/${product.slug}`, "_blank");
+      return;
+    }
     e.preventDefault();
-    if (onMedicineClick && product.medicineMeta) {
+    if (onMedicineClick) {
       onMedicineClick(product);
     } else {
       openQuickView(product);
@@ -83,7 +79,6 @@ export default function ProductCard({
   const unit = product.unit;
   const isUntracked = product.trackStock === false;
   const outOfStock = !isUntracked && (product.stock <= (unit?.minQty ?? 0) - 1e-9 || product.stock <= 0);
-  const badge = product.badges.find((b) => b !== "HOT");
   // the cart line of this product (products with options are added from the picker, so they have no stepper here)
   const line = product.hasVariants ? undefined : cart.items.find((i) => i.productId === product.id && !i.variantId);
 
@@ -201,43 +196,23 @@ export default function ProductCard({
     >
       {/* ── Image ───────────────────────────────────── */}
       <div className="relative aspect-square overflow-hidden bg-secondary">
-        {onMedicineClick ? (
-          <button
-            type="button"
-            onClick={() => onMedicineClick(product)}
-            tabIndex={-1}
-            aria-hidden="true"
-            className="relative block h-full w-full cursor-pointer text-left"
-          >
-            {primaryImage && (
-              <Image
-                src={primaryImage.url}
-                alt={primaryImage.alt}
-                fill
-                sizes="(max-width: 640px) 46vw, (max-width: 1024px) 30vw, 17vw"
-                className={`object-cover transition-transform duration-500 group-hover:scale-105 ${outOfStock ? "opacity-60 grayscale" : ""}`}
-              />
-            )}
-          </button>
-        ) : (
-          <Link
-            href={`/products/${product.slug}`}
-            onClick={handleCardClick}
-            tabIndex={-1}
-            aria-hidden="true"
-            className="relative block h-full w-full cursor-pointer"
-          >
-            {primaryImage && (
-              <Image
-                src={primaryImage.url}
-                alt={primaryImage.alt}
-                fill
-                sizes="(max-width: 640px) 46vw, (max-width: 1024px) 30vw, 17vw"
-                className={`object-cover transition-transform duration-500 group-hover:scale-105 ${outOfStock ? "opacity-60 grayscale" : ""}`}
-              />
-            )}
-          </Link>
-        )}
+        <button
+          type="button"
+          onClick={handleCardClick}
+          tabIndex={-1}
+          aria-hidden="true"
+          className="relative block h-full w-full cursor-pointer text-left"
+        >
+          {primaryImage && (
+            <Image
+              src={primaryImage.url}
+              alt={primaryImage.alt}
+              fill
+              sizes="(max-width: 640px) 46vw, (max-width: 1024px) 30vw, 17vw"
+              className={`object-cover transition-transform duration-500 group-hover:scale-105 ${outOfStock ? "opacity-60 grayscale" : ""}`}
+            />
+          )}
+        </button>
 
         {outOfStock && (
           <div className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center bg-brand-deep/30" aria-hidden="true">
@@ -340,29 +315,16 @@ export default function ProductCard({
             )}
           </div>
         )}
-        {onMedicineClick ? (
-          <button
-            type="button"
-            onClick={() => onMedicineClick(product)}
-            className="text-left w-full"
-          >
-            <h3 className="line-clamp-2 min-h-[2.4rem] font-outfit text-[13px] font-semibold leading-snug text-foreground transition-colors group-hover:text-primary dark:group-hover:text-accent-text sm:text-sm">
-              {product.name}
-              {sizeText ? ` - ${sizeText}` : ""}
-            </h3>
-          </button>
-        ) : (
-          <Link
-            href={`/products/${product.slug}`}
-            onClick={handleCardClick}
-            className="text-left w-full block cursor-pointer"
-          >
-            <h3 className="line-clamp-2 min-h-[2.4rem] font-outfit text-[13px] font-semibold leading-snug text-foreground transition-colors group-hover:text-primary dark:group-hover:text-accent-text sm:text-sm">
-              {product.name}
-              {sizeText ? ` - ${sizeText}` : ""}
-            </h3>
-          </Link>
-        )}
+        <button
+          type="button"
+          onClick={handleCardClick}
+          className="text-left w-full block cursor-pointer"
+        >
+          <h3 className="line-clamp-2 min-h-[2.4rem] font-outfit text-[13px] font-semibold leading-snug text-foreground transition-colors group-hover:text-primary dark:group-hover:text-accent-text sm:text-sm">
+            {product.name}
+            {sizeText ? ` - ${sizeText}` : ""}
+          </h3>
+        </button>
         {product.medicineMeta && (
           <div className="mt-1 flex flex-col text-[11px] text-muted-foreground leading-tight">
             <span className="truncate font-medium text-foreground/80 italic">
