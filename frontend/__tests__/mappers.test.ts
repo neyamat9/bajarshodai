@@ -32,13 +32,18 @@ describe("mapProduct", () => {
         { id: "v1", name: "Black", sku: "A", price: null, stock: 2, attribute1Name: "Color", attribute1Value: "Black" },
         { id: "v2", name: "Black / 128GB", sku: "B", price: "950", stock: 0, attribute1Name: "Color", attribute1Value: "Black", attribute2Name: "Storage", attribute2Value: "128GB" },
       ],
-    });
+    }, "en");
     expect(p.variants[0].type).toBe("color");
     expect(p.variants[0].colorHex).toBe("#111111");
     expect(p.variants[0].price).toBe(900);
     expect(p.variants[1].type).toBe("size");
     expect(p.variants[1].price).toBe(950);
     expect(p.description).toBe("Hello\nWorld");
+  });
+
+  it("provides authentic Bangla fallback when descriptionBn is missing in bn locale", () => {
+    const p = mapProduct({ ...card, name: "মরিচ", category: { name: "সবজি", slug: "vegetables" } }, "bn");
+    expect(p.description).toContain("সরাসরি কৃষকের খামার থেকে সংগৃহীত");
   });
 });
 
