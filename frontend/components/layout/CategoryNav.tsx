@@ -94,7 +94,7 @@ export default function CategoryNav({ categories, compact = false }: CategoryNav
   }, [categories]);
 
   return (
-    <nav className="relative z-[1000] overflow-x-clip border-b border-border bg-card/95 shadow-sm backdrop-blur-xl" aria-label={t("categoriesAria")}>
+    <nav className="hidden xl:block relative z-[1000] overflow-x-clip border-b border-border bg-card/95 shadow-sm backdrop-blur-xl" aria-label={t("categoriesAria")}>
       <div className="mx-auto max-w-[1440px] px-4 md:px-8">
         <div className="flex items-center justify-between">
           {/* All categories: opens the floating sidebar (the same button on every screen size) */}

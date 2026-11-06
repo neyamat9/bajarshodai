@@ -6,7 +6,8 @@ import { startNavigation } from "@/components/layout/NavigationGate";
 import { gsap } from "@/components/motion/gsap";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { useWishlist } from "@/lib/hooks/use-wishlist";
-import { Heart, LifeBuoy, LogOut, type LucideIcon, Moon, Package, PackageSearch, RotateCcw, Sun, UserRound, X } from "lucide-react";
+import { useBrowse } from "@/components/browse/BrowseModals";
+import { Heart, LayoutGrid, LifeBuoy, LogOut, type LucideIcon, Moon, Package, PackageSearch, RotateCcw, ShoppingBag, Sun, UserRound, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
@@ -42,6 +43,8 @@ interface Item {
  */
 export default function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
   const t = useTranslations("Menu");
+  const tNav = useTranslations("Nav");
+  const { open: openBrowse } = useBrowse();
   const locale = useLocale() as Locale;
   const { user, isLoading, logout } = useAuth();
   const { openAuth } = useAuthModal();
@@ -192,6 +195,29 @@ export default function MobileMenu({ open, onClose }: { open: boolean; onClose: 
                 </div>
               </>
             )}
+          </div>
+
+          {/* Quick primary actions: All Categories & All Products */}
+          <div data-menu-row className="mt-3 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                openBrowse("categories");
+              }}
+              className="flex h-11 items-center justify-center gap-2 rounded border border-primary/25 bg-primary/10 px-3 text-xs font-bold text-primary transition-colors hover:bg-primary/20"
+            >
+              <LayoutGrid className="h-4 w-4" aria-hidden="true" />
+              <span>{tNav("allCategories")}</span>
+            </button>
+            <Link
+              href="/products"
+              onClick={() => go("/products")}
+              className="flex h-11 items-center justify-center gap-2 rounded border border-border bg-card px-3 text-xs font-bold text-foreground transition-colors hover:border-brand-fresh hover:text-accent-text"
+            >
+              <ShoppingBag className="h-4 w-4 text-brand-fresh" aria-hidden="true" />
+              <span>{tNav("allProducts")}</span>
+            </Link>
           </div>
 
           {/* pages */}

@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { Link } from "@/i18n/navigation";
 import RevealGroup from "@/components/motion/RevealGroup";
 import type { Category } from "@/lib/types";
@@ -12,6 +15,54 @@ import type { Locale } from "@/lib/locale";
 
 interface CategoryGridProps {
   categories: Category[];
+}
+
+function CategoryItemImage({
+  image,
+  name,
+  slug,
+  icon,
+}: {
+  image?: string | null;
+  name: string;
+  slug: string;
+  icon?: string | null;
+}) {
+  const [error, setError] = useState(false);
+
+  if (!image || error) {
+    if (slug === "medicine") {
+      return (
+        <span className="text-4xl" role="img" aria-label="Medicine">
+          💊
+        </span>
+      );
+    }
+    if (icon) {
+      return (
+        <svg className="h-9 w-9 text-white/90" fill="none" stroke="currentColor" strokeWidth={1.4} viewBox="0 0 24 24" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d={icon} />
+        </svg>
+      );
+    }
+    return (
+      <span className="font-outfit text-3xl font-black text-white/90" aria-hidden="true">
+        {Array.from(name)[0]}
+      </span>
+    );
+  }
+
+  return (
+    <Image
+      src={image}
+      alt=""
+      fill
+      sizes="96px"
+      onError={() => setError(true)}
+      className="object-cover transition-transform duration-500 group-hover:scale-110"
+      unoptimized
+    />
+  );
 }
 
 export default function CategoryGrid({ categories }: CategoryGridProps) {
@@ -46,36 +97,22 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
 
         {/* small tiles: a picture, two lines of name (max 16) */}
         <div className="grid grid-cols-4 gap-x-2 gap-y-5 sm:grid-cols-5 md:gap-x-4 lg:grid-cols-8">
-          {categories.slice(0, 16).map((cat) => {
-            // The dashboard can attach an image to a category; fall back to its icon, then to its first letter.
-            const image = cat.image;
-            return (
-              <Link
-                data-reveal="clip"
-                key={cat.slug}
-                href={`/category/${cat.slug}`}
-                prefetch
-                id={`category-${cat.slug}`}
-                className="group flex flex-col items-center gap-2 text-center"
-              >
-                <span className="relative flex aspect-square w-full max-w-[96px] items-center justify-center overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary to-brand-deep-light shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:border-brand-fresh group-hover:shadow-md">
-                  {image ? (
-                    <Image src={image} alt="" fill sizes="96px" className="object-cover transition-transform duration-500 group-hover:scale-110" />
-                  ) : cat.slug === "medicine" ? (
-                    <span className="text-4xl" role="img" aria-label="Medicine">💊</span>
-                  ) : cat.icon ? (
-                    <svg className="h-9 w-9 text-white/90" fill="none" stroke="currentColor" strokeWidth={1.4} viewBox="0 0 24 24" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" d={cat.icon} />
-                    </svg>
-                  ) : (
-                    <span className="font-outfit text-3xl font-black text-white/90" aria-hidden="true">{Array.from(cat.name)[0]}</span>
-                  )}
-                </span>
-                <span className="line-clamp-2 w-full break-words text-[12px] font-semibold leading-tight text-foreground transition-colors group-hover:text-accent-text sm:text-[13px]">{cat.name}</span>
-                <span className="-mt-1.5 text-[11px] font-medium text-muted-foreground">{t("productsCount", { count: formatNumber(cat.productCount, locale, 0) })}</span>
-              </Link>
-            );
-          })}
+          {categories.slice(0, 16).map((cat) => (
+            <Link
+              data-reveal="clip"
+              key={cat.slug}
+              href={`/category/${cat.slug}`}
+              prefetch
+              id={`category-${cat.slug}`}
+              className="group flex flex-col items-center gap-2 text-center"
+            >
+              <span className="relative flex aspect-square w-full max-w-[96px] items-center justify-center overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary to-brand-deep-light shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:border-brand-fresh group-hover:shadow-md">
+                <CategoryItemImage image={cat.image} name={cat.name} slug={cat.slug} icon={cat.icon} />
+              </span>
+              <span className="line-clamp-2 w-full break-words text-[12px] font-semibold leading-tight text-foreground transition-colors group-hover:text-accent-text sm:text-[13px]">{cat.name}</span>
+              <span className="-mt-1.5 text-[11px] font-medium text-muted-foreground">{t("productsCount", { count: formatNumber(cat.productCount, locale, 0) })}</span>
+            </Link>
+          ))}
         </div>
 
         <SectionMore>
