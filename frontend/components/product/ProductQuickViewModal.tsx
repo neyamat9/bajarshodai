@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import Image from "next/image";
-import { useRouter } from "@/i18n/navigation";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import type { Locale } from "@/lib/locale";
 import type { Product, ProductVariant } from "@/lib/types";
@@ -23,6 +23,7 @@ import {
   ArrowRight,
   ChevronRight,
   Heart,
+  Loader2,
   Minus,
   Pill,
   Plus,
@@ -57,6 +58,7 @@ export function ProductQuickViewProvider({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [product, setProduct] = useState<Product | null>(null);
 
   const openQuickView = useCallback((prod: Product) => {
@@ -69,11 +71,16 @@ export function ProductQuickViewProvider({
 
   const navigateToProduct = useCallback(
     (slug: string) => {
-      setProduct(null);
+      // Do not clear product immediately to prevent flashing background page during navigation
       router.push(`/products/${slug}`);
     },
     [router]
   );
+
+  // When route changes (e.g. navigation to product page completes), dismiss modal seamlessly
+  useEffect(() => {
+    setProduct(null);
+  }, [pathname]);
 
   // Listen for browser popstate (phone back button or browser back arrow)
   useEffect(() => {
@@ -111,7 +118,7 @@ function QuickViewModalContent({
   onClose: () => void;
   onNavigate?: (slug: string) => void;
 }) {
-  const router = useRouter();
+  const pathname = usePathname();
   const t = useTranslations("Product");
   const locale = useLocale() as Locale;
   const formatBDT = (n: number) => formatMoney(n, locale);
@@ -124,6 +131,14 @@ function QuickViewModalContent({
   );
   const [isWishAnimating, setIsWishAnimating] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  // Safety timeout in case navigation is interrupted
+  useEffect(() => {
+    if (!isNavigating) return;
+    const timer = setTimeout(() => setIsNavigating(false), 8000);
+    return () => clearTimeout(timer);
+  }, [isNavigating]);
 
   const unit = product.unit;
   const isUntracked = product.trackStock === false;
@@ -271,14 +286,19 @@ function QuickViewModalContent({
     }
   }
 
-  // Navigate to full details page
-  function handleGoToFullDetails() {
+  // Navigate to full details page without closing the modal prematurely
+  function handleGoToFullDetails(e: React.MouseEvent) {
     isNavigatingRef.current = true;
+    const currentPath = (pathname || "").replace(/^\/(?:bn|en)(?=\/|$)/, "").replace(/\/$/, "");
+    const targetPath = `/products/${product.slug}`;
+    if (currentPath === targetPath) {
+      e.preventDefault();
+      onClose();
+      return;
+    }
+    setIsNavigating(true);
     if (onNavigate) {
       onNavigate(product.slug);
-    } else {
-      onClose();
-      router.push(`/products/${product.slug}`);
     }
   }
 
@@ -580,10 +600,13 @@ function QuickViewModalContent({
 
               {/* ── Prominent "Full Details" Action Button (Click 2) ── */}
               <div className="mt-2 pt-3 border-t border-border/80">
-                <button
-                  type="button"
+                <Link
+                  href={`/products/${product.slug}`}
+                  prefetch
                   onClick={handleGoToFullDetails}
-                  className="group flex w-full items-center justify-between rounded-xl border border-brand-fresh/40 bg-brand-fresh/5 px-4 py-3 text-left transition-all hover:bg-brand-fresh/15 hover:border-brand-fresh active:scale-[0.99]"
+                  className={`group flex w-full items-center justify-between rounded-xl border border-brand-fresh/40 bg-brand-fresh/5 px-4 py-3 text-left transition-all hover:bg-brand-fresh/15 hover:border-brand-fresh active:scale-[0.99] ${
+                    isNavigating ? "pointer-events-none opacity-80" : ""
+                  }`}
                 >
                   <div className="flex flex-col">
                     <span className="font-outfit text-sm font-bold text-brand-deep dark:text-emerald-300 group-hover:text-primary transition-colors flex items-center gap-1.5">
@@ -596,9 +619,13 @@ function QuickViewModalContent({
                   </div>
 
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-card border border-border/80 text-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors shadow-xs">
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    {isNavigating ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    ) : (
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    )}
                   </span>
-                </button>
+                </Link>
               </div>
             </div>
           </div>
