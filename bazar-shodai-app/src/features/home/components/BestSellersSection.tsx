@@ -30,7 +30,7 @@ export function BestSellersSection({ products, className = '' }: BestSellersSect
       <View className="flex-row items-center justify-between mb-3">
         <View>
           <View className="flex-row items-center gap-1.5">
-            <Text className="text-base font-bold text-foreground">জনপ্রিয় পণ্য সমূহ</Text>
+            <Text className="text-base font-bold text-foreground">বেশি বিক্রিত পণ্য</Text>
             <View className="px-1.5 py-0.5 rounded bg-carrot/15">
               <Text className="text-[10px] font-bold text-carrot">BEST SELLERS</Text>
             </View>
