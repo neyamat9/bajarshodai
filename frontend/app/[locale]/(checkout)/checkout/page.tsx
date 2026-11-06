@@ -213,7 +213,7 @@ function Checkout() {
                       longitude: location.lng,
                       placeName: location.placeName || d.address || undefined,
                       accuracyM: location.accuracyM ?? undefined,
-                      locationSource: location.source as any,
+                      locationSource: location.source,
                       isDefault: (saved?.length ?? 0) === 0,
                     });
                     setSaved((prev) => (prev ? [newAddr, ...prev] : [newAddr]));
@@ -245,9 +245,9 @@ function Checkout() {
             <PaymentSelector
               methods={methods}
               accounts={{
-                bKash: settings?.payment?.bkash ?? (settings?.payment as any)?.bKash ?? null,
-                Nagad: settings?.payment?.nagad ?? (settings?.payment as any)?.Nagad ?? null,
-                Rocket: settings?.payment?.rocket ?? (settings?.payment as any)?.Rocket ?? null,
+                bKash: settings?.payment?.bkash ?? null,
+                Nagad: settings?.payment?.nagad ?? null,
+                Rocket: settings?.payment?.rocket ?? null,
               }}
               total={summary?.total ?? null}
               selected={payment}

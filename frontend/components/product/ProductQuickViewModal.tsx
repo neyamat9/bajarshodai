@@ -15,13 +15,12 @@ import type { Locale } from "@/lib/locale";
 import type { Product, ProductVariant } from "@/lib/types";
 import { formatMoney, formatNumber, formatQuantity } from "@/lib/format";
 import { startQty, stepDown, stepUp } from "@/lib/quantity";
-import { useCart, useCartActions } from "@/lib/hooks/use-cart";
+import { useCartActions } from "@/lib/hooks/use-cart";
 import { useWishlist } from "@/lib/hooks/use-wishlist";
 import { playClick } from "@/lib/sound";
 import { toast } from "sonner";
 import {
   ArrowRight,
-  Check,
   ChevronRight,
   Heart,
   Minus,
@@ -29,7 +28,6 @@ import {
   Plus,
   ShieldCheck,
   ShoppingCart,
-  Sparkles,
   X,
 } from "lucide-react";
 
@@ -139,7 +137,6 @@ function QuickViewModalContent({
   const t = useTranslations("Product");
   const locale = useLocale() as Locale;
   const formatBDT = (n: number) => formatMoney(n, locale);
-  const { cart, updateQuantity, removeFromCart } = useCart();
   const { addToCart } = useCartActions();
   const { addToVault, removeFromVault, isInVault } = useWishlist();
 
@@ -230,9 +227,6 @@ function QuickViewModalContent({
   const activeImage = images[activeImageIndex] ?? images[0];
 
   const inVault = isInVault(product.id);
-  const line = product.hasVariants
-    ? undefined
-    : cart.items.find((i) => i.productId === product.id && !i.variantId);
 
   // Stepper handlers
   function handleQuantityMinus() {

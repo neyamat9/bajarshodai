@@ -20,6 +20,7 @@ import MedicineSearchBar from "@/components/medicine/MedicineSearchBar";
 import SortBar from "./SortBar";
 import { flattenSubs } from "@/lib/utils/categories";
 import { recalculateScrollBounds } from "@/components/motion/scroll-top";
+import { useRouter } from "@/i18n/navigation";
 
 interface ProductGridProps {
   /** Optional page header / title rendered at the top of the main column */
@@ -65,10 +66,24 @@ export default function ProductGrid({
 }: ProductGridProps) {
   const t = useTranslations("Product");
   const locale = useLocale() as Locale;
+  const router = useRouter();
   const isMedicine = lockedCategory === "medicine";
   const [selectedMedicine, setSelectedMedicine] = useState<Product | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "grid">(isMedicine ? "list" : "grid");
   const [searchQuery, setSearchQuery] = useState(search ?? "");
+
+  const handleCategoryClick = useCallback(
+    (cat: Category) => {
+      if (cat.slug === lockedCategory) {
+        // User unchecks the locked category on a category page -> go to all products
+        router.push("/products");
+      } else {
+        // User clicked a different category -> navigate to that category's page
+        router.push(`/category/${cat.slug}`);
+      }
+    },
+    [lockedCategory, router],
+  );
 
   // Keep search state in sync if parent search prop changes
   useEffect(() => {
@@ -126,10 +141,11 @@ export default function ProductGrid({
   const query = useMemo<ProductQuery>(
     () => ({
       search: effectiveSearch || undefined,
-      category: lockedCategory ?? (filters.categories.length === 1 ? filters.categories[0] : undefined),
+      category: lockedCategory ?? (filters.categories.length > 0 ? filters.categories.join(",") : undefined),
       subCategory:
-        subCategory ??
-        (filters.categories.length === 1 ? subsOf(filters.categories[0]).join(",") || undefined : filters.categories.length === 0 ? filters.subCategories.join(",") || undefined : undefined),
+        filters.subCategories.length > 0
+          ? (filters.categories.length === 1 ? subsOf(filters.categories[0]).join(",") || undefined : filters.subCategories.join(","))
+          : subCategory,
       brand: filters.brands.length ? filters.brands : undefined,
       generic: filters.generics.length ? filters.generics : undefined,
       minPrice: filters.minPrice > priceMin ? filters.minPrice : undefined,
@@ -279,12 +295,16 @@ export default function ProductGrid({
     }
 
     return chips;
-  }, [filters, onSale, categories, brands, lockedCategory, lockedBrand, priceMin, priceMax, t, locale]);
+  }, [filters, onSale, categories, brands, lockedCategory, lockedBrand, priceMin, priceMax, searchQuery, t, locale]);
 
   const handleRemoveFilter = useCallback(
     (key: string) => {
       if (key.startsWith("category:")) {
         const slug = key.replace("category:", "");
+        if (lockedCategory && slug === lockedCategory) {
+          router.push("/products");
+          return;
+        }
         setFilters((prev) => {
           const owned = new Set(categories.find((c) => c.slug === slug)?.subCategories.map((x) => x.slug));
           return { ...prev, categories: prev.categories.filter((c) => c !== slug), subCategories: prev.subCategories.filter((x) => !owned.has(x)) };
@@ -308,10 +328,26 @@ export default function ProductGrid({
         setFilters((prev) => ({ ...prev, minPrice: priceMin, maxPrice: priceMax }));
       }
     },
-    [priceMin, priceMax, categories],
+    [priceMin, priceMax, categories, lockedCategory, router],
   );
 
   function handleClearAll() {
+    if (lockedCategory) {
+      const hasOtherFilters =
+        filters.subCategories.length > 0 ||
+        filters.brands.length > 0 ||
+        filters.generics.length > 0 ||
+        filters.inStockOnly ||
+        onSale ||
+        searchQuery.trim().length > 0 ||
+        filters.minPrice > priceMin ||
+        filters.maxPrice < priceMax;
+
+      if (!hasOtherFilters) {
+        router.push("/products");
+        return;
+      }
+    }
     setFilters({ ...base, inStockOnly: false });
     setOnSale(false);
     setSearchQuery("");
@@ -331,6 +367,8 @@ export default function ProductGrid({
         generics={generics}
         filters={filters}
         onFiltersChange={setFilters}
+        onCategoryClick={lockedCategory ? handleCategoryClick : undefined}
+        excludeMedicine={excludeMedicine}
         priceMin={priceMin}
         priceMax={priceMax}
         activeCount={activeFilters.length}

@@ -64,9 +64,15 @@ async function CategoryContent({
     notFound();
   }
 
+  const isMedicine = slug === "medicine";
   const subSlug = sub ? findSub(category.subCategories, sub)?.slug : undefined;
   const trail = trailOf(category, subSlug);
   const here = trail[trail.length - 1];
+
+  const sidebarCategories = isMedicine
+    ? [category]
+    : categories.filter((c) => c.slug !== "medicine");
+
   const [initial, facets] = await Promise.all([
     listProducts(
       {
@@ -76,10 +82,16 @@ async function CategoryContent({
         brand: brand ? [brand] : undefined,
         generic: generic ? [generic] : undefined,
         sortBy: "popular",
+        excludeMedicine: !isMedicine,
       },
       locale,
     ),
-    getProductFacets({ category: slug, subCategory: subSlug, search: initialSearch }),
+    getProductFacets({
+      category: slug,
+      subCategory: subSlug,
+      search: initialSearch,
+      excludeMedicine: !isMedicine,
+    }),
   ]);
 
   return (
@@ -90,7 +102,7 @@ async function CategoryContent({
           <ProductGrid
             key={`${subSlug ?? "all"}|${initialSearch ?? ""}`}
             header={
-              slug === "medicine" ? (
+              isMedicine ? (
                 <MedicineHeader
                   categoryName={here.name}
                   categoryDescription={!subSlug ? category.description : null}
@@ -109,7 +121,7 @@ async function CategoryContent({
               )
             }
             initial={initial}
-            categories={slug === "medicine" ? [category] : categories}
+            categories={sidebarCategories}
             brands={facetBrands(facets)}
             generics={facets.generics}
             priceRange={facets.price}
@@ -120,6 +132,7 @@ async function CategoryContent({
               brand,
               generic,
             }}
+            excludeMedicine={!isMedicine}
           />
         </Suspense>
       </div>

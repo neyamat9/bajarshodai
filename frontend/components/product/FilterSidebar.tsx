@@ -26,6 +26,8 @@ interface FilterSidebarProps {
   generics?: { name: string; count: number }[];
   filters: FilterState;
   onFiltersChange: (filters: FilterState) => void;
+  onCategoryClick?: (category: Category) => void;
+  excludeMedicine?: boolean;
   /** Absolute price bounds from the product set */
   priceMin?: number;
   priceMax?: number;
@@ -47,6 +49,8 @@ export default function FilterSidebar({
   generics,
   filters,
   onFiltersChange,
+  onCategoryClick,
+  excludeMedicine = false,
   priceMin = DEFAULT_PRICE_MIN,
   priceMax = DEFAULT_PRICE_MAX,
   activeCount = 0,
@@ -57,6 +61,11 @@ export default function FilterSidebar({
   const t = useTranslations("Product");
   const locale = useLocale() as Locale;
   const money = (n: number) => formatMoney(n, locale);
+
+  const visibleCategories = useMemo(() => {
+    return excludeMedicine ? categories.filter((c) => c.slug !== "medicine") : categories;
+  }, [categories, excludeMedicine]);
+
   // Local price state for the dual-handle slider (avoids re-filtering on every drag)
   const [localMin, setLocalMin] = useState(filters.minPrice ?? priceMin);
   const [localMax, setLocalMax] = useState(filters.maxPrice ?? priceMax);
@@ -78,6 +87,10 @@ export default function FilterSidebar({
 
   // ticking a category reveals its sub-categories; unticking it also drops the sub-categories chosen under it
   function toggleCategory(cat: Category) {
+    if (onCategoryClick) {
+      onCategoryClick(cat);
+      return;
+    }
     const on = filters.categories.includes(cat.slug);
     const owned = new Set(flattenSubs(cat.subCategories).map((x) => x.slug));
     onFiltersChange({
@@ -173,8 +186,8 @@ export default function FilterSidebar({
 
       {/* Category / Subcategories */}
       {(() => {
-        const isSingleLocked = categories.length === 1 && filters.categories.includes(categories[0].slug);
-        const singleSubs = isSingleLocked ? flattenSubs(categories[0].subCategories) : [];
+        const isSingleLocked = visibleCategories.length === 1 && filters.categories.includes(visibleCategories[0].slug);
+        const singleSubs = isSingleLocked ? flattenSubs(visibleCategories[0].subCategories) : [];
         if (isSingleLocked && singleSubs.length === 0) return null;
 
         if (isSingleLocked) {
@@ -191,7 +204,7 @@ export default function FilterSidebar({
                     id={`sub-${sub.slug}`}
                     label={`${"– ".repeat(sub.depth)}${sub.name}`}
                     checked={filters.subCategories.includes(sub.slug)}
-                    onChange={() => toggleSub(categories[0], sub.slug)}
+                    onChange={() => toggleSub(visibleCategories[0], sub.slug)}
                   />
                 ))}
               </ul>
@@ -199,12 +212,12 @@ export default function FilterSidebar({
           );
         }
 
-        if (categories.length === 0) return null;
+        if (visibleCategories.length === 0) return null;
 
         return (
           <Section title={t("filters.category")} count={filters.categories.length + filters.subCategories.length}>
             <ul className="no-scrollbar -mx-1 max-h-80 space-y-0.5 overflow-y-auto px-1" data-lenis-prevent>
-              {categories.map((cat) => {
+              {visibleCategories.map((cat) => {
                 const checked = filters.categories.includes(cat.slug);
                 const allSubs = flattenSubs(cat.subCategories);
                 const picked = allSubs.filter((x) => filters.subCategories.includes(x.slug)).length;
