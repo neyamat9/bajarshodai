@@ -31,15 +31,40 @@ function BannerSlide({ b, priority, sizes = "(min-width: 1024px) 66vw, 100vw" }:
   const showTextOverlay = Boolean((b.title || b.subtitle) && (b.textColor || b.bgColor));
   const inner = (
     <>
-      <Image
-        src={b.imageUrl}
-        alt={b.title ?? t("bannerAlt")}
-        fill
-        priority={priority}
-        sizes={sizes}
-        className="object-cover object-center"
-        unoptimized
-      />
+      {b.mobileImageUrl ? (
+        <>
+          {/* Mobile view (< md): Small screen optimized image */}
+          <Image
+            src={b.mobileImageUrl}
+            alt={b.title ?? t("bannerAlt")}
+            fill
+            priority={priority}
+            sizes="100vw"
+            className="block md:hidden object-cover object-center"
+            unoptimized
+          />
+          {/* Large devices (>= md): High-resolution desktop image */}
+          <Image
+            src={b.imageUrl}
+            alt={b.title ?? t("bannerAlt")}
+            fill
+            priority={priority}
+            sizes={sizes}
+            className="hidden md:block object-cover object-center"
+            unoptimized
+          />
+        </>
+      ) : (
+        <Image
+          src={b.imageUrl}
+          alt={b.title ?? t("bannerAlt")}
+          fill
+          priority={priority}
+          sizes={sizes}
+          className="object-cover object-center"
+          unoptimized
+        />
+      )}
       {showTextOverlay && (
         <div
           className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-brand-deep/80 to-transparent p-6 md:p-10"
@@ -86,8 +111,8 @@ function Slider({
     <div
       className={`relative h-full w-full overflow-hidden rounded border border-border bg-secondary ${
         fullWidth
-          ? "aspect-[16/9] sm:aspect-[16/8] md:aspect-[16/7.5] min-h-[300px] sm:min-h-[380px] md:min-h-[460px] lg:min-h-[500px]"
-          : "aspect-[16/9] min-h-[260px] sm:min-h-[340px] md:min-h-[440px] lg:aspect-auto lg:h-full lg:min-h-0"
+          ? "aspect-[16/9] sm:aspect-[16/8] md:aspect-[16/7.5] min-h-[220px] sm:min-h-[380px] md:min-h-[460px] lg:min-h-[500px]"
+          : "aspect-[16/10] sm:aspect-[16/9] min-h-[220px] sm:min-h-[340px] md:min-h-[440px] lg:aspect-auto lg:h-full lg:min-h-0"
       }`}
     >
       {banners.map((b, idx) => (
@@ -105,17 +130,17 @@ function Slider({
             type="button"
             aria-label={t("prevBanner")}
             onClick={prev}
-            className="absolute left-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded bg-card/90 text-foreground shadow transition-colors hover:bg-brand-fresh hover:text-on-fresh"
+            className="absolute left-2 sm:left-3 top-1/2 z-10 flex h-8 w-8 sm:h-10 sm:w-10 -translate-y-1/2 items-center justify-center rounded bg-card/90 text-foreground shadow transition-colors hover:bg-brand-fresh hover:text-on-fresh"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>
           <button
             type="button"
             aria-label={t("nextBanner")}
             onClick={next}
-            className="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded bg-card/90 text-foreground shadow transition-colors hover:bg-brand-fresh hover:text-on-fresh"
+            className="absolute right-2 sm:right-3 top-1/2 z-10 flex h-8 w-8 sm:h-10 sm:w-10 -translate-y-1/2 items-center justify-center rounded bg-card/90 text-foreground shadow transition-colors hover:bg-brand-fresh hover:text-on-fresh"
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>
           <div className="absolute bottom-4 right-5 z-10 flex gap-2">
             {banners.map((b, idx) => (
