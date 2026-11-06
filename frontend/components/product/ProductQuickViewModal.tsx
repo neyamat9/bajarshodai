@@ -157,13 +157,55 @@ function QuickViewModalContent({
   const outOfStock = !isUntracked && (stock <= 0 || stock <= (unit?.minQty ?? 0) - 1e-9);
 
   const [quantity, setQuantity] = useState(startQty(unit));
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Lock body scroll while modal is visible
+  // Lock body, html, and Lenis smooth scrolling while modal is visible
   useEffect(() => {
-    const originalOverflow = document.body.style.overflow;
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalBodyPaddingRight = document.body.style.paddingRight;
+
+    // Compensate for scrollbar disappearance so background layout doesn't shift
+    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+    if (scrollBarWidth > 0) {
+      document.body.style.paddingRight = `${scrollBarWidth}px`;
+    }
+
     document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    // Pause Lenis smooth scrolling completely while modal is open
+    const w = window as unknown as { __lenis?: { stop: () => void; start: () => void } };
+    w.__lenis?.stop();
+
+    // Prevent wheel scrolling on background or chaining at boundaries
+    const handleWheel = (e: WheelEvent) => {
+      const scrollable = scrollContainerRef.current;
+      const target = e.target as HTMLElement | null;
+
+      // If wheel is outside the scrollable body (e.g. backdrop, header, borders), stop scroll
+      if (!scrollable || !scrollable.contains(target)) {
+        e.preventDefault();
+        return;
+      }
+
+      // If inside scrollable body, prevent chaining at boundary limits
+      const { scrollTop, scrollHeight, clientHeight } = scrollable;
+      const atTop = scrollTop <= 0 && e.deltaY < 0;
+      const atBottom = scrollTop + clientHeight >= scrollHeight - 1 && e.deltaY > 0;
+      if (atTop || atBottom) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+
     return () => {
-      document.body.style.overflow = originalOverflow;
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      document.body.style.paddingRight = originalBodyPaddingRight;
+      w.__lenis?.start();
+      window.removeEventListener("wheel", handleWheel);
     };
   }, []);
 
@@ -277,13 +319,15 @@ function QuickViewModalContent({
       role="dialog"
       aria-modal="true"
       aria-labelledby="quick-view-title"
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-brand-deep/60 backdrop-blur-sm animate-fade-in"
+      data-lenis-prevent
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-brand-deep/60 backdrop-blur-sm animate-fade-in overscroll-contain"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
-        className="relative flex w-full max-w-full sm:max-w-3xl md:max-w-4xl max-h-[92vh] sm:max-h-[88vh] flex-col overflow-hidden rounded-t-2xl sm:rounded-2xl border border-border bg-card shadow-2xl transition-all"
+        data-lenis-prevent
+        className="relative flex w-full max-w-full sm:max-w-3xl md:max-w-4xl max-h-[92vh] sm:max-h-[88vh] flex-col overflow-hidden rounded-t-2xl sm:rounded-2xl border border-border bg-card shadow-2xl transition-all overscroll-contain"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Mobile Swipe / Drag Handle Indicator */}
@@ -318,7 +362,11 @@ function QuickViewModalContent({
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 no-scrollbar">
+        <div
+          ref={scrollContainerRef}
+          data-lenis-prevent
+          className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 no-scrollbar"
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-8 items-start">
             {/* ── Left Column: Product Gallery ── */}
             <div className="flex flex-col gap-3">

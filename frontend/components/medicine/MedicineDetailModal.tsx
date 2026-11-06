@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { formatMoney, formatQuantity } from "@/lib/format";
@@ -58,13 +58,56 @@ export default function MedicineDetailModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [product, onClose]);
 
-  // Lock body scroll when open
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Lock body, html, and Lenis smooth scrolling when open
   useEffect(() => {
     if (!product) return;
-    const originalStyle = document.body.style.overflow;
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalBodyPaddingRight = document.body.style.paddingRight;
+
+    // Compensate for scrollbar disappearance so background layout doesn't shift
+    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+    if (scrollBarWidth > 0) {
+      document.body.style.paddingRight = `${scrollBarWidth}px`;
+    }
+
     document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    // Pause Lenis smooth scrolling completely while modal is open
+    const w = window as unknown as { __lenis?: { stop: () => void; start: () => void } };
+    w.__lenis?.stop();
+
+    // Prevent mouse wheel from scrolling the background page or chaining
+    const handleWheel = (e: WheelEvent) => {
+      const scrollable = scrollContainerRef.current;
+      const target = e.target as HTMLElement | null;
+
+      // If wheel is outside the scrollable body (e.g. backdrop, padding), stop scroll
+      if (!scrollable || !scrollable.contains(target)) {
+        e.preventDefault();
+        return;
+      }
+
+      // If inside scrollable body, prevent chaining at boundary limits
+      const { scrollTop, scrollHeight, clientHeight } = scrollable;
+      const atTop = scrollTop <= 0 && e.deltaY < 0;
+      const atBottom = scrollTop + clientHeight >= scrollHeight - 1 && e.deltaY > 0;
+      if (atTop || atBottom) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+
     return () => {
-      document.body.style.overflow = originalStyle;
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      document.body.style.paddingRight = originalBodyPaddingRight;
+      w.__lenis?.start();
+      window.removeEventListener("wheel", handleWheel);
     };
   }, [product]);
 
@@ -190,12 +233,17 @@ export default function MedicineDetailModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="medicine-modal-title"
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm transition-opacity"
+      data-lenis-prevent
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm transition-opacity overscroll-contain"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="relative w-full sm:max-w-xl max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-border bg-card p-5 sm:p-6 shadow-2xl animate-in fade-in-0 zoom-in-95 duration-200">
+      <div
+        ref={scrollContainerRef}
+        data-lenis-prevent
+        className="relative w-full sm:max-w-xl max-h-[90vh] overflow-y-auto overscroll-contain rounded-t-2xl sm:rounded-2xl border border-border bg-card p-5 sm:p-6 shadow-2xl animate-in fade-in-0 zoom-in-95 duration-200"
+      >
         {/* Close Button */}
         <button
           type="button"
