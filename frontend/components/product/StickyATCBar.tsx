@@ -1,13 +1,15 @@
 "use client";
 
-import { useCart } from "@/lib/hooks/use-cart";
+import { useCartActions } from "@/lib/hooks/use-cart";
 import type { Product, ProductVariant } from "@/lib/types";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, formatQuantity } from "@/lib/format";
 import type { Locale } from "@/lib/locale";
+import { startQty } from "@/lib/quantity";
+import { playClick } from "@/lib/sound";
 
 interface StickyATCBarProps {
   product: Product;
@@ -27,13 +29,19 @@ export default function StickyATCBar({
   const t = useTranslations("Product");
   const locale = useLocale() as Locale;
   const formatBDT = (n: number) => formatMoney(n, locale);
-  const { addToCart } = useCart();
+  const { addToCart } = useCartActions();
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   const primaryImage =
     product.images.find((img) => img.isPrimary) ?? product.images[0];
+
+  const unit = product.unit;
+  const isUntracked = product.trackStock === false;
+  const rawStock = variant?.stock ?? product.stock;
+  const stock = isUntracked ? 9999 : rawStock;
+  const isOutOfStock = !isUntracked && (stock <= 0 || stock <= (unit?.minQty ?? 0) - 1e-9);
 
   // Watch the main ATC button — show bar when it scrolls out of view
   useEffect(() => {
@@ -56,7 +64,10 @@ export default function StickyATCBar({
   }, [atcButtonRef]);
 
   async function handleAddToCart() {
+    if (isOutOfStock || loading) return;
+    playClick();
     setLoading(true);
+    const quantity = startQty(unit);
     const res = await addToCart({
       productId: product.id,
       slug: product.slug,
@@ -64,12 +75,19 @@ export default function StickyATCBar({
       price: currentPrice,
       variantId: variant?.id,
       variantLabel: variant?.label,
-      quantity: 1,
+      quantity,
       imageUrl: primaryImage?.url ?? "/placeholder.svg",
-      stock: variant?.stock ?? product.stock,
+      stock,
+      unit,
     });
     if (res.ok) {
-      toast.success(t("card.added", { name: product.name }), { description: formatBDT(currentPrice), duration: 2500 });
+      toast.success(t("card.added", { name: product.name }), {
+        description: t("summary.addedDesc", {
+          qty: `${formatQuantity(quantity, locale)}${unit ? ` ${unit.label}` : ""}`,
+          price: formatBDT(currentPrice * quantity),
+        }),
+        duration: 2500,
+      });
     } else {
       toast.error(res.error ?? t("card.couldNotAdd"));
     }
@@ -111,10 +129,10 @@ export default function StickyATCBar({
           </div>
 
           {/* Stock indicator */}
-          {product.stock < 5 && product.stock > 0 && (
+          {!isUntracked && stock < 5 && stock > 0 && (
             <div className="hidden md:flex items-center gap-1.5 text-red-400 text-[11px] font-black uppercase tracking-widest flex-shrink-0">
               <span className="w-1.5 h-1.5 bg-red-400 rounded animate-pulse" />
-              Only {product.stock} left
+              {t("card.onlyStock", { count: formatQuantity(stock, locale) })}
             </div>
           )}
 
@@ -122,7 +140,7 @@ export default function StickyATCBar({
           <button
             type="button"
             onClick={handleAddToCart}
-            disabled={loading || product.stock === 0}
+            disabled={loading || isOutOfStock}
             aria-label={t("card.addNamed", { name: product.name })}
             className="flex-shrink-0 h-10 px-6 flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-tight text-sm rounded transition-all shadow-[0_4px_16px_rgba(69,162,44,0.3)] disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97]"
           >
@@ -136,7 +154,9 @@ export default function StickyATCBar({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             )}
-            <span className="hidden sm:inline">Add to Cart</span>
+            <span className="hidden sm:inline">
+              {isOutOfStock ? t("summary.outOfStock") : t("summary.addToCart")}
+            </span>
           </button>
         </div>
       </div>
