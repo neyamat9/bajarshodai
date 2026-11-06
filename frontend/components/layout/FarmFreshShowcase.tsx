@@ -1,6 +1,7 @@
 "use client";
 
 import { useLocale } from "next-intl";
+import { usePathname } from "@/i18n/navigation";
 import type { Locale } from "@/lib/locale";
 import Image from "next/image";
 import { Leaf, Sprout, Tractor, HeartPulse, Sparkles, ShieldCheck } from "lucide-react";
@@ -77,9 +78,19 @@ const BADGES: BadgeItem[] = [
   },
 ];
 
-export default function FarmFreshShowcase() {
+export default function FarmFreshShowcase({ hide }: { hide?: boolean } = {}) {
   const locale = useLocale() as Locale;
   const isBn = locale === "bn";
+  const pathname = usePathname();
+  const cleanPath = (pathname || "")
+    .replace(/^\/(?:bn|en)(?=\/|$)/, "")
+    .replace(/\/$/, "");
+
+  // Hide the farm-fresh meadow showcase banner on product details pages (/products/[slug])
+  const isProductDetail = hide || (cleanPath.startsWith("/products/") && cleanPath !== "/products");
+  if (isProductDetail) {
+    return null;
+  }
 
   return (
     <section

@@ -13,7 +13,15 @@ const headingClass = "mb-5 font-outfit text-lg font-semibold text-white";
 const linkClass = "inline-block text-sm text-white/70 transition-all hover:translate-x-1 hover:text-brand-fresh";
 const colClass = "lg:border-l lg:border-white/10 lg:pl-7";
 
-export default async function SiteFooter({ settings, categories }: { settings: SiteSettings; categories: Category[] }) {
+export default async function SiteFooter({
+  settings,
+  categories,
+  hideShowcase,
+}: {
+  settings: SiteSettings;
+  categories: Category[];
+  hideShowcase?: boolean;
+}) {
   const t = await getTranslations("Footer");
   const links = [
     { label: t("allProducts"), href: "/products" },
@@ -27,7 +35,7 @@ export default async function SiteFooter({ settings, categories }: { settings: S
   return (
     <footer className="relative bg-brand-deep text-white border-none">
       {/* ── Attached Farm-Fresh Showcase (Vegetable Tote Bag + 6 Orbital Badges) ── */}
-      <FarmFreshShowcase />
+      <FarmFreshShowcase hide={hideShowcase} />
 
       <RevealGroup>
         {/* overflow-hidden: the rows slide up while animating in — they must not stretch the page below the footer */}
