@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
 import { ProductGridCard, ProductGridItem } from '@/components/product/ProductGridCard';
 import { useCartStore } from '@/store/useCartStore';
+import { useQuickViewStore } from '@/store/useQuickViewStore';
 import { toast } from '@/store/useToastStore';
 
 export interface RelatedProductsProps {
@@ -14,7 +14,7 @@ export function RelatedProducts({
   products = [],
   title = 'Frequently Bought Together',
 }: RelatedProductsProps) {
-  const router = useRouter();
+  const openQuickView = useQuickViewStore((s) => s.openQuickView);
   const { items, addItem, updateQuantity, removeItem } = useCartStore();
 
   if (!products || products.length === 0) {
@@ -42,7 +42,7 @@ export function RelatedProducts({
               <ProductGridCard
                 product={item}
                 quantityInCart={quantityInCart}
-                onPress={() => router.push(`/product/${item.slug}` as any)}
+                onPress={() => openQuickView(item as any)}
                 onAddToCart={() => {
                   addItem(
                     {

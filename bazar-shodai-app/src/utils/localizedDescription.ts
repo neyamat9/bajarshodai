@@ -8,7 +8,7 @@ export interface ProductDescriptionInput {
   name?: string;
   nameBn?: string;
   banglaName?: string;
-  category?: string | { slug?: string; name?: string; nameBn?: string };
+  category?: string | { slug?: string; name?: string; nameBn?: string } | null;
   categoryName?: string;
   categorySlug?: string;
   description?: string | null;

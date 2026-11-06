@@ -10,6 +10,7 @@ import { ThemeProvider, useAppTheme } from '@/components/theme/ThemeProvider';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { ToastContainer } from '@/components/ui/Toast';
 import { NetworkBanner } from '@/components/ui/NetworkBanner';
+import { ProductQuickViewModal } from '@/components/product/ProductQuickViewModal';
 import { useAppFonts } from '@/hooks/useFonts';
 import { hideSplashScreen } from '@/utils/splash';
 import { getOrCreateGuestToken } from '@/utils/guestToken';
@@ -291,6 +292,7 @@ function RootNavigationLayout() {
           }}
         />
       </Stack>
+      <ProductQuickViewModal />
     </View>
   );
 }

@@ -19,6 +19,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Radius } from '@/constants/layout';
 import { useWishlist, useToggleWishlist } from '@/features/account/api/accountApi';
 import { useCartStore } from '@/store/useCartStore';
+import { useQuickViewStore } from '@/store/useQuickViewStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { toast } from '@/store/useToastStore';
 import { haptics } from '@/services/haptics';
@@ -29,6 +30,7 @@ const CARD_WIDTH = (width - 40) / 2;
 
 export default function WishlistScreen() {
   const router = useRouter();
+  const openQuickView = useQuickViewStore((s) => s.openQuickView);
   const { isAuthenticated } = useAuthStore();
   const { data: wishlist = [], isLoading, refetch, isRefetching } = useWishlist();
   const { mutate: toggleWishlist } = useToggleWishlist();
@@ -120,7 +122,19 @@ export default function WishlistScreen() {
             return (
               <View style={styles.card}>
                 <TouchableOpacity
-                  onPress={() => router.push(`/product/${p.slug}` as any)}
+                  onPress={() =>
+                    openQuickView({
+                      id: p.id,
+                      slug: p.slug,
+                      name: p.name,
+                      banglaName: p.nameBn || (p as any).banglaName,
+                      price: p.price,
+                      originalPrice: (p as any).regularPrice || (p as any).originalPrice,
+                      imageUrl: imgUri,
+                      unit: p.unit || 'pc',
+                      stock: p.stock,
+                    })
+                  }
                   activeOpacity={0.8}
                 >
                   <View style={styles.imageContainer}>

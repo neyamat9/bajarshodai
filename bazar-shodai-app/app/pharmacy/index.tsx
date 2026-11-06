@@ -49,6 +49,7 @@ export default function PharmacyCatalogScreen() {
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [selectedMedicine, setSelectedMedicine] = useState<{
     name: string;
+    slug?: string;
     price: number;
     meta: MedicineMetaData;
   } | null>(null);
@@ -173,6 +174,7 @@ export default function PharmacyCatalogScreen() {
     haptics.light();
     setSelectedMedicine({
       name: item.nameBn || item.name,
+      slug: item.slug,
       price: item.price,
       meta: {
         genericName: item.genericName || 'General',
@@ -452,9 +454,11 @@ export default function PharmacyCatalogScreen() {
         <MedicineInfoSheet
           visible={Boolean(selectedMedicine)}
           medicineName={selectedMedicine.name}
+          slug={selectedMedicine.slug}
           meta={selectedMedicine.meta}
           price={selectedMedicine.price}
           onClose={() => setSelectedMedicine(null)}
+          onViewFullDetails={(slug) => router.push(`/product/${slug}`)}
           onAddToCart={() => {
             addItem(
               {

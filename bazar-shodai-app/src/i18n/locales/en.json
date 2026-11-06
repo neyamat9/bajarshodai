@@ -65,5 +65,19 @@
     "call": "Call Customer",
     "markDelivered": "Delivered",
     "markFailed": "Delivery Failed"
+  },
+  "quickView": {
+    "title": "Quick Preview",
+    "viewFullDetails": "View Full Details",
+    "viewFullDetailsSubtitle": "Full specifications, nutrition facts & customer reviews",
+    "close": "Close preview",
+    "inStock": "In Stock",
+    "stockOut": "Out of Stock",
+    "dailyFresh": "Daily Fresh",
+    "save": "Save",
+    "addToCart": "Add to Cart",
+    "addedToCart": "Added to cart",
+    "quantity": "Quantity",
+    "weighedNotice": "Price may slightly vary depending on final weighed scale"
   }
 }

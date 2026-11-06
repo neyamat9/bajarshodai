@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, Text, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
 import { ProductGridCard, ProductGridItem } from '@/components/product/ProductGridCard';
 import { ProductCardData } from '../types';
 import { useCartStore } from '@/store/useCartStore';
+import { useQuickViewStore } from '@/store/useQuickViewStore';
 import { toast } from '@/store/useToastStore';
 
 export interface FeaturedProductsSectionProps {
@@ -15,7 +15,7 @@ export function FeaturedProductsSection({
   products,
   className = '',
 }: FeaturedProductsSectionProps) {
-  const router = useRouter();
+  const openQuickView = useQuickViewStore((s) => s.openQuickView);
   const addItem = useCartStore((s) => s.addItem);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
@@ -71,7 +71,7 @@ export function FeaturedProductsSection({
                 <ProductGridCard
                   product={gridItem}
                   quantityInCart={cartItem?.quantity}
-                  onPress={() => router.push(`/product/${p.slug}`)}
+                  onPress={() => openQuickView(gridItem as any)}
                   onAddToCart={() => {
                     addItem(
                       {

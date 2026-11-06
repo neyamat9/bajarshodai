@@ -16,11 +16,13 @@ import { FilterBottomSheet, FilterState } from '@/features/products/components/F
 import { NoProductsFound } from '@/features/products/components/NoProductsFound';
 import { useInfiniteProducts } from '@/features/products/hooks/useInfiniteProducts';
 import { useCartStore } from '@/store/useCartStore';
+import { useQuickViewStore } from '@/store/useQuickViewStore';
 import { toast } from '@/store/useToastStore';
 import { haptics } from '@/services/haptics';
 
 export default function ProductListingScreen() {
   const router = useRouter();
+  const openQuickView = useQuickViewStore((s) => s.openQuickView);
   const searchParams = useLocalSearchParams<{
     category?: string;
     brand?: string;
@@ -158,7 +160,7 @@ export default function ProductListingScreen() {
                 <ProductGridCard
                   product={gridItem}
                   quantityInCart={cartItem?.quantity}
-                  onPress={() => router.push(`/product/${item.slug}`)}
+                  onPress={() => openQuickView(gridItem as any)}
                   onAddToCart={() => {
                     addItem(
                       {

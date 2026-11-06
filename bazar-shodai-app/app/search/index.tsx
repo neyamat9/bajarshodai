@@ -25,6 +25,7 @@ import {
   clearAllSearchHistory,
 } from '@/features/search/api/searchHistory';
 import { useCartStore } from '@/store/useCartStore';
+import { useQuickViewStore } from '@/store/useQuickViewStore';
 import { toast } from '@/store/useToastStore';
 import { haptics } from '@/services/haptics';
 
@@ -37,6 +38,7 @@ function assetUrl(url?: string): string | undefined {
 
 export default function SearchScreen() {
   const router = useRouter();
+  const openQuickView = useQuickViewStore((s) => s.openQuickView);
   const addItem = useCartStore((s) => s.addItem);
   const removeItem = useCartStore((s) => s.removeItem);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
@@ -251,7 +253,26 @@ export default function SearchScreen() {
               <MedicineListItem
                 product={medData}
                 quantityInCart={cartItem?.quantity}
-                onPress={() => router.push(`/product/${item.slug}`)}
+                onPress={() =>
+                  openQuickView({
+                    id: item.id,
+                    slug: item.slug,
+                    name: medData.name,
+                    banglaName: medData.nameBn,
+                    price: medData.price,
+                    unit: medData.unit || 'pc',
+                    imageUrl: medData.imageUrl,
+                    inStock,
+                    trackStock: item.trackStock,
+                    medicineMeta: {
+                      genericName: medData.genericName,
+                      dosageForm: medData.dosageForm,
+                      strength: medData.strength,
+                      manufacturer: medData.manufacturer,
+                      isPrescriptionRequired: medData.isPrescriptionRequired,
+                    },
+                  })
+                }
                 onAddToCart={() => {
                   addItem(
                     {
@@ -335,7 +356,7 @@ export default function SearchScreen() {
                 <ProductGridCard
                   product={gridItem}
                   quantityInCart={cartItem?.quantity}
-                  onPress={() => router.push(`/product/${item.slug}`)}
+                  onPress={() => openQuickView(gridItem as any)}
                   onAddToCart={() => {
                     addItem(
                       {

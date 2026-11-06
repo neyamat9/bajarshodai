@@ -9,21 +9,25 @@ import { MedicineMetaData } from '../types';
 export interface MedicineInfoSheetProps {
   visible: boolean;
   medicineName: string;
+  slug?: string;
   meta?: MedicineMetaData;
   price?: number;
   onClose: () => void;
   onAddToCart?: () => void;
   onUploadPrescription?: () => void;
+  onViewFullDetails?: (slug: string) => void;
 }
 
 export function MedicineInfoSheet({
   visible,
   medicineName,
+  slug,
   meta,
   price,
   onClose,
   onAddToCart,
   onUploadPrescription,
+  onViewFullDetails,
 }: MedicineInfoSheetProps) {
   const isRx = meta?.isPrescriptionRequired ?? false;
 
@@ -116,6 +120,27 @@ export function MedicineInfoSheet({
                   'Generally well-tolerated. Rare mild symptoms may include nausea, slight dizziness, or gastric irritation.'}
               </Text>
             </View>
+            {/* View Full Details Button */}
+            {slug && onViewFullDetails ? (
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => {
+                  onClose();
+                  onViewFullDetails(slug);
+                }}
+                style={styles.fullDetailsBtn}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.fullDetailsTitle}>সম্পূর্ণ বিবরণ দেখুন</Text>
+                  <Text style={styles.fullDetailsSubtitle}>
+                    ডোজের নিয়মাবলী, পার্শ্বপ্রতিক্রিয়া ও নির্দেশিকা
+                  </Text>
+                </View>
+                <View style={styles.arrowCircle}>
+                  <Icon name="ArrowRight" size={16} color="#ffffff" />
+                </View>
+              </TouchableOpacity>
+            ) : null}
           </ScrollView>
 
           {/* Footer Action */}
@@ -250,5 +275,33 @@ const styles = StyleSheet.create({
     padding: 16,
     borderTopWidth: 1,
     borderTopColor: '#f3f4f6',
+  },
+  fullDetailsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#86efac',
+    backgroundColor: '#f0fdf4',
+  },
+  fullDetailsTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0b6234',
+  },
+  fullDetailsSubtitle: {
+    fontSize: 11,
+    color: '#15803d',
+    marginTop: 2,
+  },
+  arrowCircle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#0b6234',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

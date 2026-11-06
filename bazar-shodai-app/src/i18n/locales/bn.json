@@ -65,5 +65,19 @@
     "call": "গ্রাহককে কল করুন",
     "markDelivered": "ডেলিভারি সম্পন্ন",
     "markFailed": "ডেলিভারি ব্যর্থ"
+  },
+  "quickView": {
+    "title": "এক নজরে",
+    "viewFullDetails": "সম্পূর্ণ বিবরণ দেখুন",
+    "viewFullDetailsSubtitle": "বিস্তারিত বিবরণ, পুষ্টিগুণ ও গ্রাহকদের রিভিউ দেখুন",
+    "close": "বন্ধ করুন",
+    "inStock": "স্টকে আছে",
+    "stockOut": "স্টক শেষ",
+    "dailyFresh": "তাজা বাজার",
+    "save": "সাশ্রয়",
+    "addToCart": "ব্যাগে যোগ করুন",
+    "addedToCart": "ব্যাগে যুক্ত করা হয়েছে",
+    "quantity": "পরিমাণ",
+    "weighedNotice": "ওজন অনুযায়ী মূল্যের সামান্য তারতম্য হতে পারে"
   }
 }

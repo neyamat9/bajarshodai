@@ -36,4 +36,28 @@ describe('design tokens & component layout integrity', () => {
     expect(isValidBdMobile('017123456789')).toBe(false); // Too long
     expect(isValidBdMobile('abcdefghijk')).toBe(false); // Non-numeric
   });
+
+  it('manages quick view modal state cleanly', async () => {
+    const { useQuickViewStore } = await import('../src/store/useQuickViewStore');
+    expect(useQuickViewStore.getState().isOpen).toBe(false);
+
+    useQuickViewStore.getState().openQuickView({
+      id: 'prod-1',
+      slug: 'fresh-potato',
+      name: 'Fresh Potato',
+      banglaName: 'তাজা আলু',
+      price: 45,
+      originalPrice: 50,
+      unit: 'kg',
+      stock: 20,
+    });
+
+    expect(useQuickViewStore.getState().isOpen).toBe(true);
+    expect(useQuickViewStore.getState().product?.slug).toBe('fresh-potato');
+    expect(useQuickViewStore.getState().product?.banglaName).toBe('তাজা আলু');
+
+    useQuickViewStore.getState().closeQuickView();
+    expect(useQuickViewStore.getState().isOpen).toBe(false);
+    expect(useQuickViewStore.getState().product).toBeNull();
+  });
 });

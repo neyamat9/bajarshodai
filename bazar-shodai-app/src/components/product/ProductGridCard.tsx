@@ -5,6 +5,7 @@ import { Icon } from '@/components/ui/Icon';
 import { formatBdt } from '@/utils/format';
 import { Radius, Shadows } from '@/constants/layout';
 import { haptics } from '@/services/haptics';
+import { useQuickViewStore } from '@/store/useQuickViewStore';
 
 export interface ProductGridItem {
   id: string;
@@ -84,12 +85,21 @@ function ProductGridCardComponent({
 
   const displayTitle = product.banglaName || product.name;
   const displayUnit = product.packSize || (product.unit ? `১ ${product.unit}` : '');
+  const openQuickView = useQuickViewStore((s) => s.openQuickView);
+
+  const handleCardPress = () => {
+    if (onPress) {
+      onPress();
+    } else {
+      openQuickView(product as any);
+    }
+  };
 
   return (
     <TouchableOpacity
       activeOpacity={0.9}
       delayPressIn={0}
-      onPress={onPress}
+      onPress={handleCardPress}
       style={[styles.card, Shadows.sm]}
       className={`bg-card border border-border ${className}`}
     >

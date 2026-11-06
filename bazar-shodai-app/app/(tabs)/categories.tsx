@@ -18,6 +18,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { useHomeCategories } from '@/features/home/api/useHomeData';
 import { fetchProductsApi } from '@/features/products/api/productsApi';
 import { useCartStore } from '@/store/useCartStore';
+import { useQuickViewStore } from '@/store/useQuickViewStore';
 import { toast } from '@/store/useToastStore';
 import { haptics } from '@/services/haptics';
 import { assetUrl } from '@/utils/format';
@@ -33,6 +34,7 @@ const SORT_OPTIONS: { id: SortOption; label: string; icon: string }[] = [
 
 export default function ShopScreen() {
   const router = useRouter();
+  const openQuickView = useQuickViewStore((s) => s.openQuickView);
   const params = useLocalSearchParams<{ category?: string; sub?: string }>();
   const addItem = useCartStore((s) => s.addItem);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
@@ -399,7 +401,7 @@ export default function ShopScreen() {
                 <ProductGridCard
                   product={gridItem}
                   quantityInCart={cartItem?.quantity}
-                  onPress={() => router.push(`/product/${item.slug}`)}
+                  onPress={() => openQuickView(gridItem as any)}
                   onAddToCart={() => {
                     addItem(
                       {
