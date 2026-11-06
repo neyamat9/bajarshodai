@@ -62,21 +62,19 @@ export function ProductQuickViewProvider({
   const openQuickView = useCallback((prod: Product) => {
     setProduct(prod);
 
-    // Sync with browser history so native Back button closes the modal first!
+    // Push history state WITHOUT changing URL search params, so phone back button closes the modal
+    // without triggering Next.js searchParams navigation or scroll-to-top!
     if (typeof window !== "undefined") {
-      const url = new URL(window.location.href);
-      url.searchParams.set("preview", prod.slug);
-      window.history.pushState({ preview: prod.slug }, "", url.toString());
+      window.history.pushState({ quickViewModal: true }, "", window.location.href);
     }
   }, []);
 
   const closeQuickView = useCallback(() => {
     setProduct(null);
 
-    // If "preview" query exists in current URL, step back in history to clean it up
+    // If modal pushed a history state, step back to clean it up
     if (typeof window !== "undefined") {
-      const url = new URL(window.location.href);
-      if (url.searchParams.has("preview")) {
+      if ((window.history.state as { quickViewModal?: boolean } | null)?.quickViewModal) {
         window.history.back();
       }
     }
@@ -86,10 +84,8 @@ export function ProductQuickViewProvider({
     (slug: string) => {
       setProduct(null);
       if (typeof window !== "undefined") {
-        const url = new URL(window.location.href);
-        if (url.searchParams.has("preview")) {
-          url.searchParams.delete("preview");
-          window.history.replaceState({}, "", url.toString());
+        if ((window.history.state as { quickViewModal?: boolean } | null)?.quickViewModal) {
+          window.history.back();
         }
       }
       router.push(`/products/${slug}`);
@@ -158,11 +154,12 @@ function QuickViewModalContent({
 
   // Lock body and Lenis smooth scrolling while modal is visible
   useEffect(() => {
+    const scrollY = window.scrollY || document.documentElement.scrollTop;
     const originalBodyOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
     // Pause Lenis smooth scrolling completely while modal is open
-    const w = window as unknown as { __lenis?: { stop: () => void; start: () => void } };
+    const w = window as unknown as { __lenis?: { stop: () => void; start: () => void; scrollTo: (y: number, opts?: object) => void } };
     w.__lenis?.stop();
 
     // Prevent wheel scrolling on background or chaining at boundaries
@@ -191,6 +188,12 @@ function QuickViewModalContent({
       document.body.style.overflow = originalBodyOverflow;
       w.__lenis?.start();
       window.removeEventListener("wheel", handleWheel);
+
+      // Restore exact scroll position seamlessly
+      if (w.__lenis) {
+        w.__lenis.scrollTo(scrollY, { immediate: true, force: true });
+      }
+      window.scrollTo({ top: scrollY, left: 0, behavior: "instant" });
     };
   }, []);
 

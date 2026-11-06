@@ -63,11 +63,12 @@ export default function MedicineDetailModal({
   // Lock body and Lenis smooth scrolling when open
   useEffect(() => {
     if (!product) return;
+    const scrollY = window.scrollY || document.documentElement.scrollTop;
     const originalBodyOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
     // Pause Lenis smooth scrolling completely while modal is open
-    const w = window as unknown as { __lenis?: { stop: () => void; start: () => void } };
+    const w = window as unknown as { __lenis?: { stop: () => void; start: () => void; scrollTo: (y: number, opts?: object) => void } };
     w.__lenis?.stop();
 
     // Prevent mouse wheel from scrolling the background page or chaining
@@ -96,6 +97,12 @@ export default function MedicineDetailModal({
       document.body.style.overflow = originalBodyOverflow;
       w.__lenis?.start();
       window.removeEventListener("wheel", handleWheel);
+
+      // Restore exact scroll position seamlessly
+      if (w.__lenis) {
+        w.__lenis.scrollTo(scrollY, { immediate: true, force: true });
+      }
+      window.scrollTo({ top: scrollY, left: 0, behavior: "instant" });
     };
   }, [product]);
 
