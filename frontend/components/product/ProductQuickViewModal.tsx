@@ -156,20 +156,10 @@ function QuickViewModalContent({
   const [quantity, setQuantity] = useState(startQty(unit));
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Lock body, html, and Lenis smooth scrolling while modal is visible
+  // Lock body and Lenis smooth scrolling while modal is visible
   useEffect(() => {
     const originalBodyOverflow = document.body.style.overflow;
-    const originalHtmlOverflow = document.documentElement.style.overflow;
-    const originalBodyPaddingRight = document.body.style.paddingRight;
-
-    // Compensate for scrollbar disappearance so background layout doesn't shift
-    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
-    if (scrollBarWidth > 0) {
-      document.body.style.paddingRight = `${scrollBarWidth}px`;
-    }
-
     document.body.style.overflow = "hidden";
-    document.documentElement.style.overflow = "hidden";
 
     // Pause Lenis smooth scrolling completely while modal is open
     const w = window as unknown as { __lenis?: { stop: () => void; start: () => void } };
@@ -199,8 +189,6 @@ function QuickViewModalContent({
 
     return () => {
       document.body.style.overflow = originalBodyOverflow;
-      document.documentElement.style.overflow = originalHtmlOverflow;
-      document.body.style.paddingRight = originalBodyPaddingRight;
       w.__lenis?.start();
       window.removeEventListener("wheel", handleWheel);
     };
@@ -314,7 +302,7 @@ function QuickViewModalContent({
       aria-modal="true"
       aria-labelledby="quick-view-title"
       data-lenis-prevent
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-brand-deep/60 backdrop-blur-sm animate-fade-in overscroll-contain"
+      className="fixed inset-0 z-[2200] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-brand-deep/60 backdrop-blur-sm animate-fade-in overscroll-contain"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}

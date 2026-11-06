@@ -77,7 +77,7 @@ export default function CategoryNav({ categories, compact = false }: CategoryNav
       const kids = Array.from(el.children) as HTMLElement[];
       let n = 0;
       for (const k of kids) {
-        if (k.offsetLeft + k.offsetWidth <= room + 0.5) n++;
+        if (k.offsetLeft + k.offsetWidth <= room - 6) n++;
         else break;
       }
       setFit((prev) => (prev === n ? prev : n));
@@ -85,8 +85,12 @@ export default function CategoryNav({ categories, compact = false }: CategoryNav
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
+    window.addEventListener("resize", measure);
     void document.fonts?.ready.then(measure);
-    return () => ro.disconnect();
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
   }, [categories]);
 
   return (
@@ -94,7 +98,7 @@ export default function CategoryNav({ categories, compact = false }: CategoryNav
       <div className="mx-auto max-w-[1440px] px-4 md:px-8">
         <div className="flex items-center justify-between">
           {/* All categories: opens the floating sidebar (the same button on every screen size) */}
-          <div className="flex items-center py-1.5">
+          <div className="flex shrink-0 items-center py-1.5">
             <button
               type="button"
               id="all-categories-toggle"
@@ -119,7 +123,7 @@ export default function CategoryNav({ categories, compact = false }: CategoryNav
           </div>
 
           {/* Desktop nav */}
-          <div ref={row} data-cat-row="" className="relative mx-2 hidden min-w-0 flex-1 items-center xl:flex">
+          <div ref={row} data-cat-row="" className="relative mx-2 hidden min-w-0 flex-1 items-center overflow-hidden xl:flex">
             {categories.map((cat, i) => {
               const isCatActive = pathname === `/category/${cat.slug}` || pathname.startsWith(`/category/${cat.slug}/`);
               return (
@@ -173,7 +177,7 @@ export default function CategoryNav({ categories, compact = false }: CategoryNav
           </div>
 
           {/* Right side: promo + (when the header is tucked away) the cart */}
-          <div className="flex items-center py-1.5">
+          <div className="relative z-10 flex shrink-0 items-center py-1.5">
             <Link
               href="/products"
               className="hidden items-center whitespace-nowrap rounded border border-brand-fresh/40 bg-brand-fresh/10 px-3 py-1.5 text-xs font-bold text-accent-text transition-colors hover:bg-brand-fresh hover:text-on-fresh 2xl:flex"
