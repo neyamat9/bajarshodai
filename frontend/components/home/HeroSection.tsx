@@ -98,18 +98,46 @@ function Slider({
   const n = banners.length;
   const t = useTranslations("Home");
   const next = useCallback(() => setI((x) => (x + 1) % n), [n]);
-  const prev = () => setI((x) => (x - 1 + n) % n);
+  const prev = useCallback(() => setI((x) => (x - 1 + n) % n), [n]);
+
+  // Touch gesture support for mobile finger swiping
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const diffX = e.changedTouches[0].clientX - touchStartX.current;
+    const diffY = e.changedTouches[0].clientY - touchStartY.current;
+
+    // Trigger only if horizontal swipe is dominant and exceeds 40px threshold
+    if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
+      if (diffX < 0) {
+        next();
+      } else {
+        prev();
+      }
+    }
+    touchStartX.current = null;
+    touchStartY.current = null;
+  };
 
   useEffect(() => {
     if (n < 2) return;
     const ms = Math.max(2, intervalSec) * 1000;
     const timer = setInterval(next, ms);
     return () => clearInterval(timer);
-  }, [n, next, intervalSec]);
+  }, [n, next, intervalSec, i]);
 
   return (
     <div
-      className={`relative h-full w-full overflow-hidden rounded border border-border bg-secondary ${
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      className={`relative h-full w-full overflow-hidden rounded border border-border bg-secondary touch-pan-y select-none ${
         fullWidth
           ? "aspect-[16/9] sm:aspect-[16/8] md:aspect-[16/7.5] min-h-[220px] sm:min-h-[380px] md:min-h-[460px] lg:min-h-[500px]"
           : "aspect-[16/10] sm:aspect-[16/9] min-h-[220px] sm:min-h-[340px] md:min-h-[440px] lg:aspect-auto lg:h-full lg:min-h-0"
@@ -126,11 +154,12 @@ function Slider({
       ))}
       {n > 1 && (
         <>
+          {/* Side navigation arrows - hidden on mobile/small devices, visible on md+ desktop */}
           <button
             type="button"
             aria-label={t("prevBanner")}
             onClick={prev}
-            className="absolute left-2 sm:left-3 top-1/2 z-10 flex h-8 w-8 sm:h-10 sm:w-10 -translate-y-1/2 items-center justify-center rounded bg-card/90 text-foreground shadow transition-colors hover:bg-brand-fresh hover:text-on-fresh"
+            className="absolute left-2 sm:left-3 top-1/2 z-10 hidden md:flex h-8 w-8 sm:h-10 sm:w-10 -translate-y-1/2 items-center justify-center rounded bg-card/90 text-foreground shadow transition-colors hover:bg-brand-fresh hover:text-on-fresh"
           >
             <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>
@@ -138,7 +167,7 @@ function Slider({
             type="button"
             aria-label={t("nextBanner")}
             onClick={next}
-            className="absolute right-2 sm:right-3 top-1/2 z-10 flex h-8 w-8 sm:h-10 sm:w-10 -translate-y-1/2 items-center justify-center rounded bg-card/90 text-foreground shadow transition-colors hover:bg-brand-fresh hover:text-on-fresh"
+            className="absolute right-2 sm:right-3 top-1/2 z-10 hidden md:flex h-8 w-8 sm:h-10 sm:w-10 -translate-y-1/2 items-center justify-center rounded bg-card/90 text-foreground shadow transition-colors hover:bg-brand-fresh hover:text-on-fresh"
           >
             <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>
