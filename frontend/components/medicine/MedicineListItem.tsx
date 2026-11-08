@@ -265,7 +265,7 @@ export default function MedicineListItem({ product, onOpenDetail }: MedicineList
       onPointerEnter={warm}
       onTouchStart={warm}
       onFocus={warm}
-      className="group relative flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 p-4 rounded-xl border border-border bg-card hover:border-emerald-500/40 hover:shadow-[0_8px_20px_-8px_rgba(16,185,129,0.18)] transition-all duration-200"
+      className="group relative flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 p-3.5 sm:p-4 rounded-xl border border-border bg-card hover:border-emerald-500/40 hover:shadow-[0_8px_20px_-8px_rgba(16,185,129,0.18)] transition-all duration-200 w-full min-w-0"
     >
       {/* ── Left Side: Dosage Form Avatar & Medicine Info ────────── */}
       <div className="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
@@ -331,29 +331,29 @@ export default function MedicineListItem({ product, onOpenDetail }: MedicineList
           </div>
 
           {/* Molecule (Generic) & Manufacturer */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1 text-xs text-muted-foreground min-w-0">
             {genericName && (
-              <div className="flex items-center gap-1 text-foreground/90 font-medium">
+              <div className="flex items-center gap-1 text-foreground/90 font-medium min-w-0">
                 <Dna className="size-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <span className="truncate max-w-[260px] sm:max-w-none">{genericName}</span>
+                <span className="truncate max-w-[140px] xs:max-w-[200px] sm:max-w-[260px] md:max-w-none">{genericName}</span>
               </div>
             )}
 
             {manufacturer && (
-              <div className="flex items-center gap-1 text-muted-foreground">
+              <div className="flex items-center gap-1 text-muted-foreground min-w-0">
                 <Building2 className="size-3.5 text-muted-foreground/70 shrink-0" />
-                <span className="truncate max-w-[200px] sm:max-w-none">{manufacturer}</span>
+                <span className="truncate max-w-[120px] xs:max-w-[160px] sm:max-w-[200px] md:max-w-none">{manufacturer}</span>
               </div>
             )}
           </div>
 
           {/* Pack size info */}
           {packText && (
-            <div className="flex items-center gap-1 text-[11px] text-muted-foreground/80">
+            <div className="flex items-center gap-1 text-[11px] text-muted-foreground/80 min-w-0">
               <Package className="size-3 shrink-0" />
-              <span>{packText}</span>
+              <span className="truncate">{packText}</span>
               {meta?.mrpUnit && (
-                <span className="text-muted-foreground/60 ml-1">
+                <span className="text-muted-foreground/60 ml-1 shrink-0">
                   ({locale === "bn" ? "প্রতি পিস" : "per piece"} {formatBDT(Number(meta.mrpUnit))})
                 </span>
               )}
@@ -363,7 +363,7 @@ export default function MedicineListItem({ product, onOpenDetail }: MedicineList
       </div>
 
       {/* ── Right Side: Price & Cart Action ────────────────────────── */}
-      <div className="flex items-center justify-between md:justify-end gap-4 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-border/60">
+      <div className="flex items-center justify-between md:justify-end gap-3 sm:gap-4 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-border/60 w-full md:w-auto min-w-0">
         {/* Pricing */}
         <div className="text-left md:text-right">
           <div className="flex items-baseline gap-1.5 md:justify-end">

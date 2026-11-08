@@ -81,10 +81,10 @@ export default function MedicineSearchBar({
             onKeyDown={handleKeyDown}
             placeholder={
               isBn
-                ? "ওষুধের নাম (যেমন: Napa, Seclo) অথবা জেনেরিক নাম (যেমন: Paracetamol, Omeprazole) দিয়ে খুঁজুন..."
-                : "Search by medicine brand name (e.g. Napa, Seclo) or generic (e.g. Paracetamol, Omeprazole)..."
+                ? "ওষুধ বা জেনেরিক নাম দিয়ে খুঁজুন (যেমন: Napa)..."
+                : "Search medicine or generic name (e.g. Napa)..."
             }
-            className="w-full bg-transparent text-sm sm:text-base text-foreground placeholder:text-muted-foreground/70 focus:outline-none"
+            className="w-full min-w-0 bg-transparent text-sm sm:text-base text-foreground placeholder:text-muted-foreground/70 focus:outline-none"
             aria-label={isBn ? "ওষুধের নাম বা জেনেরিক খুঁজুন" : "Search medicine or generic"}
           />
 

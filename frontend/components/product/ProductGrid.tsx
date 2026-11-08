@@ -356,7 +356,7 @@ export default function ProductGrid({
   const hasActiveFilters = activeFilters.length > 0;
 
   return (
-    <div className="flex items-start gap-6 min-h-[calc(100vh-var(--sticky-top,8rem)-2rem)]">
+    <div className="block lg:flex lg:items-start lg:gap-6 w-full min-w-0 min-h-[calc(100vh-var(--sticky-top,8rem)-2rem)]">
       {/* Inject noindex when filters are active to prevent crawling of filtered URLs */}
       <NoIndexWhenFiltered noIndex={hasActiveFilters} />
 
@@ -378,7 +378,7 @@ export default function ProductGrid({
       />
 
       {/* ── Main content ────────────────────────────── */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 w-full min-w-0">
         {header}
 
         {/* Dedicated Search bar for Medicine */}
@@ -425,7 +425,7 @@ export default function ProductGrid({
           {products.length === 0 && !loading ? (
             <EmptyState hasFilters={hasActiveFilters} onClearFilters={handleClearAll} />
           ) : viewMode === "list" ? (
-            <div className="flex flex-col gap-2.5">
+            <div className="flex flex-col gap-2.5 w-full min-w-0">
               {products.map((product) =>
                 product.medicineMeta ? (
                   <MedicineListItem

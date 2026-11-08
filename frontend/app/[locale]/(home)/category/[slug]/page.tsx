@@ -95,8 +95,8 @@ async function CategoryContent({
   ]);
 
   return (
-    <div className="bg-background">
-      <div className="max-w-[1440px] mx-auto px-4 md:px-8 pt-4 pb-8">
+    <div className="bg-background overflow-x-hidden w-full">
+      <div className="max-w-[1440px] mx-auto px-3 sm:px-4 md:px-8 pt-3 sm:pt-4 pb-8 w-full min-w-0">
         {/* Grid with filters — category is locked */}
         <Suspense fallback={<SkeletonGrid count={12} />}>
           <ProductGrid

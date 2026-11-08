@@ -108,13 +108,13 @@ export default function MedicineHeader({
   return (
     <div className="mb-6 space-y-4">
       {/* Top Hero Banner */}
-      <div className="relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 p-6 text-white shadow-lg">
+      <div className="relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 p-4 sm:p-6 text-white shadow-lg w-full min-w-0">
         {/* Subtle background glow */}
         <div className="pointer-events-none absolute -right-10 -top-10 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-10 right-40 h-48 w-48 rounded-full bg-emerald-300/10 blur-2xl" />
 
-        <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
-          <div className="space-y-2 max-w-2xl">
+        <div className="relative z-10 flex flex-col justify-between gap-4 sm:gap-6 md:flex-row md:items-center">
+          <div className="space-y-2 max-w-2xl min-w-0">
             {/* MRP Pill (rounded-[4px] as requested) */}
             <div className="inline-flex items-center gap-1.5 rounded-[4px] bg-white/15 px-3 py-1 text-xs font-semibold tracking-wide text-white backdrop-blur-md">
               <Pill className="h-3.5 w-3.5 text-emerald-200" />
@@ -129,7 +129,7 @@ export default function MedicineHeader({
               {categoryName}
             </h1>
 
-            <p className="text-sm text-emerald-50/90 leading-relaxed sm:text-base">
+            <p className="text-xs sm:text-sm text-emerald-50/90 leading-relaxed sm:text-base">
               {categoryDescription ||
                 (isBn
                   ? "দেশের শীর্ষস্থানীয় ফার্মাসিউটিক্যালস (স্কয়ার, বেক্সিমকো, ইনসেপ্টা, রেনাটা) থেকে সরাসরি সংগৃহীত জেনুইন ওষুধ।"
@@ -138,11 +138,11 @@ export default function MedicineHeader({
           </div>
 
           {/* Rx Prescription Call-To-Action (Clean button, no icon, title: প্রেসক্রিপশন আপলোড) */}
-          <div className="shrink-0">
+          <div className="shrink-0 w-full sm:w-auto">
             <button
               type="button"
               onClick={() => setRxModalOpen(true)}
-              className="group flex flex-col justify-center rounded-xl border border-white/30 bg-white/95 px-6 py-3.5 text-left text-emerald-950 shadow-md transition-all hover:bg-white hover:shadow-xl active:scale-95"
+              className="group flex flex-col justify-center rounded-xl border border-white/30 bg-white/95 px-4 sm:px-6 py-3 sm:py-3.5 text-left text-emerald-950 shadow-md transition-all hover:bg-white hover:shadow-xl active:scale-95 w-full sm:w-auto"
             >
               <p className="font-outfit text-base font-bold text-emerald-950">
                 {isBn ? "প্রেসক্রিপশন আপলোড" : "Upload Prescription"}
