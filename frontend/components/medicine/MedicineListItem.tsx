@@ -29,6 +29,11 @@ import Image from "next/image";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { PLACEHOLDER_IMAGE } from "@/lib/api/client";
+import MedicinePurchasePopover from "@/components/medicine/MedicinePurchasePopover";
+import {
+  isOralSolidMedicine,
+  type MedicinePriceBreakdown,
+} from "@/lib/services/medicine-pricing";
 
 interface MedicineListItemProps {
   product: Product;
@@ -53,6 +58,7 @@ export default function MedicineListItem({ product, onOpenDetail }: MedicineList
   }
 
   const [isWishAnimating, setIsWishAnimating] = useState(false);
+  const [isPurchaseOpen, setIsPurchaseOpen] = useState(false);
 
   const inVault = isInVault(product.id);
   const unit = product.unit;
@@ -70,7 +76,6 @@ export default function MedicineListItem({ product, onOpenDetail }: MedicineList
   const genericName = meta?.genericName || "";
   const manufacturer = meta?.manufacturer || product.brandName || "";
   const isRx = meta?.type === "PRESCRIPTION";
-  const strength = meta?.strength;
 
   const hasRealImage =
     product.images?.[0]?.url &&
@@ -101,6 +106,13 @@ export default function MedicineListItem({ product, onOpenDetail }: MedicineList
     if (outOfStock) return;
     playClick();
 
+    // Oral solid forms (Tablet / Capsule) open the custom Pata & Loose Tablet popover
+    if (isOralSolidMedicine(product)) {
+      setIsPurchaseOpen(true);
+      return;
+    }
+
+    // Liquids, syrups, ointments add directly to cart
     const base = {
       id: product.id,
       slug: product.slug,
@@ -112,6 +124,91 @@ export default function MedicineListItem({ product, onOpenDetail }: MedicineList
     };
 
     void quickAdd(base, startQty(unit));
+  }
+
+  async function handlePopoverConfirm(breakdown: MedicinePriceBreakdown) {
+    const isBn = locale === "bn";
+
+    // Scenario 1: Only full strips
+    if (breakdown.totalStrips > 0 && breakdown.looseTabs === 0) {
+      await addToCart({
+        productId: product.id,
+        slug: product.slug,
+        name: product.name,
+        price: breakdown.effectiveStripPrice,
+        quantity: breakdown.totalStrips,
+        imageUrl: hasRealImage ? product.images[0].url : "",
+        stock: isUntracked ? 9999 : product.stock,
+        unit,
+      });
+      toast.success(
+        isBn
+          ? `${product.name} (${formatQuantity(breakdown.totalStrips, locale)} পাতা) কার্টে যোগ করা হয়েছে`
+          : `Added ${product.name} (${breakdown.totalStrips} strips) to cart`
+      );
+      return;
+    }
+
+    // Scenario 2: Only loose tablets
+    if (breakdown.totalStrips === 0 && breakdown.looseTabs > 0) {
+      await addToCart({
+        productId: product.id,
+        slug: product.slug,
+        name: `${product.name} (${formatQuantity(breakdown.looseTabs, locale)} ${isBn ? "টি ট্যাবলেট" : "tabs"})`,
+        price: breakdown.effectiveTabPrice,
+        quantity: breakdown.looseTabs,
+        imageUrl: hasRealImage ? product.images[0].url : "",
+        stock: isUntracked ? 9999 : product.stock,
+        unit: {
+          code: "piece",
+          label: isBn ? "ট্যাবলেট" : "tab",
+          allowDecimal: false,
+          step: 1,
+          minQty: 1,
+        },
+      });
+      toast.success(
+        isBn
+          ? `${product.name} (${formatQuantity(breakdown.looseTabs, locale)}টি ট্যাবলেট) কার্টে যোগ করা হয়েছে`
+          : `Added ${product.name} (${breakdown.looseTabs} tabs) to cart`
+      );
+      return;
+    }
+
+    // Scenario 3: Combination (e.g. 1 Strip + 3 Loose Tablets = 13 tabs total)
+    // Add strips line
+    await addToCart({
+      productId: product.id,
+      slug: product.slug,
+      name: `${product.name} (${formatQuantity(breakdown.totalStrips, locale)} ${isBn ? "পাতা" : "strip"})`,
+      price: breakdown.effectiveStripPrice,
+      quantity: breakdown.totalStrips,
+      imageUrl: hasRealImage ? product.images[0].url : "",
+      stock: isUntracked ? 9999 : product.stock,
+      unit,
+    });
+    // Add loose tabs line
+    await addToCart({
+      productId: product.id,
+      slug: product.slug,
+      name: `${product.name} (${formatQuantity(breakdown.looseTabs, locale)} ${isBn ? "টি ট্যাবলেট" : "tabs"})`,
+      price: breakdown.effectiveTabPrice,
+      quantity: breakdown.looseTabs,
+      imageUrl: hasRealImage ? product.images[0].url : "",
+      stock: isUntracked ? 9999 : product.stock,
+      unit: {
+        code: "piece",
+        label: isBn ? "ট্যাবলেট" : "tab",
+        allowDecimal: false,
+        step: 1,
+        minQty: 1,
+      },
+    });
+    toast.success(
+      isBn
+        ? `${product.name} (${formatQuantity(breakdown.totalStrips, locale)} পাতা + ${formatQuantity(breakdown.looseTabs, locale)}টি ট্যাবলেট) কার্টে যোগ করা হয়েছে`
+        : `Added ${product.name} (${breakdown.totalStrips} strips + ${breakdown.looseTabs} tabs) to cart`
+    );
   }
 
   async function more(e: React.MouseEvent) {
@@ -342,14 +439,29 @@ export default function MedicineListItem({ product, onOpenDetail }: MedicineList
               type="button"
               disabled={outOfStock}
               onClick={handleAddToCart}
-              className="flex items-center gap-2 px-3.5 h-9 rounded-lg font-medium text-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm disabled:opacity-50 disabled:pointer-events-none transition-colors"
+              aria-label={locale === "bn" ? "কার্টে যোগ করুন" : "Add to Cart"}
+              title={locale === "bn" ? "কার্টে যোগ করুন" : "Add to Cart"}
+              className="flex size-9 sm:w-auto sm:px-3.5 items-center justify-center sm:gap-2 rounded-lg font-medium text-xs bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white shadow-sm disabled:opacity-50 disabled:pointer-events-none transition-all"
             >
-              <ShoppingCart className="size-3.5" />
-              <span>কার্টে যোগ করুন</span>
+              <Plus className="size-4 sm:hidden" />
+              <ShoppingCart className="hidden sm:inline size-3.5" />
+              <span className="hidden sm:inline">
+                {locale === "bn" ? "কার্টে যোগ করুন" : "Add to Cart"}
+              </span>
             </button>
           )}
         </div>
       </div>
+
+      {/* Oral Solid Pata & Loose Tablet Purchase Popover */}
+      {isOralSolidMedicine(product) && (
+        <MedicinePurchasePopover
+          product={product}
+          isOpen={isPurchaseOpen}
+          onClose={() => setIsPurchaseOpen(false)}
+          onConfirm={handlePopoverConfirm}
+        />
+      )}
     </article>
   );
 }

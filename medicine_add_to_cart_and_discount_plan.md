@@ -26,8 +26,8 @@ This document outlines the end-to-end architecture across the **Database / Backe
 | **Units per Pata / Strip** | Default is **10 tablets/capsules**. Can be auto-extracted from API data (`packSizeInfo`, e.g. `"1 Strip (10 Tablets)"`) and overridden manually by Admin in the Dashboard.                                                                                                                |
 | **Add-to-Cart Trigger**    | Clicking the cart icon / "Add to Cart" button on any tablet/capsule triggers a small **tooltip-style popover / modal** anchored to the button (or mobile bottom sheet).                                                                                                                   |
 | **Selection Options**      | 1. **Full Pata (পাতা / Strip)**: Stepper [ − ] `count` [ + ]<br>2. **Loose Tablets (ট্যাবলেট / পিস)**: Stepper [ − ] `count` [ + ]<br>3. **Combination**: e.g., 1 Pata + 3 Tablets.<br>4. Auto-rollover: Selecting `unitsPerStrip` loose tablets automatically converts into 1 full pata. |
-| **Global Discount Policy** | Managed in Admin Dashboard (`siteSetting: medicine_discount_settings`):<br>• `ALL_CASES`: Discount applies to both loose tablets and full patas.<br>• `MIN_STRIP_ONLY`: Discount applies **only** if order includes $\ge$ 1 full pata. Loose tabs charged at standard unit MRP.           |
-| **Per-Medicine Override**  | Admin can override discount policy per medicine in `ProductEditor` / `MedicineSync`:<br>• `INHERIT_GLOBAL` (Follow global setting)<br>• `ALL_CASES` (Always discount all quantities)<br>• `MIN_STRIP_ONLY` (Only discount if $\ge$ 1 pata)<br>• `NO_DISCOUNT` (Always full MRP)           |
+| **Global Discount Policy** | Managed in Admin Dashboard (`siteSetting: medicine_discount_settings`):<br>• `ALL_CASES`: Discount applies to all quantities (even 1, 2, or 3 loose tablets).<br>• `MIN_STRIP_ONLY`: Discount unlocks **only** if the order includes $\ge$ 1 full pata. Once unlocked, **all tablets (both the full patas and loose tabs, e.g. all 13 tablets) receive the discount**! If order contains $< 1$ full pata (only loose tabs), no discount is applied. |
+| **Per-Medicine Override**  | Admin can override discount policy per medicine in `ProductEditor` / `MedicineSync`:<br>• `INHERIT_GLOBAL` (Follow global setting)<br>• `ALL_CASES` (Always discount all quantities)<br>• `MIN_STRIP_ONLY` (Only discount if $\ge$ 1 pata; once met, discounts all tablets)<br>• `NO_DISCOUNT` (Always full MRP) |
 
 ---
 
@@ -136,11 +136,14 @@ function calculateMedicineOrderPrice({
       stripDiscountRate = discountPercent / 100;
       tabDiscountRate = discountPercent / 100;
     } else if (discountEligibility === "MIN_STRIP_ONLY") {
-      // Strips get discount if totalStrips >= 1; loose tabs remain at standard MRP
+      // If customer buys at least 1 full strip, discount unlocks for ALL tablets (both strips and loose tabs!)
       if (totalStrips >= 1) {
         stripDiscountRate = discountPercent / 100;
+        tabDiscountRate = discountPercent / 100; // Loose tabs ALSO get discount once min 1 strip threshold is met!
+      } else {
+        stripDiscountRate = 0;
+        tabDiscountRate = 0; // Less than 1 strip: loose tablets stay at standard unit MRP
       }
-      tabDiscountRate = 0; // loose tablets get NO discount
     }
   }
 
@@ -173,9 +176,9 @@ function calculateMedicineOrderPrice({
 
 | Scenario               | Inputs               | Rule: `MIN_STRIP_ONLY` (8% off)       | Rule: `ALL_CASES` (8% off)               |
 | :--------------------- | :------------------- | :------------------------------------ | :--------------------------------------- |
-| **A: 1 Full Pata**     | 1 Strip (MRP ৳50)    | ৳50 − 8% = **৳46.00** (Save ৳4)       | ৳50 − 8% = **৳46.00** (Save ৳4)          |
-| **B: 3 Loose Tabs**    | 3 Tabs (MRP ৳5 each) | 3 × ৳5 = **৳15.00** (No discount)     | 3 × (৳5 − 8%) = **৳13.80** (Save ৳1.20)  |
-| **C: 1 Pata + 3 Tabs** | 1 Strip + 3 Tabs     | ৳46 (strip) + ৳15 (tabs) = **৳61.00** | ৳46 (strip) + ৳13.80 (tabs) = **৳59.80** |
+| **A: 1 Full Pata**     | 1 Strip (MRP ৳50)    | ৳50 − 8% = **৳46.00** (Save ৳4.00)       | ৳50 − 8% = **৳46.00** (Save ৳4.00)          |
+| **B: 3 Loose Tabs**    | 3 Tabs (MRP ৳5 each) | 3 × ৳5 = **৳15.00** (No discount, $< 1$ pata)     | 3 × (৳5 − 8%) = **৳13.80** (Save ৳1.20)  |
+| **C: 1 Pata + 3 Tabs (13 tabs)** | 1 Strip + 3 Tabs     | $\ge 1$ pata unlocked! ৳46 (strip) + ৳13.80 (tabs) = **৳59.80** (Save ৳5.20 across all 13 tabs) | ৳46 (strip) + ৳13.80 (tabs) = **৳59.80** (Save ৳5.20) |
 
 ---
 
@@ -187,8 +190,8 @@ In the Global Medicine Settings panel:
 
 1. **Global Discount Rate (%):** Input field, e.g. `8%`.
 2. **Discount Eligibility Rule (ছাড়ের নিয়ম):**
-   - 🔘 **All Cases (সব ক্ষেত্রে):** Apply discount to full strips as well as any number of loose tablets.
-   - 🔘 **Minimum 1 Full Pata (কমপক্ষে ১ পাতা):** Discount applies only to full strips ($\ge 1$ pata); loose tablets are sold at individual MRP.
+   - 🔘 **All Cases (সব ক্ষেত্রে ছাড়):** Apply discount to all quantities (even 1, 2, or 3 loose tablets).
+   - 🔘 **Minimum 1 Full Pata (কমপক্ষে ১ পাতা নিলে পুরো অর্ডারে ছাড়):** Customer must purchase at least 1 full pata ($\ge 1$) to unlock the discount. Once unlocked, **all tablets (the full pata + all loose tablets, e.g. all 13 tablets) receive the discount**. If customer orders $< 1$ pata (only loose tabs), no discount is applied.
 3. **Default Units per Strip:** Input field, default `10`.
 4. **"Apply Settings to All Global Medicines" Button:** Updates site settings and refreshes cached calculations.
 
@@ -319,7 +322,7 @@ flowchart LR
 | **TC-2**  | Click cart on 10-tablet strip with 1 strip selected  | Adds 1 strip at discounted strip price.                                        |
 | **TC-3**  | Buy 3 loose tabs with `MIN_STRIP_ONLY` rule          | Added at standard single tablet MRP (no discount).                             |
 | **TC-4**  | Buy 3 loose tabs with `ALL_CASES` rule               | Added at discounted single tablet rate.                                        |
-| **TC-5**  | Buy 1 strip + 3 loose tabs (`MIN_STRIP_ONLY`)        | Strip is discounted; loose tabs are at standard MRP. Total is correct.         |
+| **TC-5**  | Buy 1 strip + 3 loose tabs (`MIN_STRIP_ONLY`)        | Condition ($\ge 1$ pata) is met: both strip and loose tabs receive the discount (all 13 tabs discounted). Total is ৳59.80 (Save ৳5.20). |
 | **TC-6**  | Increase loose tablets to equal `unitsPerStrip`      | Stepper automatically increments Strip count by +1 and resets loose tabs to 0. |
 | **TC-7**  | Medicine with custom strip size (e.g., 6 or 20 tabs) | Popover correctly shows "৬টি ট্যাবলেট / পাতা" and limits loose tabs to 5.      |
 | **TC-8**  | Admin overrides single medicine to `NO_DISCOUNT`     | Global discount ignored; medicine charged at full MRP for both strip and tabs. |

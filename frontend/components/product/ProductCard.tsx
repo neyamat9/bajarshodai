@@ -295,7 +295,8 @@ export default function ProductCard({
               title={outOfStock ? t("card.stockOut") : t("card.addToCart")}
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary text-primary-foreground shadow-sm transition-all hover:bg-brand-fresh hover:text-on-fresh active:scale-90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:opacity-60 disabled:hover:bg-muted disabled:hover:text-muted-foreground"
             >
-              <ShoppingCart className="h-4 w-4" aria-hidden="true" />
+              <Plus className="h-4 w-4 sm:hidden" aria-hidden="true" />
+              <ShoppingCart className="hidden sm:inline h-4 w-4" aria-hidden="true" />
             </button>
           )}
         </div>

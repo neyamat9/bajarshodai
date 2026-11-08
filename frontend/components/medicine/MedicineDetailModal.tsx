@@ -6,13 +6,18 @@ import { useLocale, useTranslations } from "next-intl";
 import { formatMoney, formatQuantity } from "@/lib/format";
 import type { Locale } from "@/lib/locale";
 import type { Product } from "@/lib/types";
-import { useCart } from "@/lib/hooks/use-cart";
+import { useCart, useCartActions } from "@/lib/hooks/use-cart";
 import { useQuickAdd } from "@/lib/hooks/use-quick-add";
 import { useWishlist } from "@/lib/hooks/use-wishlist";
 import { playClick } from "@/lib/sound";
 import { startQty, stepDown, stepUp } from "@/lib/quantity";
 import { PLACEHOLDER_IMAGE } from "@/lib/api/client";
 import { toast } from "sonner";
+import MedicinePurchasePopover from "@/components/medicine/MedicinePurchasePopover";
+import {
+  isOralSolidMedicine,
+  type MedicinePriceBreakdown,
+} from "@/lib/services/medicine-pricing";
 import {
   Building2,
   CheckCircle2,
@@ -45,6 +50,7 @@ export default function MedicineDetailModal({
   const locale = useLocale() as Locale;
   const formatBDT = (n: number) => formatMoney(n, locale);
   const quickAdd = useQuickAdd();
+  const { addToCart } = useCartActions();
   const { cart, updateQuantity, removeFromCart } = useCart();
   const { addToVault, removeFromVault, isInVault } = useWishlist();
 
@@ -107,6 +113,7 @@ export default function MedicineDetailModal({
   }, [product]);
 
   const [isWishAnimating, setIsWishAnimating] = useState(false);
+  const [isPurchaseOpen, setIsPurchaseOpen] = useState(false);
 
   if (!product) return null;
 
@@ -165,6 +172,12 @@ export default function MedicineDetailModal({
   function handleAddToCart() {
     if (outOfStock) return;
     playClick();
+
+    if (isOralSolidMedicine(currentProduct)) {
+      setIsPurchaseOpen(true);
+      return;
+    }
+
     const base = {
       id: currentProduct.id,
       slug: currentProduct.slug,
@@ -175,6 +188,91 @@ export default function MedicineDetailModal({
       unit,
     };
     void quickAdd(base, startQty(unit));
+  }
+
+  async function handlePopoverConfirm(breakdown: MedicinePriceBreakdown) {
+    const isBn = locale === "bn";
+
+    // Scenario 1: Only full strips
+    if (breakdown.totalStrips > 0 && breakdown.looseTabs === 0) {
+      await addToCart({
+        productId: currentProduct.id,
+        slug: currentProduct.slug,
+        name: currentProduct.name,
+        price: breakdown.effectiveStripPrice,
+        quantity: breakdown.totalStrips,
+        imageUrl: hasRealImage ? currentProduct.images[0].url : "",
+        stock: isUntracked ? 9999 : currentProduct.stock,
+        unit,
+      });
+      toast.success(
+        isBn
+          ? `${currentProduct.name} (${formatQuantity(breakdown.totalStrips, locale)} পাতা) কার্টে যোগ করা হয়েছে`
+          : `Added ${currentProduct.name} (${breakdown.totalStrips} strips) to cart`
+      );
+      return;
+    }
+
+    // Scenario 2: Only loose tablets
+    if (breakdown.totalStrips === 0 && breakdown.looseTabs > 0) {
+      await addToCart({
+        productId: currentProduct.id,
+        slug: currentProduct.slug,
+        name: `${currentProduct.name} (${formatQuantity(breakdown.looseTabs, locale)} ${isBn ? "টি ট্যাবলেট" : "tabs"})`,
+        price: breakdown.effectiveTabPrice,
+        quantity: breakdown.looseTabs,
+        imageUrl: hasRealImage ? currentProduct.images[0].url : "",
+        stock: isUntracked ? 9999 : currentProduct.stock,
+        unit: {
+          code: "piece",
+          label: isBn ? "ট্যাবলেট" : "tab",
+          allowDecimal: false,
+          step: 1,
+          minQty: 1,
+        },
+      });
+      toast.success(
+        isBn
+          ? `${currentProduct.name} (${formatQuantity(breakdown.looseTabs, locale)}টি ট্যাবলেট) কার্টে যোগ করা হয়েছে`
+          : `Added ${currentProduct.name} (${breakdown.looseTabs} tabs) to cart`
+      );
+      return;
+    }
+
+    // Scenario 3: Combination (e.g. 1 Strip + 3 Loose Tablets = 13 tabs total)
+    // Add strips line
+    await addToCart({
+      productId: currentProduct.id,
+      slug: currentProduct.slug,
+      name: `${currentProduct.name} (${formatQuantity(breakdown.totalStrips, locale)} ${isBn ? "পাতা" : "strip"})`,
+      price: breakdown.effectiveStripPrice,
+      quantity: breakdown.totalStrips,
+      imageUrl: hasRealImage ? currentProduct.images[0].url : "",
+      stock: isUntracked ? 9999 : currentProduct.stock,
+      unit,
+    });
+    // Add loose tabs line
+    await addToCart({
+      productId: currentProduct.id,
+      slug: currentProduct.slug,
+      name: `${currentProduct.name} (${formatQuantity(breakdown.looseTabs, locale)} ${isBn ? "টি ট্যাবলেট" : "tabs"})`,
+      price: breakdown.effectiveTabPrice,
+      quantity: breakdown.looseTabs,
+      imageUrl: hasRealImage ? currentProduct.images[0].url : "",
+      stock: isUntracked ? 9999 : currentProduct.stock,
+      unit: {
+        code: "piece",
+        label: isBn ? "ট্যাবলেট" : "tab",
+        allowDecimal: false,
+        step: 1,
+        minQty: 1,
+      },
+    });
+    toast.success(
+      isBn
+        ? `${currentProduct.name} (${formatQuantity(breakdown.totalStrips, locale)} পাতা + ${formatQuantity(breakdown.looseTabs, locale)}টি ট্যাবলেট) কার্টে যোগ করা হয়েছে`
+        : `Added ${currentProduct.name} (${breakdown.totalStrips} strips + ${breakdown.looseTabs} tabs) to cart`
+    );
   }
 
   async function more() {
@@ -516,6 +614,16 @@ export default function MedicineDetailModal({
           </span>
         </div>
       </div>
+
+      {/* Oral Solid Pata & Loose Tablet Purchase Popover */}
+      {isOralSolidMedicine(currentProduct) && (
+        <MedicinePurchasePopover
+          product={currentProduct}
+          isOpen={isPurchaseOpen}
+          onClose={() => setIsPurchaseOpen(false)}
+          onConfirm={handlePopoverConfirm}
+        />
+      )}
     </div>
   );
 }
