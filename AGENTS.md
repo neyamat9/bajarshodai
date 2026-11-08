@@ -37,4 +37,10 @@
     2. Key design decisions and shared business logic.
     3. Verification and test results across both codebases.
 
+## Communication Language
+
+- **Always Communicate in English:**
+  - Regardless of the presence of Bengali UI strings, product names, or prompt snippets, ALWAYS address the user and write all responses, status reports, plans, and explanations in clear English.
+
+
 
