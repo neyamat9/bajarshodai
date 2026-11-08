@@ -5,7 +5,7 @@ import type { Order } from "@/lib/types";
 import { BadgeCheck, ClipboardList, PackageOpen, PartyPopper, Truck, XCircle, type LucideIcon, PauseCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useStatusLabel } from "@/components/orders/labels";
-import { formatDate as fmtDate, formatDateTime as fmtDateTime, formatMoney } from "@/lib/format";
+import { formatDate as fmtDate, formatDateTime as fmtDateTime, formatDeliveryWindow as fmtDeliveryWindow, formatMoney } from "@/lib/format";
 
 // Small building blocks shared by the account pages.
 
@@ -23,6 +23,8 @@ export const btnGhost =
 export const formatBDT = (n: number) => formatMoney(n);
 export const formatDate = (iso: string) => fmtDate(iso);
 export const formatDateTime = (iso: string) => fmtDateTime(iso);
+export const formatDeliveryWindow = (estimatedDelivery?: string | Date | null, deliverySlot?: string | null) =>
+  fmtDeliveryWindow(estimatedDelivery, deliverySlot);
 
 export function Skeleton({ className = "" }: { className?: string }) {
   return <div className={`animate-pulse rounded bg-secondary ${className}`} />;

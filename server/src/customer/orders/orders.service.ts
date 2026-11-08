@@ -7,7 +7,9 @@ import {
 import {
   isMobileBanking,
   PAYMENT_LABEL,
+  DeliverySettings,
 } from '../../common/settings/settings.types';
+import { SettingsService } from '../../common/settings';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PlaceOrderDto } from './dto/place-order.dto';
 import { CheckoutService } from '../checkout/checkout.service';
@@ -82,6 +84,7 @@ export class OrdersService {
     private cartService: CartService,
     private stock: StockService,
     private loyaltyService: LoyaltyService,
+    private settings: SettingsService,
   ) {}
 
   async findAll(userId: string) {
@@ -319,11 +322,19 @@ export class OrdersService {
         },
       });
 
-      // the road time plus half an hour to pick and pack, at least an hour out
-      const estimatedDelivery = new Date(
-        Date.now() +
-          Math.max(3600, (quote.shipping.durationSec ?? 0) + 1800) * 1000,
-      );
+      // Default delivery turnaround from global settings (e.g. 60-120 mins) or route distance based
+      let leadMinutes = 90;
+      try {
+        const deliverySettings = await this.settings.get('delivery');
+        if (deliverySettings?.defaultDeliveryMinutes) {
+          leadMinutes = deliverySettings.defaultDeliveryMinutes;
+        }
+      } catch {
+        // Fallback to standard 90 mins (1.5 hours)
+      }
+      const roadMinutes = Math.ceil((quote.shipping.durationSec ?? 0) / 60) + 30;
+      const effectiveMinutes = Math.max(leadMinutes, roadMinutes);
+      const estimatedDelivery = new Date(Date.now() + effectiveMinutes * 60 * 1000);
 
       const created = await tx.order.create({
         data: {
@@ -668,6 +679,8 @@ export class OrdersService {
       deliveredAt: order.deliveredAt,
       cancelledAt: order.cancelledAt,
       estimatedDelivery: order.estimatedDelivery,
+      deliverySlot: order.deliverySlot,
+      deliveryDate: order.deliveryDate,
       subtotal: order.subtotal,
       shippingCost: order.shippingCost,
       discountAmount: order.discountAmount,

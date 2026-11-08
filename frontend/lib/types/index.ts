@@ -291,6 +291,8 @@ export interface Order {
   bkashSenderNumber?: string;
   placedAt: string;
   estimatedDelivery: string;
+  deliverySlot?: string | null;
+  deliveryDate?: string | null;
   statusHistory: { status: OrderStatus; timestamp: string }[];
   rawStatus?: string;
   paymentStatus?: string;

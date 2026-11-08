@@ -19,6 +19,7 @@ import {
   OrderFilterDto,
   UpdateOrderNotesDto,
   UpdateShippingInfoDto,
+  UpdateOrderDeliveryTimeDto,
 } from './dto/order-admin.dto';
 import { recordReceivedPayment } from './order-payments';
 import { syncDeliveryWithOrder } from '../../common/delivery/delivery-sync';
@@ -577,6 +578,61 @@ export class AdminOrdersService {
         })
         .catch(() => undefined);
     }
+    return this.findOne(id);
+  }
+
+  async updateDeliveryTime(
+    id: string,
+    dto: UpdateOrderDeliveryTimeDto,
+    adminId?: string,
+  ) {
+    const order = await this.prisma.order.findUnique({ where: { id } });
+    if (!order) throw new NotFoundException('Order not found');
+    if (order.status === 'CANCELLED') {
+      throw new BadRequestException('A cancelled order has no delivery');
+    }
+    const data: Prisma.OrderUpdateInput = {};
+    if (dto.estimatedDelivery !== undefined) {
+      data.estimatedDelivery = dto.estimatedDelivery
+        ? new Date(dto.estimatedDelivery)
+        : null;
+    }
+    if (dto.deliverySlot !== undefined) {
+      data.deliverySlot = dto.deliverySlot || null;
+    }
+    if (dto.deliveryDate !== undefined) {
+      data.deliveryDate = dto.deliveryDate ? new Date(dto.deliveryDate) : null;
+    }
+    if (!Object.keys(data).length) {
+      throw new BadRequestException('Nothing to change');
+    }
+
+    const updated = await this.prisma.order.update({
+      where: { id },
+      data: {
+        ...data,
+        statusHistory: {
+          create: {
+            toStatus: order.status,
+            fromStatus: order.status,
+            note: 'Estimated delivery schedule updated by admin',
+            changedBy: adminId || 'admin',
+          },
+        },
+      },
+    });
+
+    if (dto.notifyCustomer && order.userId && updated.estimatedDelivery) {
+      void this.notifications
+        .notifyInApp(order.userId, {
+          type: 'ORDER_UPDATED',
+          title: `Delivery time updated for ${order.orderNumber}`,
+          body: `Your estimated delivery schedule has been updated.`,
+          data: { orderId: id, orderNumber: order.orderNumber },
+        })
+        .catch(() => undefined);
+    }
+
     return this.findOne(id);
   }
 

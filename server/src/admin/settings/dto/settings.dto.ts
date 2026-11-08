@@ -278,6 +278,12 @@ export class UpdateDeliverySettingsDto {
   @IsOptional()
   @IsIn(['direct', 'road'])
   distanceCalculation?: 'direct' | 'road';
+
+  @ApiPropertyOptional({ example: 90, description: 'Default delivery turnaround time in minutes (e.g. 60, 90, 120)' })
+  @IsOptional()
+  @IsNumber()
+  @Min(15)
+  defaultDeliveryMinutes?: number;
 }
 
 export class UpdateMapsSettingsDto {

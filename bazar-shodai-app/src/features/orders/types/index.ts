@@ -30,7 +30,9 @@ export interface CustomerOrderRecord {
   subtotal: number;
   deliveryFee: number;
   discountAmount: number;
-  deliverySlot?: string;
+  estimatedDelivery?: string | null;
+  deliveryDate?: string | null;
+  deliverySlot?: string | null;
   deliveryNote?: string;
   shippingAddress: {
     fullName: string;

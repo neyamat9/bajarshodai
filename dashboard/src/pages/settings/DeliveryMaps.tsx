@@ -42,6 +42,7 @@ export function DeliveryForm({ v, tileUrl }: { v: DeliverySettings; tileUrl: str
     routeFactor: String(v.routeFactor),
     restrictToZone: v.restrictToZone ?? true,
     distanceCalculation: v.distanceCalculation ?? "direct",
+    defaultDeliveryMinutes: String(v.defaultDeliveryMinutes ?? 90),
   });
   const [satellite, setSatellite] = useState(true);
   const [previewKm, setPreviewKm] = useState("6");
@@ -86,6 +87,7 @@ export function DeliveryForm({ v, tileUrl }: { v: DeliverySettings; tileUrl: str
       routeFactor: num(f.routeFactor) || 1.3,
       restrictToZone: f.restrictToZone,
       distanceCalculation: f.distanceCalculation ?? "direct",
+      defaultDeliveryMinutes: num(f.defaultDeliveryMinutes) || 90,
       slots: f.slots.map((s) => ({ ...s, id: s.id.trim(), label: s.label.trim(), labelBn: s.labelBn.trim() })),
     });
   };
@@ -203,6 +205,40 @@ export function DeliveryForm({ v, tileUrl }: { v: DeliverySettings; tileUrl: str
           <Field label={tr("Closes")}><Input type="time" value={f.openTo} onChange={(e) => setF({ ...f, openTo: e.target.value })} /></Field>
           <Field label={tr("Minimum order ৳")}><Input type="number" min={0} value={f.minOrderAmount} onChange={(e) => setF({ ...f, minOrderAmount: e.target.value })} /></Field>
           <Field label={tr("Free delivery from ৳")} hint={tr("Empty = never free")}><Input type="number" min={0} value={f.freeDeliveryThreshold} onChange={(e) => setF({ ...f, freeDeliveryThreshold: e.target.value })} /></Field>
+          <Field
+            label={tr("Default delivery turnaround (minutes)")}
+            hint={tr("Standard estimated delivery turnaround for new orders (e.g. 60 min = 1 hour, 90-120 min = 1.5 to 2 hours)")}
+            className="sm:col-span-2"
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <Input
+                type="number"
+                min={15}
+                step={15}
+                value={f.defaultDeliveryMinutes}
+                onChange={(e) => setF({ ...f, defaultDeliveryMinutes: e.target.value })}
+                className="max-w-[140px]"
+              />
+              <div className="flex flex-wrap items-center gap-1.5">
+                {[
+                  { label: "1 hr (60 min)", val: "60" },
+                  { label: "1.5 hrs (90 min)", val: "90" },
+                  { label: "2 hrs (120 min)", val: "120" },
+                  { label: "3 hrs (180 min)", val: "180" },
+                ].map((preset) => (
+                  <Button
+                    key={preset.val}
+                    type="button"
+                    variant={f.defaultDeliveryMinutes === preset.val ? "default" : "outline"}
+                    size="xs"
+                    onClick={() => setF({ ...f, defaultDeliveryMinutes: preset.val })}
+                  >
+                    {preset.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </Field>
         </div>
       </Section>
 

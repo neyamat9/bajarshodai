@@ -49,3 +49,84 @@ export function formatBdt(
   }
   return `৳${fullFormatted}`;
 }
+
+/**
+ * Formats order estimated delivery date and hour / window.
+ * Supports both Bengali ('bn') and English ('en') locales.
+ * If deliverySlot is provided, displays: "১২ নভে ২০২৬, ৪:০০ PM - ৬:০০ PM" / "Nov 12, 2026, 4:00 PM - 6:00 PM".
+ * If only estimatedDelivery is provided, displays: "১২ নভে ২০২৬, বিকাল ৪:৩০" / "Nov 12, 2026, 4:30 PM".
+ */
+export function formatDeliveryWindow(
+  estimatedDelivery?: string | Date | null,
+  deliverySlot?: string | null,
+  locale: 'en' | 'bn' = 'bn',
+): string {
+  if (!estimatedDelivery && !deliverySlot) return '';
+
+  const dateObj = estimatedDelivery
+    ? estimatedDelivery instanceof Date
+      ? estimatedDelivery
+      : new Date(estimatedDelivery)
+    : null;
+  const isValidDate = Boolean(dateObj && !isNaN(dateObj.getTime()));
+
+  let datePart = '';
+  let timePart = '';
+
+  if (isValidDate && dateObj) {
+    try {
+      if (locale === 'bn') {
+        const dStr = new Intl.DateTimeFormat('bn-BD', {
+          timeZone: 'Asia/Dhaka',
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+          numberingSystem: 'beng',
+        }).format(dateObj);
+        const tStr = new Intl.DateTimeFormat('bn-BD', {
+          timeZone: 'Asia/Dhaka',
+          hour: 'numeric',
+          minute: '2-digit',
+          numberingSystem: 'beng',
+        }).format(dateObj);
+        datePart = dStr;
+        timePart = tStr;
+      } else {
+        const dStr = new Intl.DateTimeFormat('en-US', {
+          timeZone: 'Asia/Dhaka',
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        }).format(dateObj);
+        const tStr = new Intl.DateTimeFormat('en-US', {
+          timeZone: 'Asia/Dhaka',
+          hour: 'numeric',
+          minute: '2-digit',
+        }).format(dateObj);
+        datePart = dStr;
+        timePart = tStr;
+      }
+    } catch {
+      // Fallback for runtimes without Intl timezone support
+      if (locale === 'bn') {
+        datePart = `${toBengaliNumerals(dateObj.getDate())}/${toBengaliNumerals(dateObj.getMonth() + 1)}/${toBengaliNumerals(dateObj.getFullYear())}`;
+        timePart = `${toBengaliNumerals(dateObj.getHours())}:${toBengaliNumerals(dateObj.getMinutes())}`;
+      } else {
+        datePart = dateObj.toLocaleDateString();
+        timePart = dateObj.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      }
+    }
+  }
+
+  const slot = deliverySlot?.trim();
+  if (slot) {
+    const formattedSlot = locale === 'bn' ? toBengaliNumerals(slot) : slot;
+    return datePart ? `${datePart}, ${formattedSlot}` : formattedSlot;
+  }
+
+  if (isValidDate) {
+    return `${datePart}, ${timePart}`;
+  }
+
+  return '';
+}

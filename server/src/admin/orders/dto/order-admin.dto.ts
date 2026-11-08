@@ -6,6 +6,7 @@ import {
   IsArray,
   IsBoolean,
   IsDate,
+  IsDateString,
   IsEmail,
   IsIn,
   IsInt,
@@ -195,6 +196,47 @@ export class UpdateShippingInfoDto {
 
   @ApiPropertyOptional({
     description: 'Tell the customer (in-app) that tracking details were added',
+  })
+  @IsOptional()
+  @IsBoolean()
+  notifyCustomer?: boolean;
+}
+
+export class UpdateOrderDeliveryTimeDto {
+  @ApiPropertyOptional({
+    nullable: true,
+    example: '2026-11-08T18:00:00.000Z',
+    description: 'Estimated delivery date and time',
+  })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsDateString()
+  estimatedDelivery?: string | null;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    example: '04:00 PM - 06:00 PM',
+    description: 'Delivery slot or window description',
+  })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @Transform(trim)
+  @IsString()
+  @MaxLength(100)
+  deliverySlot?: string | null;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    example: '2026-11-08',
+    description: 'Delivery calendar date',
+  })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsDateString()
+  deliveryDate?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'Notify the customer that the delivery schedule has been updated',
   })
   @IsOptional()
   @IsBoolean()

@@ -20,6 +20,8 @@ import { LiveDeliveryMap } from '@/features/orders/components/LiveDeliveryMap';
 import { CancelOrderDialog } from '@/features/orders/components/CancelOrderDialog';
 import { OrderInvoiceButton } from '@/features/orders/components/OrderInvoiceButton';
 import { executeReorder } from '@/features/orders/api/reorder';
+import { formatDeliveryWindow } from '@/utils/format';
+import { useTranslation } from '@/i18n';
 
 interface StepMilestone {
   key: OrderStatus;
@@ -78,6 +80,7 @@ const ORDER_STATUS_ORDER: OrderStatus[] = [
 
 export default function OrderDetailScreen() {
   const router = useRouter();
+  const { isBn } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const orderId = typeof id === 'string' ? id : '';
 
@@ -188,6 +191,21 @@ export default function OrderDetailScreen() {
               minute: '2-digit',
             })}
           </Text>
+
+          {/* Estimated Delivery Time Window */}
+          {formatDeliveryWindow(order.estimatedDelivery, order.deliverySlot, isBn ? 'bn' : 'en') ? (
+            <View style={styles.deliveryEstimateBanner}>
+              <Icon name="Clock" size={16} color="#0b6234" />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.deliveryEstimateLabel}>
+                  {isBn ? 'সম্ভাব্য ডেলিভারি সময়' : 'Estimated Delivery Time'}
+                </Text>
+                <Text style={styles.deliveryEstimateValue}>
+                  {formatDeliveryWindow(order.estimatedDelivery, order.deliverySlot, isBn ? 'bn' : 'en')}
+                </Text>
+              </View>
+            </View>
+          ) : null}
         </View>
 
         {/* Live Delivery Map & Rider Contact (if out for delivery) */}
@@ -270,6 +288,14 @@ export default function OrderDetailScreen() {
           <Text style={styles.recipientName}>{order.shippingAddress.fullName}</Text>
           <Text style={styles.recipientPhone}>{order.shippingAddress.phone}</Text>
           <Text style={styles.recipientAddress}>{order.shippingAddress.address}</Text>
+          {formatDeliveryWindow(order.estimatedDelivery, order.deliverySlot, isBn ? 'bn' : 'en') ? (
+            <View style={styles.slotInAddressRow}>
+              <Icon name="Clock" size={13} color="#0b6234" />
+              <Text style={styles.slotInAddressText}>
+                {formatDeliveryWindow(order.estimatedDelivery, order.deliverySlot, isBn ? 'bn' : 'en')}
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         {/* Order Items Breakdown */}
@@ -445,6 +471,47 @@ const styles = StyleSheet.create({
   orderDateText: {
     fontSize: 12,
     color: '#9ca3af',
+  },
+  deliveryEstimateBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#f0fdf4',
+    borderWidth: 1,
+    borderColor: '#bbf7d0',
+    borderRadius: Radius.sm,
+    padding: 10,
+    marginTop: 8,
+  },
+  deliveryEstimateLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#15803d',
+    textTransform: 'uppercase',
+  },
+  deliveryEstimateValue: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0b6234',
+    marginTop: 2,
+  },
+  slotInAddressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#f0fdf4',
+    borderRadius: Radius.xs,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#dcfce7',
+    alignSelf: 'flex-start',
+  },
+  slotInAddressText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#0b6234',
   },
   timelineCard: {
     backgroundColor: '#ffffff',

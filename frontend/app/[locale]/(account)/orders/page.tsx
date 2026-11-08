@@ -2,7 +2,7 @@
 
 import { Link } from "@/i18n/navigation";
 import RequireLogin from "@/components/account/RequireLogin";
-import { btnPrimary, card, EmptyState, formatBDT, formatDate, PageHeading, Skeleton, StepProgress } from "@/components/account/ui";
+import { btnPrimary, card, EmptyState, formatBDT, formatDate, formatDeliveryWindow, PageHeading, Skeleton, StepProgress } from "@/components/account/ui";
 import { StatusBadge } from "@/components/orders/StatusBadge";
 import { errorMessage } from "@/lib/api/client";
 import { useCart } from "@/lib/hooks/use-cart";
@@ -85,7 +85,7 @@ function OrderRow({ order }: { order: Order }) {
 
       <div className="pointer-events-none relative z-10 flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 sm:px-5">
         <p className="text-xs text-muted-foreground">
-          {order.status === "Delivered" ? t("deliveredLine") : isOffTrack(order.status) ? statusText(order.status) : t.rich("estimated", { date: formatDate(order.estimatedDelivery), b: (c) => <b className="text-foreground">{c}</b> })}
+          {order.status === "Delivered" ? t("deliveredLine") : isOffTrack(order.status) ? statusText(order.status) : t.rich("estimated", { date: formatDeliveryWindow(order.estimatedDelivery, order.deliverySlot), b: (c) => <b className="text-foreground">{c}</b> })}
         </p>
         <div className="flex items-center gap-2">
           <button type="button" onClick={buyAgain} disabled={busy} className="pointer-events-auto inline-flex h-9 items-center gap-1.5 rounded border border-border px-3 text-xs font-bold text-foreground transition-colors hover:border-brand-fresh hover:text-accent-text disabled:opacity-60">

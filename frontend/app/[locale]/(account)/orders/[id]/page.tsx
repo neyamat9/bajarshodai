@@ -2,13 +2,13 @@
 
 import { Link } from "@/i18n/navigation";
 import RequireLogin from "@/components/account/RequireLogin";
-import { btnGhost, btnPrimary, card, formatBDT, formatDate, formatDateTime, Skeleton, StepProgress } from "@/components/account/ui";
+import { btnGhost, btnPrimary, card, formatBDT, formatDate, formatDateTime, formatDeliveryWindow, Skeleton, StepProgress } from "@/components/account/ui";
 import { StatusBadge } from "@/components/orders/StatusBadge";
 import { errorMessage } from "@/lib/api/client";
 import { useCart } from "@/lib/hooks/use-cart";
 import { cancelOrder, getOrderById, openInvoice, reorder } from "@/lib/services/orders.service";
 import { MOBILE_METHODS, type Order } from "@/lib/types";
-import { ArrowLeft, Banknote, Bike, Calendar, CheckCircle2, StickyNote, ExternalLink, FileText, Headset, MapPin, PackageSearch, Phone, RotateCcw, RotateCw, Smartphone, Truck, XCircle } from "lucide-react";
+import { ArrowLeft, Banknote, Bike, Calendar, CheckCircle2, Clock, StickyNote, ExternalLink, FileText, Headset, MapPin, PackageSearch, Phone, RotateCcw, RotateCw, Smartphone, Truck, XCircle } from "lucide-react";
 import Image from "next/image";
 import { useParams, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -180,7 +180,7 @@ function Detail() {
               {!isFinished(order.status) && (
                 <span className="inline-flex items-center gap-1.5">
                   <Truck className="h-4 w-4" aria-hidden="true" />
-                  {t.rich("arrivesBy", { date: formatDate(order.estimatedDelivery), b: (c) => <b className="text-foreground">{c}</b> })}
+                  {t.rich("arrivesBy", { date: formatDeliveryWindow(order.estimatedDelivery, order.deliverySlot), b: (c) => <b className="text-foreground">{c}</b> })}
                 </span>
               )}
             </p>
@@ -293,6 +293,12 @@ function Detail() {
               {order.deliveryDistanceKm != null && <p className="text-xs text-muted-foreground">{tc("distanceLine", { km: formatNumber(order.deliveryDistanceKm, locale, 1) })}</p>}
               <p className="text-muted-foreground">{addr.phone}</p>
             </address>
+            {order.deliverySlot && (
+              <p className="mt-3 flex items-center gap-2 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground/85">
+                <Clock className="h-3.5 w-3.5 shrink-0 text-accent-text" aria-hidden="true" />
+                <span>{order.deliverySlot}</span>
+              </p>
+            )}
             {order.deliveryNote && (
               <p className="mt-3 flex items-start gap-2 rounded border border-border bg-background px-3 py-2 text-xs text-foreground/85">
                 <StickyNote className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-text" aria-hidden="true" />

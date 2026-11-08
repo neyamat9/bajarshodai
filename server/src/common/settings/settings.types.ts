@@ -153,6 +153,8 @@ export interface DeliverySettings {
   restrictToZone: boolean;
   // Direct distance from Kalibari Hub (free, straight-line) or Road distance (driving route)
   distanceCalculation: 'direct' | 'road';
+  // Default delivery turnaround time in minutes for new orders (e.g. 60, 90, or 120 minutes for 1-2 hour delivery)
+  defaultDeliveryMinutes: number;
 }
 
 export type MapProviderName = 'osm' | 'google';
@@ -314,6 +316,7 @@ export const DEFAULT_SETTINGS: SettingsMap = {
     routeFactor: 1.3,
     restrictToZone: true,
     distanceCalculation: 'direct',
+    defaultDeliveryMinutes: 90,
   },
   maps: {
     provider: 'osm',

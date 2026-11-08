@@ -1,7 +1,7 @@
 import { lazy, Suspense, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Copy, Crosshair, MapPin, MessageCircle, Navigation, Pencil, Phone, Send } from "lucide-react";
+import { Clock, Copy, Crosshair, MapPin, MessageCircle, Navigation, Pencil, Phone, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input, Textarea } from "@/components/ui/input";
@@ -93,12 +93,96 @@ function RequestLocationDialog({ order, phone, name, onClose }: { order: OrderDe
   );
 }
 
+function SetDeliveryTimeDialog({ order, onClose }: { order: OrderDetail; onClose: () => void }) {
+  const initialDate = order.estimatedDelivery ? new Date(order.estimatedDelivery) : new Date(Date.now() + 90 * 60 * 1000);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const defaultDateStr = `${initialDate.getFullYear()}-${pad(initialDate.getMonth() + 1)}-${pad(initialDate.getDate())}`;
+  const defaultTimeStr = `${pad(initialDate.getHours())}:${pad(initialDate.getMinutes())}`;
+
+  const [date, setDate] = useState(defaultDateStr);
+  const [time, setTime] = useState(defaultTimeStr);
+  const [slot, setSlot] = useState(order.deliverySlot ?? "");
+  const [notify, setNotify] = useState(false);
+
+  const save = useAct(
+    (body: { estimatedDelivery?: string | null; deliverySlot?: string | null; notifyCustomer?: boolean }) =>
+      ordersApi.updateDeliveryTime(order.id, body),
+    {
+      success: tr("Delivery time updated"),
+      invalidate: [["order", order.id], ["orders"]],
+      onSuccess: onClose,
+    }
+  );
+
+  const applyPreset = (minutesFromNow: number, slotText: string) => {
+    const target = new Date(Date.now() + minutesFromNow * 60 * 1000);
+    setDate(`${target.getFullYear()}-${pad(target.getMonth() + 1)}-${pad(target.getDate())}`);
+    setTime(`${pad(target.getHours())}:${pad(target.getMinutes())}`);
+    setSlot(slotText);
+  };
+
+  const submit = () => {
+    let iso: string | null = null;
+    if (date && time) {
+      iso = new Date(`${date}T${time}`).toISOString();
+    }
+    save.mutate({
+      estimatedDelivery: iso,
+      deliverySlot: slot.trim() || null,
+      notifyCustomer: notify,
+    });
+  };
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent size="sm">
+        <DialogHeader>
+          <DialogTitle>{tr("Set delivery date & time")}</DialogTitle>
+          <DialogDescription>{tr("Specify when the customer can expect their delivery.")}</DialogDescription>
+        </DialogHeader>
+        <DialogBody className="space-y-3">
+          <div className="flex flex-wrap gap-1.5">
+            <Button size="xs" variant="outline" type="button" onClick={() => applyPreset(60, "Within 1 hour")}>
+              {tr("Within 1 hr")}
+            </Button>
+            <Button size="xs" variant="outline" type="button" onClick={() => applyPreset(90, "Within 1-2 hours")}>
+              {tr("Within 1-2 hrs")}
+            </Button>
+            <Button size="xs" variant="outline" type="button" onClick={() => applyPreset(120, "Within 2 hours")}>
+              {tr("Within 2 hrs")}
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Field label={tr("Delivery date")} required>
+              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            </Field>
+            <Field label={tr("Delivery hour / time")} required>
+              <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+            </Field>
+          </div>
+          <Field label={tr("Delivery slot or window (optional)")} hint={tr("e.g. 04:00 PM - 06:00 PM or বিকাল ৩:০০ - ৫:০০")}>
+            <Input value={slot} onChange={(e) => setSlot(e.target.value)} placeholder="e.g. 04:00 PM - 06:00 PM" />
+          </Field>
+          <label className="flex cursor-pointer items-center gap-2 pt-1 text-xs">
+            <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} className="rounded" />
+            <span>{tr("Send notification to customer")}</span>
+          </label>
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>{tr("Cancel")}</Button>
+          <Button loading={save.isPending} onClick={submit}>{tr("Save delivery time")}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /**
  * Where the order goes: a map with the shop, the delivery pin and the road between them,
  * the distance, the delivery charge (with the by-hand override), and one-tap navigation / call / WhatsApp.
  */
 export function DeliveryCard({ order, locked, phone, name, onEditAddress }: { order: OrderDetail; locked: boolean; phone: string | null; name: string | null; onEditAddress: () => void }) {
-  const [dlg, setDlg] = useState<null | "fee" | "request">(null);
+  const [dlg, setDlg] = useState<null | "fee" | "request" | "deliveryTime">(null);
   const [moving, setMoving] = useState(false);
   const [draft, setDraft] = useState<{ lat: number; lng: number } | null>(null);
 
@@ -222,6 +306,16 @@ export function DeliveryCard({ order, locked, phone, name, onEditAddress }: { or
             </KeyValue>
             {overridden && order.deliveryFee !== null && <KeyValue label={tr("Distance charge")}>{money(order.deliveryFee)}</KeyValue>}
             {overridden && order.deliveryFeeOverrideReason && <p className="mt-1 text-xs text-muted-foreground">Reason: {order.deliveryFeeOverrideReason}</p>}
+            {order.estimatedDelivery && (
+              <KeyValue label={tr("Estimated delivery")}>
+                <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                  {new Date(order.estimatedDelivery).toLocaleString([], {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })}
+                </span>
+              </KeyValue>
+            )}
             {order.deliverySlot && <KeyValue label={tr("Time slot")}>{order.deliverySlot}</KeyValue>}
           </dl>
           {order.distanceEstimated && <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">{tr("No road route was found, so the distance is the straight line × a factor. Check the pin, or add a routing key in Settings → Maps.")}</p>}
@@ -231,6 +325,7 @@ export function DeliveryCard({ order, locked, phone, name, onEditAddress }: { or
             {phoneDigits && <Button size="xs" variant="outline" asChild><a href={`tel:${phoneDigits}`}><Phone />{" "}{tr("Call")}</a></Button>}
             {phoneDigits && <Button size="xs" variant="outline" asChild><a href={`https://wa.me/${waNumber(phoneDigits)}`} target="_blank" rel="noopener noreferrer"><MessageCircle />{" "}{tr("WhatsApp")}</a></Button>}
             {!locked && !moving && <Button size="xs" variant="outline" onClick={() => { setMoving(true); setDraft(pin ?? (origin ? { lat: origin.lat, lng: origin.lng } : DEFAULT_CENTER)); }}><Crosshair /> {pin ? tr("Move pin") : tr("Place pin")}</Button>}
+            {!locked && <Button size="xs" variant="outline" onClick={() => setDlg("deliveryTime")}><Clock />{" "}{tr("Set delivery time")}</Button>}
             {!locked && <Button size="xs" variant="outline" onClick={() => setDlg("request")}><Send />{" "}{tr("Request location")}</Button>}
             {!locked && <Button size="xs" variant="outline" onClick={() => setDlg("fee")}><Pencil />{" "}{tr("Change charge")}</Button>}
           </div>
@@ -240,6 +335,7 @@ export function DeliveryCard({ order, locked, phone, name, onEditAddress }: { or
 
       {dlg === "fee" && <OverrideFeeDialog order={order} onClose={() => setDlg(null)} />}
       {dlg === "request" && <RequestLocationDialog order={order} phone={phone} name={name} onClose={() => setDlg(null)} />}
+      {dlg === "deliveryTime" && <SetDeliveryTimeDialog order={order} onClose={() => setDlg(null)} />}
     </Section>
   );
 }

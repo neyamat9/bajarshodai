@@ -48,6 +48,7 @@ import {
   UpdateOrderNotesDto,
   UpdateOrderStatusDto,
   UpdateShippingInfoDto,
+  UpdateOrderDeliveryTimeDto,
 } from './dto/order-admin.dto';
 
 @ApiTags('Admin - Orders')
@@ -214,6 +215,18 @@ export class AdminOrdersController {
     @Body() dto: UpdateShippingInfoDto,
   ) {
     return this.orders.updateShippingInfo(id, dto);
+  }
+
+  @Patch(':id/delivery-time')
+  @ApiOperation({
+    summary: 'Update estimated delivery time, slot, and calendar date of an order',
+  })
+  deliveryTime(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateOrderDeliveryTimeDto,
+    @CurrentUser() admin: User,
+  ) {
+    return this.orders.updateDeliveryTime(id, dto, admin.id);
   }
 
   @Patch(':id/notes')

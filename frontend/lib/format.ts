@@ -67,5 +67,26 @@ export function formatDateTime(value: DateInput, locale: Locale = clientLocale()
   return formatDate(value, locale, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
+/**
+ * Formats an order delivery arrival window including date and hour/slot.
+ * E.g. "১২ নভে ২০২৬, ০৪:০০ PM - ০৬:০০ PM" or "Nov 12, 2026, 4:30 PM".
+ */
+export function formatDeliveryWindow(
+  estimatedDelivery?: DateInput,
+  deliverySlot?: string | null,
+  locale: Locale = clientLocale(),
+): string {
+  const datePart = estimatedDelivery ? formatDate(estimatedDelivery, locale) : "";
+  const slot = deliverySlot?.trim();
+  if (slot) {
+    const formattedSlot = locale === "bn" ? localizeDigits(slot, locale) : slot;
+    return datePart ? `${datePart}, ${formattedSlot}` : formattedSlot;
+  }
+  if (estimatedDelivery) {
+    return formatDateTime(estimatedDelivery, locale);
+  }
+  return "";
+}
+
 /** "5 items" / "৫টি পণ্য" style counts are written by the messages; this only formats the number. */
 export const formatCount = (n: number, locale: Locale = clientLocale()) => formatNumber(n, locale, 0);

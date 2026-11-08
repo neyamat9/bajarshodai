@@ -353,6 +353,8 @@ export function mapOrder(o: Raw, locale: Locale = clientLocale()): Order {
     bkashSenderNumber: o.bkashSenderNumber ?? undefined,
     placedAt: o.placedAt,
     estimatedDelivery: o.estimatedDelivery ?? '',
+    deliverySlot: o.deliverySlot ?? null,
+    deliveryDate: o.deliveryDate ?? null,
     statusHistory: history.map((h) => ({ status: h.status, timestamp: h.timestamp })),
     rawStatus: o.status,
     paymentStatus: o.paymentStatus,

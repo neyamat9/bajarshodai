@@ -288,6 +288,18 @@ export const ordersApi = {
     api.patch<{ updated: number; failed: number; results: { id: string; orderNumber?: string; ok: boolean; error?: string }[] }>("/admin/orders/bulk-status", { ids, status, note: note || undefined }).then((r) => r.data),
   shipping: (id: string, body: { courierName?: string | null; trackingNumber?: string | null; trackingUrl?: string | null; notifyCustomer?: boolean }) =>
     api.patch<OrderDetail>(`/admin/orders/${id}/shipping`, body).then((r) => r.data),
+  updateDeliveryTime: (
+    id: string,
+    body: {
+      estimatedDelivery?: string | null;
+      deliverySlot?: string | null;
+      deliveryDate?: string | null;
+      notifyCustomer?: boolean;
+    },
+  ) =>
+    api
+      .patch<OrderDetail>(`/admin/orders/${id}/delivery-time`, body)
+      .then((r) => r.data),
   notes: (id: string, body: { internalNote?: string | null; staffNote?: string | null; deliveryNote?: string | null }) => api.patch<OrderDetail>(`/admin/orders/${id}/notes`, body).then((r) => r.data),
   address: (id: string, body: AddressInput & { recalculateShipping?: boolean }) => api.put<OrderDetail>(`/admin/orders/${id}/address`, body).then((r) => r.data),
   items: (id: string, body: { items: OrderLineInput[]; discountAmount?: number; shippingCost?: number; recalculateShipping?: boolean; reason?: string }) =>

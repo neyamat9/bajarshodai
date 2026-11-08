@@ -19,11 +19,14 @@ import { useCustomerOrders } from '@/features/orders/api/ordersApi';
 import { OrderStatus } from '@/features/orders/types';
 import { executeReorder } from '@/features/orders/api/reorder';
 import { haptics } from '@/services/haptics';
+import { formatDeliveryWindow } from '@/utils/format';
+import { useTranslation } from '@/i18n';
 
 type OrderFilter = 'ALL' | 'ACTIVE' | 'DELIVERED' | 'CANCELLED';
 
 export default function OrderHistoryScreen() {
   const router = useRouter();
+  const { isBn } = useTranslation();
   const [activeFilter, setActiveFilter] = useState<OrderFilter>('ALL');
 
   const { data: rawOrders = [], isLoading, refetch, isRefetching } = useCustomerOrders();
@@ -154,6 +157,17 @@ export default function OrderHistoryScreen() {
                   : 'Groceries package'}
               </Text>
             </View>
+
+            {/* Estimated Delivery Window (Date + Hour / Slot) */}
+            {formatDeliveryWindow(item.estimatedDelivery, item.deliverySlot, isBn ? 'bn' : 'en') ? (
+              <View style={styles.deliveryTimeWindowRow}>
+                <Icon name="Clock" size={13} color="#0b6234" />
+                <Text style={styles.deliveryTimeWindowText} numberOfLines={1}>
+                  {isBn ? 'ডেলিভারি সময়: ' : 'Delivery: '}
+                  {formatDeliveryWindow(item.estimatedDelivery, item.deliverySlot, isBn ? 'bn' : 'en')}
+                </Text>
+              </View>
+            ) : null}
 
             {/* Price & Action Row */}
             <View style={styles.cardBottom}>
@@ -303,6 +317,24 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#4b5563',
     lineHeight: 17,
+  },
+  deliveryTimeWindowRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#f0fdf4',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: Radius.xs,
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: '#dcfce7',
+  },
+  deliveryTimeWindowText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#0b6234',
+    flex: 1,
   },
   cardBottom: {
     flexDirection: 'row',
