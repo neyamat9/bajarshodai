@@ -1,9 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Icon, IconName } from '@/components/ui/Icon';
-import { formatBdt } from '@/utils/format';
+import { formatBdt, toBengaliNumerals } from '@/utils/format';
 import { Radius } from '@/constants/layout';
 import { haptics } from '@/services/haptics';
+import { useCartStore } from '@/store/useCartStore';
+import { toast } from '@/store/useToastStore';
+import {
+  isOralSolidMedicine,
+  MedicinePriceBreakdown,
+  DiscountEligibility,
+} from '@/services/medicinePricing';
+import { MedicinePurchaseSheet } from './MedicinePurchaseSheet';
 
 export interface MedicineItemData {
   id: string;
@@ -22,6 +30,13 @@ export interface MedicineItemData {
   trackStock?: boolean;
   inStock?: boolean;
   imageUrl?: string;
+  unitsPerStrip?: number;
+  mrpUnit?: number;
+  mrpStrip?: number;
+  packSizeInfo?: string;
+  discountPercent?: number;
+  discountEligibility?: DiscountEligibility | string;
+  medicineMeta?: any;
 }
 
 export interface MedicineListItemProps {
@@ -30,6 +45,7 @@ export interface MedicineListItemProps {
   onPress?: () => void;
   onAddToCart?: () => void;
   onQuantityChange?: (quantity: number) => void;
+  onPurchaseBreakdown?: (breakdown: MedicinePriceBreakdown) => void;
 }
 
 interface DosageVisual {
@@ -66,7 +82,9 @@ function MedicineListItemComponent({
   onPress,
   onAddToCart,
   onQuantityChange,
+  onPurchaseBreakdown,
 }: MedicineListItemProps) {
+  const addItem = useCartStore((s) => s.addItem);
   const isUntracked = product.trackStock === false;
   const isOutOfStock =
     product.inStock === false ||
@@ -74,12 +92,111 @@ function MedicineListItemComponent({
 
   const dosageVisual = getDosageVisual(product.dosageForm);
   const dosageLabel = product.dosageForm || 'Tablet';
+  const isOralSolid = isOralSolidMedicine(product.dosageForm);
+  const [isPurchaseSheetOpen, setIsPurchaseSheetOpen] = useState(false);
 
   const handleAddToCart = (e: any) => {
     e?.stopPropagation?.();
     if (isOutOfStock) return;
+    if (product.isPrescriptionRequired) {
+      onAddToCart?.();
+      return;
+    }
     void haptics.selection().catch(() => {});
+    if (isOralSolid) {
+      setIsPurchaseSheetOpen(true);
+      return;
+    }
     onAddToCart?.();
+  };
+
+  const handlePurchaseConfirm = (breakdown: MedicinePriceBreakdown) => {
+    if (onPurchaseBreakdown) {
+      onPurchaseBreakdown(breakdown);
+      return;
+    }
+
+    const displayName = product.nameBn || product.name;
+
+    // Scenario 1: Only full strips
+    if (breakdown.totalStrips > 0 && breakdown.looseTabs === 0) {
+      addItem(
+        {
+          id: `${product.id}-strip`,
+          productId: product.id,
+          name: `${product.name} (${breakdown.totalStrips} strips)`,
+          banglaName: `${displayName} (${toBengaliNumerals(breakdown.totalStrips)} পাতা)`,
+          price: breakdown.effectiveStripPrice,
+          originalPrice: breakdown.stripPrice,
+          unit: 'পাতা',
+          imageUrl: product.imageUrl,
+          stock: product.stock,
+        },
+        breakdown.totalStrips,
+      );
+      toast.success(
+        'Cart',
+        `${displayName} (${toBengaliNumerals(breakdown.totalStrips)} পাতা) ব্যাগে যোগ করা হয়েছে`,
+      );
+      return;
+    }
+
+    // Scenario 2: Only loose tablets
+    if (breakdown.totalStrips === 0 && breakdown.looseTabs > 0) {
+      addItem(
+        {
+          id: `${product.id}-loose`,
+          productId: product.id,
+          name: `${product.name} (${breakdown.looseTabs} tabs)`,
+          banglaName: `${displayName} (${toBengaliNumerals(breakdown.looseTabs)}টি ট্যাবলেট)`,
+          price: breakdown.effectiveTabPrice,
+          originalPrice: breakdown.tabPrice,
+          unit: 'ট্যাবলেট',
+          imageUrl: product.imageUrl,
+          stock: product.stock,
+        },
+        breakdown.looseTabs,
+      );
+      toast.success(
+        'Cart',
+        `${displayName} (${toBengaliNumerals(breakdown.looseTabs)}টি ট্যাবলেট) ব্যাগে যোগ করা হয়েছে`,
+      );
+      return;
+    }
+
+    // Scenario 3: Combination (Strips + Loose Tablets)
+    addItem(
+      {
+        id: `${product.id}-strip`,
+        productId: product.id,
+        name: `${product.name} (${breakdown.totalStrips} strips)`,
+        banglaName: `${displayName} (${toBengaliNumerals(breakdown.totalStrips)} পাতা)`,
+        price: breakdown.effectiveStripPrice,
+        originalPrice: breakdown.stripPrice,
+        unit: 'পাতা',
+        imageUrl: product.imageUrl,
+        stock: product.stock,
+      },
+      breakdown.totalStrips,
+    );
+    addItem(
+      {
+        id: `${product.id}-loose`,
+        productId: product.id,
+        name: `${product.name} (${breakdown.looseTabs} tabs)`,
+        banglaName: `${displayName} (${toBengaliNumerals(breakdown.looseTabs)}টি ট্যাবলেট)`,
+        price: breakdown.effectiveTabPrice,
+        originalPrice: breakdown.tabPrice,
+        unit: 'ট্যাবলেট',
+        imageUrl: product.imageUrl,
+        stock: product.stock,
+      },
+      breakdown.looseTabs,
+    );
+    toast.success(
+      'Cart',
+      `${displayName} (${toBengaliNumerals(breakdown.totalStrips)} পাতা + ${toBengaliNumerals(breakdown.looseTabs)}টি ট্যাবলেট) ব্যাগে যোগ করা হয়েছে`,
+    );
   };
 
   const handleDecrease = (e: any) => {
@@ -201,6 +318,36 @@ function MedicineListItemComponent({
           </TouchableOpacity>
         )}
       </View>
+
+      {/* Oral Solid Pata & Loose Tablet Purchase Sheet */}
+      {isOralSolid && (
+        <MedicinePurchaseSheet
+          visible={isPurchaseSheetOpen}
+          product={{
+            id: product.id,
+            name: product.name,
+            nameBn: product.nameBn,
+            slug: product.slug,
+            price: product.price,
+            originalPrice: product.originalPrice,
+            dosageForm: product.dosageForm,
+            strength: product.strength,
+            manufacturer: product.manufacturer,
+            genericName: product.genericName,
+            imageUrl: product.imageUrl,
+            stock: product.stock,
+            unitsPerStrip: product.unitsPerStrip,
+            mrpUnit: product.mrpUnit,
+            mrpStrip: product.mrpStrip,
+            packSizeInfo: product.packSizeInfo,
+            discountPercent: product.discountPercent,
+            discountEligibility: product.discountEligibility as any,
+            meta: product.medicineMeta,
+          }}
+          onClose={() => setIsPurchaseSheetOpen(false)}
+          onConfirm={handlePurchaseConfirm}
+        />
+      )}
     </TouchableOpacity>
   );
 }

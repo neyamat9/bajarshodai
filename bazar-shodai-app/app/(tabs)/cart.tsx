@@ -86,7 +86,7 @@ export default function CartScreen() {
 
       <FlatList
         data={items}
-        keyExtractor={(item) => item.productId}
+        keyExtractor={(item) => item.id || item.productId}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
@@ -108,9 +108,9 @@ export default function CartScreen() {
         renderItem={({ item }) => (
           <SwipeableCartItem
             item={item}
-            onUpdateQuantity={(newQty) => updateQuantity(item.productId, newQty)}
+            onUpdateQuantity={(newQty) => updateQuantity(item.id || item.productId, newQty)}
             onRemove={() => {
-              removeItem(item.productId);
+              removeItem(item.id || item.productId);
               toast.info('Removed', `${item.name} removed`);
             }}
           />

@@ -30,9 +30,11 @@ import { useProductReviews } from '@/features/reviews/api/reviewsApi';
 import { useCartStore } from '@/store/useCartStore';
 import { toast } from '@/store/useToastStore';
 import { haptics } from '@/services/haptics';
-import { assetUrl } from '@/utils/format';
+import { assetUrl, toBengaliNumerals } from '@/utils/format';
 import { useTranslation } from '@/i18n';
 import { getLocalizedDescription } from '@/utils/localizedDescription';
+import { isOralSolidMedicine } from '@/services/medicinePricing';
+import { MedicinePurchaseSheet } from '@/components/medicine/MedicinePurchaseSheet';
 
 function ProductDetailSkeleton() {
   return (
@@ -210,8 +212,17 @@ export default function ProductDetailScreen() {
     });
   };
 
+  const isOralSolid = isOralSolidMedicine(
+    product?.medicineMeta?.dosageForm || (product as any)?.dosageForm,
+  );
+  const [isPurchaseSheetOpen, setIsPurchaseSheetOpen] = useState(false);
+
   // Handle Add to Cart from bottom bar
   const handleAddToCart = () => {
+    if (isOralSolid) {
+      setIsPurchaseSheetOpen(true);
+      return;
+    }
     addItem(
       {
         id: productId,
@@ -418,6 +429,102 @@ export default function ProductDetailScreen() {
         productName={nameBn || name}
         onClose={() => setIsBackInStockOpen(false)}
       />
+
+      {/* Oral Solid Pata & Loose Tablet Purchase Sheet */}
+      {isOralSolid && (
+        <MedicinePurchaseSheet
+          visible={isPurchaseSheetOpen}
+          product={{
+            id: productId,
+            name,
+            nameBn,
+            slug: productSlug,
+            price,
+            originalPrice: regularPrice,
+            dosageForm: product?.medicineMeta?.dosageForm || (product as any)?.dosageForm,
+            strength: product?.medicineMeta?.strength || (product as any)?.strength,
+            manufacturer: product?.medicineMeta?.manufacturer || product?.brand?.name,
+            genericName: product?.medicineMeta?.genericName || (product as any)?.genericName,
+            imageUrl: images[0],
+            stock: product?.stock ? Number(product.stock) : undefined,
+            unitsPerStrip: product?.medicineMeta?.unitsPerStrip,
+            mrpUnit: product?.medicineMeta?.mrpUnit ? Number(product.medicineMeta.mrpUnit) : undefined,
+            mrpStrip: product?.medicineMeta?.mrpStrip ? Number(product.medicineMeta.mrpStrip) : undefined,
+            packSizeInfo: product?.medicineMeta?.packSizeInfo ?? product?.packSize,
+            discountPercent,
+            discountEligibility: product?.medicineMeta?.discountEligibility,
+            meta: product?.medicineMeta,
+          }}
+          onClose={() => setIsPurchaseSheetOpen(false)}
+          onConfirm={(breakdown) => {
+            const displayName = nameBn || name;
+            if (breakdown.totalStrips > 0 && breakdown.looseTabs === 0) {
+              addItem(
+                {
+                  id: `${productId}-strip`,
+                  productId,
+                  name: `${name} (${breakdown.totalStrips} strips)`,
+                  banglaName: `${displayName} (${toBengaliNumerals(breakdown.totalStrips)} পাতা)`,
+                  price: breakdown.effectiveStripPrice,
+                  originalPrice: breakdown.stripPrice,
+                  unit: 'পাতা',
+                  imageUrl: images[0],
+                  stock: product?.stock ? Number(product.stock) : undefined,
+                },
+                breakdown.totalStrips,
+              );
+            } else if (breakdown.totalStrips === 0 && breakdown.looseTabs > 0) {
+              addItem(
+                {
+                  id: `${productId}-loose`,
+                  productId,
+                  name: `${name} (${breakdown.looseTabs} tabs)`,
+                  banglaName: `${displayName} (${toBengaliNumerals(breakdown.looseTabs)}টি ট্যাবলেট)`,
+                  price: breakdown.effectiveTabPrice,
+                  originalPrice: breakdown.tabPrice,
+                  unit: 'ট্যাবলেট',
+                  imageUrl: images[0],
+                  stock: product?.stock ? Number(product.stock) : undefined,
+                },
+                breakdown.looseTabs,
+              );
+            } else {
+              addItem(
+                {
+                  id: `${productId}-strip`,
+                  productId,
+                  name: `${name} (${breakdown.totalStrips} strips)`,
+                  banglaName: `${displayName} (${toBengaliNumerals(breakdown.totalStrips)} পাতা)`,
+                  price: breakdown.effectiveStripPrice,
+                  originalPrice: breakdown.stripPrice,
+                  unit: 'পাতা',
+                  imageUrl: images[0],
+                  stock: product?.stock ? Number(product.stock) : undefined,
+                },
+                breakdown.totalStrips,
+              );
+              addItem(
+                {
+                  id: `${productId}-loose`,
+                  productId,
+                  name: `${name} (${breakdown.looseTabs} tabs)`,
+                  banglaName: `${displayName} (${toBengaliNumerals(breakdown.looseTabs)}টি ট্যাবলেট)`,
+                  price: breakdown.effectiveTabPrice,
+                  originalPrice: breakdown.tabPrice,
+                  unit: 'ট্যাবলেট',
+                  imageUrl: images[0],
+                  stock: product?.stock ? Number(product.stock) : undefined,
+                },
+                breakdown.looseTabs,
+              );
+            }
+            toast.success(
+              'Added to Bag',
+              `${displayName} (${toBengaliNumerals(breakdown.totalStrips)} পাতা + ${toBengaliNumerals(breakdown.looseTabs)}টি ট্যাবলেট) added to your bag`,
+            );
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 }

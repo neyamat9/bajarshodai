@@ -247,6 +247,13 @@ export default function SearchScreen() {
               trackStock: item.trackStock,
               inStock,
               imageUrl: assetUrl(rawImage),
+              unitsPerStrip: item.medicineMeta?.unitsPerStrip,
+              mrpUnit: item.medicineMeta?.mrpUnit ? Number(item.medicineMeta.mrpUnit) : undefined,
+              mrpStrip: item.medicineMeta?.mrpStrip ? Number(item.medicineMeta.mrpStrip) : undefined,
+              packSizeInfo: item.medicineMeta?.packSizeInfo ?? item.packSize,
+              discountPercent: item.discountPercent,
+              discountEligibility: item.medicineMeta?.discountEligibility,
+              medicineMeta: item.medicineMeta,
             };
 
             return (

@@ -125,14 +125,15 @@ export const useCartStore = create<CartState>((set, get) => ({
     const rawPrice = item.price ?? (item as any).sellingPrice ?? 0;
     const price = typeof rawPrice === 'number' && !isNaN(rawPrice) ? rawPrice : Number(rawPrice) || 0;
     const cleanQty = Math.max(1, Number(quantity) || 1);
-    const cleanItem = { ...item, price };
+    const itemId = item.id || item.productId;
+    const cleanItem = { ...item, id: itemId, price };
 
     set((state) => {
-      const existing = state.items.find((i) => i.productId === item.productId);
+      const existing = state.items.find((i) => (i.id ? i.id === itemId : i.productId === item.productId));
       let updated: CartItem[];
       if (existing) {
         updated = state.items.map((i) =>
-          i.productId === item.productId
+          (i.id ? i.id === itemId : i.productId === item.productId)
             ? { ...i, price, quantity: (Number(i.quantity) || 1) + cleanQty }
             : i,
         );
@@ -150,7 +151,7 @@ export const useCartStore = create<CartState>((set, get) => ({
         if (res?.id) {
           set((state) => {
             const synced = state.items.map((i) =>
-              i.productId === item.productId ? { ...i, serverItemId: res.id } : i,
+              (i.id === itemId || i.productId === item.productId) ? { ...i, serverItemId: res.id } : i,
             );
             persistCartAsync(synced);
             return { items: synced };
@@ -160,36 +161,38 @@ export const useCartStore = create<CartState>((set, get) => ({
       .catch(() => {});
   },
 
-  removeItem: (productId) => {
-    const item = get().items.find((i) => i.productId === productId);
+  removeItem: (idOrProductId) => {
+    const item = get().items.find((i) => i.id === idOrProductId || i.productId === idOrProductId);
     set((state) => {
-      const updated = state.items.filter((i) => i.productId !== productId);
+      const updated = state.items.filter((i) => i.id !== idOrProductId && i.productId !== idOrProductId);
       persistCartAsync(updated);
       return { items: updated };
     });
 
-    const targetId = item?.serverItemId || productId;
+    const targetId = item?.serverItemId || idOrProductId;
     void api.delete(`/customer/cart/${encodeURIComponent(targetId)}`).catch(() => {});
   },
 
-  updateQuantity: (productId, quantity) => {
-    const item = get().items.find((i) => i.productId === productId);
+  updateQuantity: (idOrProductId, quantity) => {
+    const item = get().items.find((i) => i.id === idOrProductId || i.productId === idOrProductId);
     set((state) => {
       let updated: CartItem[];
       if (quantity <= 0) {
-        updated = state.items.filter((i) => i.productId !== productId);
+        updated = state.items.filter((i) => i.id !== idOrProductId && i.productId !== idOrProductId);
       } else {
-        updated = state.items.map((i) => (i.productId === productId ? { ...i, quantity } : i));
+        updated = state.items.map((i) =>
+          (i.id === idOrProductId || i.productId === idOrProductId) ? { ...i, quantity } : i,
+        );
       }
       persistCartAsync(updated);
       return { items: updated };
     });
 
     if (quantity <= 0) {
-      const targetId = item?.serverItemId || productId;
+      const targetId = item?.serverItemId || idOrProductId;
       void api.delete(`/customer/cart/${encodeURIComponent(targetId)}`).catch(() => {});
     } else {
-      void api.post('/customer/cart', { productId, quantity }).catch(() => {});
+      void api.post('/customer/cart', { productId: item?.productId || idOrProductId, quantity }).catch(() => {});
     }
   },
 

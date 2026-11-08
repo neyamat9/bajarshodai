@@ -31,7 +31,9 @@ import { MedicineMetaData } from '@/features/pharmacy/types';
 import { useCartStore } from '@/store/useCartStore';
 import { toast } from '@/store/useToastStore';
 import { haptics } from '@/services/haptics';
-import { assetUrl } from '@/utils/format';
+import { assetUrl, toBengaliNumerals } from '@/utils/format';
+import { isOralSolidMedicine } from '@/services/medicinePricing';
+import { MedicinePurchaseSheet } from '@/components/medicine/MedicinePurchaseSheet';
 
 type FilterType = 'ALL' | 'OTC' | 'PRESCRIPTION';
 
@@ -48,11 +50,14 @@ export default function PharmacyCatalogScreen() {
   const [filters, setFilters] = useState<MedicineFiltersState>({});
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [selectedMedicine, setSelectedMedicine] = useState<{
+    id: string;
     name: string;
     slug?: string;
     price: number;
     meta: MedicineMetaData;
+    item: MedicineItemData;
   } | null>(null);
+  const [purchaseMedicine, setPurchaseMedicine] = useState<MedicineItemData | null>(null);
 
   // 1. Fetch Categories for Dosage Form subcategories
   const { data: rawCategories = [] } = useHomeCategories();
@@ -138,6 +143,13 @@ export default function PharmacyCatalogScreen() {
         trackStock: m.trackStock,
         inStock,
         imageUrl: assetUrl(rawImage),
+        unitsPerStrip: m.medicineMeta?.unitsPerStrip,
+        mrpUnit: m.medicineMeta?.mrpUnit ? Number(m.medicineMeta.mrpUnit) : undefined,
+        mrpStrip: m.medicineMeta?.mrpStrip ? Number(m.medicineMeta.mrpStrip) : undefined,
+        packSizeInfo: m.medicineMeta?.packSizeInfo ?? m.packSize,
+        discountPercent: m.discountPercent ?? m.discount,
+        discountEligibility: m.medicineMeta?.discountEligibility,
+        medicineMeta: m.medicineMeta,
       };
     });
   }, [apiMedicines]);
@@ -173,9 +185,11 @@ export default function PharmacyCatalogScreen() {
   const handleOpenInfo = (item: MedicineItemData) => {
     haptics.light();
     setSelectedMedicine({
+      id: item.id,
       name: item.nameBn || item.name,
       slug: item.slug,
       price: item.price,
+      item,
       meta: {
         genericName: item.genericName || 'General',
         dosageForm: item.dosageForm || 'Tablet',
@@ -460,18 +474,124 @@ export default function PharmacyCatalogScreen() {
           onClose={() => setSelectedMedicine(null)}
           onViewFullDetails={(slug) => router.push(`/product/${slug}`)}
           onAddToCart={() => {
+            if (isOralSolidMedicine(selectedMedicine.meta?.dosageForm)) {
+              const med = selectedMedicine.item;
+              setSelectedMedicine(null);
+              setPurchaseMedicine(med);
+              return;
+            }
             addItem(
               {
-                id: selectedMedicine.name,
-                productId: selectedMedicine.name,
+                id: selectedMedicine.id,
+                productId: selectedMedicine.id,
                 name: selectedMedicine.name,
                 price: selectedMedicine.price,
+                unit: selectedMedicine.item.unit || 'pack',
+                imageUrl: selectedMedicine.item.imageUrl,
               },
               1,
             );
             toast.success('Cart', `${selectedMedicine.name} ব্যাগে যোগ করা হয়েছে`);
+            setSelectedMedicine(null);
           }}
           onUploadPrescription={() => router.push('/prescription/upload')}
+        />
+      )}
+
+      {/* ── Oral Solid Pata & Loose Tablet Purchase Sheet ──────────── */}
+      {purchaseMedicine && (
+        <MedicinePurchaseSheet
+          visible={Boolean(purchaseMedicine)}
+          product={{
+            id: purchaseMedicine.id,
+            name: purchaseMedicine.name,
+            nameBn: purchaseMedicine.nameBn,
+            slug: purchaseMedicine.slug,
+            price: purchaseMedicine.price,
+            originalPrice: purchaseMedicine.originalPrice,
+            dosageForm: purchaseMedicine.dosageForm,
+            strength: purchaseMedicine.strength,
+            manufacturer: purchaseMedicine.manufacturer,
+            genericName: purchaseMedicine.genericName,
+            imageUrl: purchaseMedicine.imageUrl,
+            stock: purchaseMedicine.stock,
+            unitsPerStrip: purchaseMedicine.unitsPerStrip,
+            mrpUnit: purchaseMedicine.mrpUnit,
+            mrpStrip: purchaseMedicine.mrpStrip,
+            packSizeInfo: purchaseMedicine.packSizeInfo,
+            discountPercent: purchaseMedicine.discountPercent,
+            discountEligibility: purchaseMedicine.discountEligibility as any,
+            meta: purchaseMedicine.medicineMeta,
+          }}
+          onClose={() => setPurchaseMedicine(null)}
+          onConfirm={(breakdown) => {
+            const displayName = purchaseMedicine.nameBn || purchaseMedicine.name;
+            if (breakdown.totalStrips > 0 && breakdown.looseTabs === 0) {
+              addItem(
+                {
+                  id: `${purchaseMedicine.id}-strip`,
+                  productId: purchaseMedicine.id,
+                  name: `${purchaseMedicine.name} (${breakdown.totalStrips} strips)`,
+                  banglaName: `${displayName} (${toBengaliNumerals(breakdown.totalStrips)} পাতা)`,
+                  price: breakdown.effectiveStripPrice,
+                  originalPrice: breakdown.stripPrice,
+                  unit: 'পাতা',
+                  imageUrl: purchaseMedicine.imageUrl,
+                  stock: purchaseMedicine.stock,
+                },
+                breakdown.totalStrips,
+              );
+            } else if (breakdown.totalStrips === 0 && breakdown.looseTabs > 0) {
+              addItem(
+                {
+                  id: `${purchaseMedicine.id}-loose`,
+                  productId: purchaseMedicine.id,
+                  name: `${purchaseMedicine.name} (${breakdown.looseTabs} tabs)`,
+                  banglaName: `${displayName} (${toBengaliNumerals(breakdown.looseTabs)}টি ট্যাবলেট)`,
+                  price: breakdown.effectiveTabPrice,
+                  originalPrice: breakdown.tabPrice,
+                  unit: 'ট্যাবলেট',
+                  imageUrl: purchaseMedicine.imageUrl,
+                  stock: purchaseMedicine.stock,
+                },
+                breakdown.looseTabs,
+              );
+            } else {
+              addItem(
+                {
+                  id: `${purchaseMedicine.id}-strip`,
+                  productId: purchaseMedicine.id,
+                  name: `${purchaseMedicine.name} (${breakdown.totalStrips} strips)`,
+                  banglaName: `${displayName} (${toBengaliNumerals(breakdown.totalStrips)} পাতা)`,
+                  price: breakdown.effectiveStripPrice,
+                  originalPrice: breakdown.stripPrice,
+                  unit: 'পাতা',
+                  imageUrl: purchaseMedicine.imageUrl,
+                  stock: purchaseMedicine.stock,
+                },
+                breakdown.totalStrips,
+              );
+              addItem(
+                {
+                  id: `${purchaseMedicine.id}-loose`,
+                  productId: purchaseMedicine.id,
+                  name: `${purchaseMedicine.name} (${breakdown.looseTabs} tabs)`,
+                  banglaName: `${displayName} (${toBengaliNumerals(breakdown.looseTabs)}টি ট্যাবলেট)`,
+                  price: breakdown.effectiveTabPrice,
+                  originalPrice: breakdown.tabPrice,
+                  unit: 'ট্যাবলেট',
+                  imageUrl: purchaseMedicine.imageUrl,
+                  stock: purchaseMedicine.stock,
+                },
+                breakdown.looseTabs,
+              );
+            }
+            toast.success(
+              'Cart',
+              `${displayName} (${toBengaliNumerals(breakdown.totalStrips)} পাতা + ${toBengaliNumerals(breakdown.looseTabs)}টি ট্যাবলেট) ব্যাগে যোগ করা হয়েছে`,
+            );
+            setPurchaseMedicine(null);
+          }}
         />
       )}
 
