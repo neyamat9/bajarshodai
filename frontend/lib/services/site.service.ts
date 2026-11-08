@@ -17,6 +17,7 @@ export interface SiteSettings {
     contactEmail: string | null;
     hotline: string | null;
     whatsapp: string | null;
+    whatsappOrderTemplate?: string | null;
     address: string | null;
     businessHours: string | null;
     socialLinks: Record<string, string>;

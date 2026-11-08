@@ -19,6 +19,7 @@ import { useCartActions } from "@/lib/hooks/use-cart";
 import { useWishlist } from "@/lib/hooks/use-wishlist";
 import { playClick } from "@/lib/sound";
 import { toast } from "sonner";
+import WhatsAppOrderButton from "@/components/product/WhatsAppOrderButton";
 import {
   ArrowRight,
   ChevronRight,
@@ -596,6 +597,16 @@ function QuickViewModalContent({
                     }`}
                   />
                 </button>
+              </div>
+
+              {/* ── WhatsApp Direct Order Button ── */}
+              <div className="mt-2.5">
+                <WhatsAppOrderButton
+                  productName={product.name}
+                  productSlug={product.slug}
+                  productPrice={price}
+                  className="w-full"
+                />
               </div>
 
               {/* ── Prominent "Full Details" Action Button (Click 2) ── */}

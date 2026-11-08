@@ -2,6 +2,7 @@
 
 import { Link } from "@/i18n/navigation";
 import BackInStockForm from "@/components/product/BackInStockForm";
+import WhatsAppOrderButton from "@/components/product/WhatsAppOrderButton";
 import { useCart } from "@/lib/hooks/use-cart";
 import { useWishlist } from "@/lib/hooks/use-wishlist";
 import { playClick } from "@/lib/sound";
@@ -377,6 +378,16 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
           <Heart className="h-4 w-4" fill={inVault ? "currentColor" : "none"} />
           {t("summary.wishlist")}
         </button>
+      </div>
+
+      {/* ── WhatsApp Direct Order Button ── */}
+      <div className="mt-3">
+        <WhatsAppOrderButton
+          productName={product.name}
+          productSlug={product.slug}
+          productPrice={price}
+          className="w-full"
+        />
       </div>
 
       {isOutOfStock && <BackInStockForm productId={product.id} variantId={variant?.id} />}

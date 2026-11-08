@@ -24,6 +24,7 @@ import { haptics } from '@/services/haptics';
 import { Radius, Shadows } from '@/constants/layout';
 import { isOralSolidMedicine } from '@/services/medicinePricing';
 import { MedicinePurchaseSheet } from '@/components/medicine/MedicinePurchaseSheet';
+import { WhatsAppOrderButton } from './WhatsAppOrderButton';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -469,6 +470,14 @@ function QuickViewSheetContent({ product, onClose }: QuickViewSheetContentProps)
           </TouchableOpacity>
         </View>
 
+        {/* ── WhatsApp Direct Order Button ── */}
+        <WhatsAppOrderButton
+          productName={displayTitle}
+          productSlug={product.slug}
+          productPrice={product.price}
+          style={styles.whatsAppBtn}
+        />
+
         {/* ── Prominent "View Full Details" Action Card (Click 2) ── */}
         <TouchableOpacity
           activeOpacity={0.88}
@@ -905,6 +914,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  whatsAppBtn: {
+    marginTop: 10,
+    width: '100%',
   },
   fullDetailsCard: {
     flexDirection: 'row',

@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
 import { Price } from '@/components/ui/Price';
 import { QuantityStepper } from '@/components/product/QuantityStepper';
+import { WhatsAppOrderButton } from '@/components/product/WhatsAppOrderButton';
 
 export interface ProductStickyBottomBarProps {
   unitPrice: number;
@@ -15,6 +16,8 @@ export interface ProductStickyBottomBarProps {
   onQuantityChange: (qty: number) => void;
   onAddToCart: () => void;
   onNotifyBackInStock?: () => void;
+  productName?: string;
+  productSlug?: string;
 }
 
 export function ProductStickyBottomBar({
@@ -27,6 +30,8 @@ export function ProductStickyBottomBar({
   onQuantityChange,
   onAddToCart,
   onNotifyBackInStock,
+  productName,
+  productSlug,
 }: ProductStickyBottomBarProps) {
   const insets = useSafeAreaInsets();
   const totalPrice = unitPrice * quantity;
@@ -56,6 +61,16 @@ export function ProductStickyBottomBar({
                 size="sm"
               />
             </View>
+
+            {productName && productSlug ? (
+              <WhatsAppOrderButton
+                variant="compact"
+                productName={productName}
+                productSlug={productSlug}
+                productPrice={unitPrice}
+                style={styles.whatsAppCompactBtn}
+              />
+            ) : null}
 
             <Button
               title="Add to Bag"
@@ -99,6 +114,9 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   stepperWrap: {
+    marginRight: 4,
+  },
+  whatsAppCompactBtn: {
     marginRight: 4,
   },
 });
