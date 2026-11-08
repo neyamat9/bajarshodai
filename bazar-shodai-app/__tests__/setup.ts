@@ -15,6 +15,11 @@ jest.mock('react-native', () => ({
   Alert: { alert: jest.fn() },
   Linking: { openURL: jest.fn().mockResolvedValue(true) },
   StyleSheet: { create: (styles: any) => styles },
+  BackHandler: {
+    addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+    removeEventListener: jest.fn(),
+    exitApp: jest.fn(),
+  },
 }));
 
 jest.mock('react-native-mmkv', () => ({

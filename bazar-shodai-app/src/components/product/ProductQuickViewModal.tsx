@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Dimensions,
   Platform,
+  BackHandler,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { AppImage } from '@/components/ui/AppImage';
@@ -48,6 +49,18 @@ function QuickViewSheetContent({ product, onClose }: QuickViewSheetContentProps)
     product.medicineMeta?.dosageForm || (product as any).dosageForm,
   );
   const [isPurchaseSheetOpen, setIsPurchaseSheetOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isPurchaseSheetOpen) return;
+
+    const onBackPress = () => {
+      setIsPurchaseSheetOpen(false);
+      return true;
+    };
+
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [isPurchaseSheetOpen]);
 
   const rawImage =
     (typeof product.images?.[0] === 'string'
@@ -633,6 +646,23 @@ function QuickViewSheetContent({ product, onClose }: QuickViewSheetContentProps)
 export function ProductQuickViewModal() {
   const { t } = useTranslation();
   const { isOpen, product, closeQuickView } = useQuickViewStore();
+
+  // Intercept Android hardware back button and swipe-back gestures when modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const onHardwareBackPress = () => {
+      closeQuickView();
+      return true; // Return true to prevent event from bubbling and navigating back to previous screen
+    };
+
+    const subscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      onHardwareBackPress,
+    );
+
+    return () => subscription.remove();
+  }, [isOpen, closeQuickView]);
 
   if (!isOpen || !product) {
     return null;

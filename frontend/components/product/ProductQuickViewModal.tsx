@@ -61,18 +61,48 @@ export function ProductQuickViewProvider({
   const router = useRouter();
   const pathname = usePathname();
   const [product, setProduct] = useState<Product | null>(null);
+  const modalPushedRef = useRef(false);
 
   const openQuickView = useCallback((prod: Product) => {
+    if (typeof window !== "undefined" && !modalPushedRef.current) {
+      try {
+        window.history.pushState(
+          { modal: "quickview", slug: prod.slug },
+          "",
+          window.location.href
+        );
+        modalPushedRef.current = true;
+      } catch {
+        // Ignore in environments without history push support
+      }
+    }
     setProduct(prod);
   }, []);
 
   const closeQuickView = useCallback(() => {
+    if (typeof window !== "undefined" && modalPushedRef.current) {
+      modalPushedRef.current = false;
+      try {
+        window.history.back();
+      } catch {
+        // Ignore
+      }
+    }
     setProduct(null);
   }, []);
 
   const navigateToProduct = useCallback(
     (slug: string) => {
-      // Do not clear product immediately to prevent flashing background page during navigation
+      if (typeof window !== "undefined" && modalPushedRef.current) {
+        modalPushedRef.current = false;
+        try {
+          // Replace the modal dummy history entry with clean URL so back navigation
+          // from the target product page returns smoothly to the catalog list
+          window.history.replaceState(null, "", window.location.href);
+        } catch {
+          // Ignore
+        }
+      }
       router.push(`/products/${slug}`);
     },
     [router]
@@ -80,14 +110,20 @@ export function ProductQuickViewProvider({
 
   // When route changes (e.g. navigation to product page completes), dismiss modal seamlessly
   useEffect(() => {
+    modalPushedRef.current = false;
     setProduct(null);
   }, [pathname]);
 
-  // Listen for browser popstate (phone back button or browser back arrow)
+  // Listen for browser popstate (phone hardware back button, browser back button, or swipe back)
   useEffect(() => {
     const handlePopState = () => {
-      // When back button is pressed, dismiss the modal without page reload
-      setProduct(null);
+      if (modalPushedRef.current) {
+        // Consumed the dummy modal history entry: dismiss modal and leave user on current page
+        modalPushedRef.current = false;
+        setProduct(null);
+      } else {
+        setProduct(null);
+      }
     };
 
     window.addEventListener("popstate", handlePopState);
