@@ -12,7 +12,7 @@ import { formatMoney, formatNumber } from "@/lib/format";
 import type { Locale } from "@/lib/locale";
 
 interface HeroSectionProps {
-  /** Banners the shop owner set up in the dashboard (HERO_MAIN slider + HERO_SIDE cards) */
+  /** Banners the shop ownr set up in the dashboard (HERO_MAIN slider + HERO_SIDE cards) */
   main: Banner[];
   side: Banner[];
   /** Real products whose photos fill the big banner stack */
