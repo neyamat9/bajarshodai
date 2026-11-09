@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -103,6 +103,12 @@ export default function PharmacyCatalogScreen() {
       sortBy: filters.sortBy || 'popular',
     };
   }, [activeType, searchQuery, filters]);
+
+  const listRef = useRef<FlatList>(null);
+
+  useEffect(() => {
+    listRef.current?.scrollToOffset({ offset: 0, animated: false });
+  }, [queryParams]);
 
   const {
     data: apiMedicines = [],
@@ -236,6 +242,7 @@ export default function PharmacyCatalogScreen() {
       </View>
 
       <FlatList
+        ref={listRef}
         data={medicinesList}
         keyExtractor={(item) => item.id}
         refreshControl={

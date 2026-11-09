@@ -19,7 +19,7 @@ import MedicineDetailModal from "@/components/medicine/MedicineDetailModal";
 import MedicineSearchBar from "@/components/medicine/MedicineSearchBar";
 import SortBar from "./SortBar";
 import { flattenSubs } from "@/lib/utils/categories";
-import { recalculateScrollBounds, scrollToGridTopSmooth } from "@/components/motion/scroll-top";
+import { resetScrollAndResize, recalculateScrollBounds } from "@/components/motion/scroll-top";
 import { useRouter } from "@/i18n/navigation";
 
 interface ProductGridProps {
@@ -171,26 +171,27 @@ export default function ProductGrid({
     [filters, sortBy, onSale, effectiveSearch, lockedCategory, subCategory, priceMin, priceMax, subsOf, excludeMedicine],
   );
 
+  // When filters, sort, or search change, immediately reset scroll to top if user is scrolled down
+  useEffect(() => {
+    if (first.current) return;
+    if (typeof window !== "undefined" && window.scrollY > 40) {
+      resetScrollAndResize();
+    }
+  }, [filters, sortBy, onSale, searchQuery]);
+
   // Synchronously after DOM commits the updated products list:
-  // ensure Lenis and ScrollTrigger recalculate bounds and clamp scroll smoothly
+  // if this is a filter (page 1) or the products list shrank, clamp scroll to top and collapse Lenis & ScrollTrigger bounds
   useLayoutEffect(() => {
     if (first.current) {
       prevCount.current = products.length;
       return;
     }
 
-    const targetY = getGridTop();
-    const isScrolledPast = typeof window !== "undefined" && window.scrollY > targetY + 80;
-    const isResetOrShrank =
-      meta.page === 1 && (products.length < prevCount.current || isScrolledPast);
-
+    const isFilterOrShrink = meta.page === 1 || products.length < prevCount.current;
     prevCount.current = products.length;
 
-    // If the results reset to page 1 (due to filter/sort) and user was scrolled down,
-    // smoothly glide directly to the top of the product results so they never get stranded
-    // in empty blank space.
-    if (isResetOrShrank && isScrolledPast) {
-      scrollToGridTopSmooth(targetY, 0.45);
+    if (isFilterOrShrink) {
+      resetScrollAndResize();
     } else {
       recalculateScrollBounds();
     }
@@ -205,13 +206,13 @@ export default function ProductGrid({
 
     const timer = setTimeout(() => {
       recalculateScrollBounds();
-    }, 150);
+    }, 100);
 
     return () => {
       cancelAnimationFrame(raf1);
       clearTimeout(timer);
     };
-  }, [products, meta.page, getGridTop]);
+  }, [products, meta.page]);
 
 
   // New filters / sort → fetch page 1 again

@@ -320,7 +320,7 @@ export default function FilterSidebar({
     <>
       {/* ── Desktop sidebar ─────────────────────────── */}
       <aside
-        className="sticky hidden w-72 flex-shrink-0 self-start transition-[top] duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] lg:block"
+        className="sticky hidden w-72 flex-shrink-0 self-start overflow-hidden transition-[top] duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] lg:block"
         style={{
           top: "var(--sticky-top, 8rem)",
           maxHeight: "calc(100vh - var(--sticky-top, 8rem) - 1rem)",
@@ -343,7 +343,7 @@ export default function FilterSidebar({
       />
       <div
         className={`fixed inset-x-0 bottom-0 z-[2110] flex max-h-[88dvh] flex-col rounded-t border-t border-border bg-card transition-transform duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)] lg:hidden ${
-          mobileOpen ? "translate-y-0 pointer-events-auto" : "translate-y-full pointer-events-none invisible"
+          mobileOpen ? "translate-y-0 pointer-events-auto" : "translate-y-full pointer-events-none invisible hidden"
         }`}
         role="dialog"
         aria-modal="true"
