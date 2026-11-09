@@ -19,7 +19,7 @@ import MedicineDetailModal from "@/components/medicine/MedicineDetailModal";
 import MedicineSearchBar from "@/components/medicine/MedicineSearchBar";
 import SortBar from "./SortBar";
 import { flattenSubs } from "@/lib/utils/categories";
-import { recalculateScrollBounds } from "@/components/motion/scroll-top";
+import { recalculateScrollBounds, scrollToGridTopSmooth } from "@/components/motion/scroll-top";
 import { useRouter } from "@/i18n/navigation";
 
 interface ProductGridProps {
@@ -127,6 +127,18 @@ export default function ProductGrid({
   const first = useRef(true);
   const reqId = useRef(0);
   const prevCount = useRef(initial.products.length);
+  const mainContentRef = useRef<HTMLDivElement>(null);
+
+  const getGridTop = useCallback(() => {
+    if (!mainContentRef.current || typeof window === "undefined") return 0;
+    const rect = mainContentRef.current.getBoundingClientRect();
+    const currentScroll = window.scrollY || document.documentElement.scrollTop;
+    const stickyTop =
+      parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue("--sticky-top"),
+      ) || 112;
+    return Math.max(0, rect.top + currentScroll - stickyTop - 12);
+  }, []);
 
   // slugs of the sub-categories that belong to a category
   const subsOf = useCallback(
@@ -167,8 +179,21 @@ export default function ProductGrid({
       return;
     }
 
+    const targetY = getGridTop();
+    const isScrolledPast = typeof window !== "undefined" && window.scrollY > targetY + 80;
+    const isResetOrShrank =
+      meta.page === 1 && (products.length < prevCount.current || isScrolledPast);
+
     prevCount.current = products.length;
-    recalculateScrollBounds();
+
+    // If the results reset to page 1 (due to filter/sort) and user was scrolled down,
+    // smoothly glide directly to the top of the product results so they never get stranded
+    // in empty blank space.
+    if (isResetOrShrank && isScrolledPast) {
+      scrollToGridTopSmooth(targetY, 0.45);
+    } else {
+      recalculateScrollBounds();
+    }
 
     const raf1 = requestAnimationFrame(() => {
       recalculateScrollBounds();
@@ -180,13 +205,13 @@ export default function ProductGrid({
 
     const timer = setTimeout(() => {
       recalculateScrollBounds();
-    }, 100);
+    }, 150);
 
     return () => {
       cancelAnimationFrame(raf1);
       clearTimeout(timer);
     };
-  }, [products, meta.page]);
+  }, [products, meta.page, getGridTop]);
 
 
   // New filters / sort → fetch page 1 again
@@ -378,7 +403,7 @@ export default function ProductGrid({
       />
 
       {/* ── Main content ────────────────────────────── */}
-      <div className="flex-1 w-full min-w-0">
+      <div ref={mainContentRef} className="flex-1 w-full min-w-0">
         {header}
 
         {/* Dedicated Search bar for Medicine */}

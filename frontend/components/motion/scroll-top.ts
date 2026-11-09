@@ -1,8 +1,11 @@
 import { ScrollTrigger } from "./gsap";
 
+let isGliding = false;
+
 /** Jump to the top of the page at once — also stops any smooth-scroll (Lenis) momentum that is still running and recalculates bounds. */
 export function scrollTopNow() {
   if (typeof window === "undefined") return;
+  isGliding = false;
   const lenis = (window as unknown as { __lenis?: { scrollTo: (n: number, o?: object) => void; resize?: () => void } }).__lenis;
   if (lenis) {
     lenis.scrollTo(0, { immediate: true, force: true });
@@ -15,11 +18,45 @@ export function scrollTopNow() {
 }
 
 /** Smoothly scroll to the top of the page (supports Lenis smooth-scroll if active). */
-export function scrollToTopSmooth(duration = 0.6) {
+export function scrollToTopSmooth(duration = 0.5) {
+  scrollToGridTopSmooth(0, duration);
+}
+
+/**
+ * Smoothly glides the viewport to a specific vertical position (such as the top of product grid results)
+ * and then immediately forces Lenis and ScrollTrigger to refresh bounds, eliminating empty scroll runways.
+ */
+export function scrollToGridTopSmooth(targetY = 0, duration = 0.45) {
   if (typeof window === "undefined") return;
-  const lenis = (window as unknown as { __lenis?: { scrollTo: (n: number, o?: object) => void; resize?: () => void } }).__lenis;
-  if (lenis) lenis.scrollTo(0, { duration });
-  else window.scrollTo({ top: 0, behavior: "smooth" });
+  const lenis = (window as unknown as {
+    __lenis?: {
+      scrollTo: (target: number | HTMLElement, o?: object) => void;
+      resize?: () => void;
+    };
+  }).__lenis;
+
+  isGliding = true;
+  if (lenis) {
+    lenis.resize?.();
+    lenis.scrollTo(targetY, {
+      duration,
+      onComplete: () => {
+        isGliding = false;
+        lenis.resize?.();
+        try {
+          ScrollTrigger.refresh();
+        } catch {}
+      },
+    });
+  } else {
+    window.scrollTo({ top: targetY, behavior: "smooth" });
+    setTimeout(() => {
+      isGliding = false;
+      try {
+        ScrollTrigger.refresh();
+      } catch {}
+    }, duration * 1000 + 50);
+  }
 }
 
 /**
@@ -30,6 +67,7 @@ export function scrollToTopSmooth(duration = 0.6) {
  */
 export function resetScrollAndResize() {
   if (typeof window === "undefined") return;
+  isGliding = false;
   const lenis = (window as unknown as { __lenis?: { scrollTo: (n: number, o?: object) => void; resize?: () => void } }).__lenis;
   if (lenis) {
     lenis.scrollTo(0, { immediate: true, force: true });
@@ -46,7 +84,7 @@ export function resetScrollAndResize() {
  * to match the current DOM content and clamps scroll position within natural content limits.
  */
 export function recalculateScrollBounds() {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || isGliding) return;
   const lenis = (window as unknown as {
     __lenis?: {
       resize?: () => void;
