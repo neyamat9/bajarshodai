@@ -100,9 +100,10 @@ export class OrdersService {
     return rows.map(toCustomerOrder);
   }
 
-  async findById(userId: string, orderId: string) {
+  async findById(userId: string | null, orderId: string) {
+    const where = userId ? { id: orderId, userId } : { id: orderId, userId: null };
     const order = await this.prisma.order.findFirst({
-      where: { id: orderId, userId },
+      where,
       include: {
         items: true,
         statusHistory: { orderBy: { createdAt: 'asc' } },

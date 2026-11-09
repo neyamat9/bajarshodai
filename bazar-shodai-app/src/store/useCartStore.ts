@@ -39,6 +39,7 @@ interface CartState {
   setItems: (items: CartItem[]) => void;
   setCoupon: (coupon: AppliedCoupon | null) => void;
   setDeliveryCharge: (charge: number) => void;
+  syncCartFromServer: () => Promise<void>;
 }
 
 const STORAGE_KEY = 'bazar_cart_items';
@@ -219,5 +220,76 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   setDeliveryCharge: (charge) => {
     set({ deliveryCharge: charge });
+  },
+
+  syncCartFromServer: async () => {
+    try {
+      const res = await api.get<{
+        items?: Array<{
+          id: string;
+          productId: string;
+          quantity: number;
+          unitPrice?: number;
+          product?: {
+            id: string;
+            name: string;
+            nameBn?: string;
+            price?: number;
+            sellingPrice?: number;
+            regularPrice?: number;
+            imageUrl?: string;
+            primaryImage?: { url: string };
+            images?: Array<{ url: string }>;
+            unit?: { shortLabel?: string; shortLabelBn?: string };
+            stock?: number;
+          };
+          variant?: {
+            id: string;
+            price?: number;
+            stock?: number;
+          };
+        }>;
+      }>('/customer/cart');
+
+      if (res && Array.isArray(res.items)) {
+        const mapped: CartItem[] = res.items.map((it) => {
+          const rawPrice =
+            it.variant?.price ??
+            it.product?.sellingPrice ??
+            it.product?.price ??
+            it.unitPrice ??
+            0;
+          const price = typeof rawPrice === 'number' && !isNaN(rawPrice) ? rawPrice : Number(rawPrice) || 0;
+          const rawOriginalPrice = it.product?.regularPrice;
+          const originalPrice = rawOriginalPrice ? Number(rawOriginalPrice) || undefined : undefined;
+          const quantity = Math.max(1, Number(it.quantity) || 1);
+
+          return {
+            id: it.product?.id || it.productId || it.id,
+            productId: it.product?.id || it.productId || it.id,
+            serverItemId: it.id,
+            name: it.product?.name || 'Product',
+            banglaName: it.product?.nameBn,
+            price,
+            originalPrice,
+            quantity,
+            imageUrl:
+              it.product?.imageUrl ||
+              it.product?.primaryImage?.url ||
+              it.product?.images?.[0]?.url ||
+              '',
+            unit:
+              it.product?.unit?.shortLabelBn ||
+              it.product?.unit?.shortLabel ||
+              'pc',
+            stock: it.variant ? Number(it.variant.stock) : Number(it.product?.stock ?? 999),
+          };
+        });
+
+        get().setItems(mapped);
+      }
+    } catch {
+      // Keep existing local items if network error
+    }
   },
 }));

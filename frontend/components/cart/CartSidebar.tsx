@@ -280,10 +280,9 @@ export default function CartSidebar() {
                 className="group flex w-full items-center justify-center gap-2 rounded bg-brand-fresh py-3.5 text-sm font-extrabold text-on-fresh shadow-[0_10px_24px_-10px_rgba(69,162,44,0.9)] transition-all hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0 disabled:cursor-wait disabled:opacity-80 disabled:hover:translate-y-0"
               >
                 {checkout.state === "loading" || checkout.checking ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Lock className="h-4 w-4" aria-hidden="true" />}
-                {checkout.checking ? t("checkingAddresses") : checkout.state === "signed-out" ? t("loginToCheckout") : t("proceed")}
+                {checkout.checking ? t("checkingAddresses") : t("proceed")}
                 {!checkout.checking && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />}
               </button>
-              {checkout.state === "signed-out" && <p className="-mt-1 text-center text-xs text-muted-foreground">{t("signInHint")}</p>}
               <div className="flex items-center justify-between text-sm">
                 <Link href="/cart" onClick={closeCart} className="font-semibold text-primary hover:underline dark:text-accent-text">
                   {t("viewFull")}

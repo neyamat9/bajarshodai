@@ -130,7 +130,11 @@ class MMKVStorageAdapter implements AppStorage {
   }
 
   remove(key: string): void {
-    this.mmkv.remove(key);
+    if (typeof (this.mmkv as any).delete === 'function') {
+      (this.mmkv as any).delete(key);
+    } else if (typeof (this.mmkv as any).remove === 'function') {
+      (this.mmkv as any).remove(key);
+    }
   }
 
   clearAll(): void {

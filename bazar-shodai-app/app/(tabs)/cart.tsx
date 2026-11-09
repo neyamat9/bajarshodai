@@ -174,14 +174,6 @@ export default function CartScreen() {
             size="lg"
             onPress={() => {
               haptics.selection();
-              if (!isAuthenticated) {
-                toast.warning(
-                  'লগইন প্রয়োজন',
-                  'অর্ডার সম্পন্ন করতে প্রথমে আপনার অ্যাকাউন্টে লগইন করুন',
-                );
-                router.push('/(auth)/login?redirect=/checkout');
-                return;
-              }
               router.push('/checkout');
             }}
             rightIcon={<Icon name="ArrowRight" size={18} color="#ffffff" />}

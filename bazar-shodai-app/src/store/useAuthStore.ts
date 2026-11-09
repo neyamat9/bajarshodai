@@ -3,6 +3,7 @@ import { tokenVault } from '@/utils/secureStore';
 import { storage } from '@/utils/storage';
 import { resetGuestToken } from '@/utils/guestToken';
 import { UserProfile, AuthSession } from '@/features/auth/types';
+import { useCartStore } from './useCartStore';
 
 const AUTH_USER_KEY = 'bazar_cached_user';
 
@@ -43,6 +44,9 @@ export const useAuthStore = create<AuthState>((set) => ({
       isAuthenticated: true,
       isLoading: false,
     });
+
+    // 4. Synchronize merged cart from server into local store
+    void useCartStore.getState().syncCartFromServer();
   },
 
   logout: async () => {
@@ -96,6 +100,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         user: parsedUser,
         isLoading: false,
       });
+      void useCartStore.getState().syncCartFromServer();
       return true;
     } catch {
       set({ isAuthenticated: false, user: null, userId: null, isLoading: false });

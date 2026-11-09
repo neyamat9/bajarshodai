@@ -10,16 +10,37 @@ export interface LocationSharePayload {
   subtotal?: number;
 }
 
+export interface ShippingQuote {
+  available: boolean;
+  block?: 'DISABLED' | 'ORIGIN_NOT_SET' | 'OUT_OF_AREA' | 'NO_LOCATION' | null;
+  calculatedFee: number;
+  distanceKm: number;
+  roadDistanceKm?: number | null;
+  directDistanceKm?: number | null;
+  freeDelivery: boolean;
+  minOrderAmount?: number;
+  minOrderOk?: boolean;
+  durationSec?: number | null;
+}
+
 export interface SharedLocationResponse {
-  lat: number;
-  lng: number;
+  location?: {
+    id: string;
+    lat: number;
+    lng: number;
+    accuracyM?: number | null;
+    placeName?: string | null;
+    placeNameBn?: string | null;
+    source?: string;
+  };
+  quote?: ShippingQuote;
+  lat?: number;
+  lng?: number;
   accuracyM?: number;
   placeName?: string;
-  zone?: string;
-  deliveryCharge: number;
-  isFreeDelivery?: boolean;
+  placeNameBn?: string;
+  deliveryCharge?: number;
   distanceKm?: number;
-  estimatedMinutes?: number;
 }
 
 export interface LocationTokenInfo {

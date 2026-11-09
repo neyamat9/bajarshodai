@@ -32,6 +32,7 @@ jest.mock('react-native-mmkv', () => ({
       getNumber: jest.fn((k: string) => memory.get(k)),
       contains: jest.fn((k: string) => memory.has(k)),
       delete: jest.fn((k: string) => memory.delete(k)),
+      remove: jest.fn((k: string) => memory.delete(k)),
       clearAll: jest.fn(() => memory.clear()),
       getAllKeys: jest.fn(() => Array.from(memory.keys())),
     };

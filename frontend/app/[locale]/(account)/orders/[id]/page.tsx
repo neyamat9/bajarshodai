@@ -1,7 +1,6 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
-import RequireLogin from "@/components/account/RequireLogin";
 import { btnGhost, btnPrimary, card, formatBDT, formatDate, formatDateTime, formatDeliveryWindow, Skeleton, StepProgress } from "@/components/account/ui";
 import { StatusBadge } from "@/components/orders/StatusBadge";
 import { errorMessage } from "@/lib/api/client";
@@ -392,9 +391,5 @@ function Detail() {
 }
 
 export default function OrderDetailPage() {
-  return (
-    <RequireLogin>
-      <Detail />
-    </RequireLogin>
-  );
+  return <Detail />;
 }

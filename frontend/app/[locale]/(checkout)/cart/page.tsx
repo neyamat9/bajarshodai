@@ -197,9 +197,8 @@ export default function CartPage() {
                 disabled={checkout.state === "loading" || checkout.checking}
                 className="w-full py-4 rounded bg-primary text-white font-bold text-base hover:bg-primary/90 active:scale-[0.97] transition-all shadow-[0_8px_24px_rgba(69,162,44,0.3)] hover:shadow-[0_12px_32px_rgba(69,162,44,0.4)] disabled:cursor-wait disabled:opacity-80"
               >
-                {checkout.checking ? t("checkingAddresses") : checkout.state === "signed-out" ? t("loginToCheckout") : t("proceedPage")}
+                {checkout.checking ? t("checkingAddresses") : t("proceedPage")}
               </button>
-              {checkout.state === "signed-out" && <p className="text-center text-xs text-muted-foreground">{t("signInHint")}</p>}
 
               {/* Trust badges */}
               <div className="flex items-center justify-center gap-4 pt-2">

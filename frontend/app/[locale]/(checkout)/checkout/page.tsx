@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "@/i18n/navigation";
-import RequireLogin from "@/components/account/RequireLogin";
+import { useAuthModal } from "@/components/auth/AuthModal";
 import LocationStep from "@/components/checkout/LocationStep";
 import OrderReview from "@/components/checkout/OrderReview";
 import OrderSummaryPanel from "@/components/checkout/OrderSummaryPanel";
@@ -45,6 +45,7 @@ const LABEL: Record<string, PaymentMethod> = {
 function Checkout() {
   const t = useTranslations("Checkout");
   const { user } = useAuth();
+  const { openAuth } = useAuthModal();
   const { cart, cartCount, loading: cartLoading, clearCart } = useCart();
   const router = useRouter();
 
@@ -66,16 +67,19 @@ function Checkout() {
   const placed = useRef(false);
   const summarySeq = useRef(0);
 
-  // saved addresses: loaded when the cart button was pressed, otherwise now. The form waits for them (never for long).
-  const [saved, setSaved] = useState<SavedAddress[] | null>(() => (user ? peekSavedAddresses(user.id) : null));
+  // saved addresses: loaded when the cart button was pressed, otherwise now. Guests default to empty array.
+  const [saved, setSaved] = useState<SavedAddress[] | null>(() => (user ? peekSavedAddresses(user.id) : []));
   useEffect(() => {
-    if (!user || saved !== null) return;
+    if (!user) {
+      setSaved([]);
+      return;
+    }
     let alive = true;
     loadSavedAddresses(user.id).then((l) => alive && setSaved(l));
     return () => {
       alive = false;
     };
-  }, [user, saved]);
+  }, [user]);
   // the default (else newest) saved address fills in step 1, and its pin step 2
   const prefilled = useRef(false);
   useEffect(() => {
@@ -182,6 +186,21 @@ function Checkout() {
       <div className="mb-8 md:mb-10">
         <StepIndicator currentStep={step} />
       </div>
+
+      {!user && (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded border border-brand-fresh/30 bg-brand-fresh/10 px-4 py-3 text-xs sm:text-sm">
+          <span className="text-foreground">
+            {t("guestNotice") || "Checking out as a guest. Have an account? Log in to use your saved addresses."}
+          </span>
+          <button
+            type="button"
+            onClick={() => openAuth("login")}
+            className="font-bold text-brand-fresh hover:underline cursor-pointer"
+          >
+            {t("loginNow") || "Log in"}
+          </button>
+        </div>
+      )}
 
       {summaryError && (
         <p role="alert" className="mb-6 rounded border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
@@ -301,9 +320,5 @@ function Checkout() {
 }
 
 export default function CheckoutPage() {
-  return (
-    <RequireLogin fallback={<CheckoutBodySkeleton />}>
-      <Checkout />
-    </RequireLogin>
-  );
+  return <Checkout />;
 }

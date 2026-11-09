@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
+  ActivityIndicator,
   StyleSheet,
 } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -17,6 +18,7 @@ import { CustomerAddress } from '../types';
 import { useAuthStore } from '@/store/useAuthStore';
 import { toast } from '@/store/useToastStore';
 import { haptics } from '@/services/haptics';
+import { getCurrentCoordinates, reverseGeocodeCoordinates } from '@/services/location';
 
 export interface AddressSelectorProps {
   selectedAddress: CustomerAddress | null;
@@ -33,6 +35,31 @@ export function AddressSelector({ selectedAddress, onSelectAddress }: AddressSel
   const [addressLine, setAddressLine] = useState('');
   const [city, setCity] = useState('Shahrasti');
   const [label, setLabel] = useState<'HOME' | 'OFFICE' | 'OTHER'>('HOME');
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+
+  const handleDetectLocation = async () => {
+    try {
+      setIsLocating(true);
+      haptics.selection();
+      const pos = await getCurrentCoordinates();
+      setCoords({ lat: pos.latitude, lng: pos.longitude });
+      const geo = await reverseGeocodeCoordinates(pos.latitude, pos.longitude);
+      if (!addressLine.trim() && geo.formattedAddress) {
+        setAddressLine(geo.formattedAddress);
+      }
+      if (geo.city) {
+        setCity(geo.city);
+      }
+      haptics.success();
+      toast.success('লোকেশন শনাক্ত হয়েছে', geo.formattedAddress);
+    } catch {
+      haptics.error();
+      toast.error('লোকেশন ত্রুটি', 'জিপিএস চালু আছে কিনা নিশ্চিত করুন');
+    } finally {
+      setIsLocating(false);
+    }
+  };
 
   const { data: addresses = [] } = useQuery({
     queryKey: ['customer-addresses'],
@@ -66,8 +93,8 @@ export function AddressSelector({ selectedAddress, onSelectAddress }: AddressSel
         phone: phone.trim() || user?.phone || '',
         address: addressLine.trim() || 'Shahrasti, Chandpur',
         city,
-        latitude: 23.2185,
-        longitude: 90.9525,
+        latitude: coords?.lat ?? 23.2185,
+        longitude: coords?.lng ?? 90.9525,
         label,
       };
       onSelectAddress(fallback);
@@ -95,8 +122,8 @@ export function AddressSelector({ selectedAddress, onSelectAddress }: AddressSel
       phone: phone.trim(),
       address: addressLine.trim(),
       city,
-      latitude: 23.2185,
-      longitude: 90.9525,
+      latitude: coords?.lat ?? 23.2185,
+      longitude: coords?.lng ?? 90.9525,
       label,
     });
   };
@@ -250,7 +277,24 @@ export function AddressSelector({ selectedAddress, onSelectAddress }: AddressSel
               </View>
 
               <View>
-                <Text style={styles.fieldLabel}>Detailed Address (House, Road, Area) *</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <Text style={styles.fieldLabel}>Detailed Address (House, Road, Area) *</Text>
+                  <TouchableOpacity
+                    style={[styles.gpsDetectBtn, coords && styles.gpsDetectBtnActive]}
+                    onPress={handleDetectLocation}
+                    disabled={isLocating}
+                    activeOpacity={0.8}
+                  >
+                    {isLocating ? (
+                      <ActivityIndicator size="small" color="#0b6234" />
+                    ) : (
+                      <Icon name="Crosshair" size={14} color={coords ? '#0b6234' : '#374151'} />
+                    )}
+                    <Text style={[styles.gpsDetectBtnText, coords && styles.gpsDetectBtnTextActive]}>
+                      {isLocating ? 'খোঁজা হচ্ছে...' : coords ? '✓ GPS পিন করা' : 'GPS লোকেশন দিন'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
                 <TextInput
                   style={[styles.fieldInput, { minHeight: 70 }]}
                   placeholder="House #12, Road #4, Shahrasti Bazar..."
@@ -449,5 +493,28 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 13,
     color: '#111827',
+  },
+  gpsDetectBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: Radius.sm,
+    backgroundColor: '#f3f4f6',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  gpsDetectBtnActive: {
+    backgroundColor: '#f0fdf4',
+    borderColor: '#86efac',
+  },
+  gpsDetectBtnText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  gpsDetectBtnTextActive: {
+    color: '#0b6234',
   },
 });

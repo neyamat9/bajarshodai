@@ -130,13 +130,15 @@ export class OrdersController {
     );
   }
 
+  @Public()
+  @UseGuards(OptionalJwtAuthGuard)
   @Get(':id')
-  @ApiOperation({ summary: 'Get order detail' })
+  @ApiOperation({ summary: 'Get order detail (logged in customer or guest order by UUID)' })
   async findById(
-    @CurrentUser() user: User,
+    @CurrentUser() user: User | undefined,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    return this.ordersService.findById(user.id, id);
+    return this.ordersService.findById(user?.id ?? null, id);
   }
 
   // Public so guests can order; OptionalJwtAuthGuard still attaches the
