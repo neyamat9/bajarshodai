@@ -320,7 +320,7 @@ export default function FilterSidebar({
     <>
       {/* ── Desktop sidebar ─────────────────────────── */}
       <aside
-        className="sticky hidden w-72 flex-shrink-0 self-start overflow-hidden transition-[top] duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] lg:block"
+        className="sticky hidden w-72 flex-shrink-0 self-start z-20 transition-[top] duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] lg:block"
         style={{
           top: "var(--sticky-top, 8rem)",
           maxHeight: "calc(100vh - var(--sticky-top, 8rem) - 1rem)",

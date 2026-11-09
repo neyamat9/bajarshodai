@@ -19,19 +19,23 @@ export default function SiteChrome({ categories }: { categories: Category[] }) {
   // Tell the rest of the page how much navbar is currently pinned (full header + category bar, or just the bar),
   // so sticky sidebars can sit just below it and glide as it hides/shows.
   useEffect(() => {
-    const total = wrap.current?.offsetHeight ?? 0;
-    const bar = Math.max(0, total - headerH);
-    document.documentElement.style.setProperty("--sticky-top", `${(compact ? bar : total) + 16}px`);
-    // full height (header + category bar): what is pinned once the header slides back in
-    document.documentElement.style.setProperty("--chrome-full", `${total + 16}px`);
-  }, [compact, headerH]);
-
-  useEffect(() => {
-    const measure = () => setHeaderH(headerBox.current?.offsetHeight ?? 0);
+    const measure = () => {
+      const total = wrap.current?.offsetHeight ?? 0;
+      const hH = headerBox.current?.offsetHeight ?? 0;
+      setHeaderH(hH);
+      const bar = Math.max(0, total - hH);
+      document.documentElement.style.setProperty("--sticky-top", `${(compact ? bar : total) + 16}px`);
+      // full height (header + category bar): what is pinned once the header slides back in
+      document.documentElement.style.setProperty("--chrome-full", `${total + 16}px`);
+    };
     measure();
     const ro = new ResizeObserver(measure);
+    if (wrap.current) ro.observe(wrap.current);
     if (headerBox.current) ro.observe(headerBox.current);
+    return () => ro.disconnect();
+  }, [compact]);
 
+  useEffect(() => {
     let last = window.scrollY;
     let state = false;
     const onScroll = () => {
@@ -55,7 +59,6 @@ export default function SiteChrome({ categories }: { categories: Category[] }) {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", onScroll);
-      ro.disconnect();
     };
   }, []);
 
