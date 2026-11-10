@@ -279,6 +279,7 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
 
         <TabsContent value="basics" className="space-y-4">
           <MedExAutoFill
+            showSearch={isNew}
             medicineMeta={f.medicineMeta}
             onSelectMedicine={handleSelectMedEx}
             onChangeMeta={(meta) => set("medicineMeta", meta)}
