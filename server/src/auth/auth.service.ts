@@ -172,10 +172,10 @@ export class AuthService {
   }
 
   /**
-   * Validates a Google ID Token issued by Google Identity Services, links existing accounts
-   * by email or creates a new customer profile without requiring OTP.
+   * Validates a Google token (either an ID Token from Google Identity Services or an Access Token
+   * from OAuth2 popup), links existing accounts by email or creates a new customer profile without OTP.
    */
-  async validateGoogleUser(idToken: string): Promise<User> {
+  async validateGoogleUser(token: string): Promise<User> {
     const clientId =
       this.configService.get<string>('GOOGLE_CLIENT_ID') ||
       process.env.GOOGLE_CLIENT_ID;
@@ -187,19 +187,50 @@ export class AuthService {
       );
     }
 
-    let payload;
-    try {
-      const client = new OAuth2Client(clientId);
-      const ticket = await client.verifyIdToken({
-        idToken,
-        audience: clientId,
-      });
-      payload = ticket.getPayload();
-    } catch (err) {
-      this.logger.warn(
-        `Google ID token verification failed: ${err instanceof Error ? err.message : String(err)}`,
-      );
-      throw new UnauthorizedException('Invalid Google authentication token.');
+    let payload: {
+      sub?: string;
+      email?: string;
+      name?: string;
+      given_name?: string;
+      picture?: string;
+      email_verified?: boolean;
+    } | null = null;
+
+    const isAccessToken =
+      token.startsWith('ya29.') || token.split('.').length !== 3;
+
+    if (isAccessToken) {
+      try {
+        const res = await fetch(
+          'https://www.googleapis.com/oauth2/v3/userinfo',
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+        if (!res.ok) {
+          throw new Error(`Google userinfo returned HTTP ${res.status}`);
+        }
+        payload = (await res.json()) as any;
+      } catch (err) {
+        this.logger.warn(
+          `Google access token verification failed: ${err instanceof Error ? err.message : String(err)}`,
+        );
+        throw new UnauthorizedException('Invalid Google authentication token.');
+      }
+    } else {
+      try {
+        const client = new OAuth2Client(clientId);
+        const ticket = await client.verifyIdToken({
+          idToken: token,
+          audience: clientId,
+        });
+        payload = ticket.getPayload() || null;
+      } catch (err) {
+        this.logger.warn(
+          `Google ID token verification failed: ${err instanceof Error ? err.message : String(err)}`,
+        );
+        throw new UnauthorizedException('Invalid Google authentication token.');
+      }
     }
 
     if (!payload || !payload.email || !payload.sub) {
