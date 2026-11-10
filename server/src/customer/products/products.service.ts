@@ -264,7 +264,12 @@ export class ProductsService {
     ] = await Promise.all([
       this.prisma.product.count({ where }),
       this.prisma.product.count({
-        where: { AND: [where, { stock: { gt: 0 } }] },
+        where: {
+          AND: [
+            where,
+            { OR: [{ trackStock: false }, { stock: { gt: 0 } }] },
+          ],
+        },
       }),
       this.prisma.product.count({ where: onSaleWhere }),
       this.prisma.product.aggregate({

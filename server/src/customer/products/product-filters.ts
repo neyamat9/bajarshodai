@@ -148,7 +148,11 @@ export function buildProductWhere(
       },
     });
   }
-  if (q.inStock) and.push({ stock: { gt: 0 } });
+  if (q.inStock) {
+    and.push({
+      OR: [{ trackStock: false }, { stock: { gt: 0 } }],
+    });
+  }
   if (q.onSale) and.push({ sellingPrice: { lt: regularPriceField } });
   if (q.rating) and.push({ avgRating: { gte: q.rating } });
   if (q.tag?.length) {

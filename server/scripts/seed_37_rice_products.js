@@ -830,7 +830,7 @@ The generous 5kg value bag of Chashi Aromatic Chinigura Rice, catering to family
 async function seed() {
   console.log(`Updating all ${PRODUCTS.length} rice products:`);
   console.log(' - trackStock = false (Always in stock, no stock count tracking)');
-  console.log(' - stock = 999');
+  console.log(' - stock = 0 (clean default; count not tracked)');
   console.log(' - Unit: "packet" for packaged products, "kg" for loose weight');
   console.log(' - Open Bosta images applied for 25kg sacks\n');
 
@@ -864,7 +864,7 @@ async function seed() {
         profitMargin: profitMargin,
         status: 'ACTIVE',
         trackStock: false, // CRUCIAL: Do NOT track inventory count
-        stock: 999, // In stock guarantee
+        stock: 0, // Clean default; inventory count not tracked
         isWeighed: !item.isPacket,
         isFeatured: item.serial <= 6,
         isNew: item.serial <= 10,
@@ -892,7 +892,7 @@ async function seed() {
         profitMargin: profitMargin,
         status: 'ACTIVE',
         trackStock: false, // CRUCIAL: Do NOT track inventory count
-        stock: 999, // In stock guarantee
+        stock: 0, // Clean default; inventory count not tracked
         isWeighed: !item.isPacket,
         isFeatured: item.serial <= 6,
         isNew: item.serial <= 10,
