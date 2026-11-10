@@ -382,7 +382,7 @@ export default function ProductGrid({
   const hasActiveFilters = activeFilters.length > 0;
 
   return (
-    <div className="block lg:flex lg:items-start lg:gap-6 w-full min-w-0 min-h-[calc(100vh-var(--sticky-top,8rem)+16rem)]">
+    <div className="block lg:flex lg:items-start lg:gap-6 w-full min-w-0 min-h-[calc(100vh-var(--sticky-top,8rem)-2rem)]">
       {/* Inject noindex when filters are active to prevent crawling of filtered URLs */}
       <NoIndexWhenFiltered noIndex={hasActiveFilters} />
 
@@ -404,7 +404,7 @@ export default function ProductGrid({
       />
 
       {/* ── Main content ────────────────────────────── */}
-      <div ref={mainContentRef} className="flex-1 w-full min-w-0 min-h-[calc(100vh-var(--sticky-top,8rem)+16rem)]">
+      <div ref={mainContentRef} className="flex-1 w-full min-w-0">
         {header}
 
         {/* Dedicated Search bar for Medicine */}
