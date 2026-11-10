@@ -11,7 +11,15 @@ interface GoogleAuthButtonProps {
   disabled?: boolean;
 }
 
-export default function GoogleAuthButton({
+export default function GoogleAuthButton(props: GoogleAuthButtonProps) {
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  if (!clientId) {
+    return null;
+  }
+  return <GoogleAuthButtonInner {...props} />;
+}
+
+function GoogleAuthButtonInner({
   onSuccess,
   onError,
   disabled = false,
