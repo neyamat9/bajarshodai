@@ -116,8 +116,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateProfile = useCallback(async (data: Partial<User>) => {
     try {
-      if (data.name !== undefined || data.email !== undefined) {
-        const u = await auth.updateProfile({ name: data.name, email: data.email });
+      if (data.name !== undefined || data.email !== undefined || data.phone !== undefined) {
+        const u = await auth.updateProfile({ name: data.name, email: data.email, phone: data.phone });
         setUser((prev) => (prev ? { ...prev, ...u, ...data } : u));
       } else {
         setUser((prev) => (prev ? { ...prev, ...data } : null));

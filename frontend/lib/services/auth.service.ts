@@ -56,7 +56,7 @@ export async function fetchProfile(): Promise<User | null> {
   }
 }
 
-export async function updateProfile(data: { name?: string; email?: string; language?: "bn" | "en" }): Promise<User> {
+export async function updateProfile(data: { name?: string; email?: string; phone?: string; language?: "bn" | "en" }): Promise<User> {
   return mapUser(await api.patch<any>('/customer/auth/profile', data));
 }
 

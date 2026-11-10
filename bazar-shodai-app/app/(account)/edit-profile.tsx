@@ -58,8 +58,9 @@ export default function EditProfileScreen() {
       toast.error('Validation Error', 'Full name is required');
       return;
     }
-    if (!phone.trim()) {
-      toast.error('Validation Error', 'Phone number is required');
+    const cleanPhone = phone.trim();
+    if (cleanPhone && !/^(\+?88)?01[3-9]\d{8}$/.test(cleanPhone)) {
+      toast.error('Validation Error', 'Enter a valid Bangladeshi mobile number (01XXXXXXXXX)');
       return;
     }
 
@@ -67,7 +68,7 @@ export default function EditProfileScreen() {
       {
         name: name.trim(),
         email: email.trim() || null,
-        phone: phone.trim(),
+        phone: cleanPhone || undefined,
         language,
       },
       {

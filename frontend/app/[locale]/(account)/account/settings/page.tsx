@@ -13,11 +13,14 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { latinDigits } from "@/lib/format";
 
+const BD_MOBILE = /^(\+?88)?01[3-9]\d{8}$/;
+
 function ProfileCard() {
   const t = useTranslations("Account");
   const { user, updateProfile } = useAuth();
   const [name, setName] = useState(user?.name ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
+  const [phone, setPhone] = useState(user?.phone ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,17 +28,27 @@ function ProfileCard() {
   useEffect(() => {
     setName(user?.name ?? "");
     setEmail(user?.email ?? "");
-  }, [user?.name, user?.email]);
+    setPhone(user?.phone ?? "");
+  }, [user?.name, user?.email, user?.phone]);
 
-  const dirty = name.trim() !== (user?.name ?? "") || email.trim() !== (user?.email ?? "");
+  const dirty =
+    name.trim() !== (user?.name ?? "") ||
+    email.trim() !== (user?.email ?? "") ||
+    phone.trim() !== (user?.phone ?? "");
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return setError(t("errName"));
     if (email.trim() && !/^\S+@\S+\.\S+$/.test(email.trim())) return setError(t("errEmail"));
+    const cleanPhone = latinDigits(phone.trim());
+    if (cleanPhone && !BD_MOBILE.test(cleanPhone)) return setError(t("errPhone"));
     setBusy(true);
     setError(null);
-    const r = await updateProfile({ name: name.trim(), email: email.trim() });
+    const r = await updateProfile({
+      name: name.trim(),
+      email: email.trim(),
+      phone: cleanPhone || undefined,
+    });
     setBusy(false);
     if (r.success) toast.success(t("updated"));
     else setError(r.error ?? t("updateFailed"));
@@ -47,7 +60,20 @@ function ProfileCard() {
       <p className="mb-5 text-sm text-muted-foreground">{t("personalSub")}</p>
       <div className="grid gap-4 sm:grid-cols-2">
         <AuthField id="profile-name" label={t("fullName")} icon={User} value={name} onChange={setName} placeholder={t("fullNamePh")} autoComplete="name" disabled={busy} />
-        <AuthField id="profile-phone" label={t("phone")} icon={Phone} type="tel" value={latinDigits(user?.phone ?? "")} onChange={() => {}} disabled />
+        <AuthField
+          id="profile-phone"
+          label={t("phone")}
+          icon={Phone}
+          type="tel"
+          value={phone}
+          onChange={(v) => {
+            setPhone(latinDigits(v));
+            if (error) setError(null);
+          }}
+          placeholder="01XXXXXXXXX"
+          autoComplete="tel"
+          disabled={busy}
+        />
         <div className="sm:col-span-2">
           <AuthField id="profile-email" label={t("email")} icon={Mail} type="email" value={email} onChange={setEmail} placeholder={t("emailPh")} autoComplete="email" disabled={busy}>
             <p className="mt-1.5 text-xs text-muted-foreground">{t("emailHint")}</p>
