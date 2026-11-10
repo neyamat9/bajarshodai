@@ -1,0 +1,97 @@
+{
+  "chashi_chinigura_1kg": {
+    "name": "Chashi Aromatic Chinigura Rice 1kg",
+    "r2Url": "https://pub-ab845b0ea4fd4000948347bca9ac30a0.r2.dev/media/products/87c6ff3b-65aa-4754-87df-35123b879ae7.webp",
+    "uuid": "87c6ff3b-65aa-4754-87df-35123b879ae7"
+  },
+  "chashi_chinigura_2kg": {
+    "name": "Chashi Aromatic Chinigura Rice 2kg",
+    "r2Url": "https://pub-ab845b0ea4fd4000948347bca9ac30a0.r2.dev/media/products/6aa3a8c7-07e8-4cbd-86fa-649d9c91568f.webp",
+    "uuid": "6aa3a8c7-07e8-4cbd-86fa-649d9c91568f"
+  },
+  "chashi_chinigura_5kg": {
+    "name": "Chashi Aromatic Chinigura Rice 5kg",
+    "r2Url": "https://pub-ab845b0ea4fd4000948347bca9ac30a0.r2.dev/media/products/7b451c8b-3888-4b38-8969-821fc3f9e2b3.webp",
+    "uuid": "7b451c8b-3888-4b38-8969-821fc3f9e2b3"
+  },
+  "aci_pure_nazirshail_5kg": {
+    "name": "ACI Pure Nazirshail Rice 5kg",
+    "r2Url": "https://pub-ab845b0ea4fd4000948347bca9ac30a0.r2.dev/media/products/e7d61445-37f3-42cc-b446-54f77fc38496.webp",
+    "uuid": "e7d61445-37f3-42cc-b446-54f77fc38496"
+  },
+  "aci_pure_miniket_5kg": {
+    "name": "ACI Pure Premium Miniket Rice 5kg",
+    "r2Url": "https://pub-ab845b0ea4fd4000948347bca9ac30a0.r2.dev/media/products/3efbfea2-3eaa-449e-a9a0-9341dd57ca40.webp",
+    "uuid": "3efbfea2-3eaa-449e-a9a0-9341dd57ca40"
+  },
+  "aci_pure_miniket_10kg": {
+    "name": "ACI Pure Miniket Rice Premium 10kg",
+    "r2Url": "https://pub-ab845b0ea4fd4000948347bca9ac30a0.r2.dev/media/products/7b390cda-5144-4351-8139-e58cf0bbbed9.webp",
+    "uuid": "7b390cda-5144-4351-8139-e58cf0bbbed9"
+  },
+  "aci_aroma_basmati_1kg": {
+    "name": "ACI Aroma Premium Basmati Rice 1kg",
+    "r2Url": "https://pub-ab845b0ea4fd4000948347bca9ac30a0.r2.dev/media/products/e849f3b6-f74e-41bc-abba-b946c6c42202.webp",
+    "uuid": "e849f3b6-f74e-41bc-abba-b946c6c42202"
+  },
+  "aci_aroma_chinigura_2kg": {
+    "name": "ACI Aroma Chinigura Rice 2kg",
+    "r2Url": "https://pub-ab845b0ea4fd4000948347bca9ac30a0.r2.dev/media/products/471a2e49-4dae-4a51-a435-5abdaddcf773.webp",
+    "uuid": "471a2e49-4dae-4a51-a435-5abdaddcf773"
+  },
+  "pran_chinigura_1kg": {
+    "name": "PRAN Chinigura Aromatic Rice 1kg",
+    "r2Url": "https://pub-ab845b0ea4fd4000948347bca9ac30a0.r2.dev/media/products/584d551d-b382-47dc-9a63-8a612f9d1043.webp",
+    "uuid": "584d551d-b382-47dc-9a63-8a612f9d1043"
+  },
+  "pran_chinigura_2kg": {
+    "name": "PRAN Chinigura Aromatic Rice 2kg",
+    "r2Url": "https://pub-ab845b0ea4fd4000948347bca9ac30a0.r2.dev/media/products/c2bbcc4d-ec6a-45b9-a721-24383ba842ce.webp",
+    "uuid": "c2bbcc4d-ec6a-45b9-a721-24383ba842ce"
+  },
+  "pran_metro_basmati_1kg": {
+    "name": "PRAN Metro Basmati Rice 1kg",
+    "r2Url": "https://pub-ab845b0ea4fd4000948347bca9ac30a0.r2.dev/media/products/37f8c180-19ca-4796-9073-7481a7bd9e83.webp",
+    "uuid": "37f8c180-19ca-4796-9073-7481a7bd9e83"
+  },
+  "fresh_chinigura_1kg": {
+    "name": "Fresh Chinigura Rice 1kg",
+    "r2Url": "https://pub-ab845b0ea4fd4000948347bca9ac30a0.r2.dev/media/products/f17c2467-582f-4385-9cd8-0bd8ab995749.webp",
+    "uuid": "f17c2467-582f-4385-9cd8-0bd8ab995749"
+  },
+  "rupchanda_chinigura_1kg": {
+    "name": "Rupchanda Chinigura Premium Aromatic Rice 1kg",
+    "r2Url": "https://pub-ab845b0ea4fd4000948347bca9ac30a0.r2.dev/media/products/e5437e2e-4110-4c2a-9a12-1b4a453862ce.webp",
+    "uuid": "e5437e2e-4110-4c2a-9a12-1b4a453862ce"
+  },
+  "rupchanda_jirashail_5kg": {
+    "name": "Rupchanda Jirashail Rice 5kg",
+    "r2Url": "https://pub-ab845b0ea4fd4000948347bca9ac30a0.r2.dev/media/products/519600e7-9a7d-4444-80ce-65d9601229b4.webp",
+    "uuid": "519600e7-9a7d-4444-80ce-65d9601229b4"
+  },
+  "aarong_natural_chinigura_5kg": {
+    "name": "Aarong Natural Chinigura Rice 5kg",
+    "r2Url": "https://pub-ab845b0ea4fd4000948347bca9ac30a0.r2.dev/media/products/d19a58ad-96f0-4078-93ab-3a4d996686d1.webp",
+    "uuid": "d19a58ad-96f0-4078-93ab-3a4d996686d1"
+  },
+  "fortune_biryani_basmati_1kg": {
+    "name": "Fortune Biryani Special Basmati Rice 1kg",
+    "r2Url": "https://pub-ab845b0ea4fd4000948347bca9ac30a0.r2.dev/media/products/d545a669-5b9b-489b-b252-2723aa3ab1ad.webp",
+    "uuid": "d545a669-5b9b-489b-b252-2723aa3ab1ad"
+  },
+  "mehran_basmati_kernel_1kg": {
+    "name": "Mehran Basmati Kernel Rice 1kg",
+    "r2Url": "https://pub-ab845b0ea4fd4000948347bca9ac30a0.r2.dev/media/products/2db0d37f-e89c-4899-bb57-9787dc46e6c3.webp",
+    "uuid": "2db0d37f-e89c-4899-bb57-9787dc46e6c3"
+  },
+  "royal_umbrella_hom_mali_5kg": {
+    "name": "Royal Umbrella Pure Thai Hom Mali Rice 5kg",
+    "r2Url": "https://pub-ab845b0ea4fd4000948347bca9ac30a0.r2.dev/media/products/4066affe-28c6-4a3b-80da-acc06e220be7.webp",
+    "uuid": "4066affe-28c6-4a3b-80da-acc06e220be7"
+  },
+  "royal_umbrella_sticky_rice_1kg": {
+    "name": "Royal Umbrella Thai Glutinous Sticky Rice 1kg",
+    "r2Url": "https://pub-ab845b0ea4fd4000948347bca9ac30a0.r2.dev/media/products/b88d7080-80eb-4411-b897-3410df5cb93e.webp",
+    "uuid": "b88d7080-80eb-4411-b897-3410df5cb93e"
+  }
+}
