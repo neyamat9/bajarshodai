@@ -107,10 +107,15 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login or register with Google ID token' })
   async googleLogin(@Body() dto: GoogleAuthDto, @Req() req: Request) {
-    const user = await this.authService.validateGoogleUser(dto.idToken);
-    await this.mergeGuestCart(user.id, dto.guestToken);
-    const meta = { ip: req.ip, device: req.headers['user-agent'] as string | undefined };
-    return this.publicSession(await this.authService.login(user, meta));
+    try {
+      const user = await this.authService.validateGoogleUser(dto.idToken);
+      await this.mergeGuestCart(user.id, dto.guestToken);
+      const meta = { ip: req.ip, device: req.headers['user-agent'] as string | undefined };
+      return this.publicSession(await this.authService.login(user, meta));
+    } catch (err) {
+      this.logger.error(`Google login controller failed: ${err instanceof Error ? err.stack : String(err)}`);
+      throw err;
+    }
   }
 
   @Public()
