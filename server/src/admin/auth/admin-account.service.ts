@@ -76,11 +76,12 @@ export class AdminAccountService {
 
     // Always verify a password so the response time does not reveal whether
     // the email is an admin account.
-    const ok = user
-      ? await argon2.verify(user.passwordHash, password).catch(() => false)
-      : await this.dummyHash
-          .then((h) => argon2.verify(h, password))
-          .catch(() => false);
+    const ok =
+      user && user.passwordHash
+        ? await argon2.verify(user.passwordHash, password).catch(() => false)
+        : await this.dummyHash
+            .then((h) => argon2.verify(h, password))
+            .catch(() => false);
 
     if (!user || !ok || !this.isAdmin(user)) {
       this.recordFailure(key);
@@ -270,7 +271,10 @@ export class AdminAccountService {
   }
 
   async changePassword(user: User, current: string, next: string) {
-    if (!(await argon2.verify(user.passwordHash, current).catch(() => false))) {
+    if (
+      !user.passwordHash ||
+      !(await argon2.verify(user.passwordHash, current).catch(() => false))
+    ) {
       throw new BadRequestException('Current password is incorrect');
     }
     await this.assertNotReused(user, next);
@@ -305,16 +309,21 @@ export class AdminAccountService {
 
   private async setPassword(user: User, next: string) {
     const passwordHash = await argon2.hash(next);
-    await this.prisma.$transaction([
-      this.prisma.passwordHistory.create({
-        data: { userId: user.id, passwordHash: user.passwordHash },
-      }),
+    const tx: any[] = [
       // Clearing the refresh token signs the account out everywhere.
       this.prisma.user.update({
         where: { id: user.id },
         data: { passwordHash, refreshTokenHash: null },
       }),
-    ]);
+    ];
+    if (user.passwordHash) {
+      tx.unshift(
+        this.prisma.passwordHistory.create({
+          data: { userId: user.id, passwordHash: user.passwordHash },
+        }),
+      );
+    }
+    await this.prisma.$transaction(tx);
   }
 
   private async assertNotReused(user: User, next: string) {
@@ -323,10 +332,11 @@ export class AdminAccountService {
       orderBy: { createdAt: 'desc' },
       take: PASSWORD_HISTORY - 1,
     });
-    for (const hash of [
-      user.passwordHash,
+    const historyHashes = [
+      ...(user.passwordHash ? [user.passwordHash] : []),
       ...recent.map((r) => r.passwordHash),
-    ]) {
+    ];
+    for (const hash of historyHashes) {
       if (await argon2.verify(hash, next).catch(() => false)) {
         throw new BadRequestException(
           `Choose a password you have not used in your last ${PASSWORD_HISTORY} passwords`,

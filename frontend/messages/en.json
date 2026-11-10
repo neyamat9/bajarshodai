@@ -646,6 +646,7 @@
     "close": "Close",
     "welcomeBack": "Welcome <accent>back</accent>",
     "createAccount": "Create your <accent>account</accent>",
+    "orContinueWith": "or with mobile / email",
     "loginLead": "Sign in to see your orders, wishlist and faster checkout",
     "signupLead": "Create an account to track orders, keep a wishlist and check out faster",
     "expired": "Your session ended. Please sign in again.",

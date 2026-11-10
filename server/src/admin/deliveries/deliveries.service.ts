@@ -831,26 +831,28 @@ export class DeliveriesService {
       orderBy: { deliveredAt: 'asc' },
       take: 1000,
     });
-    const by = new Map<
-      string,
-      {
-        rider: { id: string; name: string; phone: string };
-        total: number;
-        items: {
-          id: string;
-          orderNumber: string;
-          cash: number;
-          due: number;
-          deliveredAt: Date | null;
-        }[];
-      }
-    >();
+    type RiderGroup = {
+      rider: { id: string; name: string; phone: string | null };
+      total: number;
+      items: {
+        id: string;
+        orderNumber: string;
+        cash: number;
+        due: number;
+        deliveredAt: Date | null;
+      }[];
+    };
+    const by = new Map<string, RiderGroup>();
     for (const r of rows) {
-      const g = by.get(r.assigneeId) ?? {
-        rider: r.assignee,
-        total: 0,
-        items: [],
-      };
+      let g = by.get(r.assigneeId);
+      if (!g) {
+        g = {
+          rider: r.assignee,
+          total: 0,
+          items: [],
+        };
+        by.set(r.assigneeId, g);
+      }
       g.total = round2(g.total + n(r.cashCollected));
       g.items.push({
         id: r.id,
@@ -859,7 +861,6 @@ export class DeliveriesService {
         due: n(r.cashToCollect),
         deliveredAt: r.deliveredAt,
       });
-      by.set(r.assigneeId, g);
     }
     return [...by.values()].sort((a, b) => b.total - a.total);
   }

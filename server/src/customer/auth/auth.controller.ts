@@ -23,6 +23,7 @@ import { Public } from '../../common/decorators/public.decorator';
 import type { User } from '@prisma/client';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { GoogleAuthDto } from './dto/google-auth.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -95,6 +96,18 @@ export class AuthController {
   @ApiOperation({ summary: 'Login with email & password' })
   async login(@Body() dto: LoginDto, @Req() req: Request) {
     const user = await this.authService.validateLocalUser(dto);
+    await this.mergeGuestCart(user.id, dto.guestToken);
+    const meta = { ip: req.ip, device: req.headers['user-agent'] as string | undefined };
+    return this.publicSession(await this.authService.login(user, meta));
+  }
+
+  @Public()
+  @Post('google')
+  @Throttle({ medium: { ttl: 60000, limit: 15 } })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Login or register with Google ID token' })
+  async googleLogin(@Body() dto: GoogleAuthDto, @Req() req: Request) {
+    const user = await this.authService.validateGoogleUser(dto.idToken);
     await this.mergeGuestCart(user.id, dto.guestToken);
     const meta = { ip: req.ip, device: req.headers['user-agent'] as string | undefined };
     return this.publicSession(await this.authService.login(user, meta));
@@ -256,6 +269,9 @@ export class AuthController {
     @CurrentUser() user: User,
     @Body() dto: ChangePasswordDto,
   ) {
+    if (!user.passwordHash) {
+      return { success: false, message: 'Account does not have a password set.' };
+    }
     const isValid = await argon2.verify(user.passwordHash, dto.currentPassword);
     if (!isValid) {
       return { success: false, message: 'Current password is incorrect' };

@@ -1,6 +1,7 @@
 "use client";
 
 import AuthField from "@/components/auth/AuthField";
+import GoogleAuthButton from "@/components/auth/GoogleAuthButton";
 import PasswordStrengthMeter from "@/components/auth/PasswordStrengthMeter";
 import { useBlockClose } from "@/components/auth/auth-busy";
 import { useMascot } from "@/components/auth/RobotMascot";
@@ -63,7 +64,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  */
 export default function AuthForm({ mode, expired = false, initialEmail = "", onEmailChange, onSuccess, onSwitchMode }: AuthFormProps) {
   const t = useTranslations("Auth");
-  const { login, signup } = useAuth();
+  const { login, signup, loginWithGoogle } = useAuth();
   const mascot = useMascot();
 
   const [form, setForm] = useState<FormState>({ name: "", email: "", identifier: initialEmail, phone: "", password: "", confirmPassword: "" });
@@ -168,6 +169,30 @@ export default function AuthForm({ mode, expired = false, initialEmail = "", onE
     }
   }
 
+  async function handleGoogleSuccess(idToken: string) {
+    setSubmitStatus("loading");
+    setErrors({});
+    try {
+      const result = await loginWithGoogle(idToken);
+      if (result.success) {
+        setSubmitStatus("success");
+        if (mode === "signup") toast.success(t("welcomeToast"), { duration: 3000 });
+        else toast.success(t("welcomeBackToast"), { duration: 2500 });
+        setTimeout(onSuccess, 1100);
+      } else {
+        setSubmitStatus("error");
+        setErrors({ general: result.error ?? t("errGeneral") });
+        triggerShake();
+        setTimeout(() => setSubmitStatus("idle"), 500);
+      }
+    } catch {
+      setSubmitStatus("error");
+      setErrors({ general: t("errUnexpected") });
+      triggerShake();
+      setTimeout(() => setSubmitStatus("idle"), 500);
+    }
+  }
+
   const isLoading = submitStatus === "loading";
   const isSuccess = submitStatus === "success";
   const off = isLoading || isSuccess;
@@ -204,6 +229,26 @@ export default function AuthForm({ mode, expired = false, initialEmail = "", onE
           )}
         </div>
       )}
+
+      {/* 1-Click Google Sign-In */}
+      <div className="mb-5 space-y-3">
+        <GoogleAuthButton
+          onSuccess={handleGoogleSuccess}
+          onError={(err) => {
+            setErrors({ general: err });
+            triggerShake();
+          }}
+          disabled={off}
+        />
+        <div className="relative flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-border" />
+          </div>
+          <span className="relative bg-card px-3 text-xs uppercase tracking-wider text-muted-foreground">
+            {t("orContinueWith")}
+          </span>
+        </div>
+      </div>
 
       <form ref={formRef} onSubmit={handleSubmit} noValidate className="space-y-4">
         {mode === "signup" && (

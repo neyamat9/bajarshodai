@@ -382,6 +382,7 @@ export interface AuthContextValue {
   isLoading: boolean;
   /** `identifier` is a mobile number, or the email when the account has one */
   login: (identifier: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  loginWithGoogle: (idToken: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   signup: (data: SignupData) => Promise<{ success: boolean; error?: string }>;
   updateProfile: (data: Partial<User>) => Promise<{ success: boolean; error?: string }>;

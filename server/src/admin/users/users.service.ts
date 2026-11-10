@@ -466,9 +466,11 @@ export class AdminUsersService {
     }
     const passwordHash = await argon2.hash(temporaryPassword);
     await this.prisma.$transaction(async (tx) => {
-      await tx.passwordHistory.create({
-        data: { userId: id, passwordHash: user.passwordHash },
-      });
+      if (user.passwordHash) {
+        await tx.passwordHistory.create({
+          data: { userId: id, passwordHash: user.passwordHash },
+        });
+      }
       await tx.user.update({
         where: { id },
         // signed out everywhere: the old sessions stop working

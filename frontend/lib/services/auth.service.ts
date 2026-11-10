@@ -22,6 +22,10 @@ export async function login(identifier: string, password: string): Promise<User>
   return store(await api.post<AuthResponse>('/customer/auth/login', { identifier, password, guestToken: guestToken() ?? undefined }));
 }
 
+export async function loginWithGoogle(idToken: string): Promise<User> {
+  return store(await api.post<AuthResponse>('/customer/auth/google', { idToken, guestToken: guestToken() ?? undefined }));
+}
+
 export async function register(data: { name: string; phone: string; email?: string; password: string }): Promise<User> {
   return store(await api.post<AuthResponse>('/customer/auth/register', { ...data, email: data.email || undefined, language: clientLocale(), guestToken: guestToken() ?? undefined }));
 }

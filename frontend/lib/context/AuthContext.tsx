@@ -90,6 +90,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [t]);
 
+  const loginWithGoogle = useCallback(async (idToken: string) => {
+    try {
+      setUser(await auth.loginWithGoogle(idToken));
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: errorMessage(e, t("loginFailed")) };
+    }
+  }, [t]);
+
   const signup = useCallback(async (data: SignupData) => {
     try {
       setUser(await auth.register({ ...data, email: data.email?.trim() || undefined, name: data.name.trim() }));
@@ -116,8 +125,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value: AuthContextValue = useMemo(
-    () => ({ user, isAuthenticated: user !== null, isLoading, login, logout, signup, updateProfile }),
-    [user, isLoading, login, logout, signup, updateProfile],
+    () => ({ user, isAuthenticated: user !== null, isLoading, login, loginWithGoogle, logout, signup, updateProfile }),
+    [user, isLoading, login, loginWithGoogle, logout, signup, updateProfile],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

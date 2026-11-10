@@ -7,6 +7,7 @@ import WhatsAppWidget from "@/components/layout/WhatsAppWidget";
 import ScrollToTop from "@/components/motion/ScrollToTop";
 import SmoothScroll from "@/components/motion/SmoothScroll";
 import ThemeProvider from "@/components/theme/ThemeProvider";
+import GoogleProvider from "@/components/providers/GoogleProvider";
 import { isLocale, routing } from "@/i18n/routing";
 import { AuthProvider } from "@/lib/context/AuthContext";
 import { CartProvider } from "@/lib/context/CartContext";
@@ -87,21 +88,23 @@ export default async function LocaleLayout({
             <SmoothScroll />
             <ScrollToTop />
             <FreshnessWatcher />
-            <AuthProvider>
-              <CartProvider>
-                <WishlistProvider>
-                  <ProductQuickViewProvider>
-                    <AuthModalProvider>
-                      {children}
-                      {/* Global overlays — rendered once, visibility driven by context */}
-                      <CartSidebar />
-                      <FloatingCart />
-                      <WhatsAppWidget />
-                    </AuthModalProvider>
-                  </ProductQuickViewProvider>
-                </WishlistProvider>
-              </CartProvider>
-            </AuthProvider>
+            <GoogleProvider>
+              <AuthProvider>
+                <CartProvider>
+                  <WishlistProvider>
+                    <ProductQuickViewProvider>
+                      <AuthModalProvider>
+                        {children}
+                        {/* Global overlays — rendered once, visibility driven by context */}
+                        <CartSidebar />
+                        <FloatingCart />
+                        <WhatsAppWidget />
+                      </AuthModalProvider>
+                    </ProductQuickViewProvider>
+                  </WishlistProvider>
+                </CartProvider>
+              </AuthProvider>
+            </GoogleProvider>
             <Toaster position="top-center" richColors expand={true} />
           </ThemeProvider>
         </NextIntlClientProvider>

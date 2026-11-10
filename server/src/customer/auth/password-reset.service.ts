@@ -160,7 +160,7 @@ export class PasswordResetService {
       );
     }
 
-    if (await argon2.verify(record.user.passwordHash, newPassword)) {
+    if (record.user.passwordHash && (await argon2.verify(record.user.passwordHash, newPassword))) {
       throw new BadRequestException(
         'New password must be different from your current password',
       );
@@ -168,10 +168,7 @@ export class PasswordResetService {
 
     const passwordHash = await argon2.hash(newPassword);
 
-    await this.prisma.$transaction([
-      this.prisma.passwordHistory.create({
-        data: { userId: record.userId, passwordHash: record.user.passwordHash },
-      }),
+    const txOps: any[] = [
       // Clearing the refresh token logs the user out on every device.
       this.prisma.user.update({
         where: { id: record.userId },
@@ -184,7 +181,17 @@ export class PasswordResetService {
       this.prisma.passwordResetToken.deleteMany({
         where: { userId: record.userId, usedAt: null, id: { not: record.id } },
       }),
-    ]);
+    ];
+
+    if (record.user.passwordHash) {
+      txOps.unshift(
+        this.prisma.passwordHistory.create({
+          data: { userId: record.userId, passwordHash: record.user.passwordHash },
+        }),
+      );
+    }
+
+    await this.prisma.$transaction(txOps);
 
     return {
       success: true,

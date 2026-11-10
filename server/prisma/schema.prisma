@@ -237,10 +237,11 @@ model User {
   id String @id @default(uuid())
 
   // Identity
-  email            String? @unique // optional: customers log in with their phone
-  phone            String  @unique
+  email            String? @unique // optional: customers log in with their phone or Google
+  phone            String? @unique
+  googleId         String? @unique
   role             Role    @default(USER)
-  passwordHash     String
+  passwordHash     String?
   name             String
   refreshTokenHash String?
 

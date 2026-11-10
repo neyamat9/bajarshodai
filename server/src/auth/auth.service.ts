@@ -18,6 +18,7 @@ import { JwtService } from '@nestjs/jwt';
 import { AuthPayload } from './types/auth-payload.type';
 import { ConfigService } from '@nestjs/config';
 import { normalizeBdPhone, parseLoginIdentifier } from '../common/utils/phone';
+import { OAuth2Client } from 'google-auth-library';
 
 // Precomputed valid argon2 hash to ensure constant-time response for unknown users (Point 8)
 const DUMMY_ARGON2_HASH =
@@ -130,9 +131,10 @@ export class AuthService {
     }
 
     // Always run argon2 verification so response latency never exposes if user exists
-    const passwordMatched = user
-      ? await argon2.verify(user.passwordHash, password).catch(() => false)
-      : await argon2.verify(DUMMY_ARGON2_HASH, password).catch(() => false);
+    const passwordMatched =
+      user && user.passwordHash
+        ? await argon2.verify(user.passwordHash, password).catch(() => false)
+        : await argon2.verify(DUMMY_ARGON2_HASH, password).catch(() => false);
 
     if (!user || !passwordMatched) {
       if (user) {
@@ -165,6 +167,116 @@ export class AuthService {
         'This account has been suspended. Please contact support.',
       );
     }
+
+    return user;
+  }
+
+  /**
+   * Validates a Google ID Token issued by Google Identity Services, links existing accounts
+   * by email or creates a new customer profile without requiring OTP.
+   */
+  async validateGoogleUser(idToken: string): Promise<User> {
+    const clientId =
+      this.configService.get<string>('GOOGLE_CLIENT_ID') ||
+      process.env.GOOGLE_CLIENT_ID;
+
+    if (!clientId) {
+      this.logger.error('GOOGLE_CLIENT_ID environment variable is missing.');
+      throw new InternalServerErrorException(
+        'Google authentication is currently not configured on this server.',
+      );
+    }
+
+    let payload;
+    try {
+      const client = new OAuth2Client(clientId);
+      const ticket = await client.verifyIdToken({
+        idToken,
+        audience: clientId,
+      });
+      payload = ticket.getPayload();
+    } catch (err) {
+      this.logger.warn(
+        `Google ID token verification failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      throw new UnauthorizedException('Invalid Google authentication token.');
+    }
+
+    if (!payload || !payload.email || !payload.sub) {
+      throw new UnauthorizedException(
+        'Google token is missing required profile information (email / user ID).',
+      );
+    }
+
+    if (!payload.email_verified) {
+      throw new UnauthorizedException(
+        'The Google email address must be verified by Google to sign in.',
+      );
+    }
+
+    const googleId = payload.sub;
+    const email = payload.email.toLowerCase().trim();
+    const name = payload.name?.trim() || payload.given_name?.trim() || email.split('@')[0];
+    const picture = payload.picture || null;
+
+    // 1. Look for existing user by googleId
+    let user = await this.prisma.user.findUnique({
+      where: { googleId },
+    });
+
+    if (user) {
+      if (user.status !== 'ACTIVE') {
+        throw new ForbiddenException(
+          'This account has been suspended. Please contact support.',
+        );
+      }
+      // Update avatar or name if not previously set
+      if (!user.avatarUrl && picture) {
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: { avatarUrl: picture, emailVerified: true },
+        });
+      }
+      return user;
+    }
+
+    // 2. Look for existing user by email
+    const existingByEmail = await this.prisma.user.findFirst({
+      where: { email: { equals: email, mode: 'insensitive' } },
+    });
+
+    if (existingByEmail) {
+      if (existingByEmail.status !== 'ACTIVE') {
+        throw new ForbiddenException(
+          'This account has been suspended. Please contact support.',
+        );
+      }
+      // Link googleId to this existing account!
+      user = await this.prisma.user.update({
+        where: { id: existingByEmail.id },
+        data: {
+          googleId,
+          emailVerified: true,
+          emailVerifiedAt: existingByEmail.emailVerifiedAt || new Date(),
+          avatarUrl: existingByEmail.avatarUrl || picture,
+        },
+      });
+      return user;
+    }
+
+    // 3. New customer registration via Google (no password, no OTP needed)
+    user = await this.prisma.user.create({
+      data: {
+        googleId,
+        email,
+        name,
+        avatarUrl: picture,
+        emailVerified: true,
+        emailVerifiedAt: new Date(),
+        role: 'USER',
+        status: 'ACTIVE',
+      },
+    });
 
     return user;
   }

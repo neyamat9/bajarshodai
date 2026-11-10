@@ -474,9 +474,11 @@ export class StaffService {
     const password = tempPassword();
     const passwordHash = await argon2.hash(password);
     await this.prisma.$transaction(async (tx) => {
-      await tx.passwordHistory.create({
-        data: { userId: id, passwordHash: target.passwordHash },
-      });
+      if (target.passwordHash) {
+        await tx.passwordHistory.create({
+          data: { userId: id, passwordHash: target.passwordHash },
+        });
+      }
       // signed out everywhere: the old sessions stop working
       await tx.user.update({
         where: { id },
