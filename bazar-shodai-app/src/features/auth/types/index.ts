@@ -24,6 +24,7 @@ export interface UserProfile {
   status?: string;
   emailVerified?: boolean;
   phoneVerified?: boolean;
+  hasPassword?: boolean;
   loyaltyPoints?: number;
   totalOrders?: number;
   totalSpent?: number;
@@ -63,6 +64,6 @@ export interface ResetPasswordPayload {
 }
 
 export interface ChangePasswordPayload {
-  currentPassword: string;
+  currentPassword?: string;
   newPassword: string;
 }

@@ -503,6 +503,7 @@ export class AuthService {
       avatarUrl: user.avatarUrl,
       emailVerified: user.emailVerified,
       phoneVerified: user.phoneVerified,
+      hasPassword: Boolean(user.passwordHash),
       createdAt: user.createdAt,
     };
   }

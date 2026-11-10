@@ -327,6 +327,7 @@ export interface User {
   email: string;
   phone: string;
   avatarUrl: string;
+  hasPassword?: boolean;
   orderIds: string[];
   createdAt: string;
 }

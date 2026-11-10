@@ -356,14 +356,19 @@ export default function AccountScreen() {
               <View style={styles.menuDivider} />
               <TouchableOpacity
                 onPress={() =>
-                  handleAction('Change Password', () => router.push('/(account)/change-password'))
+                  handleAction(
+                    user?.hasPassword !== false ? 'Change Password' : 'Set Password',
+                    () => router.push('/(account)/change-password'),
+                  )
                 }
                 style={styles.menuRow}
               >
                 <View style={styles.menuIconBox}>
                   <Icon name="KeyRound" size={18} color="#0b6234" />
                 </View>
-                <Text style={styles.menuTitle}>Change Password</Text>
+                <Text style={styles.menuTitle}>
+                  {user?.hasPassword !== false ? 'Change Password' : 'Set Password'}
+                </Text>
                 <Icon name="ChevronRight" size={16} color="#94a3b8" />
               </TouchableOpacity>
             </>

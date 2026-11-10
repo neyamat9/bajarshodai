@@ -807,6 +807,8 @@
     "save": "Save changes",
     "pwTitle": "Password & security",
     "pwSub": "Use a long password you don't use anywhere else.",
+    "pwSetTitle": "Set a password",
+    "pwSetSub": "Set a password so you can also log in directly with your phone or email.",
     "pwCurrent": "Current password",
     "pwNew": "New password",
     "pwAgain": "Repeat new password",
@@ -814,7 +816,9 @@
     "pwMismatch": "The two new passwords do not match",
     "pwSame": "Choose a password different from the current one",
     "pwChanged": "Password changed",
-    "pwUpdate": "Update password"
+    "pwUpdate": "Update password",
+    "pwSetBtn": "Set password",
+    "pwSetSuccess": "Password set successfully"
   },
   "Orders": {
     "stepPlaced": "Placed",

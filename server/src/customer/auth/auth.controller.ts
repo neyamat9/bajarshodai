@@ -10,6 +10,7 @@ import {
   HttpStatus,
   Logger,
   ConflictException,
+  BadRequestException,
   Headers,
   Req,
 } from '@nestjs/common';
@@ -203,6 +204,7 @@ export class AuthController {
         status: true,
         emailVerified: true,
         phoneVerified: true,
+        passwordHash: true,
         loyaltyPoints: true,
         totalOrders: true,
         totalSpent: true,
@@ -213,7 +215,12 @@ export class AuthController {
         },
       },
     });
-    return profile;
+    if (!profile) return null;
+    const { passwordHash, ...rest } = profile;
+    return {
+      ...rest,
+      hasPassword: Boolean(passwordHash),
+    };
   }
 
   @Patch('profile')
@@ -269,17 +276,19 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Change password' })
+  @ApiOperation({ summary: 'Change or set password' })
   async changePassword(
     @CurrentUser() user: User,
     @Body() dto: ChangePasswordDto,
   ) {
-    if (!user.passwordHash) {
-      return { success: false, message: 'Account does not have a password set.' };
-    }
-    const isValid = await argon2.verify(user.passwordHash, dto.currentPassword);
-    if (!isValid) {
-      return { success: false, message: 'Current password is incorrect' };
+    if (user.passwordHash) {
+      if (!dto.currentPassword) {
+        throw new BadRequestException('Current password is required to change password');
+      }
+      const isValid = await argon2.verify(user.passwordHash, dto.currentPassword);
+      if (!isValid) {
+        return { success: false, message: 'Current password is incorrect' };
+      }
     }
 
     const newHash = await argon2.hash(dto.newPassword);
@@ -288,6 +297,12 @@ export class AuthController {
       data: { passwordHash: newHash },
     });
 
-    return { success: true, message: 'Password changed successfully' };
+    return {
+      success: true,
+      message: user.passwordHash
+        ? 'Password changed successfully'
+        : 'Password set successfully',
+      hasPassword: true,
+    };
   }
 }

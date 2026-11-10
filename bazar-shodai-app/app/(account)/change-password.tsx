@@ -9,9 +9,13 @@ import { haptics } from '@/services/haptics';
 import { changePasswordApi } from '@/features/auth/api/changePassword';
 import { Radius, TouchTarget } from '@/constants/layout';
 import { getErrorMessage } from '@/api/errorHandler';
+import { useAuthStore } from '@/store/useAuthStore';
 
 export default function ChangePasswordScreen() {
   const router = useRouter();
+  const user = useAuthStore((s) => s.user);
+  const setProfile = useAuthStore((s) => s.setProfile);
+  const hasPassword = user?.hasPassword !== false;
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -23,7 +27,7 @@ export default function ChangePasswordScreen() {
   const handleChangePassword = async () => {
     setErrorMessage(null);
 
-    if (!currentPassword) {
+    if (hasPassword && !currentPassword) {
       setErrorMessage('Please enter your current password');
       return;
     }
@@ -43,18 +47,28 @@ export default function ChangePasswordScreen() {
       haptics.light();
 
       await changePasswordApi({
-        currentPassword,
+        currentPassword: hasPassword ? currentPassword : undefined,
         newPassword,
       });
 
       haptics.success();
-      toast.success('Password Changed', 'Your account password has been updated');
+      if (user) {
+        setProfile({ ...user, hasPassword: true });
+      }
+      toast.success(
+        hasPassword ? 'Password Changed' : 'Password Set',
+        hasPassword
+          ? 'Your account password has been updated'
+          : 'Your account password has been set successfully',
+      );
       router.back();
     } catch (error: unknown) {
       haptics.error();
       const msg = getErrorMessage(
         error,
-        'পাসওয়ার্ড পরিবর্তন ব্যর্থ হয়েছে। বর্তমান পাসওয়ার্ড সঠিক আছে কিনা দেখুন।',
+        hasPassword
+          ? 'পাসওয়ার্ড পরিবর্তন ব্যর্থ হয়েছে। বর্তমান পাসওয়ার্ড সঠিক আছে কিনা দেখুন।'
+          : 'পাসওয়ার্ড সেট করতে ব্যর্থ হয়েছে। আবার চেষ্টা করুন।',
       );
       setErrorMessage(msg);
       toast.error('ব্যর্থ', msg);
@@ -75,7 +89,9 @@ export default function ChangePasswordScreen() {
         >
           <Icon name="ArrowLeft" size={22} color="#0b6234" />
         </TouchableOpacity>
-        <Text className="text-base font-bold text-foreground">Change Password</Text>
+        <Text className="text-base font-bold text-foreground">
+          {hasPassword ? 'Change Password' : 'Set Password'}
+        </Text>
         <View className="w-8" />
       </View>
 
@@ -86,30 +102,32 @@ export default function ChangePasswordScreen() {
           </View>
         ) : null}
 
-        {/* Current Password */}
-        <View className="mb-4">
-          <Text className="text-xs font-semibold text-foreground mb-1.5">Current Password</Text>
-          <View style={styles.inputBox} className="bg-card border border-border">
-            <Icon name="Lock" size={16} color="#64748b" style={styles.inputIcon} />
-            <TextInput
-              value={currentPassword}
-              onChangeText={(text) => {
-                setCurrentPassword(text);
-                if (errorMessage) setErrorMessage(null);
-              }}
-              placeholder="Enter current password"
-              placeholderTextColor="#94a3b8"
-              secureTextEntry={!showPassword}
-              autoCapitalize="none"
-              className="flex-1 text-sm text-foreground"
-            />
+        {/* Current Password - Only if user already has a password */}
+        {hasPassword && (
+          <View className="mb-4">
+            <Text className="text-xs font-semibold text-foreground mb-1.5">Current Password</Text>
+            <View style={styles.inputBox} className="bg-card border border-border">
+              <Icon name="Lock" size={16} color="#64748b" style={styles.inputIcon} />
+              <TextInput
+                value={currentPassword}
+                onChangeText={(text) => {
+                  setCurrentPassword(text);
+                  if (errorMessage) setErrorMessage(null);
+                }}
+                placeholder="Enter current password"
+                placeholderTextColor="#94a3b8"
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                className="flex-1 text-sm text-foreground"
+              />
+            </View>
           </View>
-        </View>
+        )}
 
         {/* New Password */}
         <View className="mb-4">
           <Text className="text-xs font-semibold text-foreground mb-1.5">
-            New Password (Min 6 characters)
+            {hasPassword ? 'New Password (Min 6 characters)' : 'Password (Min 6 characters)'}
           </Text>
           <View style={styles.inputBox} className="bg-card border border-border">
             <Icon name="KeyRound" size={16} color="#64748b" style={styles.inputIcon} />
@@ -119,7 +137,7 @@ export default function ChangePasswordScreen() {
                 setNewPassword(text);
                 if (errorMessage) setErrorMessage(null);
               }}
-              placeholder="Enter new password"
+              placeholder={hasPassword ? 'Enter new password' : 'Enter a secure password'}
               placeholderTextColor="#94a3b8"
               secureTextEntry={!showPassword}
               autoCapitalize="none"
@@ -136,7 +154,9 @@ export default function ChangePasswordScreen() {
 
         {/* Confirm New Password */}
         <View className="mb-6">
-          <Text className="text-xs font-semibold text-foreground mb-1.5">Confirm New Password</Text>
+          <Text className="text-xs font-semibold text-foreground mb-1.5">
+            {hasPassword ? 'Confirm New Password' : 'Confirm Password'}
+          </Text>
           <View style={styles.inputBox} className="bg-card border border-border">
             <Icon name="KeyRound" size={16} color="#64748b" style={styles.inputIcon} />
             <TextInput
@@ -145,7 +165,7 @@ export default function ChangePasswordScreen() {
                 setConfirmPassword(text);
                 if (errorMessage) setErrorMessage(null);
               }}
-              placeholder="Re-enter new password"
+              placeholder="Re-enter password"
               placeholderTextColor="#94a3b8"
               secureTextEntry={!showPassword}
               autoCapitalize="none"
@@ -155,7 +175,7 @@ export default function ChangePasswordScreen() {
         </View>
 
         <Button
-          title="Save New Password"
+          title={hasPassword ? 'Save New Password' : 'Set Password'}
           variant="primary"
           size="lg"
           loading={isSubmitting}

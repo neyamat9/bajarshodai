@@ -388,6 +388,7 @@ export function mapUser(u: Raw): User {
     phone: u.phone ?? '',
     language: u.language === 'en' ? 'en' : 'bn',
     avatarUrl: u.avatarUrl ? assetUrl(u.avatarUrl) : '',
+    hasPassword: u.hasPassword !== undefined ? Boolean(u.hasPassword) : undefined,
     orderIds: [],
     createdAt: u.createdAt ?? '',
   };

@@ -60,8 +60,11 @@ export async function updateProfile(data: { name?: string; email?: string; langu
   return mapUser(await api.patch<any>('/customer/auth/profile', data));
 }
 
-export const changePassword = (currentPassword: string, newPassword: string) =>
-  api.post<{ success: boolean }>('/customer/auth/change-password', { currentPassword, newPassword });
+export const changePassword = (currentPassword: string | undefined, newPassword: string) =>
+  api.post<{ success: boolean; message?: string; hasPassword?: boolean }>('/customer/auth/change-password', {
+    currentPassword: currentPassword || undefined,
+    newPassword,
+  });
 
 export const forgotPassword = (email: string) => api.post<unknown>('/customer/auth/forgot-password', { email });
 export const resetPassword = (token: string, newPassword: string) => api.post<unknown>('/customer/auth/reset-password', { token, newPassword });

@@ -5,6 +5,7 @@ import PasswordStrengthMeter from "@/components/auth/PasswordStrengthMeter";
 import { btnPrimary, card } from "@/components/account/ui";
 import { errorMessage } from "@/lib/api/client";
 import { changePassword } from "@/lib/services/auth.service";
+import { useAuth } from "@/lib/hooks/use-auth";
 import { AlertCircle, KeyRound, Lock, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -12,6 +13,9 @@ import { useTranslations } from "next-intl";
 
 export default function ChangePassword() {
   const t = useTranslations("Account");
+  const { user, updateProfile } = useAuth();
+  const hasPassword = user?.hasPassword !== false;
+
   const [cur, setCur] = useState("");
   const [next, setNext] = useState("");
   const [again, setAgain] = useState("");
@@ -20,23 +24,33 @@ export default function ChangePassword() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (hasPassword && !cur) return setError(t("pwCurrent"));
     if (next.length < 6) return setError(t("pwShort"));
     if (next !== again) return setError(t("pwMismatch"));
-    if (next === cur) return setError(t("pwSame"));
+    if (hasPassword && next === cur) return setError(t("pwSame"));
     setBusy(true);
     setError(null);
     try {
-      await changePassword(cur, next);
-      toast.success(t("pwChanged"));
+      const res = await changePassword(hasPassword ? cur : undefined, next);
+      if (res && res.success === false) {
+        setError(res.message || t("updateFailed"));
+        return;
+      }
+      toast.success(hasPassword ? t("pwChanged") : t("pwSetSuccess"));
       setCur("");
       setNext("");
       setAgain("");
+      if (!hasPassword) {
+        void updateProfile({ hasPassword: true });
+      }
     } catch (err) {
       setError(errorMessage(err));
     } finally {
       setBusy(false);
     }
   }
+
+  const canSubmit = !busy && Boolean(next) && Boolean(again) && (!hasPassword || Boolean(cur));
 
   return (
     <form id="security" onSubmit={submit} noValidate className={`${card} scroll-mt-40 p-5 sm:p-6`}>
@@ -45,18 +59,51 @@ export default function ChangePassword() {
           <ShieldCheck className="h-5 w-5" aria-hidden="true" />
         </span>
         <div>
-          <h2 className="font-outfit text-lg font-black text-foreground">{t("pwTitle")}</h2>
-          <p className="text-sm text-muted-foreground">{t("pwSub")}</p>
+          <h2 className="font-outfit text-lg font-black text-foreground">
+            {hasPassword ? t("pwTitle") : t("pwSetTitle")}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {hasPassword ? t("pwSub") : t("pwSetSub")}
+          </p>
         </div>
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="lg:col-span-2">
-          <AuthField id="cur-pw" label={t("pwCurrent")} icon={KeyRound} password value={cur} onChange={setCur} autoComplete="current-password" disabled={busy} />
-        </div>
-        <AuthField id="new-pw" label={t("pwNew")} icon={Lock} password value={next} onChange={setNext} autoComplete="new-password" disabled={busy}>
+        {hasPassword && (
+          <div className="lg:col-span-2">
+            <AuthField
+              id="cur-pw"
+              label={t("pwCurrent")}
+              icon={KeyRound}
+              password
+              value={cur}
+              onChange={setCur}
+              autoComplete="current-password"
+              disabled={busy}
+            />
+          </div>
+        )}
+        <AuthField
+          id="new-pw"
+          label={t("pwNew")}
+          icon={Lock}
+          password
+          value={next}
+          onChange={setNext}
+          autoComplete="new-password"
+          disabled={busy}
+        >
           <PasswordStrengthMeter password={next} />
         </AuthField>
-        <AuthField id="again-pw" label={t("pwAgain")} icon={Lock} password value={again} onChange={setAgain} autoComplete="new-password" disabled={busy} />
+        <AuthField
+          id="again-pw"
+          label={t("pwAgain")}
+          icon={Lock}
+          password
+          value={again}
+          onChange={setAgain}
+          autoComplete="new-password"
+          disabled={busy}
+        />
       </div>
       {error && (
         <p role="alert" className="mt-4 flex items-center gap-2 text-sm font-medium text-destructive">
@@ -64,8 +111,8 @@ export default function ChangePassword() {
           {error}
         </p>
       )}
-      <button type="submit" disabled={busy || !cur || !next} className={`${btnPrimary} mt-5 w-full sm:w-auto`}>
-        {busy ? t("saving") : t("pwUpdate")}
+      <button type="submit" disabled={!canSubmit} className={`${btnPrimary} mt-5 w-full sm:w-auto`}>
+        {busy ? t("saving") : hasPassword ? t("pwUpdate") : t("pwSetBtn")}
       </button>
     </form>
   );
