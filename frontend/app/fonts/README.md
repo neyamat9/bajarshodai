@@ -1,6 +1,8 @@
 # Fonts
 
-`NotoSansBengali-variable.woff2` is the Bengali part of **Noto Sans Bengali** (variable weight 400-800),
-by the Noto Project, licensed under the SIL Open Font License 1.1 (https://openfontlicense.org).
-It is self-hosted because the Google font loader fails in Turbopack production builds when it has to
-fetch a Bengali subset. Latin text keeps using Inter and Outfit (next/font/google).
+All primary fonts in Bazar Shodai are self-hosted in `frontend/app/fonts/` as variable WOFF2 fonts:
+- `Inter-variable.woff2` (Latin variable font)
+- `Outfit-variable.woff2` (Headings variable font)
+- `NotoSansBengali-variable.woff2` (Bengali variable weight 400-800, by the Noto Project under SIL OFL 1.1)
+
+Self-hosting completely removes runtime Google Font CDN fetches during Turbopack and Vercel production builds, preventing `[next]/internal/font/google module-not-found` errors and eliminating third-party DNS latency for users.

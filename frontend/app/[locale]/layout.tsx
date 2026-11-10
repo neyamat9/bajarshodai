@@ -15,26 +15,26 @@ import { WishlistProvider } from "@/lib/context/WishlistContext";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
-import { Inter, Outfit } from "next/font/google";
 import localFont from "next/font/local";
 import { notFound } from "next/navigation";
 import { Toaster } from "sonner";
 import "../globals.css";
 
-const inter = Inter({
+// Self-hosted fonts (see app/fonts/README.md): completely removes runtime Google Font CDN
+// network requests during build and Turbopack deployment, ensuring 100% reliable builds.
+const inter = localFont({
+  src: "../fonts/Inter-variable.woff2",
   variable: "--font-inter",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
+  display: "swap",
 });
 
-const outfit = Outfit({
+const outfit = localFont({
+  src: "../fonts/Outfit-variable.woff2",
   variable: "--font-outfit",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
+  display: "swap",
 });
 
 // Bangla text: Inter and Outfit have no Bangla letters, so the browser falls back to this font for them.
-// Self-hosted (see app/fonts/README.md): the Google font loader fails in production builds for Bengali.
 const bangla = localFont({
   src: "../fonts/NotoSansBengali-variable.woff2",
   variable: "--font-bangla",
