@@ -5,9 +5,33 @@ export const fieldClass =
   "flex w-full rounded border border-input bg-card px-3 text-sm shadow-xs hover:border-ring/50 text-foreground placeholder:text-muted-foreground/70 outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive";
 
 export const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
-  ({ className, type, ...props }, ref) => (
-    <input ref={ref} type={type} className={cn(fieldClass, "h-9 max-sm:h-10", className)} {...props} />
-  ),
+  ({ className, type, onClick, ...props }, ref) => {
+    const isPickerType = type === "date" || type === "datetime-local" || type === "time";
+    return (
+      <input
+        ref={ref}
+        type={type}
+        onClick={(e) => {
+          onClick?.(e);
+          if (!e.defaultPrevented && isPickerType && !props.disabled && !props.readOnly) {
+            try {
+              e.currentTarget.showPicker?.();
+            } catch {
+              // Graceful fallback if browser does not support showPicker or already open
+            }
+          }
+        }}
+        className={cn(
+          fieldClass,
+          "h-9 max-sm:h-10",
+          isPickerType &&
+            "cursor-pointer pr-2.5 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:rounded [&::-webkit-calendar-picker-indicator]:p-1 [&::-webkit-calendar-picker-indicator]:opacity-80 hover:[&::-webkit-calendar-picker-indicator]:opacity-100",
+          className,
+        )}
+        {...props}
+      />
+    );
+  },
 );
 Input.displayName = "Input";
 

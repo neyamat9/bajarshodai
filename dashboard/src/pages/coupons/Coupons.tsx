@@ -31,7 +31,7 @@ function Rules({ f, set }: { f: Form; set: (p: Partial<Form>) => void }) {
   const cats = useQuery({ queryKey: ["categories"], queryFn: categoriesApi.list });
   return (
     <div className="space-y-3">
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <Field label={tr("Discount type")}>
           <Select value={f.discountType} onChange={(e) => set({ discountType: e.target.value as DiscountType })}>
             <option value="PERCENTAGE">{tr("Percentage")}</option><option value="FIXED_AMOUNT">{tr("Fixed amount (৳)")}</option><option value="FREE_SHIPPING">{tr("Free shipping")}</option>
@@ -39,9 +39,9 @@ function Rules({ f, set }: { f: Form; set: (p: Partial<Form>) => void }) {
         </Field>
         {f.discountType !== "FREE_SHIPPING" && <Field label={f.discountType === "PERCENTAGE" ? tr("Percent") : tr("Amount ৳")} required><Input type="number" min={0} value={f.discountValue} onChange={(e) => set({ discountValue: e.target.value })} /></Field>}
         {f.discountType === "PERCENTAGE" && <Field label={tr("Max discount ৳")} hint={tr("Optional cap")}><Input type="number" min={0} value={f.maxDiscount} onChange={(e) => set({ maxDiscount: e.target.value })} /></Field>}
+        <Field label={tr("Minimum order ৳")} hint={tr("Optional")}><Input type="number" min={0} value={f.minOrderAmount} onChange={(e) => set({ minOrderAmount: e.target.value })} placeholder="0" /></Field>
       </div>
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Field label={tr("Minimum order ৳")}><Input type="number" min={0} value={f.minOrderAmount} onChange={(e) => set({ minOrderAmount: e.target.value })} /></Field>
+      <div className="grid gap-3 sm:grid-cols-2">
         <Field label={tr("Valid from")} required><Input type="datetime-local" value={f.validFrom} onChange={(e) => set({ validFrom: e.target.value })} /></Field>
         <Field label={tr("Valid until")} required><Input type="datetime-local" value={f.validTo} onChange={(e) => set({ validTo: e.target.value })} /></Field>
       </div>
