@@ -12,6 +12,7 @@ export interface ProductStickyBottomBarProps {
   unit?: string;
   step?: number;
   minQty?: number;
+  maxQty?: number;
   inStock?: boolean;
   onQuantityChange: (qty: number) => void;
   onAddToCart: () => void;
@@ -26,6 +27,7 @@ export function ProductStickyBottomBar({
   unit = 'kg',
   step = 1,
   minQty = 1,
+  maxQty,
   inStock = true,
   onQuantityChange,
   onAddToCart,
@@ -58,6 +60,7 @@ export function ProductStickyBottomBar({
                 unit={unit}
                 step={step}
                 min={minQty}
+                max={maxQty ?? 99}
                 size="sm"
               />
             </View>

@@ -555,6 +555,7 @@ model Product {
   packSize           String? // e.g. "500 g", "1 dozen"
   sellStep           Decimal?      @db.Decimal(8, 3) // overrides the unit step, e.g. 0.5
   minQty             Decimal?      @db.Decimal(8, 3)
+  maxQty             Decimal?      @db.Decimal(8, 3) // Maximum allowed order quantity per order (null = no limit)
   isWeighed          Boolean       @default(false) // final weight may differ at packing
   brandName          String? // Denormalized for fast queries
   categoryName       String? // Denormalized for fast queries

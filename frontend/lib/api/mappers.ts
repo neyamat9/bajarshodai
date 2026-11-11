@@ -140,7 +140,9 @@ function mapUnit(p: Raw, locale: Locale): Product['unit'] {
   if (!u) return null;
   const step = num(p.sellStep ?? u.step ?? u.defaultStep, 1);
   const minQty = num(p.minQty ?? u.minQty ?? u.defaultMinQty, step);
-  return { code: u.code, label: pick(locale, u.shortLabel, u.shortLabelBn), allowDecimal: !!u.allowDecimal, step, minQty };
+  const rawMax = p.maxQty ?? u.maxQty;
+  const maxQty = rawMax !== undefined && rawMax !== null ? num(rawMax) : null;
+  return { code: u.code, label: pick(locale, u.shortLabel, u.shortLabelBn), allowDecimal: !!u.allowDecimal, step, minQty, maxQty };
 }
 
 // Full product (detail page, product lists) — also accepts the slim "card" shape.
@@ -190,6 +192,7 @@ export function mapProduct(p: Raw, locale: Locale = clientLocale()): Product {
     packSize: p.packSize ?? '',
     isWeighed: !!p.isWeighed,
     trackStock: p.trackStock !== undefined ? !!p.trackStock : undefined,
+    maxQty: p.maxQty !== undefined && p.maxQty !== null ? num(p.maxQty) : null,
     price,
     originalPrice,
     discount,

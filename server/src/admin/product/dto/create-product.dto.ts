@@ -311,6 +311,18 @@ export class CreateProductDto {
   minQty?: number | null;
 
   @ApiPropertyOptional({
+    nullable: true,
+    example: 5,
+    description: 'Maximum quantity a customer can order in a single order. Null = no limit.',
+  })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 3 })
+  @IsPositive()
+  maxQty?: number | null;
+
+  @ApiPropertyOptional({
     description: 'The final weight may differ a little from the ordered quantity (packer weighs it)',
   })
   @IsOptional()

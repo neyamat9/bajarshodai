@@ -13,13 +13,14 @@ export interface QuickViewProduct {
   imageUrl?: string;
   image?: string | null;
   images?: (string | { id?: string; url: string; alt?: string | null })[];
-  unit: string | { label?: string; shortLabel?: string; shortLabelBn?: string; minQty?: number };
+  unit: string | { label?: string; shortLabel?: string; shortLabelBn?: string; minQty?: number; maxQty?: number | null };
   packSize?: string;
   stock?: number;
   trackStock?: boolean;
   inStock?: boolean;
   discountPercent?: number;
   badge?: string;
+  maxQty?: number | null;
   description?: string;
   descriptionBn?: string;
   categoryName?: string;

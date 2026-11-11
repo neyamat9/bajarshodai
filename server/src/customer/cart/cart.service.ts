@@ -56,6 +56,7 @@ export function shapeCartItem(item: CartRow) {
       regularPrice: toNum(product.regularPrice),
       sellStep: product.sellStep === null ? null : toNum(product.sellStep),
       minQty: product.minQty === null ? null : toNum(product.minQty),
+      maxQty: product.maxQty === null ? null : toNum(product.maxQty),
       unit: product.unit
         ? {
             shortLabel: product.unit.shortLabel,
@@ -63,6 +64,7 @@ export function shapeCartItem(item: CartRow) {
             allowDecimal: product.unit.allowDecimal,
             step: rule.step,
             minQty: rule.min,
+            maxQty: rule.max,
           }
         : null,
     },
@@ -87,6 +89,7 @@ const cartItemInclude = {
       packSize: true,
       sellStep: true,
       minQty: true,
+      maxQty: true,
       isWeighed: true,
       unit: {
         select: {
@@ -190,9 +193,12 @@ export class CartService implements OnModuleInit, OnModuleDestroy {
       }
       variantStock = toNum(variant.stock);
     }
-    const maxQty = product.trackStock
-      ? Math.min(floorToStep(variantStock, rule), MAX_QTY_PER_LINE)
+    const effectiveLimit = rule.max
+      ? Math.min(rule.max, MAX_QTY_PER_LINE)
       : MAX_QTY_PER_LINE;
+    const maxQty = product.trackStock
+      ? Math.min(floorToStep(variantStock, rule), effectiveLimit)
+      : effectiveLimit;
 
     const variantId = dto.variantId || null;
     const ownerWhere = cartOwnerWhere(owner);
@@ -259,12 +265,15 @@ export class CartService implements OnModuleInit, OnModuleDestroy {
     const rule = saleRuleOf(item.product);
     const next = round3(quantity);
     assertQuantity(next, rule, item.product.nameBn ?? item.product.name);
+    const effectiveLimit = rule.max
+      ? Math.min(rule.max, MAX_QTY_PER_LINE)
+      : MAX_QTY_PER_LINE;
     const maxStock = item.product.trackStock
       ? Math.min(
           floorToStep(toNum(item.variant?.stock ?? item.product.stock), rule),
-          MAX_QTY_PER_LINE,
+          effectiveLimit,
         )
-      : MAX_QTY_PER_LINE;
+      : effectiveLimit;
     if (next > maxStock) {
       throw new BadRequestException(
         `Only ${fmtQty(maxStock)} of this item can be added to the cart`,
@@ -347,9 +356,12 @@ export class CartService implements OnModuleInit, OnModuleDestroy {
           }
           stock = toNum(variant.stock);
         }
-        const cap = product.trackStock
-          ? Math.min(floorToStep(stock, rule), MAX_QTY_PER_LINE)
+        const effectiveLimit = rule.max
+          ? Math.min(rule.max, MAX_QTY_PER_LINE)
           : MAX_QTY_PER_LINE;
+        const cap = product.trackStock
+          ? Math.min(floorToStep(stock, rule), effectiveLimit)
+          : effectiveLimit;
         if (product.trackStock && cap < rule.min) {
           fail('Out of stock');
           continue;
@@ -430,9 +442,12 @@ export class CartService implements OnModuleInit, OnModuleDestroy {
 
       for (const g of guestItems) {
         const rule = saleRuleOf(g.product);
+        const effectiveLimit = rule.max
+          ? Math.min(rule.max, MAX_QTY_PER_LINE)
+          : MAX_QTY_PER_LINE;
         const cap = Math.min(
           floorToStep(toNum(g.variant?.stock ?? g.product.stock), rule),
-          MAX_QTY_PER_LINE,
+          effectiveLimit,
         );
         const existing = await tx.cartItem.findFirst({
           where: { userId, productId: g.productId, variantId: g.variantId },

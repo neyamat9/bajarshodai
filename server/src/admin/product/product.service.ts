@@ -308,6 +308,7 @@ export class ProductService {
             packSize: dto.packSize || null,
             sellStep: dto.sellStep ?? null,
             minQty: dto.minQty ?? (dto.sellStep ? dto.sellStep : null),
+            maxQty: dto.maxQty ?? null,
             isWeighed: dto.isWeighed ?? false,
             status: dto.status ?? 'ACTIVE',
             buyingPrice: dto.buyingPrice,
@@ -518,17 +519,19 @@ export class ProductService {
     }
 
     // --- plain fields ---
-    // how it is sold (unit, step, minimum)
+    // how it is sold (unit, step, minimum, maximum)
     if (
       dto.unitId !== undefined ||
       dto.sellStep !== undefined ||
-      dto.minQty !== undefined
+      dto.minQty !== undefined ||
+      dto.maxQty !== undefined
     ) {
       await this.resolveSale({
         unitId: dto.unitId ?? current.unitId ?? undefined,
         sellStep:
           dto.sellStep !== undefined ? dto.sellStep : num(current.sellStep),
         minQty: dto.minQty !== undefined ? dto.minQty : num(current.minQty),
+        maxQty: dto.maxQty !== undefined ? dto.maxQty : num(current.maxQty),
       });
     }
     if (dto.nameBn !== undefined) data.nameBn = dto.nameBn.trim() || null;
@@ -540,6 +543,7 @@ export class ProductService {
     if (dto.unitId !== undefined) data.unitId = dto.unitId;
     if (dto.sellStep !== undefined) data.sellStep = dto.sellStep;
     if (dto.minQty !== undefined) data.minQty = dto.minQty;
+    if (dto.maxQty !== undefined) data.maxQty = dto.maxQty;
 
     const copy = [
       'barcode',
@@ -853,6 +857,7 @@ export class ProductService {
             packSize: src.packSize,
             sellStep: src.sellStep,
             minQty: src.minQty,
+            maxQty: src.maxQty,
             isWeighed: src.isWeighed,
             brandName: src.brandName,
             categoryName: src.categoryName,
@@ -1030,16 +1035,17 @@ export class ProductService {
     return { categoryName: category.name, brandName };
   }
 
-  /** Checks the unit, step and minimum of a product: a whole-number unit cannot be sold by halves. */
+  /** Checks the unit, step, minimum and maximum of a product: a whole-number unit cannot be sold by halves. */
   async resolveSale(input: {
     unitId?: string;
     sellStep?: number | null;
     minQty?: number | null;
+    maxQty?: number | null;
   }) {
     if (!input.unitId) {
-      if (input.sellStep != null || input.minQty != null) {
+      if (input.sellStep != null || input.minQty != null || input.maxQty != null) {
         throw new BadRequestException(
-          'Choose a unit before setting a step or a minimum quantity',
+          'Choose a unit before setting a step, a minimum quantity, or a maximum quantity',
         );
       }
       return null;
@@ -1080,7 +1086,30 @@ export class ProductService {
         `The smallest quantity (${min}) must be a multiple of the step (${step})`,
       );
     }
-    return { unit, step, min };
+    if (input.maxQty != null) {
+      const max = input.maxQty;
+      if (!unit.allowDecimal && !Number.isInteger(max)) {
+        throw new BadRequestException(
+          `"${unit.name}" is sold in whole numbers, so the maximum quantity must be a whole number`,
+        );
+      }
+      if (max <= 0) {
+        throw new BadRequestException(
+          'The maximum order quantity must be above zero',
+        );
+      }
+      if (max < min) {
+        throw new BadRequestException(
+          `The maximum quantity (${max}) cannot be less than the minimum quantity (${min})`,
+        );
+      }
+      if (!isOnStep(max, step)) {
+        throw new BadRequestException(
+          `The maximum quantity (${max}) must be a multiple of the step (${step})`,
+        );
+      }
+    }
+    return { unit, step, min, max: input.maxQty ?? null };
   }
 
   private async stockIds(kind: 'low' | 'in') {

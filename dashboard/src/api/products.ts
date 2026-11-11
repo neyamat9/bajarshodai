@@ -82,6 +82,7 @@ export interface ProductDetail extends Omit<ProductRow, "mainImage" | "_count" |
   packSize: string | null;
   sellStep: string | null;
   minQty: string | null;
+  maxQty: string | null;
   isWeighed: boolean;
   images: ProductImage[];
   variants: ProductVariant[];
@@ -178,6 +179,7 @@ export interface ProductInput {
   /** null = use the unit's step / minimum */
   sellStep?: number | null;
   minQty?: number | null;
+  maxQty?: number | null;
   isWeighed?: boolean;
   attributes?: { name: string; value: string }[];
   tags?: string[];

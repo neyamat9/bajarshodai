@@ -5,27 +5,32 @@ import type { ProductUnit } from "./types";
 // Quantities can be parts of a unit (0.5 kg). These helpers keep the + / − buttons, the cart and the
 // labels in step with the unit rules the server also enforces.
 
-const DEFAULT_RULE = { allowDecimal: false, step: 1, minQty: 1 };
+const DEFAULT_RULE = { allowDecimal: false, step: 1, minQty: 1, maxQty: null };
 
 export const round3 = (n: number) => Math.round((n + Number.EPSILON) * 1000) / 1000;
 
-type Rule = Pick<ProductUnit, "allowDecimal" | "step" | "minQty">;
-const ruleOf = (unit?: Rule | null): Rule => unit ?? DEFAULT_RULE;
+type Rule = Pick<ProductUnit, "allowDecimal" | "step" | "minQty"> & { maxQty?: number | null };
+const ruleOf = (unit?: Rule | null): Rule => (unit ? { ...DEFAULT_RULE, ...unit } : DEFAULT_RULE);
 
 /** The first quantity put in the cart: the smallest one allowed. */
 export function startQty(unit?: Rule | null): number {
-  const { step, minQty } = ruleOf(unit);
-  return Math.max(step, minQty);
+  const { step, minQty, maxQty } = ruleOf(unit);
+  const start = Math.max(step, minQty);
+  if (maxQty !== undefined && maxQty !== null && maxQty > 0) {
+    return Math.min(start, maxQty);
+  }
+  return start;
 }
 
 /**
- * What the + button gives: one step more, never above what is in stock (rounded down to a full step).
+ * What the + button gives: one step more, never above stock or max order quantity (rounded down to a full step).
  * Returns null when there is no room for another step.
  */
 export function stepUp(current: number, unit: Rule | null | undefined, stock: number): number | null {
-  const { step } = ruleOf(unit);
+  const { step, maxQty } = ruleOf(unit);
   const next = round3(current + step);
-  return next <= stock + 1e-9 ? next : null;
+  const cap = maxQty !== undefined && maxQty !== null && maxQty > 0 ? Math.min(stock, maxQty) : stock;
+  return next <= cap + 1e-9 ? next : null;
 }
 
 /** What the − button gives: one step less, or null when that goes below the minimum (the line is removed). */

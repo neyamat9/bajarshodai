@@ -1,16 +1,18 @@
 import { BadRequestException } from '@nestjs/common';
 import { fmtQty, isOnStep, round3, toNum } from '../utils/qty';
 
-/** How a product may be bought: whole numbers only, the step of the + / − buttons, the smallest quantity. */
+/** How a product may be bought: whole numbers only, the step of the + / − buttons, the smallest quantity, and optional max order limit. */
 export interface SaleRule {
   allowDecimal: boolean;
   step: number;
   min: number;
+  max?: number | null;
 }
 
 interface RuleSource {
   sellStep?: unknown;
   minQty?: unknown;
+  maxQty?: unknown;
   unit?: {
     allowDecimal: boolean;
     defaultStep: unknown;
@@ -18,10 +20,11 @@ interface RuleSource {
   } | null;
 }
 
-/** The rule of a product: its own step / minimum if set, else the unit's, else whole pieces. */
+/** The rule of a product: its own step / minimum / maximum if set, else the unit's, else whole pieces. */
 export function saleRuleOf(p: RuleSource): SaleRule {
   const u = p.unit;
-  if (!u) return { allowDecimal: false, step: 1, min: 1 };
+  const max = p.maxQty ? toNum(p.maxQty) : null;
+  if (!u) return { allowDecimal: false, step: 1, min: 1, max };
   const step = toNum(p.sellStep ?? u.defaultStep) || 1;
   const rawMin = toNum(p.minQty ?? u.defaultMinQty) || step;
   // A product's minimum quantity cannot be less than its step, and must align with the step.
@@ -33,6 +36,7 @@ export function saleRuleOf(p: RuleSource): SaleRule {
     allowDecimal: u.allowDecimal,
     step,
     min,
+    max,
   };
 }
 
@@ -47,6 +51,11 @@ export function assertQuantity(qty: number, rule: SaleRule, name: string) {
   if (qty + 1e-9 < rule.min) {
     throw new BadRequestException(
       `The smallest quantity of ${name} is ${fmtQty(rule.min)}`,
+    );
+  }
+  if (rule.max && qty > rule.max + 1e-9) {
+    throw new BadRequestException(
+      `The maximum quantity of ${name} is ${fmtQty(rule.max)}`,
     );
   }
   if (!isOnStep(qty, rule.step)) {

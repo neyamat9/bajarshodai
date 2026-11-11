@@ -39,6 +39,7 @@ export interface ProductUnitData {
   allowDecimal?: boolean;
   step?: number;
   minQty?: number;
+  maxQty?: number | null;
 }
 
 export interface ProductCardData {
@@ -61,6 +62,7 @@ export interface ProductCardData {
   image?: string | null;
   imageUrl?: string;
   packSize?: string | null;
+  maxQty?: number | null;
   images?: { id?: string; url: string; alt?: string | null; isMain?: boolean }[];
   primaryImage?: { url: string; alt?: string | null } | null;
   category?: { id: string; name: string; slug: string } | null;

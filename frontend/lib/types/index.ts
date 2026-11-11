@@ -45,6 +45,7 @@ export interface ProductUnit {
   /** how much the + / − buttons add */
   step: number;
   minQty: number;
+  maxQty?: number | null;
 }
 
 export type ProductBadge = 'NEW' | 'HOT' | 'BEST SELLER' | 'LIMITED STOCK';
@@ -67,6 +68,7 @@ export interface Product {
   packSize: string;
   isWeighed: boolean;
   trackStock?: boolean;
+  maxQty?: number | null;
   price: number;
   originalPrice?: number;
   discount?: number;

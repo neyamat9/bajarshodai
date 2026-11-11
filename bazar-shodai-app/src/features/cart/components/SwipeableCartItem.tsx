@@ -83,6 +83,7 @@ export function SwipeableCartItem({ item, onUpdateQuantity, onRemove }: Swipeabl
               unit={item.unit}
               size="sm"
               min={0}
+              max={item.maxQty ?? 99}
             />
           </View>
         </View>

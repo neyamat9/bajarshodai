@@ -28,7 +28,7 @@ import { tr } from "@/i18n";
 interface Form {
   name: string; nameBn: string; slug: string; productCode: string; barcode: string; status: ProductStatus;
   categoryId: string; brandId: string;
-  unitId: string; packSize: string; sellStep: string; minQty: string; isWeighed: boolean;
+  unitId: string; packSize: string; sellStep: string; minQty: string; maxQty: string; isWeighed: boolean;
   shortDescription: string; shortDescriptionBn: string; description: string; descriptionBn: string;
   buyingPrice: string; regularPrice: string; sellingPrice: string;
   discountPrice: string; discountStart: string; discountEnd: string; discountLabel: string;
@@ -43,7 +43,7 @@ interface Form {
 
 const blank: Form = {
   name: "", nameBn: "", slug: "", productCode: "", barcode: "", status: "ACTIVE", categoryId: "", brandId: "",
-  unitId: "", packSize: "", sellStep: "", minQty: "", isWeighed: false,
+  unitId: "", packSize: "", sellStep: "", minQty: "", maxQty: "", isWeighed: false,
   shortDescription: "", shortDescriptionBn: "", description: "", descriptionBn: "", buyingPrice: "", regularPrice: "", sellingPrice: "",
   discountPrice: "", discountStart: "", discountEnd: "", discountLabel: "", trackStock: true, stock: "0", lowStockThreshold: "5", freeShipping: false,
   weight: "", length: "", width: "", height: "", isFeatured: false, isNew: false, isHot: false, isBestSeller: false, isLimitedStock: false,
@@ -54,7 +54,7 @@ const n = (v?: string | number | null) => (v === null || v === undefined ? "" : 
 const toForm = (p: ProductDetail): Form => ({
   name: p.name, nameBn: p.nameBn ?? "", slug: p.slug, productCode: p.productCode ?? "", barcode: p.barcode ?? "", status: p.status,
   categoryId: p.categoryId, brandId: p.brandId ?? "",
-  unitId: p.unitId ?? "", packSize: p.packSize ?? "", sellStep: p.sellStep ? n(p.sellStep) : "", minQty: p.minQty ? n(p.minQty) : "", isWeighed: p.isWeighed,
+  unitId: p.unitId ?? "", packSize: p.packSize ?? "", sellStep: p.sellStep ? n(p.sellStep) : "", minQty: p.minQty ? n(p.minQty) : "", maxQty: p.maxQty ? n(p.maxQty) : "", isWeighed: p.isWeighed,
   shortDescription: p.shortDescription ?? "", shortDescriptionBn: p.shortDescriptionBn ?? "", description: p.description, descriptionBn: p.descriptionBn ?? "",
   buyingPrice: n(p.buyingPrice), regularPrice: n(p.regularPrice), sellingPrice: n(p.priceBeforeDiscount ?? p.sellingPrice),
   discountPrice: p.discountPrice ? n(p.discountPrice) : "", discountStart: toLocalInput(p.discountStart), discountEnd: toLocalInput(p.discountEnd), discountLabel: p.discountLabel ?? "",
@@ -166,8 +166,9 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
     if (f.unitId) {
       const step = f.sellStep === "" ? (unit ? Number(unit.defaultStep) : 1) : Number(f.sellStep);
       const min = f.minQty === "" ? (step || (unit ? Number(unit.defaultMinQty) : 1)) : Number(f.minQty);
-      if (unit && !unit.allowDecimal && ((step !== undefined && !Number.isInteger(step)) || (min !== undefined && !Number.isInteger(min)))) e.sale = tr("\"{{unit}}\" is sold in whole numbers: use a whole-number step and minimum", { unit: unit.name });
-      if ((f.sellStep !== "" && !(Number(f.sellStep) > 0)) || (f.minQty !== "" && !(Number(f.minQty) > 0))) e.sale = "Step and minimum must be above zero";
+      const max = f.maxQty === "" ? null : Number(f.maxQty);
+      if (unit && !unit.allowDecimal && ((step !== undefined && !Number.isInteger(step)) || (min !== undefined && !Number.isInteger(min)) || (max !== null && !Number.isInteger(max)))) e.sale = tr("\"{{unit}}\" is sold in whole numbers: use whole numbers", { unit: unit.name });
+      if ((f.sellStep !== "" && !(Number(f.sellStep) > 0)) || (f.minQty !== "" && !(Number(f.minQty) > 0)) || (f.maxQty !== "" && !(Number(f.maxQty) > 0))) e.sale = "Step, minimum and maximum must be above zero";
       if (step > 0 && min > 0) {
         if (min < step) {
           e.sale = tr("Smallest quantity ({{min}}) cannot be less than the step ({{step}})", { min, step });
@@ -175,7 +176,14 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
           e.sale = tr("Smallest quantity ({{min}}) must be a multiple of the step ({{step}})", { min, step });
         }
       }
-    } else if (f.sellStep !== "" || f.minQty !== "") e.sale = "Choose a unit first";
+      if (max !== null && step > 0) {
+        if (max < min) {
+          e.sale = tr("Maximum quantity ({{max}}) cannot be less than the smallest quantity ({{min}})", { max, min });
+        } else if (Math.abs(max / step - Math.round(max / step)) > 1e-9) {
+          e.sale = tr("Maximum quantity ({{max}}) must be a multiple of the step ({{step}})", { max, step });
+        }
+      }
+    } else if (f.sellStep !== "" || f.minQty !== "" || f.maxQty !== "") e.sale = "Choose a unit first";
     if (f.slug && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(f.slug)) e.slug = "Lowercase letters, numbers and single dashes";
     if (!f.categoryId) e.categoryId = "Choose a category";
 
@@ -204,7 +212,7 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
       description: f.description, shortDescription: f.shortDescription || undefined,
       descriptionBn: f.descriptionBn, shortDescriptionBn: f.shortDescriptionBn,
       unitId: f.unitId || undefined, packSize: f.packSize.trim(), isWeighed: f.isWeighed,
-      ...(f.unitId ? { sellStep: f.sellStep === "" ? null : Number(f.sellStep), minQty: f.minQty === "" ? (f.sellStep !== "" ? Number(f.sellStep) : null) : Number(f.minQty) } : {}),
+      ...(f.unitId ? { sellStep: f.sellStep === "" ? null : Number(f.sellStep), minQty: f.minQty === "" ? (f.sellStep !== "" ? Number(f.sellStep) : null) : Number(f.minQty), maxQty: f.maxQty === "" ? null : Number(f.maxQty) } : {}),
       status: f.status, categoryId: f.categoryId, brandId: f.brandId || undefined,
       buyingPrice: Number(f.buyingPrice), regularPrice: Number(f.regularPrice), sellingPrice: Number(f.sellingPrice),
       discountPrice: f.discountPrice === "" ? null : Number(f.discountPrice),
@@ -323,7 +331,7 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
           </Section>
           <Section title={tr("How it is sold")} description={tr("The unit shows on the product card (৳380 / kg). The + and − buttons move by the step.")}>
             {errs.sale && <p className="mb-3 rounded bg-red-50 px-3 py-2 text-xs font-medium text-destructive dark:bg-red-500/10">{errs.sale}</p>}
-            <div className="grid gap-3 sm:grid-cols-4">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
               <Field label={tr("Unit")} hint={<Link to="/units" className="underline">{tr("Manage units")}</Link>}>
                 <Select value={f.unitId} onChange={(e) => set("unitId", e.target.value)}>
                   <option value="">{tr("None (whole pieces)")}</option>
@@ -350,6 +358,20 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
                   disabled={!f.unitId}
                   onChange={(e) => set("minQty", e.target.value)}
                   placeholder={f.sellStep !== "" ? f.sellStep : unit ? String(unit.defaultMinQty) : ""}
+                />
+              </Field>
+              <Field
+                label={tr("Maximum order")}
+                hint={unit ? tr("Empty = no limit") : tr("Choose a unit first")}
+              >
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.001"
+                  value={f.maxQty}
+                  disabled={!f.unitId}
+                  onChange={(e) => set("maxQty", e.target.value)}
+                  placeholder={tr("No limit")}
                 />
               </Field>
             </div>

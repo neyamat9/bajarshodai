@@ -36,6 +36,7 @@ const cartInclude = {
       categoryId: true,
       sellStep: true,
       minQty: true,
+      maxQty: true,
       isWeighed: true,
       weight: true,
       unit: {

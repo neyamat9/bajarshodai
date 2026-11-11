@@ -14,7 +14,7 @@ import { useTranslations } from "next-intl";
 export default function ChangePassword() {
   const t = useTranslations("Account");
   const { user, updateProfile } = useAuth();
-  const hasPassword = user?.hasPassword !== false;
+  const hasPassword = Boolean(user?.hasPassword);
 
   const [cur, setCur] = useState("");
   const [next, setNext] = useState("");

@@ -118,14 +118,16 @@ function QuickViewSheetContent({ product, onClose }: QuickViewSheetContentProps)
   const handleIncrease = () => {
     void haptics.selection().catch(() => {});
     const maxStock = isUntracked ? 99 : product.stock ?? 99;
-    if (quantity < maxStock) {
+    const maxLimit = product.maxQty ?? (product.unit as any)?.maxQty;
+    const effectiveCap = typeof maxLimit === 'number' && maxLimit > 0 ? Math.min(maxStock, maxLimit) : maxStock;
+    if (quantity < effectiveCap) {
       setQuantity(quantity + 1);
     } else {
       toast.info(
-        isBn ? 'সর্বোচ্চ স্টক' : 'Stock Limit',
+        isBn ? 'সর্বোচ্চ সীমা' : 'Order Limit',
         isBn
-          ? `সর্বোচ্চ ${toBengaliNumerals(maxStock)}টি যুক্ত করা যাবে`
-          : `Only ${maxStock} items available in stock`,
+          ? `সর্বোচ্চ ${toBengaliNumerals(effectiveCap)}টি অর্ডার করা যাবে`
+          : `Maximum order limit is ${effectiveCap}`,
       );
     }
   };
@@ -138,6 +140,7 @@ function QuickViewSheetContent({ product, onClose }: QuickViewSheetContentProps)
       return;
     }
 
+    const maxLimit = product.maxQty ?? (product.unit as any)?.maxQty;
     addItem(
       {
         id: product.id,
@@ -149,6 +152,7 @@ function QuickViewSheetContent({ product, onClose }: QuickViewSheetContentProps)
         imageUrl: fullImageUrl,
         unit: unitLabel,
         stock: product.stock,
+        maxQty: typeof maxLimit === 'number' && maxLimit > 0 ? maxLimit : undefined,
       },
       quantity,
     );

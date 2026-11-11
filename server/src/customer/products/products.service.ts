@@ -39,6 +39,7 @@ export const cardSelect = {
   packSize: true,
   sellStep: true,
   minQty: true,
+  maxQty: true,
   isWeighed: true,
   unit: {
     select: {
@@ -113,8 +114,10 @@ export function toCard(p: CardRow) {
             Number(p.sellStep ?? p.unit.defaultStep),
             Number(p.minQty ?? p.unit.defaultMinQty),
           ),
+          maxQty: p.maxQty ? Number(p.maxQty) : null,
         }
       : null,
+    maxQty: p.maxQty ? Number(p.maxQty) : null,
     isWeighed: p.isWeighed,
     price,
     regularPrice: regular,

@@ -13,6 +13,7 @@ export interface CartItem {
   imageUrl?: string;
   unit?: string;
   stock?: number;
+  maxQty?: number | null;
   serverItemId?: string; // ID assigned by backend /customer/cart
 }
 
@@ -133,13 +134,23 @@ export const useCartStore = create<CartState>((set, get) => ({
       const existing = state.items.find((i) => (i.id ? i.id === itemId : i.productId === item.productId));
       let updated: CartItem[];
       if (existing) {
+        let newQty = (Number(existing.quantity) || 1) + cleanQty;
+        const maxLimit = existing.maxQty ?? item.maxQty;
+        if (typeof maxLimit === 'number' && maxLimit > 0) {
+          newQty = Math.min(newQty, maxLimit);
+        }
         updated = state.items.map((i) =>
           (i.id ? i.id === itemId : i.productId === item.productId)
-            ? { ...i, price, quantity: (Number(i.quantity) || 1) + cleanQty }
+            ? { ...i, price, quantity: newQty }
             : i,
         );
       } else {
-        updated = [...state.items, { ...cleanItem, quantity: cleanQty }];
+        let newQty = cleanQty;
+        const maxLimit = item.maxQty;
+        if (typeof maxLimit === 'number' && maxLimit > 0) {
+          newQty = Math.min(newQty, maxLimit);
+        }
+        updated = [...state.items, { ...cleanItem, quantity: newQty }];
       }
       persistCartAsync(updated);
       return { items: updated };
@@ -176,24 +187,28 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   updateQuantity: (idOrProductId, quantity) => {
     const item = get().items.find((i) => i.id === idOrProductId || i.productId === idOrProductId);
+    let resolvedQty = quantity;
+    if (item && typeof item.maxQty === 'number' && item.maxQty > 0 && resolvedQty > 0) {
+      resolvedQty = Math.min(resolvedQty, item.maxQty);
+    }
     set((state) => {
       let updated: CartItem[];
-      if (quantity <= 0) {
+      if (resolvedQty <= 0) {
         updated = state.items.filter((i) => i.id !== idOrProductId && i.productId !== idOrProductId);
       } else {
         updated = state.items.map((i) =>
-          (i.id === idOrProductId || i.productId === idOrProductId) ? { ...i, quantity } : i,
+          (i.id === idOrProductId || i.productId === idOrProductId) ? { ...i, quantity: resolvedQty } : i,
         );
       }
       persistCartAsync(updated);
       return { items: updated };
     });
 
-    if (quantity <= 0) {
+    if (resolvedQty <= 0) {
       const targetId = item?.serverItemId || idOrProductId;
       void api.delete(`/customer/cart/${encodeURIComponent(targetId)}`).catch(() => {});
     } else {
-      void api.post('/customer/cart', { productId: item?.productId || idOrProductId, quantity }).catch(() => {});
+      void api.post('/customer/cart', { productId: item?.productId || idOrProductId, quantity: resolvedQty }).catch(() => {});
     }
   },
 

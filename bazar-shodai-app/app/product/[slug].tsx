@@ -164,6 +164,11 @@ export default function ProductDetailScreen() {
     'kg';
   const step = Number(product?.unit?.defaultStep ?? product?.unit?.step ?? 1);
   const minQty = Number(product?.unit?.defaultMinQty ?? product?.unit?.minQty ?? 1);
+  const maxQty = product?.maxQty
+    ? Number(product.maxQty)
+    : product?.unit?.maxQty
+    ? Number(product.unit.maxQty)
+    : undefined;
 
   // Derive real image URLs from API response
   const images = React.useMemo(() => {
@@ -234,6 +239,7 @@ export default function ProductDetailScreen() {
         imageUrl: images[0],
         unit: unitCode,
         stock: product?.stock ? Number(product.stock) : undefined,
+        maxQty,
       },
       quantity,
     );
@@ -418,6 +424,7 @@ export default function ProductDetailScreen() {
         unit={unitCode}
         step={step}
         minQty={minQty}
+        maxQty={maxQty}
         inStock={inStock}
         productName={isBn ? nameBn || name : name}
         productSlug={product?.slug || (slug as string)}
