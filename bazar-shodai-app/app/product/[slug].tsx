@@ -143,7 +143,8 @@ export default function ProductDetailScreen() {
 
   // Real backend price fields
   const price = Number(product?.sellingPrice ?? product?.price ?? 0);
-  const regularPrice = product?.regularPrice ? Number(product.regularPrice) : undefined;
+  const rawRegular = product?.regularPrice ? Number(product.regularPrice) : undefined;
+  const regularPrice = rawRegular && rawRegular > price ? rawRegular : undefined;
   const discountPercent =
     product?.discountPercent ??
     (regularPrice && regularPrice > price

@@ -56,7 +56,7 @@ const toForm = (p: ProductDetail): Form => ({
   categoryId: p.categoryId, brandId: p.brandId ?? "",
   unitId: p.unitId ?? "", packSize: p.packSize ?? "", sellStep: p.sellStep ? n(p.sellStep) : "", minQty: p.minQty ? n(p.minQty) : "", maxQty: p.maxQty ? n(p.maxQty) : "", isWeighed: p.isWeighed,
   shortDescription: p.shortDescription ?? "", shortDescriptionBn: p.shortDescriptionBn ?? "", description: p.description, descriptionBn: p.descriptionBn ?? "",
-  buyingPrice: n(p.buyingPrice), regularPrice: n(p.regularPrice), sellingPrice: n(p.priceBeforeDiscount ?? p.sellingPrice),
+  buyingPrice: n(p.buyingPrice), regularPrice: p.regularPrice && Number(p.regularPrice) > Number(p.priceBeforeDiscount ?? p.sellingPrice) ? n(p.regularPrice) : "", sellingPrice: n(p.priceBeforeDiscount ?? p.sellingPrice),
   discountPrice: p.discountPrice ? n(p.discountPrice) : "", discountStart: toLocalInput(p.discountStart), discountEnd: toLocalInput(p.discountEnd), discountLabel: p.discountLabel ?? "",
   trackStock: p.trackStock ?? true, stock: String(p.stock), lowStockThreshold: String(p.lowStockThreshold), freeShipping: p.freeShipping,
   weight: n(p.weight), length: n(p.length), width: n(p.width), height: n(p.height),
@@ -118,7 +118,6 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
       const price = detail.stripPrice ?? detail.unitPrice ?? detail.boxPrice;
       if (price) {
         next.sellingPrice = String(price);
-        next.regularPrice = String(price);
         if (!next.buyingPrice) {
           next.buyingPrice = (price * 0.88).toFixed(2);
         }
@@ -188,7 +187,7 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
     if (!f.categoryId) e.categoryId = "Choose a category";
 
     if (f.buyingPrice === "" || Number(f.buyingPrice) < 0) e.buyingPrice = "Enter the cost price";
-    if (!(Number(f.regularPrice) > 0)) e.regularPrice = "Enter the regular (MRP) price";
+    if (f.regularPrice !== "" && Number(f.regularPrice) < 0) e.regularPrice = "Regular price cannot be negative";
     if (!(Number(f.sellingPrice) > 0)) e.sellingPrice = "Enter the selling price";
     if (f.discountPrice !== "") {
       if (Number(f.discountPrice) >= Number(f.sellingPrice)) e.discountPrice = "Must be lower than the selling price";
@@ -214,7 +213,7 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
       unitId: f.unitId || undefined, packSize: f.packSize.trim(), isWeighed: f.isWeighed,
       ...(f.unitId ? { sellStep: f.sellStep === "" ? null : Number(f.sellStep), minQty: f.minQty === "" ? (f.sellStep !== "" ? Number(f.sellStep) : null) : Number(f.minQty), maxQty: f.maxQty === "" ? null : Number(f.maxQty) } : {}),
       status: f.status, categoryId: f.categoryId, brandId: f.brandId || undefined,
-      buyingPrice: Number(f.buyingPrice), regularPrice: Number(f.regularPrice), sellingPrice: Number(f.sellingPrice),
+      buyingPrice: Number(f.buyingPrice), regularPrice: f.regularPrice === "" ? null : Number(f.regularPrice), sellingPrice: Number(f.sellingPrice),
       discountPrice: f.discountPrice === "" ? null : Number(f.discountPrice),
       discountStart: f.discountPrice === "" ? null : fromLocalInput(f.discountStart),
       discountEnd: f.discountPrice === "" ? null : fromLocalInput(f.discountEnd),
@@ -402,7 +401,7 @@ function ProductForm({ id, p }: { id?: string; p?: ProductDetail }) {
           <Section title={tr("Prices (৳)")}>
             <div className="grid gap-3 sm:grid-cols-3">
               <Field label={tr("Cost price (what you pay)")} required error={errs.buyingPrice}><Input type="number" min={0} step="0.01" value={f.buyingPrice} onChange={(e) => set("buyingPrice", e.target.value)} /></Field>
-              <Field label={tr("Regular price (MRP)")} required error={errs.regularPrice} hint={tr("The crossed-out 'was' price")}><Input type="number" min={0} step="0.01" value={f.regularPrice} onChange={(e) => set("regularPrice", e.target.value)} /></Field>
+              <Field label={tr("Regular price (optional)")} error={errs.regularPrice} hint={tr("Crossed-out 'was' price: shown only if higher than selling price")}><Input type="number" min={0} step="0.01" value={f.regularPrice} onChange={(e) => set("regularPrice", e.target.value)} placeholder={tr("Optional")} /></Field>
               <Field label={tr("Selling price")} required error={errs.sellingPrice}><Input type="number" min={0} step="0.01" value={f.sellingPrice} onChange={(e) => set("sellingPrice", e.target.value)} /></Field>
             </div>
             {margin !== null && <p className="mt-3 text-xs text-muted-foreground">{tr("Margin at the selling price:")}{" "}<b className={margin < 0 ? "text-destructive" : "text-foreground"}>{margin.toFixed(1)}%</b> · profit {money(Number(f.sellingPrice) - Number(f.buyingPrice))} per unit</p>}

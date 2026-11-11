@@ -346,14 +346,16 @@ export class CreateProductDto {
   @Min(0)
   buyingPrice: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
+    nullable: true,
     example: 2000,
-    description: 'MRP / original price (shown struck through)',
+    description: 'MRP / original price (shown struck through if higher than selling price)',
   })
+  @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @IsPositive()
-  regularPrice: number;
+  regularPrice?: number | null;
 
   @ApiProperty({ example: 1800, description: 'Normal selling price' })
   @Type(() => Number)

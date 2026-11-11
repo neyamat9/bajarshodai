@@ -93,7 +93,11 @@ export type CardRow = Prisma.ProductGetPayload<{ select: typeof cardSelect }>;
 
 export function toCard(p: CardRow) {
   const price = Number(p.sellingPrice);
-  const regular = Number(p.regularPrice);
+  const regular =
+    p.regularPrice !== null && p.regularPrice !== undefined
+      ? Number(p.regularPrice)
+      : 0;
+  const showRegular = regular > price && regular > 0;
   return {
     id: p.id,
     name: p.name,
@@ -120,11 +124,10 @@ export function toCard(p: CardRow) {
     maxQty: p.maxQty ? Number(p.maxQty) : null,
     isWeighed: p.isWeighed,
     price,
-    regularPrice: regular,
-    discountPercent:
-      regular > price && regular > 0
-        ? Math.round(((regular - price) / regular) * 100)
-        : 0,
+    regularPrice: showRegular ? regular : null,
+    discountPercent: showRegular
+      ? Math.round(((regular - price) / regular) * 100)
+      : 0,
     inStock: !p.trackStock || Number(p.stock) > 0,
     trackStock: p.trackStock,
     stock: Number(p.stock),

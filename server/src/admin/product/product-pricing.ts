@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 
 export interface PricingInput {
-  regularPrice: number;
+  regularPrice?: number | null;
   // The everyday price (what customers pay when no promotion is running)
   normalPrice: number;
   buyingPrice: number;
@@ -32,11 +32,6 @@ export function isPromoActive(
 
 // Checks the prices make sense together.
 export function validatePricing(p: PricingInput, now = new Date()) {
-  if (p.normalPrice > p.regularPrice) {
-    throw new BadRequestException(
-      'Selling price cannot be higher than the regular price (MRP)',
-    );
-  }
   if (p.discountPrice === null) {
     if (p.discountStart || p.discountEnd) {
       throw new BadRequestException(
@@ -66,10 +61,14 @@ export function computePricing(
 ): PricingResult {
   const active = isPromoActive(p, now);
   const sellingPrice = active ? (p.discountPrice as number) : p.normalPrice;
+  const reg =
+    p.regularPrice !== undefined && p.regularPrice !== null
+      ? Number(p.regularPrice)
+      : null;
   return {
     sellingPrice,
     priceBeforeDiscount: active ? p.normalPrice : null,
-    isDiscounted: sellingPrice < p.regularPrice,
+    isDiscounted: reg !== null ? sellingPrice < reg : false,
     // margin on the normal price, so a short promotion does not distort it
     profitMargin:
       p.normalPrice > 0

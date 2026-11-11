@@ -147,7 +147,7 @@ export interface ProductInput {
   shortDescription?: string;
   status?: ProductStatus;
   buyingPrice?: number;
-  regularPrice?: number;
+  regularPrice?: number | null;
   sellingPrice?: number;
   discountPrice?: number | null;
   discountStart?: string | null;

@@ -258,8 +258,12 @@ export class ProductService {
   async create(dto: CreateProductDto, adminId: string) {
     const name = dto.name.trim();
     const normalPrice = dto.sellingPrice;
+    const regularPrice =
+      dto.regularPrice !== undefined && dto.regularPrice !== null
+        ? dto.regularPrice
+        : normalPrice;
     const pricing = this.pricingFrom({
-      regularPrice: dto.regularPrice,
+      regularPrice: dto.regularPrice ?? null,
       normalPrice,
       buyingPrice: dto.buyingPrice,
       discountPrice: dto.discountPrice ?? null,
@@ -312,7 +316,7 @@ export class ProductService {
             isWeighed: dto.isWeighed ?? false,
             status: dto.status ?? 'ACTIVE',
             buyingPrice: dto.buyingPrice,
-            regularPrice: dto.regularPrice,
+            regularPrice,
             sellingPrice: pricing.sellingPrice,
             priceBeforeDiscount: pricing.priceBeforeDiscount,
             isDiscounted: pricing.isDiscounted,
@@ -459,8 +463,14 @@ export class ProductService {
     const normalPrice =
       dto.sellingPrice ??
       num(current.priceBeforeDiscount ?? current.sellingPrice)!;
+    const regularPrice =
+      dto.regularPrice !== undefined
+        ? dto.regularPrice === null
+          ? normalPrice
+          : Number(dto.regularPrice)
+        : Number(current.regularPrice);
     const merged = {
-      regularPrice: dto.regularPrice ?? Number(current.regularPrice),
+      regularPrice,
       normalPrice,
       buyingPrice: dto.buyingPrice ?? Number(current.buyingPrice),
       discountPrice:

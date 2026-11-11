@@ -151,7 +151,7 @@ export function mapProduct(p: Raw, locale: Locale = clientLocale()): Product {
   const name = pick(locale, p.name, p.nameBn);
   const price = isCard ? num(p.price) : num(p.sellingPrice);
   const regular = num(p.regularPrice);
-  const originalPrice = regular > price ? regular : undefined;
+  const originalPrice = regular && regular > price ? regular : undefined;
   const discount = originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : undefined;
 
   let images = (p.images ?? []).map((im: Raw, i: number) => ({
