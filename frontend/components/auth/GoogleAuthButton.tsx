@@ -11,9 +11,12 @@ interface GoogleAuthButtonProps {
   disabled?: boolean;
 }
 
+const GOOGLE_CLIENT_ID =
+  process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+  "302074665927-ku2ajdtkae2kj8or8ph5e9kgrjdkn9gj.apps.googleusercontent.com";
+
 export default function GoogleAuthButton(props: GoogleAuthButtonProps) {
-  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-  if (!clientId) {
+  if (!GOOGLE_CLIENT_ID) {
     return null;
   }
   return <GoogleAuthButtonInner {...props} />;

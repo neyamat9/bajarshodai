@@ -231,26 +231,24 @@ export default function AuthForm({ mode, expired = false, initialEmail = "", onE
       )}
 
       {/* 1-Click Google Sign-In */}
-      {Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) && (
-        <div className="mb-5 space-y-3">
-          <GoogleAuthButton
-            onSuccess={handleGoogleSuccess}
-            onError={(err) => {
-              setErrors({ general: err });
-              triggerShake();
-            }}
-            disabled={off}
-          />
-          <div className="relative flex items-center justify-center">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-border" />
-            </div>
-            <span className="relative bg-card px-3 text-xs uppercase tracking-wider text-muted-foreground">
-              {t("orContinueWith")}
-            </span>
+      <div className="mb-5 space-y-3">
+        <GoogleAuthButton
+          onSuccess={handleGoogleSuccess}
+          onError={(err) => {
+            setErrors({ general: err });
+            triggerShake();
+          }}
+          disabled={off}
+        />
+        <div className="relative flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-border" />
           </div>
+          <span className="relative bg-card px-3 text-xs uppercase tracking-wider text-muted-foreground">
+            {t("orContinueWith")}
+          </span>
         </div>
-      )}
+      </div>
 
       <form ref={formRef} onSubmit={handleSubmit} noValidate className="space-y-4">
         {mode === "signup" && (

@@ -178,7 +178,8 @@ export class AuthService {
   async validateGoogleUser(token: string): Promise<User> {
     const clientId =
       this.configService.get<string>('GOOGLE_CLIENT_ID') ||
-      process.env.GOOGLE_CLIENT_ID;
+      process.env.GOOGLE_CLIENT_ID ||
+      '302074665927-ku2ajdtkae2kj8or8ph5e9kgrjdkn9gj.apps.googleusercontent.com';
 
     if (!clientId) {
       this.logger.error('GOOGLE_CLIENT_ID environment variable is missing.');
