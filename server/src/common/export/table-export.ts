@@ -31,6 +31,12 @@ export interface Table {
   totals?: Row;
   // Shown above the table in Excel and returned in JSON, e.g. the date range
   meta?: Record<string, unknown>;
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 const MIME: Record<Exclude<ExportFormat, 'json'>, string> = {
@@ -87,6 +93,7 @@ export async function sendTable(
         columns: table.columns,
         rows: table.rows,
         totals: table.totals ?? null,
+        pagination: table.pagination ?? null,
       },
     });
     return;

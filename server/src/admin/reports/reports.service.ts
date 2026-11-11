@@ -72,7 +72,44 @@ export class ReportsService {
   async productPerformance(
     r: DateRange,
     includeUnsold: boolean,
+    pagination?: { page: number; limit: number },
   ): Promise<Table> {
+    const totalsRaw = await this.prisma.$queryRaw<
+      {
+        total: number;
+        units: number;
+        orders: number;
+        revenue: number;
+        cost: number;
+      }[]
+    >(Prisma.sql`
+      SELECT 
+        COUNT(*)::int AS total,
+        COALESCE(SUM(s.units), 0)::int AS units,
+        COALESCE(SUM(s.orders), 0)::int AS orders,
+        COALESCE(SUM(s.revenue), 0)::float8 AS revenue,
+        COALESCE(SUM(COALESCE(s.units, 0) * p."buyingPrice"), 0)::float8 AS cost
+      FROM "Product" p
+      ${includeUnsold ? Prisma.sql`LEFT JOIN` : Prisma.sql`JOIN`} (
+        SELECT i."productId", SUM(i.quantity) AS units, SUM(i.total) AS revenue,
+               COUNT(DISTINCT i."orderId") AS orders
+        FROM "OrderItem" i JOIN "Order" o ON o.id = i."orderId"
+        WHERE ${VALID} AND o."placedAt" >= ${ts(r.from)} AND o."placedAt" < ${ts(r.to)}
+        GROUP BY i."productId"
+      ) s ON s."productId" = p.id
+    `);
+    const summary = totalsRaw[0] ?? {
+      total: 0,
+      units: 0,
+      orders: 0,
+      revenue: 0,
+      cost: 0,
+    };
+
+    const limitClause = pagination
+      ? Prisma.sql`LIMIT ${pagination.limit} OFFSET ${(pagination.page - 1) * pagination.limit}`
+      : Prisma.sql`LIMIT ${REPORT_MAX_ROWS + 1}`;
+
     const rows = await this.prisma.$queryRaw<
       {
         name: string;
@@ -106,8 +143,10 @@ export class ReportsService {
         GROUP BY i."productId"
       ) s ON s."productId" = p.id
       ORDER BY revenue DESC, p.name ASC
-      LIMIT ${REPORT_MAX_ROWS + 1}`);
-    assertNotTruncated(rows);
+      ${limitClause}`);
+    if (!pagination) {
+      assertNotTruncated(rows);
+    }
     const out = rows.map((x) => ({
       ...x,
       revenue: round2(x.revenue),
@@ -117,8 +156,23 @@ export class ReportsService {
         ? round2(((x.revenue - x.cost) / x.revenue) * 100)
         : null,
     }));
-    const t = (k: 'units' | 'orders' | 'revenue' | 'cost' | 'profit') =>
-      out.reduce((s, x) => s + x[k], 0);
+    const totals = pagination
+      ? {
+          name: 'Total',
+          units: summary.units,
+          orders: summary.orders,
+          revenue: round2(summary.revenue),
+          cost: round2(summary.cost),
+          profit: round2(summary.revenue - summary.cost),
+        }
+      : {
+          name: 'Total',
+          units: out.reduce((s, x) => s + x.units, 0),
+          orders: out.reduce((s, x) => s + x.orders, 0),
+          revenue: round2(out.reduce((s, x) => s + x.revenue, 0)),
+          cost: round2(out.reduce((s, x) => s + x.cost, 0)),
+          profit: round2(out.reduce((s, x) => s + x.profit, 0)),
+        };
     return {
       title: 'Product performance',
       filename: 'product-performance',
@@ -145,18 +199,47 @@ export class ReportsService {
         { key: 'reviews', header: 'Reviews', type: 'int' },
       ],
       rows: out,
-      totals: {
-        name: 'Total',
-        units: t('units'),
-        orders: t('orders'),
-        revenue: round2(t('revenue')),
-        cost: round2(t('cost')),
-        profit: round2(t('profit')),
-      },
+      totals,
+      pagination: pagination
+        ? {
+            page: pagination.page,
+            limit: pagination.limit,
+            total: summary.total,
+            totalPages: Math.max(1, Math.ceil(summary.total / pagination.limit)),
+          }
+        : undefined,
     };
   }
 
-  async stockValuation(): Promise<Table> {
+  async stockValuation(
+    pagination?: { page: number; limit: number },
+  ): Promise<Table> {
+    const summaryRaw = await this.prisma.$queryRaw<
+      {
+        total: number;
+        stock: number;
+        costValue: number;
+        retailValue: number;
+      }[]
+    >(Prisma.sql`
+      SELECT 
+        COUNT(*)::int AS total,
+        COALESCE(SUM(CASE WHEN s."trackStock" THEN GREATEST(0, s.stock) ELSE 0 END), 0)::int AS stock,
+        COALESCE(SUM(CASE WHEN s."trackStock" THEN GREATEST(0, s.stock) * s.cost::float8 ELSE 0 END), 0)::float8 AS "costValue",
+        COALESCE(SUM(CASE WHEN s."trackStock" THEN GREATEST(0, s.stock) * s.retail::float8 ELSE 0 END), 0)::float8 AS "retailValue"
+      FROM (${SKU_ROWS}) s WHERE status NOT IN ('DISCONTINUED')
+    `);
+    const summary = summaryRaw[0] ?? {
+      total: 0,
+      stock: 0,
+      costValue: 0,
+      retailValue: 0,
+    };
+
+    const limitClause = pagination
+      ? Prisma.sql`LIMIT ${pagination.limit} OFFSET ${(pagination.page - 1) * pagination.limit}`
+      : Prisma.sql`LIMIT ${REPORT_MAX_ROWS + 1}`;
+
     const rows = await this.prisma.$queryRaw<
       {
         sku: string | null;
@@ -171,8 +254,10 @@ export class ReportsService {
     >(Prisma.sql`
       SELECT * FROM (${SKU_ROWS}) s WHERE status NOT IN ('DISCONTINUED')
       ORDER BY "productName" ASC, "variantName" ASC NULLS FIRST
-      LIMIT ${REPORT_MAX_ROWS + 1}`);
-    assertNotTruncated(rows);
+      ${limitClause}`);
+    if (!pagination) {
+      assertNotTruncated(rows);
+    }
     const out = rows.map((x) => {
       const units = x.trackStock ? Math.max(0, x.stock) : 0;
       const cost = Number(x.cost);
@@ -191,6 +276,19 @@ export class ReportsService {
     });
     const sum = (k: 'stock' | 'costValue' | 'retailValue') =>
       out.reduce((s, x) => s + (k === 'stock' ? Math.max(0, x[k]) : x[k]), 0);
+    const totals = pagination
+      ? {
+          sku: 'Total',
+          stock: summary.stock,
+          costValue: round2(summary.costValue),
+          retailValue: round2(summary.retailValue),
+        }
+      : {
+          sku: 'Total',
+          stock: sum('stock'),
+          costValue: round2(sum('costValue')),
+          retailValue: round2(sum('retailValue')),
+        };
     return {
       title: 'Stock valuation',
       filename: 'stock-valuation',
@@ -210,12 +308,15 @@ export class ReportsService {
         { key: 'retailValue', header: 'Retail value', type: 'money' },
       ],
       rows: out,
-      totals: {
-        sku: 'Total',
-        stock: sum('stock'),
-        costValue: round2(sum('costValue')),
-        retailValue: round2(sum('retailValue')),
-      },
+      totals,
+      pagination: pagination
+        ? {
+            page: pagination.page,
+            limit: pagination.limit,
+            total: summary.total,
+            totalPages: Math.max(1, Math.ceil(summary.total / pagination.limit)),
+          }
+        : undefined,
     };
   }
 
@@ -306,7 +407,30 @@ export class ReportsService {
     };
   }
 
-  async customers(r: DateRange): Promise<Table> {
+  async customers(
+    r: DateRange,
+    pagination?: { page: number; limit: number },
+  ): Promise<Table> {
+    const summaryRaw = await this.prisma.$queryRaw<
+      {
+        total: number;
+        orders: number;
+        spent: number;
+      }[]
+    >(Prisma.sql`
+      SELECT 
+        COUNT(DISTINCT u.id)::int AS total,
+        COUNT(o.id)::int AS orders,
+        COALESCE(SUM(o.total), 0)::float8 AS spent
+      FROM "User" u JOIN "Order" o ON o."userId" = u.id
+      WHERE ${VALID} AND o."placedAt" >= ${ts(r.from)} AND o."placedAt" < ${ts(r.to)}
+    `);
+    const summary = summaryRaw[0] ?? { total: 0, orders: 0, spent: 0 };
+
+    const limitClause = pagination
+      ? Prisma.sql`LIMIT ${pagination.limit} OFFSET ${(pagination.page - 1) * pagination.limit}`
+      : Prisma.sql`LIMIT ${REPORT_MAX_ROWS + 1}`;
+
     const rows = await this.prisma.$queryRaw<
       {
         name: string;
@@ -330,8 +454,10 @@ export class ReportsService {
       FROM "User" u JOIN "Order" o ON o."userId" = u.id
       WHERE ${VALID} AND o."placedAt" >= ${ts(r.from)} AND o."placedAt" < ${ts(r.to)}
       GROUP BY u.id ORDER BY spent DESC, u.name ASC
-      LIMIT ${REPORT_MAX_ROWS + 1}`);
-    assertNotTruncated(rows);
+      ${limitClause}`);
+    if (!pagination) {
+      assertNotTruncated(rows);
+    }
     const out = rows.map((x) => ({
       ...x,
       spent: round2(x.spent),
@@ -339,8 +465,8 @@ export class ReportsService {
       avgOrderValue: x.orders ? round2(x.spent / x.orders) : 0,
       newCustomer: x.isNew ? 'yes' : 'no',
     }));
-    const orders = out.reduce((s, x) => s + x.orders, 0);
-    const spent = round2(out.reduce((s, x) => s + x.spent, 0));
+    const orders = pagination ? summary.orders : out.reduce((s, x) => s + x.orders, 0);
+    const spent = pagination ? round2(summary.spent) : round2(out.reduce((s, x) => s + x.spent, 0));
     return {
       title: 'Customers',
       filename: 'customers-report',
@@ -369,6 +495,14 @@ export class ReportsService {
         spent,
         avgOrderValue: orders ? round2(spent / orders) : 0,
       },
+      pagination: pagination
+        ? {
+            page: pagination.page,
+            limit: pagination.limit,
+            total: summary.total,
+            totalPages: Math.max(1, Math.ceil(summary.total / pagination.limit)),
+          }
+        : undefined,
     };
   }
 }

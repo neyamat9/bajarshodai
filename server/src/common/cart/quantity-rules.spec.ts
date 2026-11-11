@@ -34,8 +34,8 @@ describe('qty helpers', () => {
 
 describe('saleRuleOf', () => {
   it('takes the unit defaults', () => {
-    expect(saleRuleOf({ unit: kg })).toEqual({ allowDecimal: true, step: 0.5, min: 0.5 });
-    expect(saleRuleOf({ unit: piece })).toEqual({ allowDecimal: false, step: 1, min: 1 });
+    expect(saleRuleOf({ unit: kg })).toEqual({ allowDecimal: true, step: 0.5, min: 0.5, max: null });
+    expect(saleRuleOf({ unit: piece })).toEqual({ allowDecimal: false, step: 1, min: 1, max: null });
   });
 
   it('lets the product override step and minimum', () => {
@@ -43,6 +43,7 @@ describe('saleRuleOf', () => {
       allowDecimal: true,
       step: 0.25,
       min: 1,
+      max: null,
     });
   });
 
@@ -51,11 +52,21 @@ describe('saleRuleOf', () => {
       allowDecimal: true,
       step: 1,
       min: 1,
+      max: null,
     });
   });
 
   it('treats a product without a unit as whole pieces', () => {
-    expect(saleRuleOf({})).toEqual({ allowDecimal: false, step: 1, min: 1 });
+    expect(saleRuleOf({})).toEqual({ allowDecimal: false, step: 1, min: 1, max: null });
+  });
+
+  it('respects maximum order quantity when set', () => {
+    expect(saleRuleOf({ unit: kg, maxQty: 5 })).toEqual({
+      allowDecimal: true,
+      step: 0.5,
+      min: 0.5,
+      max: 5,
+    });
   });
 });
 

@@ -6,8 +6,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsIn, IsOptional } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { IsBoolean, IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
 import type { Response } from 'express';
 import { JwtAuthGuard, PermissionsGuard } from '../../common/guards';
 import { RequirePermissions } from '../../common/decorators';
@@ -30,6 +30,21 @@ class ReportQueryDto extends RangeQueryDto {
   @IsOptional()
   @IsIn(EXPORT_FORMATS)
   format: ExportFormat = 'json';
+
+  @ApiPropertyOptional({ default: 1 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @ApiPropertyOptional({ default: 20 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
 }
 
 class SalesReportQueryDto extends ReportQueryDto {
@@ -41,13 +56,13 @@ class SalesReportQueryDto extends ReportQueryDto {
 
 class ProductReportQueryDto extends ReportQueryDto {
   @ApiPropertyOptional({
-    default: true,
+    default: false,
     description: 'false = only products that sold in the range',
   })
   @IsOptional()
   @Transform(toBool)
   @IsBoolean()
-  includeUnsold: boolean = true;
+  includeUnsold: boolean = false;
 }
 
 class StockReportQueryDto {
@@ -55,6 +70,21 @@ class StockReportQueryDto {
   @IsOptional()
   @IsIn(EXPORT_FORMATS)
   format: ExportFormat = 'json';
+
+  @ApiPropertyOptional({ default: 1 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @ApiPropertyOptional({ default: 20 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
 }
 
 @ApiTags('Admin - Reports')
@@ -131,6 +161,7 @@ export class ReportsController {
     const table = await this.reports.productPerformance(
       resolveRange(q.from, q.to),
       q.includeUnsold,
+      q.format === 'json' ? { page: q.page ?? 1, limit: q.limit ?? 20 } : undefined,
     );
     await sendTable(res, q.format, table);
   }
@@ -141,7 +172,13 @@ export class ReportsController {
       'Stock on hand valued at cost and at selling price, per SKU with totals. format=json|csv|xlsx',
   })
   async stock(@Query() q: StockReportQueryDto, @Res() res: Response) {
-    await sendTable(res, q.format, await this.reports.stockValuation());
+    await sendTable(
+      res,
+      q.format,
+      await this.reports.stockValuation(
+        q.format === 'json' ? { page: q.page ?? 1, limit: q.limit ?? 20 } : undefined,
+      ),
+    );
   }
 
   @Get('coupon-performance')
@@ -166,7 +203,10 @@ export class ReportsController {
     await sendTable(
       res,
       q.format,
-      await this.reports.customers(resolveRange(q.from, q.to)),
+      await this.reports.customers(
+        resolveRange(q.from, q.to),
+        q.format === 'json' ? { page: q.page ?? 1, limit: q.limit ?? 20 } : undefined,
+      ),
     );
   }
 }

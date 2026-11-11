@@ -8,6 +8,12 @@ export interface ReportTable {
   columns: { key: string; header: string; type?: "text" | "int" | "number" | "money" | "percent" | "date" }[];
   rows: Record<string, unknown>[];
   totals?: Record<string, unknown>;
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 export const REPORTS = [
   { id: "sales", label: tr("Sales"), hint: tr("Orders and revenue over time"), path: "/admin/reports/sales", range: true, gran: true },
