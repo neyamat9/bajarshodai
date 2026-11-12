@@ -226,35 +226,8 @@ export default function LocationPicker({
         </p>
       )}
 
-      {/* Skip Location / Abroad Ordering Option */}
-      {!skipLocation ? (
-        <button
-          type="button"
-          onClick={() => onSkipLocationChange?.(true)}
-          className="flex items-center justify-between w-full p-3.5 rounded border border-border bg-card/60 hover:bg-card hover:border-brand-fresh/40 text-left transition-all group"
-        >
-          <div className="flex items-center gap-3">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-fresh/10 text-brand-fresh group-hover:bg-brand-fresh/20 transition-colors">
-              <Globe className="h-4 w-4" aria-hidden="true" />
-            </span>
-            <div>
-              <p className="text-xs font-bold text-foreground">
-                {locale === "bn"
-                  ? "প্রবাসী অথবা দূর থেকে অর্ডার? লোকেশন পিন ছাড়া অর্ডার করুন"
-                  : "Ordering from abroad or remote? Order without location pin"}
-              </p>
-              <p className="text-[11px] text-muted-foreground">
-                {locale === "bn"
-                  ? "ডেলিভারি চার্জ দোকান থেকে নিশ্চিত করা হবে (৳—)"
-                  : "Delivery fee will be confirmed by store (৳—)"}
-              </p>
-            </div>
-          </div>
-          <span className="text-xs font-bold text-brand-fresh shrink-0">
-            {locale === "bn" ? "নির্বাচন করুন →" : "Select →"}
-          </span>
-        </button>
-      ) : (
+      {/* Skip Location / Abroad Active Form (shown when customer chooses to order without pin) */}
+      {skipLocation && (
         <div className="rounded-lg border-2 border-brand-fresh/40 bg-card p-4 space-y-3.5 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2.5">
@@ -561,10 +534,44 @@ export default function LocationPicker({
                 )}
               </div>
             ) : (
-              <p role="alert" className="flex items-start gap-2 text-sm font-semibold text-destructive">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                {t("outOfArea", { km: km(quote.straightKm ?? 0), radius: formatNumber(quote.radiusKm, locale, 0), shop: shopName })}
-              </p>
+              <div className="space-y-3">
+                <p role="alert" className="flex items-start gap-2 text-sm font-semibold text-destructive">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                  {t("outOfArea", { km: km(quote.straightKm ?? 0), radius: formatNumber(quote.radiusKm, locale, 0), shop: shopName })}
+                </p>
+
+                {!skipLocation && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onIsAbroadOrderChange?.(false);
+                      onSkipLocationChange?.(true);
+                    }}
+                    className="flex items-center justify-between w-full p-3.5 rounded border border-border bg-card hover:bg-card/80 hover:border-brand-fresh/40 text-left transition-all group shadow-sm"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-fresh/10 text-brand-fresh group-hover:bg-brand-fresh/20 transition-colors">
+                        <Globe className="h-4 w-4" aria-hidden="true" />
+                      </span>
+                      <div>
+                        <p className="text-xs font-bold text-foreground">
+                          {locale === "bn"
+                            ? "প্রবাসী অথবা দূর থেকে অর্ডার? লোকেশন পিন ছাড়া অর্ডার করুন"
+                            : "Ordering from abroad or remote? Order without location pin"}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {locale === "bn"
+                            ? "ডেলিভারি চার্জ দোকান থেকে নিশ্চিত করা হবে (৳—)"
+                            : "Delivery fee will be confirmed by store (৳—)"}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold text-brand-fresh shrink-0">
+                      {locale === "bn" ? "নির্বাচন করুন →" : "Select →"}
+                    </span>
+                  </button>
+                )}
+              </div>
             )
           ) : null}
 

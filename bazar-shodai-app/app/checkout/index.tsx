@@ -464,8 +464,8 @@ export default function CheckoutScreen() {
               </View>
             )}
 
-            {/* Skip Location / Abroad Card */}
-            {!skipLocation ? (
+            {/* Skip Location / Abroad Card: only show when out of area */}
+            {!skipLocation && locationBlock === 'OUT_OF_AREA' && (
               <TouchableOpacity
                 style={styles.skipPinBtn}
                 onPress={() => setSkipLocation(true)}
@@ -482,7 +482,9 @@ export default function CheckoutScreen() {
                 </View>
                 <Icon name="ChevronRight" size={16} color="#0b6234" />
               </TouchableOpacity>
-            ) : (
+            )}
+
+            {skipLocation && (
               <View style={styles.skipPinCard}>
                 <View style={styles.skipPinHeader}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
