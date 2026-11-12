@@ -524,6 +524,8 @@
   },
   "Checkout": {
     "title": "Checkout",
+    "guestNotice": "Checking out as a guest. Have an account? Log in to use your saved addresses.",
+    "loginNow": "Log in",
     "backToCart": "Back to cart",
     "secure": "Secure Checkout",
     "progress": "Checkout progress",

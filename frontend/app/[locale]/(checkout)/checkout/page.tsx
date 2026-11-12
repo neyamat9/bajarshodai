@@ -212,14 +212,14 @@ function Checkout() {
       {!user && (
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded border border-brand-fresh/30 bg-brand-fresh/10 px-4 py-3 text-xs sm:text-sm">
           <span className="text-foreground">
-            {t("guestNotice") || "Checking out as a guest. Have an account? Log in to use your saved addresses."}
+            {t("guestNotice")}
           </span>
           <button
             type="button"
             onClick={() => openAuth("login")}
             className="font-bold text-brand-fresh hover:underline cursor-pointer"
           >
-            {t("loginNow") || "Log in"}
+            {t("loginNow")}
           </button>
         </div>
       )}
