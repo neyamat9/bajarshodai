@@ -310,6 +310,9 @@ model User {
   customerNotes        CustomerNote[]          @relation("CustomerNotes")
   notesWritten         CustomerNote[]          @relation("NotesWritten")
   prescriptions        Prescription[]
+  chatConversations    ChatConversation[]      @relation("UserChatConversations")
+  adminAssignedChats   ChatConversation[]      @relation("AdminAssignedChats")
+  chatMessages         ChatMessage[]           @relation("UserChatMessages")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1950,4 +1953,65 @@ model Prescription {
 
   @@index([userId, createdAt])
   @@index([status, createdAt])
+}
+
+// ============================================================
+// LIVE CHAT MODULE
+// ============================================================
+
+enum ChatSenderType {
+  CUSTOMER
+  ADMIN
+  SYSTEM
+}
+
+enum ChatConversationStatus {
+  ACTIVE
+  RESOLVED
+  CLOSED
+  ARCHIVED
+}
+
+model ChatConversation {
+  id                  String                 @id @default(uuid())
+  userId              String?
+  user                User?                  @relation("UserChatConversations", fields: [userId], references: [id], onDelete: SetNull)
+  guestToken          String?                @unique
+  guestName           String?
+  guestPhone          String?
+  status              ChatConversationStatus @default(ACTIVE)
+  lastMessageAt       DateTime               @default(now())
+  lastMessageText     String?                @db.Text
+  unreadCustomerCount Int                    @default(0)
+  unreadAdminCount    Int                    @default(0)
+  assignedAdminId     String?
+  assignedAdmin       User?                  @relation("AdminAssignedChats", fields: [assignedAdminId], references: [id], onDelete: SetNull)
+  messages            ChatMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([guestToken])
+  @@index([status, lastMessageAt])
+}
+
+model ChatMessage {
+  id             String           @id @default(uuid())
+  conversationId String
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderType     ChatSenderType
+  senderId       String?
+  sender         User?            @relation("UserChatMessages", fields: [senderId], references: [id], onDelete: SetNull)
+  senderName     String?
+  text           String?          @db.Text
+  attachmentUrl  String?
+  attachmentType String?
+  isRead         Boolean          @default(false)
+  readAt         DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([conversationId, id])
 }

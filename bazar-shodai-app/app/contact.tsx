@@ -20,8 +20,8 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { toast } from '@/store/useToastStore';
 import { haptics } from '@/services/haptics';
 
-const HOTLINE_PHONE = '+8801700000000';
-const WHATSAPP_NUMBER = '8801700000000';
+const HOTLINE_PHONE = '+8801834529197';
+const WHATSAPP_NUMBER = '8801834529197';
 
 export default function ContactUsScreen() {
   const router = useRouter();

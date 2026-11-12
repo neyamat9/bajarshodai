@@ -1,9 +1,11 @@
 import CartSidebar from "@/components/cart/CartSidebar";
 import FloatingCart from "@/components/cart/FloatingCart";
 import { AuthModalProvider } from "@/components/auth/AuthModal";
+import { LiveChatProvider } from "@/components/chat/LiveChatContext";
+import LiveChatButton from "@/components/chat/LiveChatButton";
+import LiveChatModal from "@/components/chat/LiveChatModal";
 import { ProductQuickViewProvider } from "@/components/product/ProductQuickViewModal";
 import FreshnessWatcher from "@/components/layout/FreshnessWatcher";
-import WhatsAppWidget from "@/components/layout/WhatsAppWidget";
 import ScrollToTop from "@/components/motion/ScrollToTop";
 import SmoothScroll from "@/components/motion/SmoothScroll";
 import ThemeProvider from "@/components/theme/ThemeProvider";
@@ -94,11 +96,14 @@ export default async function LocaleLayout({
                   <WishlistProvider>
                     <ProductQuickViewProvider>
                       <AuthModalProvider>
-                        {children}
-                        {/* Global overlays — rendered once, visibility driven by context */}
-                        <CartSidebar />
-                        <FloatingCart />
-                        <WhatsAppWidget />
+                        <LiveChatProvider>
+                          {children}
+                          {/* Global overlays — rendered once, visibility driven by context */}
+                          <CartSidebar />
+                          <FloatingCart />
+                          <LiveChatButton />
+                          <LiveChatModal />
+                        </LiveChatProvider>
                       </AuthModalProvider>
                     </ProductQuickViewProvider>
                   </WishlistProvider>

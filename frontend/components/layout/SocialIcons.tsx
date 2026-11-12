@@ -42,8 +42,21 @@ export default function SocialIcons({ settings, variant = "icons" }: { settings:
   const s = settings.site;
   const href = (key: string) => {
     if (key === "whatsapp") {
-      const num = (s.whatsapp ?? "").replace(/[^\d]/g, "");
-      return s.socialLinks?.whatsapp || (num ? `https://wa.me/${num}` : "#");
+      const raw = s.whatsapp || s.socialLinks?.whatsapp;
+      const num = (raw ?? "01834529197").replace(/[^\d]/g, "");
+      const fullNum = num.startsWith("88") ? num : num.startsWith("01") ? `88${num}` : num;
+      return s.socialLinks?.whatsapp?.startsWith("http")
+        ? s.socialLinks.whatsapp
+        : fullNum
+          ? `https://wa.me/${fullNum}`
+          : "https://wa.me/8801834529197";
+    }
+    if (key === "facebook") {
+      const fb = s.socialLinks?.facebook;
+      if (fb && fb !== "#") return fb;
+      return s.messenger
+        ? `https://www.facebook.com/${s.messenger}`
+        : "https://www.facebook.com/bajarshodai2";
     }
     return s.socialLinks?.[key] || "#";
   };

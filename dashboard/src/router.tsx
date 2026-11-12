@@ -80,6 +80,7 @@ export const router = createBrowserRouter([
           { path: "customers/password-reset-requests", element: <Guard needs={["customers.view"]}>{L(() => import("@/pages/customers/PasswordResetRequests"), <CustomersSkeleton />)}</Guard> },
           { path: "customers/:id", element: <Guard needs={["customers.view"]}>{L(() => import("@/pages/customers/CustomerDetail"), <DetailPageSkeleton />)}</Guard> },
           { path: "coupons", element: <Guard adminOnly>{L(() => import("@/pages/coupons/Coupons"), <CouponsSkeleton />)}</Guard> },
+          { path: "live-chat", element: <Guard needs={["orders.view", "customers.view"]}>{L(() => import("@/pages/care/LiveChat"), <DetailPageSkeleton />)}</Guard> },
           { path: "reviews", element: <Guard adminOnly>{L(() => import("@/pages/care/Reviews"), <ReviewsSkeleton />)}</Guard> },
           { path: "questions", element: <Guard adminOnly>{L(() => import("@/pages/care/Questions"), <QuestionsSkeleton />)}</Guard> },
           { path: "returns", element: <Guard needs={["orders.view"]}>{L(() => import("@/pages/care/Returns"), <ReturnsSkeleton />)}</Guard> },

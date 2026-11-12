@@ -49,7 +49,7 @@ export function WhatsAppOrderButton({
   const isBn = getAppLanguage() === 'bn';
 
   const resolvedNumber =
-    propNumber || settings?.site?.whatsapp || settings?.site?.hotline || '8801700000000';
+    propNumber || settings?.site?.whatsapp || settings?.site?.hotline || '8801834529197';
   const resolvedTemplate = propTemplate || settings?.site?.whatsappOrderTemplate || null;
 
   const handlePress = () => {

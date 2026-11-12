@@ -26,6 +26,7 @@ import { MapsModule } from './common/maps';
 import { BackInStockModule } from './common/back-in-stock';
 import { AdminFeedModule } from './common/admin-feed';
 import { CustomerModule } from './customer/customer.module';
+import { ChatModule } from './chat/chat.module';
 
 import { MedExModule } from './common/medex';
 
@@ -61,6 +62,7 @@ import { MedExModule } from './common/medex';
     AuthModule,
     AdminModule,
     CustomerModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],

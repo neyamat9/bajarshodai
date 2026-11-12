@@ -24,6 +24,7 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
 
 export interface SocialLinks {
   facebook?: string;
+  whatsapp?: string;
   instagram?: string;
   youtube?: string;
   tiktok?: string;
@@ -260,8 +261,8 @@ export const DEFAULT_SETTINGS: SettingsMap = {
     logoUrl: null,
     faviconUrl: null,
     contactEmail: null,
-    hotline: null,
-    whatsapp: null,
+    hotline: '01834529197',
+    whatsapp: '01834529197',
     messenger: 'bajarshodai2',
     messengerEnabled: true,
     messengerOrderTemplate: null,
@@ -271,7 +272,10 @@ export const DEFAULT_SETTINGS: SettingsMap = {
     currencySymbol: '৳',
     metaTitle: null,
     metaDescription: null,
-    socialLinks: {},
+    socialLinks: {
+      facebook: 'https://www.facebook.com/bajarshodai2',
+      whatsapp: 'https://wa.me/8801834529197',
+    },
     hero: {
       layout: 'SLIDER_AND_SIDE',
       maxSlides: 5,

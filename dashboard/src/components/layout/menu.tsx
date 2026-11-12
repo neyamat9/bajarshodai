@@ -3,6 +3,7 @@ import {
   LayoutDashboard, ShoppingBag, PlusCircle, RotateCcw, Users, Boxes, PackagePlus, Warehouse, FolderTree, Handshake, Images,
   TicketPercent, GalleryHorizontal, BellRing, Star, MessageCircleQuestion, LifeBuoy, Mail, Newspaper, BarChart3,
   Bell, Settings, History, ShieldCheck, UserCircle, Ruler, CalendarClock, UserCog, Truck, Bike, Pill, Sparkles, FileText,
+  MessageSquare,
 } from "lucide-react";
 import type { AttentionSummary } from "@/api/notifications";
 import type { AdminUser } from "@/api/client";
@@ -73,6 +74,7 @@ export const menu: MenuSection[] = [
   {
     title: tr("Customer care"),
     items: [
+      { label: tr("Live Chat"), to: "/live-chat", icon: i(MessageSquare), needs: ["orders.view", "customers.view"] },
       { label: tr("Prescriptions"), to: "/prescriptions", icon: i(FileText), adminOnly: true },
       { label: tr("Reviews"), to: "/reviews", icon: i(Star), adminOnly: true },
       { label: tr("Questions"), to: "/questions", icon: i(MessageCircleQuestion), badge: (s) => s.unansweredQuestions, adminOnly: true },
