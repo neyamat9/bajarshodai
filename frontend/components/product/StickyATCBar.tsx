@@ -2,6 +2,7 @@
 
 import { useCartActions } from "@/lib/hooks/use-cart";
 import WhatsAppOrderButton from "@/components/product/WhatsAppOrderButton";
+import MessengerOrderButton from "@/components/product/MessengerOrderButton";
 import type { Product, ProductVariant } from "@/lib/types";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
@@ -139,6 +140,15 @@ export default function StickyATCBar({
 
           {/* WhatsApp Direct Order Button */}
           <WhatsAppOrderButton
+            variant="compact"
+            productName={product.name}
+            productSlug={product.slug}
+            productPrice={currentPrice}
+            className="flex-shrink-0 h-10 px-3 sm:px-4"
+          />
+
+          {/* Messenger Direct Order Button */}
+          <MessengerOrderButton
             variant="compact"
             productName={product.name}
             productSlug={product.slug}

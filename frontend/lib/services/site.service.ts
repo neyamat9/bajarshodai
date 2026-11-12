@@ -18,6 +18,9 @@ export interface SiteSettings {
     hotline: string | null;
     whatsapp: string | null;
     whatsappOrderTemplate?: string | null;
+    messenger?: string | null;
+    messengerEnabled?: boolean;
+    messengerOrderTemplate?: string | null;
     address: string | null;
     businessHours: string | null;
     socialLinks: Record<string, string>;
@@ -77,6 +80,9 @@ const FALLBACK: SiteSettings = {
     contactEmail: null,
     hotline: null,
     whatsapp: null,
+    messenger: 'bajarshodai2',
+    messengerEnabled: true,
+    messengerOrderTemplate: null,
     address: null,
     businessHours: null,
     socialLinks: {},

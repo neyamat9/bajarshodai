@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Price } from '@/components/ui/Price';
 import { QuantityStepper } from '@/components/product/QuantityStepper';
 import { WhatsAppOrderButton } from '@/components/product/WhatsAppOrderButton';
+import { MessengerOrderButton } from '@/components/product/MessengerOrderButton';
 
 export interface ProductStickyBottomBarProps {
   unitPrice: number;
@@ -66,13 +67,22 @@ export function ProductStickyBottomBar({
             </View>
 
             {productName && productSlug ? (
-              <WhatsAppOrderButton
-                variant="compact"
-                productName={productName}
-                productSlug={productSlug}
-                productPrice={unitPrice}
-                style={styles.whatsAppCompactBtn}
-              />
+              <>
+                <WhatsAppOrderButton
+                  variant="compact"
+                  productName={productName}
+                  productSlug={productSlug}
+                  productPrice={unitPrice}
+                  style={styles.whatsAppCompactBtn}
+                />
+                <MessengerOrderButton
+                  variant="compact"
+                  productName={productName}
+                  productSlug={productSlug}
+                  productPrice={unitPrice}
+                  style={styles.messengerCompactBtn}
+                />
+              </>
             ) : null}
 
             <Button
@@ -120,6 +130,9 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   whatsAppCompactBtn: {
+    marginRight: 4,
+  },
+  messengerCompactBtn: {
     marginRight: 4,
   },
 });

@@ -20,6 +20,7 @@ import { useWishlist } from "@/lib/hooks/use-wishlist";
 import { playClick } from "@/lib/sound";
 import { toast } from "sonner";
 import WhatsAppOrderButton from "@/components/product/WhatsAppOrderButton";
+import MessengerOrderButton from "@/components/product/MessengerOrderButton";
 import {
   ArrowRight,
   ChevronRight,
@@ -635,9 +636,15 @@ function QuickViewModalContent({
                 </button>
               </div>
 
-              {/* ── WhatsApp Direct Order Button ── */}
-              <div className="mt-2.5">
+              {/* ── Direct Chat Order Buttons (WhatsApp & Messenger) ── */}
+              <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <WhatsAppOrderButton
+                  productName={product.name}
+                  productSlug={product.slug}
+                  productPrice={price}
+                  className="w-full"
+                />
+                <MessengerOrderButton
                   productName={product.name}
                   productSlug={product.slug}
                   productPrice={price}

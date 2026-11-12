@@ -96,6 +96,9 @@ export interface Settings {
     contactEmail: string | null;
     hotline: string | null;
     whatsapp: string | null;
+    messenger?: string | null;
+    messengerEnabled?: boolean;
+    messengerOrderTemplate?: string | null;
     address: string | null;
     businessHours: string | null;
     currency: string;

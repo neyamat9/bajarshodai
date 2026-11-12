@@ -36,6 +36,8 @@ function SiteForm({ v }: { v: S["site"] }) {
     contactEmail: v.contactEmail ?? "",
     hotline: v.hotline ?? "",
     whatsapp: v.whatsapp ?? "",
+    messenger: v.messenger ?? "bajarshodai2",
+    messengerEnabled: v.messengerEnabled ?? true,
     address: v.address ?? "",
     businessHours: v.businessHours ?? "",
     metaTitle: v.metaTitle ?? "",
@@ -58,6 +60,8 @@ function SiteForm({ v }: { v: S["site"] }) {
       contactEmail: nz(f.contactEmail),
       hotline: nz(f.hotline),
       whatsapp: nz(f.whatsapp),
+      messenger: nz(f.messenger),
+      messengerEnabled: Boolean(f.messengerEnabled),
       address: nz(f.address),
       businessHours: nz(f.businessHours),
       currency: f.currency,
@@ -122,6 +126,8 @@ function SiteForm({ v }: { v: S["site"] }) {
           <Field label={tr("Contact email")}><Input type="email" value={f.contactEmail} onChange={(e) => setF({ ...f, contactEmail: e.target.value })} /></Field>
           <Field label={tr("Hotline")}><Input value={f.hotline} onChange={(e) => setF({ ...f, hotline: e.target.value })} /></Field>
           <Field label={tr("WhatsApp")}><Input value={f.whatsapp} onChange={(e) => setF({ ...f, whatsapp: e.target.value })} /></Field>
+          <Field label={tr("Facebook Messenger Username or Link")} hint={tr("e.g. bajarshodai2 or https://m.me/bajarshodai2")}><Input value={f.messenger} onChange={(e) => setF({ ...f, messenger: e.target.value })} placeholder="bajarshodai2" /></Field>
+          <label className="flex cursor-pointer items-center gap-2 text-[13px] font-medium"><Switch checked={f.messengerEnabled} onCheckedChange={(checked) => setF({ ...f, messengerEnabled: checked })} />{tr("Enable Messenger Order Button")}</label>
           <Field label={tr("Business hours")}><Input value={f.businessHours} onChange={(e) => setF({ ...f, businessHours: e.target.value })} placeholder={tr("Sat–Thu, 10am–8pm")} /></Field>
           <Field label={tr("Address")} className="sm:col-span-2"><Textarea rows={2} value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} /></Field>
         </div>

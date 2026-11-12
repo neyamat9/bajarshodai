@@ -26,6 +26,7 @@ import { Radius, Shadows } from '@/constants/layout';
 import { isOralSolidMedicine } from '@/services/medicinePricing';
 import { MedicinePurchaseSheet } from '@/components/medicine/MedicinePurchaseSheet';
 import { WhatsAppOrderButton } from './WhatsAppOrderButton';
+import { MessengerOrderButton } from './MessengerOrderButton';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -487,13 +488,21 @@ function QuickViewSheetContent({ product, onClose }: QuickViewSheetContentProps)
           </TouchableOpacity>
         </View>
 
-        {/* ── WhatsApp Direct Order Button ── */}
-        <WhatsAppOrderButton
-          productName={displayTitle}
-          productSlug={product.slug}
-          productPrice={product.price}
-          style={styles.whatsAppBtn}
-        />
+        {/* ── Direct Chat Order Buttons (WhatsApp & Messenger) ── */}
+        <View style={styles.chatOrderRow}>
+          <WhatsAppOrderButton
+            productName={displayTitle}
+            productSlug={product.slug}
+            productPrice={product.price}
+            style={styles.halfOrderBtn}
+          />
+          <MessengerOrderButton
+            productName={displayTitle}
+            productSlug={product.slug}
+            productPrice={product.price}
+            style={styles.halfOrderBtn}
+          />
+        </View>
 
         {/* ── Prominent "View Full Details" Action Card (Click 2) ── */}
         <TouchableOpacity
@@ -949,9 +958,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  whatsAppBtn: {
+  chatOrderRow: {
+    flexDirection: 'row',
+    gap: 8,
     marginTop: 10,
     width: '100%',
+  },
+  halfOrderBtn: {
+    flex: 1,
+    paddingHorizontal: 8,
   },
   fullDetailsCard: {
     flexDirection: 'row',

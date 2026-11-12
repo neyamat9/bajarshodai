@@ -92,7 +92,7 @@ export function WhatsAppOrderButton({
       accessibilityLabel={label}
     >
       <WhatsAppIcon size={20} color="#ffffff" />
-      <Text style={[styles.fullText, textStyle]}>
+      <Text style={[styles.fullText, textStyle]} numberOfLines={1} adjustsFontSizeToFit>
         {label}
       </Text>
     </TouchableOpacity>

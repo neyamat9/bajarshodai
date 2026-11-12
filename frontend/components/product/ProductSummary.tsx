@@ -3,6 +3,7 @@
 import { Link } from "@/i18n/navigation";
 import BackInStockForm from "@/components/product/BackInStockForm";
 import WhatsAppOrderButton from "@/components/product/WhatsAppOrderButton";
+import MessengerOrderButton from "@/components/product/MessengerOrderButton";
 import { useCart } from "@/lib/hooks/use-cart";
 import { useWishlist } from "@/lib/hooks/use-wishlist";
 import { playClick } from "@/lib/sound";
@@ -380,9 +381,15 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
         </button>
       </div>
 
-      {/* ── WhatsApp Direct Order Button ── */}
-      <div className="mt-3">
+      {/* ── Direct Chat Order Buttons (WhatsApp & Messenger) ── */}
+      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         <WhatsAppOrderButton
+          productName={product.name}
+          productSlug={product.slug}
+          productPrice={price}
+          className="w-full"
+        />
+        <MessengerOrderButton
           productName={product.name}
           productSlug={product.slug}
           productPrice={price}

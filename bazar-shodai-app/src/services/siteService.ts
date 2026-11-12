@@ -8,6 +8,15 @@ export interface MobileSiteSettings {
     hotline?: string | null;
     whatsapp?: string | null;
     whatsappOrderTemplate?: string | null;
+    messenger?: string | null;
+    messengerEnabled?: boolean;
+    messengerOrderTemplate?: string | null;
+    socialLinks?: {
+      facebook?: string | null;
+      instagram?: string | null;
+      youtube?: string | null;
+      twitter?: string | null;
+    };
     contactEmail?: string | null;
     address?: string | null;
   };

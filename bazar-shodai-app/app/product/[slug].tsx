@@ -36,6 +36,7 @@ import { getLocalizedDescription } from '@/utils/localizedDescription';
 import { isOralSolidMedicine } from '@/services/medicinePricing';
 import { MedicinePurchaseSheet } from '@/components/medicine/MedicinePurchaseSheet';
 import { WhatsAppOrderButton } from '@/components/product/WhatsAppOrderButton';
+import { MessengerOrderButton } from '@/components/product/MessengerOrderButton';
 
 function ProductDetailSkeleton() {
   return (
@@ -372,13 +373,21 @@ export default function ProductDetailScreen() {
             <Price amount={price} originalAmount={regularPrice} unit={unitCode} size="lg" />
           </View>
 
-          {/* ── WhatsApp Direct Order Button ── */}
-          <WhatsAppOrderButton
-            productName={isBn ? nameBn || name : name}
-            productSlug={product?.slug || (slug as string)}
-            productPrice={price}
-            style={styles.whatsAppBtn}
-          />
+          {/* ── Direct Chat Order Buttons (WhatsApp & Messenger) ── */}
+          <View style={styles.chatOrderRow}>
+            <WhatsAppOrderButton
+              productName={isBn ? nameBn || name : name}
+              productSlug={product?.slug || (slug as string)}
+              productPrice={price}
+              style={styles.chatOrderBtn}
+            />
+            <MessengerOrderButton
+              productName={isBn ? nameBn || name : name}
+              productSlug={product?.slug || (slug as string)}
+              productPrice={price}
+              style={styles.chatOrderBtn}
+            />
+          </View>
 
           {/* Specifications Accordion with Localized Description */}
           <ProductSpecs
@@ -628,9 +637,15 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 4,
   },
-  whatsAppBtn: {
+  chatOrderRow: {
+    flexDirection: 'row',
+    gap: 8,
     marginTop: 8,
     marginBottom: 14,
+  },
+  chatOrderBtn: {
+    flex: 1,
+    paddingHorizontal: 8,
   },
   notifyBtn: {
     flexDirection: 'row',

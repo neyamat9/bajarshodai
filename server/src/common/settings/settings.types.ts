@@ -47,6 +47,9 @@ export interface SiteSettings {
   contactEmail: string | null;
   hotline: string | null;
   whatsapp: string | null;
+  messenger?: string | null;
+  messengerEnabled?: boolean;
+  messengerOrderTemplate?: string | null;
   address: string | null;
   businessHours: string | null;
   currency: string;
@@ -259,6 +262,9 @@ export const DEFAULT_SETTINGS: SettingsMap = {
     contactEmail: null,
     hotline: null,
     whatsapp: null,
+    messenger: 'bajarshodai2',
+    messengerEnabled: true,
+    messengerOrderTemplate: null,
     address: null,
     businessHours: null,
     currency: 'BDT',

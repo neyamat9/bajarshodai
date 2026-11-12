@@ -88,6 +88,23 @@ export class UpdateSiteSettingsDto {
   @IsString()
   whatsapp?: string | null;
 
+  @ApiPropertyOptional({ nullable: true, example: 'bajarshodai2' })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsString()
+  messenger?: string | null;
+
+  @ApiPropertyOptional({ default: true })
+  @IsOptional()
+  @IsBoolean()
+  messengerEnabled?: boolean;
+
+  @ApiPropertyOptional({ nullable: true })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsString()
+  messengerOrderTemplate?: string | null;
+
   @ApiPropertyOptional({ nullable: true })
   @IsOptional()
   @ValidateIf((_, v) => v !== null)
