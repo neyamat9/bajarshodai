@@ -60,7 +60,9 @@ export default function ImageGallery({ product, saveBadge }: ImageGalleryProps) 
   }
 
   // Filter out "NEW" badge from the product details image
-  const otherBadges = product.badges.filter((b) => b.toUpperCase() !== "NEW");
+  const otherBadges = product.badges.filter(
+    (b) => (b as string).toUpperCase() !== "NEW" && (b as string) !== "নতুন"
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -74,16 +76,18 @@ export default function ImageGallery({ product, saveBadge }: ImageGalleryProps) 
         onKeyDown={(e) => e.key === "Enter" && handleOpenLightbox()}
       >
         {/* Full-bleed product image filling container edge-to-edge */}
-        <div className="relative w-full h-full overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden">
           {images.map((img, i) => (
             <Image
               key={img.id}
               src={img.url}
               alt={img.alt}
               fill
-              className="object-cover transition-opacity duration-300"
+              className="object-cover scale-[1.14] transition-opacity duration-300"
               style={{
                 opacity: i === activeIndex ? 1 : 0,
+                transform: "scale(1.14)",
+                transformOrigin: "center",
               }}
               aria-hidden={i !== activeIndex}
               sizes="(max-width: 768px) 100vw, 50vw"
@@ -104,7 +108,7 @@ export default function ImageGallery({ product, saveBadge }: ImageGalleryProps) 
 
         {/* ── Save Badge Overlaid On Top Of Image ── */}
         {saveBadge && (
-          <span className="absolute left-3 top-3 z-10 rounded bg-emerald-700 px-2.5 py-1 text-xs font-bold text-white shadow pointer-events-none">
+          <span className="absolute left-3.5 top-3.5 z-10 rounded bg-emerald-700 px-2.5 py-1 text-xs font-bold text-white shadow pointer-events-none">
             {saveBadge}
           </span>
         )}
