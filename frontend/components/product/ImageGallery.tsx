@@ -73,27 +73,17 @@ export default function ImageGallery({ product, saveBadge }: ImageGalleryProps) 
         aria-label={t("gallery.open")}
         onKeyDown={(e) => e.key === "Enter" && handleOpenLightbox()}
       >
-        {/* Scale-in entrance */}
-        <div
-          className="relative w-full h-full flex items-center justify-center overflow-hidden"
-          style={{
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? "scale(1)" : "scale(0.92)",
-            transition: "opacity 400ms ease-out, transform 400ms ease-out",
-          }}
-        >
-          {/* Every photo is stacked; changing photo cross-fades (and eases in from a slight zoom) instead of swapping */}
+        {/* Full-bleed product image filling container edge-to-edge */}
+        <div className="relative w-full h-full overflow-hidden">
           {images.map((img, i) => (
             <Image
               key={img.id}
               src={img.url}
               alt={img.alt}
               fill
-              className="object-contain"
+              className="object-cover transition-opacity duration-300"
               style={{
                 opacity: i === activeIndex ? 1 : 0,
-                transform: i === activeIndex ? "scale(1)" : "scale(1.06)",
-                transition: "opacity 700ms cubic-bezier(0.22, 1, 0.36, 1), transform 900ms cubic-bezier(0.22, 1, 0.36, 1)",
               }}
               aria-hidden={i !== activeIndex}
               sizes="(max-width: 768px) 100vw, 50vw"
@@ -148,7 +138,7 @@ export default function ImageGallery({ product, saveBadge }: ImageGalleryProps) 
                 src={img.url}
                 alt={img.alt}
                 fill
-                className="object-contain p-1"
+                className="object-cover"
                 sizes="64px"
               />
             </button>
