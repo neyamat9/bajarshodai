@@ -637,6 +637,7 @@ export class OrderEditService {
         discount: Number(order.discountAmount),
         shippingCost,
         extra: {
+          deliveryFeePending: false,
           deliveryFeeOverride: back ? null : dto.fee,
           deliveryFeeOverrideReason: back ? null : dto.reason!.trim(),
         },
@@ -661,6 +662,7 @@ export class OrderEditService {
         newValue: { orderNumber: order.orderNumber, charged: shippingCost, override: back ? null : dto.fee, reason: back ? null : dto.reason },
       });
     });
+    void this.notifier.deliveryFeeUpdated(id, calculated, shippingCost, dto.reason?.trim());
     return this.orders.findOne(id);
   }
 

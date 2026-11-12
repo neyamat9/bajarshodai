@@ -56,6 +56,11 @@ export default function CheckoutScreen() {
   const [isLocating, setIsLocating] = useState(false);
   const [locationBlock, setLocationBlock] = useState<string | null>(null);
   const [dynamicDeliveryFee, setDynamicDeliveryFee] = useState<number | null>(null);
+  const [skipLocation, setSkipLocation] = useState(false);
+  const [isAbroadOrder, setIsAbroadOrder] = useState(false);
+  const [senderCountry, setSenderCountry] = useState('');
+  const [senderContactMethod, setSenderContactMethod] = useState<'WHATSAPP' | 'IMO' | 'PHONE'>('WHATSAPP');
+  const [senderContactNumber, setSenderContactNumber] = useState('');
 
   const [selectedAddress, setSelectedAddress] = useState<CustomerAddress | null>(null);
 
@@ -90,6 +95,17 @@ export default function CheckoutScreen() {
 
       const blockReason = res.quote?.block;
       if (blockReason === 'OUT_OF_AREA') {
+        if (res.quote?.isAbroad) {
+          setIsAbroadOrder(true);
+          setSkipLocation(true);
+          setLocationBlock(null);
+          haptics.success();
+          toast.info(
+            'আপনি দেশের বাইরে থেকে অর্ডার করছেন!',
+            'লোকেশন পিন ছাড়াই অর্ডার সম্পন্ন করতে পারেন। আমাদের টিম সরাসরি আপনার সাথে যোগাযোগ করবে।',
+          );
+          return;
+        }
         setLocationBlock('OUT_OF_AREA');
         haptics.error();
         toast.error(
@@ -195,7 +211,7 @@ export default function CheckoutScreen() {
   const sub = subtotal();
   const isFreeDelivery = sub >= freeDeliveryThreshold;
   const baseDelivery = dynamicDeliveryFee !== null ? dynamicDeliveryFee : deliveryCharge;
-  const currentDelivery = sub > 0 ? (isFreeDelivery ? 0 : baseDelivery) : 0;
+  const currentDelivery = skipLocation ? 0 : (sub > 0 ? (isFreeDelivery ? 0 : baseDelivery) : 0);
   const discount = coupon?.discount ?? 0;
   const grandTotal = Math.max(0, sub - discount + currentDelivery);
 
@@ -206,9 +222,20 @@ export default function CheckoutScreen() {
       return;
     }
 
-    if (locationBlock === 'OUT_OF_AREA') {
+    if (!skipLocation && locationBlock === 'OUT_OF_AREA') {
       toast.error('ডেলিভারি সীমার বাইরে', 'আপনার নির্বাচিত লোকেশন আমাদের ডেলিভারি সীমার বাইরে।');
       return;
+    }
+
+    if (skipLocation && isAbroadOrder) {
+      if (!senderCountry.trim()) {
+        toast.warning('দেশ উল্লেখ করুন', 'অনুগ্রহ করে আপনার বর্তমান দেশ লিখুন (যেমন: সৌদি আরব, দুবাই)');
+        return;
+      }
+      if (!senderContactNumber.trim()) {
+        toast.warning('নম্বর আবশ্যক', 'অনুগ্রহ করে কান্ট্রি কোড সহ আপনার হোয়াটসঅ্যাপ/ইমো নম্বর দিন');
+        return;
+      }
     }
 
     if (!effectiveAddress || !effectiveAddress.fullName.trim() || !effectiveAddress.phone.trim() || !effectiveAddress.address.trim()) {
@@ -266,6 +293,11 @@ export default function CheckoutScreen() {
         bkashSenderNumber: paymentMethod !== 'CASH_ON_DELIVERY' ? senderNumber.trim() : undefined,
         bkashTransactionId:
           paymentMethod !== 'CASH_ON_DELIVERY' && trxId.trim() ? trxId.trim() : undefined,
+        skipLocation,
+        isAbroadOrder,
+        senderCountry: isAbroadOrder ? senderCountry.trim() : undefined,
+        senderContactMethod: isAbroadOrder ? senderContactMethod : undefined,
+        senderContactNumber: isAbroadOrder ? senderContactNumber.trim() : undefined,
       });
 
       haptics.success();
@@ -431,6 +463,125 @@ export default function CheckoutScreen() {
                 </Text>
               </View>
             )}
+
+            {/* Skip Location / Abroad Card */}
+            {!skipLocation ? (
+              <TouchableOpacity
+                style={styles.skipPinBtn}
+                onPress={() => setSkipLocation(true)}
+                activeOpacity={0.8}
+              >
+                <Icon name="Globe" size={18} color="#0b6234" />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.skipPinBtnTitle}>
+                    প্রবাসী অথবা দূর থেকে অর্ডার? লোকেশন পিন ছাড়া অর্ডার করুন
+                  </Text>
+                  <Text style={styles.skipPinBtnSub}>
+                    ডেলিভারি চার্জ পরে দোকান থেকে যাচাই সাপেক্ষে (৳—)
+                  </Text>
+                </View>
+                <Icon name="ChevronRight" size={16} color="#0b6234" />
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.skipPinCard}>
+                <View style={styles.skipPinHeader}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
+                    <Icon name="Globe" size={18} color="#0b6234" />
+                    <Text style={styles.skipPinTitle}>
+                      {isAbroadOrder ? 'প্রবাসী অর্ডার (লোকেশন পিন ছাড়া)' : 'লোকেশন পিন ছাড়া অর্ডার'}
+                    </Text>
+                  </View>
+                  <TouchableOpacity onPress={() => setSkipLocation(false)}>
+                    <Text style={styles.skipPinCancel}>GPS দিন</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.skipPinFeeNotice}>
+                  ডেলিভারি ফি: দোকান থেকে যাচাই সাপেক্ষে (৳—)
+                </Text>
+
+                <TouchableOpacity
+                  style={styles.abroadCheckRow}
+                  onPress={() => setIsAbroadOrder(!isAbroadOrder)}
+                  activeOpacity={0.8}
+                >
+                  <Icon
+                    name={isAbroadOrder ? 'CheckSquare' : 'Square'}
+                    size={18}
+                    color="#0b6234"
+                  />
+                  <Text style={styles.abroadCheckText}>
+                    আমি দেশের বাইরে (প্রবাসী) থেকে অর্ডার করছি
+                  </Text>
+                </TouchableOpacity>
+
+                {isAbroadOrder && (
+                  <View style={styles.abroadFields}>
+                    <View style={styles.guestFieldGroup}>
+                      <Text style={styles.guestFieldLabel}>আপনার বর্তমান দেশ *</Text>
+                      <TextInput
+                        style={styles.guestInput}
+                        value={senderCountry}
+                        onChangeText={setSenderCountry}
+                        placeholder="যেমন: সৌদি আরব, দুবাই, কাতার, মালয়েশিয়া"
+                        placeholderTextColor="#9ca3af"
+                      />
+                    </View>
+
+                    <View style={styles.guestFieldGroup}>
+                      <Text style={styles.guestFieldLabel}>যোগাযোগের মাধ্যম *</Text>
+                      <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+                        <TouchableOpacity
+                          style={[
+                            styles.platformBtn,
+                            senderContactMethod === 'WHATSAPP' && styles.platformBtnActive,
+                          ]}
+                          onPress={() => setSenderContactMethod('WHATSAPP')}
+                        >
+                          <Text
+                            style={[
+                              styles.platformBtnText,
+                              senderContactMethod === 'WHATSAPP' && styles.platformBtnTextActive,
+                            ]}
+                          >
+                            WhatsApp
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[
+                            styles.platformBtn,
+                            senderContactMethod === 'IMO' && styles.platformBtnActive,
+                          ]}
+                          onPress={() => setSenderContactMethod('IMO')}
+                        >
+                          <Text
+                            style={[
+                              styles.platformBtnText,
+                              senderContactMethod === 'IMO' && styles.platformBtnTextActive,
+                            ]}
+                          >
+                            IMO
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+
+                    <View style={styles.guestFieldGroup}>
+                      <Text style={styles.guestFieldLabel}>
+                        {senderContactMethod === 'IMO' ? 'ইমো' : 'হোয়াটসঅ্যাপ'} নম্বর (কান্ট্রি কোড সহ) *
+                      </Text>
+                      <TextInput
+                        style={styles.guestInput}
+                        value={senderContactNumber}
+                        onChangeText={setSenderContactNumber}
+                        placeholder="+966 50 123 4567"
+                        placeholderTextColor="#9ca3af"
+                        keyboardType="phone-pad"
+                      />
+                    </View>
+                  </View>
+                )}
+              </View>
+            )}
           </View>
 
           <View style={styles.sectionDivider} />
@@ -495,11 +646,13 @@ export default function CheckoutScreen() {
             <View style={styles.breakdownRow}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text style={styles.breakdownLabel}>Delivery Fee</Text>
-                {dynamicDeliveryFee !== null && (
+                {dynamicDeliveryFee !== null && !skipLocation && (
                   <Text style={styles.calculatedTag}>(লাইভ দূরত্বভিত্তিক)</Text>
                 )}
               </View>
-              {isFreeDelivery ? (
+              {skipLocation ? (
+                <Text style={{ fontSize: 13, fontWeight: '700', color: '#d97706' }}>দোকান থেকে যাচাই সাপেক্ষে</Text>
+              ) : isFreeDelivery ? (
                 <Text style={styles.freeText}>FREE</Text>
               ) : (
                 <Price amount={currentDelivery} size="sm" />
@@ -790,5 +943,96 @@ const styles = StyleSheet.create({
   footerPriceLabel: {
     fontSize: 11,
     color: '#9ca3af',
+  },
+  skipPinBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: Radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginTop: 6,
+  },
+  skipPinBtnTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  skipPinBtnSub: {
+    fontSize: 11,
+    color: '#6b7280',
+    marginTop: 2,
+  },
+  skipPinCard: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1.5,
+    borderColor: '#86efac',
+    borderRadius: Radius.md,
+    padding: 14,
+    marginTop: 6,
+    gap: 10,
+  },
+  skipPinHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  skipPinTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0b6234',
+  },
+  skipPinCancel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#0b6234',
+    textDecorationLine: 'underline',
+  },
+  skipPinFeeNotice: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#d97706',
+  },
+  abroadCheckRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 4,
+  },
+  abroadCheckText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#1f2937',
+  },
+  abroadFields: {
+    gap: 10,
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: '#f3f4f6',
+  },
+  platformBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: Radius.sm,
+    paddingVertical: 8,
+    alignItems: 'center',
+    backgroundColor: '#f9fafb',
+  },
+  platformBtnActive: {
+    borderColor: '#0b6234',
+    backgroundColor: '#f0fdf4',
+  },
+  platformBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#4b5563',
+  },
+  platformBtnTextActive: {
+    color: '#0b6234',
+    fontWeight: '700',
   },
 });

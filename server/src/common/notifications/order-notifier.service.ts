@@ -229,6 +229,48 @@ export class OrderNotifierService {
     });
   }
 
+  deliveryFeeUpdated(
+    orderId: string,
+    oldFee: number | null,
+    newFee: number,
+    reason?: string,
+  ) {
+    return this.safely('deliveryFeeUpdated', async () => {
+      const order = await this.load(orderId);
+      if (!order) return;
+      const lang = this.langOf(order);
+      const n = order.orderNumber;
+
+      const title =
+        lang === 'bn'
+          ? `ডেলিভারি ফি নির্ধারণ করা হয়েছে — ${n}`
+          : `Delivery Fee Confirmed — ${n}`;
+      const body =
+        lang === 'bn'
+          ? `আপনার #${n} নম্বরের অর্ডারে ডেলিভারি ফি ৳${newFee} নির্ধারণ করা হয়েছে। সর্বমোট বিল: ${fmtMoney(lang, order.total)}।`
+          : `Delivery fee for order #${n} is confirmed at ৳${newFee}. Total order amount is now ${fmtMoney(lang, order.total)}.`;
+
+      if (order.userId) {
+        await this.notifications.notifyInApp(order.userId, {
+          type: 'ORDER_UPDATED',
+          title,
+          body,
+          data: { ...this.data(order), newFee, total: Number(order.total) },
+        });
+      }
+
+      const email = await this.settings.get('email');
+      if (email.notifyCustomerOrderStatus) {
+        await this.emailCustomer(order, 'ORDER_UPDATED', {
+          subject: title,
+          heading: title,
+          intro: body,
+          includeItems: true,
+        });
+      }
+    });
+  }
+
   returnStatusChanged(
     returnId: string,
     status: ReturnStatus,

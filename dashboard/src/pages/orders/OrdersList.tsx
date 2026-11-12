@@ -47,12 +47,14 @@ const PAY_OPTIONS: QuickOption<string>[] = [
 const ORDER_VIEWS = [
   { name: "Needs confirming", query: "status=PENDING" },
   { name: "Payment to verify", query: "paymentStatus=PENDING&paymentMethod=BKASH" },
+  { name: "Needs delivery fee", query: "needsFee=true" },
+  { name: "Abroad orders", query: "isAbroad=true" },
   { name: "Ready to ship", query: "status=PROCESSING" },
   { name: "On the way", query: "status=SHIPPED" },
   { name: "Phone & walk-in orders", query: "source=ADMIN" },
 ];
 
-const DEFAULTS = { search: "", status: "", stage: "", toVerify: "", paymentStatus: "", paymentMethod: "", source: "", from: "", to: "", sortBy: "newest", page: "1" };
+const DEFAULTS = { search: "", status: "", stage: "", toVerify: "", needsFee: "", isAbroad: "", paymentStatus: "", paymentMethod: "", source: "", from: "", to: "", sortBy: "newest", page: "1" };
 
 export default function OrdersList() {
   const navigate = useNavigate();
@@ -141,6 +143,20 @@ export default function OrdersList() {
         <div>
           <p className="font-semibold">{o.orderNumber}</p>
           <p className="text-[11px] text-muted-foreground">{dateTime(o.placedAt)}</p>
+          {(o.deliveryFeePending || o.isAbroadOrder) && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              {o.deliveryFeePending && (
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                  {tr("Needs Fee")}
+                </span>
+              )}
+              {o.isAbroadOrder && (
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-500/15 text-sky-700 dark:text-sky-300 border border-sky-500/30">
+                  {tr("Abroad")}{o.senderCountry ? ` (${o.senderCountry})` : ""}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       ),
     },

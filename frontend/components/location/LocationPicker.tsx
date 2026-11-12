@@ -8,7 +8,7 @@ import type { Locale } from "@/lib/locale";
 import { forgetSavedLocation, getDeliveryConfig, getPlaceName, getSavedLocation, quoteDelivery, searchPlaces, shareLocation, type FoundPlace } from "@/lib/services/delivery.service";
 import { getSiteSettings, type DeliveryConfig, type MapsConfig } from "@/lib/services/site.service";
 import type { DeliveryQuote, GeoPoint, PickedLocation } from "@/lib/types";
-import { AlertTriangle, Crosshair, Loader2, MapPin, Navigation, Search, Store, X } from "lucide-react";
+import { AlertTriangle, Crosshair, Globe, Loader2, MapPin, Navigation, Search, Store, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -21,6 +21,16 @@ interface Props {
   onQuote?: (quote: DeliveryQuote | null, loading: boolean) => void;
   className?: string;
   addressText?: string;
+  skipLocation?: boolean;
+  onSkipLocationChange?: (skip: boolean) => void;
+  isAbroadOrder?: boolean;
+  onIsAbroadOrderChange?: (abroad: boolean) => void;
+  senderCountry?: string;
+  onSenderCountryChange?: (country: string) => void;
+  senderContactMethod?: "WHATSAPP" | "IMO" | "PHONE";
+  onSenderContactMethodChange?: (method: "WHATSAPP" | "IMO" | "PHONE") => void;
+  senderContactNumber?: string;
+  onSenderContactNumberChange?: (num: string) => void;
 }
 
 const key5 = (p: GeoPoint) => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`;
@@ -30,7 +40,24 @@ const key5 = (p: GeoPoint) => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`;
  * customer can drag onto their door. Shows the place name and the delivery charge for the chosen point at once.
  * Nothing is tracked in the background: the phone is asked once, when the button is pressed.
  */
-export default function LocationPicker({ value, onChange, subtotal = 0, onQuote, className = "", addressText }: Props) {
+export default function LocationPicker({
+  value,
+  onChange,
+  subtotal = 0,
+  onQuote,
+  className = "",
+  addressText,
+  skipLocation = false,
+  onSkipLocationChange,
+  isAbroadOrder = false,
+  onIsAbroadOrderChange,
+  senderCountry = "",
+  onSenderCountryChange,
+  senderContactMethod = "WHATSAPP",
+  onSenderContactMethodChange,
+  senderContactNumber = "",
+  onSenderContactNumberChange,
+}: Props) {
   const t = useTranslations("Location");
   const locale = useLocale() as Locale;
   const geo = useGeolocation();
@@ -73,6 +100,20 @@ export default function LocationPicker({ value, onChange, subtotal = 0, onQuote,
   const valueKey = value ? key5(value) : null;
   const needsName = Boolean(maps?.dynamicPlaceNames && value && !value.placeName);
   useEffect(() => {
+    if (skipLocation) {
+      setQuoting(true);
+      onQuote?.(null, true);
+      void quoteDelivery(null, subtotal, true)
+        .then((q) => {
+          setQuote(q);
+          setQuoting(false);
+          onQuote?.(q, false);
+        })
+        .catch(() => {
+          setQuoting(false);
+        });
+      return;
+    }
     if (!value) {
       setQuote(null);
       setQuoting(false);
@@ -85,6 +126,9 @@ export default function LocationPicker({ value, onChange, subtotal = 0, onQuote,
     const timer = setTimeout(async () => {
       const [q, name] = await Promise.all([quoteDelivery(value, subtotal).catch(() => null), needsName ? getPlaceName(value, locale) : Promise.resolve(null)]);
       if (!alive) return;
+      if (q?.isAbroad) {
+        onIsAbroadOrderChange?.(true);
+      }
       setQuote(q);
       setQuoting(false);
       onQuote?.(q, false);
@@ -96,7 +140,7 @@ export default function LocationPicker({ value, onChange, subtotal = 0, onQuote,
     };
     // the point and the subtotal are what matter here, not the callbacks
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [valueKey, needsName, subtotal]);
+  }, [valueKey, needsName, subtotal, skipLocation]);
 
   const origin = delivery?.origin ? { lat: delivery.origin.lat, lng: delivery.origin.lng } : null;
   const shopName = delivery?.origin ? (locale === "bn" ? delivery.origin.labelBn : delivery.origin.label).split(",")[0] : "";
@@ -180,6 +224,141 @@ export default function LocationPicker({ value, onChange, subtotal = 0, onQuote,
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
           {delivery && !delivery.enabled ? t("disabled") : t("notSetUp")}
         </p>
+      )}
+
+      {/* Skip Location / Abroad Ordering Option */}
+      {!skipLocation ? (
+        <button
+          type="button"
+          onClick={() => onSkipLocationChange?.(true)}
+          className="flex items-center justify-between w-full p-3.5 rounded border border-border bg-card/60 hover:bg-card hover:border-brand-fresh/40 text-left transition-all group"
+        >
+          <div className="flex items-center gap-3">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-fresh/10 text-brand-fresh group-hover:bg-brand-fresh/20 transition-colors">
+              <Globe className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <div>
+              <p className="text-xs font-bold text-foreground">
+                {locale === "bn"
+                  ? "প্রবাসী অথবা দূর থেকে অর্ডার? লোকেশন পিন ছাড়া অর্ডার করুন"
+                  : "Ordering from abroad or remote? Order without location pin"}
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                {locale === "bn"
+                  ? "ডেলিভারি চার্জ দোকান থেকে নিশ্চিত করা হবে (৳—)"
+                  : "Delivery fee will be confirmed by store (৳—)"}
+              </p>
+            </div>
+          </div>
+          <span className="text-xs font-bold text-brand-fresh shrink-0">
+            {locale === "bn" ? "নির্বাচন করুন →" : "Select →"}
+          </span>
+        </button>
+      ) : (
+        <div className="rounded-lg border-2 border-brand-fresh/40 bg-card p-4 space-y-3.5 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-fresh/15 text-brand-fresh">
+                <Globe className="h-4 w-4" aria-hidden="true" />
+              </span>
+              <div>
+                <p className="text-xs font-bold text-foreground">
+                  {isAbroadOrder
+                    ? (locale === "bn" ? "প্রবাসী অর্ডার (লোকেশন পিন ছাড়া)" : "Abroad Order (No pin needed)")
+                    : (locale === "bn" ? "লোকেশন পিন ছাড়া অর্ডার" : "Order without Location Pin")}
+                </p>
+                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                  {locale === "bn" ? "ডেলিভারি ফি: দোকান থেকে যাচাই সাপেক্ষে (৳—)" : "Delivery Fee: To be confirmed by store (৳—)"}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => onSkipLocationChange?.(false)}
+              className="text-xs font-bold text-muted-foreground hover:text-foreground underline"
+            >
+              {locale === "bn" ? "ম্যাপে পিন দিন" : "Use map pin"}
+            </button>
+          </div>
+
+          <div className="pt-2 border-t border-border space-y-3">
+            <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-foreground">
+              <input
+                type="checkbox"
+                checked={isAbroadOrder}
+                onChange={(e) => onIsAbroadOrderChange?.(e.target.checked)}
+                className="h-4 w-4 rounded border-border text-brand-fresh focus:ring-brand-fresh"
+              />
+              <span>{locale === "bn" ? "আমি দেশের বাইরে (প্রবাসী) থেকে অর্ডার করছি" : "I am ordering from abroad (প্রবাসী)"}</span>
+            </label>
+
+            {isAbroadOrder && (
+              <div className="space-y-3 pt-1">
+                <div>
+                  <label className="block text-xs font-semibold text-foreground mb-1">
+                    {locale === "bn" ? "আপনার বর্তমান দেশ *" : "Your Country *"}
+                  </label>
+                  <input
+                    type="text"
+                    value={senderCountry}
+                    onChange={(e) => onSenderCountryChange?.(e.target.value)}
+                    placeholder={locale === "bn" ? "যেমন: সৌদি আরব, দুবাই, কাতার, মালয়েশিয়া" : "e.g. Saudi Arabia, UAE, Qatar, Oman, UK"}
+                    className="w-full rounded border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-brand-fresh focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-foreground mb-1">
+                    {locale === "bn" ? "যোগাযোগের মাধ্যম *" : "Contact Method *"}
+                  </label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-1.5 text-xs text-foreground cursor-pointer font-medium">
+                      <input
+                        type="radio"
+                        name="contactMethod"
+                        value="WHATSAPP"
+                        checked={senderContactMethod !== "IMO"}
+                        onChange={() => onSenderContactMethodChange?.("WHATSAPP")}
+                        className="text-brand-fresh focus:ring-brand-fresh"
+                      />
+                      <span>WhatsApp</span>
+                    </label>
+                    <label className="flex items-center gap-1.5 text-xs text-foreground cursor-pointer font-medium">
+                      <input
+                        type="radio"
+                        name="contactMethod"
+                        value="IMO"
+                        checked={senderContactMethod === "IMO"}
+                        onChange={() => onSenderContactMethodChange?.("IMO")}
+                        className="text-brand-fresh focus:ring-brand-fresh"
+                      />
+                      <span>IMO</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-foreground mb-1">
+                    {senderContactMethod === "IMO" ? "IMO" : "WhatsApp"}{" "}
+                    {locale === "bn" ? "নম্বর (কান্ট্রি কোড সহ) *" : "Number (with country code) *"}
+                  </label>
+                  <input
+                    type="tel"
+                    value={senderContactNumber}
+                    onChange={(e) => onSenderContactNumberChange?.(e.target.value)}
+                    placeholder="+966 50 123 4567"
+                    className="w-full rounded border border-border bg-background px-3 py-2 text-xs text-foreground font-mono focus:border-brand-fresh focus:outline-none"
+                  />
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    {locale === "bn"
+                      ? "অর্ডারের তথ্য ও ডেলিভারি যাচাই করতে দোকান থেকে এই নম্বরে যোগাযোগ করা হবে।"
+                      : "Store staff will reach out to this number to verify the order and recipient details."}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {/* 1. the big button */}
@@ -352,10 +531,41 @@ export default function LocationPicker({ value, onChange, subtotal = 0, onQuote,
               {quote.estimated && <p className="text-xs text-muted-foreground">{t("estimatedNote")}</p>}
             </div>
           ) : quote?.block === "OUT_OF_AREA" ? (
-            <p role="alert" className="flex items-start gap-2 text-sm font-semibold text-destructive">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-              {t("outOfArea", { km: km(quote.straightKm ?? 0), radius: formatNumber(quote.radiusKm, locale, 0), shop: shopName })}
-            </p>
+            quote?.isAbroad ? (
+              <div className="rounded-lg border border-sky-500/40 bg-sky-500/10 p-3.5 space-y-3">
+                <div className="flex items-start gap-2.5">
+                  <Globe className="h-5 w-5 text-sky-500 shrink-0 mt-0.5" aria-hidden="true" />
+                  <div>
+                    <p className="font-bold text-sm text-foreground">
+                      {locale === "bn" ? "আপনি দেশের বাইরে থেকে অর্ডার করছেন!" : "You are ordering from abroad!"}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                      {locale === "bn"
+                        ? "কোনো সমস্যা নেই! ম্যাপে পিন ছাড়াই আপনি অর্ডারটি সম্পন্ন করতে পারেন। আমাদের টিম সরাসরি আপনার সাথে যোগাযোগ করে ডেলিভারি নিশ্চিত করবে।"
+                        : "No problem! You can complete your order without setting a location pin. Our team will verify delivery directly with your family."}
+                    </p>
+                  </div>
+                </div>
+
+                {!skipLocation && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onIsAbroadOrderChange?.(true);
+                      onSkipLocationChange?.(true);
+                    }}
+                    className="w-full rounded bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold py-2 px-3 transition-colors shadow"
+                  >
+                    {locale === "bn" ? "লোকেশন পিন ছাড়া এগিয়ে যান" : "Continue without location pin"}
+                  </button>
+                )}
+              </div>
+            ) : (
+              <p role="alert" className="flex items-start gap-2 text-sm font-semibold text-destructive">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                {t("outOfArea", { km: km(quote.straightKm ?? 0), radius: formatNumber(quote.radiusKm, locale, 0), shop: shopName })}
+              </p>
+            )
           ) : null}
 
           <button type="button" onClick={() => onChange(null)} className="text-xs font-bold text-muted-foreground underline-offset-2 hover:text-foreground hover:underline">

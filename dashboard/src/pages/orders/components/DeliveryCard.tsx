@@ -1,7 +1,7 @@
 import { lazy, Suspense, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Clock, Copy, Crosshair, MapPin, MessageCircle, Navigation, Pencil, Phone, Send } from "lucide-react";
+import { Clock, Copy, Crosshair, Globe, MapPin, MessageCircle, Navigation, Pencil, Phone, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input, Textarea } from "@/components/ui/input";
@@ -228,6 +228,78 @@ export function DeliveryCard({ order, locked, phone, name, onEditAddress }: { or
         </div>
       }
     >
+      {order.deliveryFeePending && (
+        <div className="mb-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="font-bold text-xs text-amber-800 dark:text-amber-200">
+              ⚠️ {tr("Pending Delivery Fee (Manual Confirmation Required)")}
+            </span>
+            {!locked && (
+              <Button size="xs" variant="default" className="bg-amber-600 hover:bg-amber-700 text-white font-bold" onClick={() => setDlg("fee")}>
+                {tr("Set Delivery Fee")}
+              </Button>
+            )}
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            {tr("This order was placed without a map pin. Once you set the fee, customer will be notified via app, browser push & email.")}
+          </p>
+        </div>
+      )}
+
+      {order.isAbroadOrder && (
+        <div className="mb-3 rounded-md border border-sky-500/30 bg-sky-500/10 p-2.5 text-xs space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="font-bold text-sky-800 dark:text-sky-200 flex items-center gap-1.5">
+              <Globe className="size-3.5" />
+              <span>{tr("Overseas Buyer (প্রবাসী)")}</span>
+            </span>
+            {order.senderCountry && (
+              <Badge variant="outline" className="font-bold border-sky-500/40 text-sky-800 dark:text-sky-200">
+                {order.senderCountry}
+              </Badge>
+            )}
+          </div>
+          {order.senderContactNumber && (
+            <div className="flex items-center justify-between pt-1 border-t border-sky-500/20">
+              <span className="text-muted-foreground">
+                {order.senderContactMethod || "WhatsApp"}: <b className="text-foreground font-mono">{order.senderContactNumber}</b>
+              </span>
+              <a
+                href={`https://wa.me/${digits(order.senderContactNumber)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 rounded bg-emerald-600 px-2 py-1 text-[11px] font-bold text-white hover:bg-emerald-700 transition-colors"
+              >
+                <MessageCircle className="size-3" />
+                {tr("WhatsApp")}
+              </a>
+            </div>
+          )}
+        </div>
+      )}
+
+      {order.locationToken && (
+        <div className="mb-3 rounded border border-border bg-muted/40 p-2.5 text-xs">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-muted-foreground">{tr("Family Location Share Link:")}</span>
+            <Button
+              size="xs"
+              variant="ghost"
+              onClick={() => {
+                const url = `https://bazarshodai.com/l/${order.locationToken}`;
+                navigator.clipboard.writeText(url);
+                toast.success(tr("Link copied to clipboard"));
+              }}
+            >
+              <Copy className="size-3 mr-1" />
+              {tr("Copy Link")}
+            </Button>
+          </div>
+          <p className="font-mono text-[11px] text-foreground truncate mt-0.5 select-all">
+            https://bazarshodai.com/l/{order.locationToken}
+          </p>
+        </div>
+      )}
       {a ? (
         <address className="mb-3 text-[13px] not-italic leading-relaxed">
           <p className="font-semibold">{a.fullName}</p>

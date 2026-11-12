@@ -31,8 +31,8 @@ export interface PlaceOrderPayload {
     fullName: string;
     phone: string;
     address: string;
-    latitude: number;
-    longitude: number;
+    latitude?: number;
+    longitude?: number;
     city?: string;
     district?: string;
     locationSource?: 'GPS' | 'PIN' | 'SEARCH' | 'LINK';
@@ -45,6 +45,11 @@ export interface PlaceOrderPayload {
   bkashTransactionId?: string;
   email?: string;
   redeemPoints?: number;
+  skipLocation?: boolean;
+  isAbroadOrder?: boolean;
+  senderCountry?: string;
+  senderContactMethod?: 'WHATSAPP' | 'IMO' | 'PHONE';
+  senderContactNumber?: string;
 }
 
 export interface OrderDetailItem {
@@ -71,4 +76,11 @@ export interface PlacedOrderResponse {
   items?: OrderDetailItem[];
   createdAt: string;
   estimatedDelivery?: string;
+  deliveryFeePending?: boolean;
+  isAbroadOrder?: boolean;
+  senderCountry?: string | null;
+  senderContactMethod?: string | null;
+  senderContactNumber?: string | null;
+  locationToken?: string | null;
+  locationUrl?: string | null;
 }

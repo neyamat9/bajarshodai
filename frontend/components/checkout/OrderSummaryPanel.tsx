@@ -194,6 +194,10 @@ export default function OrderSummaryPanel({
             <dd className="text-foreground">
               {!summary || !summary.shipping.available ? (
                 <span className="text-muted-foreground/70">{t("shippingPending")}</span>
+              ) : summary.shipping?.isPendingFee ? (
+                <span className="text-amber-600 dark:text-amber-400 font-semibold text-xs">
+                  {locale === "bn" ? "দোকান থেকে যাচাই সাপেক্ষে" : "To be confirmed by store"}
+                </span>
               ) : summary.shippingCost === 0 ? (
                 <span className="text-emerald-300 font-bold">{summary?.loyalty?.milestone?.freeShippingApplied ? (locale === 'bn' ? 'মাইলস্টোন ফ্রি' : 'Milestone Free') : t("free")}</span>
               ) : (

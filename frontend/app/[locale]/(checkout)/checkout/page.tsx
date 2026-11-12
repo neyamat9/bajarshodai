@@ -55,6 +55,11 @@ function Checkout() {
   const [quote, setQuote] = useState<DeliveryQuote | null>(null);
   const [quoting, setQuoting] = useState(false);
   const [slot, setSlot] = useState("");
+  const [skipLocation, setSkipLocation] = useState(false);
+  const [isAbroadOrder, setIsAbroadOrder] = useState(false);
+  const [senderCountry, setSenderCountry] = useState("");
+  const [senderContactMethod, setSenderContactMethod] = useState<"WHATSAPP" | "IMO" | "PHONE">("WHATSAPP");
+  const [senderContactNumber, setSenderContactNumber] = useState("");
   const [payment, setPayment] = useState<PaymentMethod | null>(null);
   const [txn, setTxn] = useState("");
   const [sender, setSender] = useState("");
@@ -110,10 +115,12 @@ function Checkout() {
     try {
       const s = await getCheckoutSummary({
         couponCode: coupon || undefined,
-        lat,
-        lng,
+        lat: skipLocation ? undefined : lat,
+        lng: skipLocation ? undefined : lng,
         phone: phone || undefined,
         redeemPoints: usePoints ? 999999 : undefined,
+        skipLocation,
+        isAbroadOrder,
       });
       if (mine === summarySeq.current) setSummary(s);
     } catch (e) {
@@ -127,7 +134,7 @@ function Checkout() {
     } finally {
       if (mine === summarySeq.current) setSummaryLoading(false);
     }
-  }, [coupon, lat, lng, phone, usePoints]);
+  }, [coupon, lat, lng, phone, usePoints, skipLocation, isAbroadOrder]);
 
   useEffect(() => {
     if (cartLoading || cartCount === 0) return;
@@ -136,10 +143,12 @@ function Checkout() {
 
   async function handleApply(code: string) {
     const s = await applyCoupon(code, {
-      lat,
-      lng,
+      lat: skipLocation ? undefined : lat,
+      lng: skipLocation ? undefined : lng,
       phone: phone || undefined,
       redeemPoints: usePoints ? 999999 : undefined,
+      skipLocation,
+      isAbroadOrder,
     });
     setSummary(s);
     setCoupon(code);
@@ -152,10 +161,12 @@ function Checkout() {
     try {
       const s = await getCheckoutSummary({
         couponCode: coupon || undefined,
-        lat,
-        lng,
+        lat: skipLocation ? undefined : lat,
+        lng: skipLocation ? undefined : lng,
         phone: phone || undefined,
         redeemPoints: apply ? (summary?.loyalty?.userPoints ?? 999999) : undefined,
+        skipLocation,
+        isAbroadOrder,
       });
       setSummary(s);
     } catch (e) {
@@ -167,7 +178,18 @@ function Checkout() {
 
   const rawMethods = (settings?.payment?.methods?.length ? settings.payment.methods : (summary?.paymentMethods?.length ? summary.paymentMethods : ["CASH_ON_DELIVERY"]));
   const methods: PaymentMethod[] = Array.from(new Set(rawMethods.map((m) => LABEL[m] || LABEL[m?.toUpperCase?.()] || (m as PaymentMethod)).filter(Boolean)));
-  const address: CheckoutAddress | null = details ? { ...details, email: "", location } : null;
+  const address: CheckoutAddress | null = details
+    ? {
+        ...details,
+        email: "",
+        location,
+        skipLocation,
+        isAbroadOrder,
+        senderCountry: senderCountry || undefined,
+        senderContactMethod,
+        senderContactNumber: senderContactNumber || undefined,
+      }
+    : null;
 
   const onQuote = useCallback((q: DeliveryQuote | null, loading: boolean) => {
     setQuote(q);
@@ -257,6 +279,16 @@ function Checkout() {
               onSlot={setSlot}
               onBack={() => setStep(1)}
               onContinue={() => setStep(3)}
+              skipLocation={skipLocation}
+              onSkipLocationChange={setSkipLocation}
+              isAbroadOrder={isAbroadOrder}
+              onIsAbroadOrderChange={setIsAbroadOrder}
+              senderCountry={senderCountry}
+              onSenderCountryChange={setSenderCountry}
+              senderContactMethod={senderContactMethod}
+              onSenderContactMethodChange={setSenderContactMethod}
+              senderContactNumber={senderContactNumber}
+              onSenderContactNumberChange={setSenderContactNumber}
             />
           )}
 

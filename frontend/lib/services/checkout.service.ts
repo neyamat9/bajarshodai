@@ -54,6 +54,8 @@ export interface SummaryInput {
   lng?: number;
   phone?: string;
   redeemPoints?: number;
+  skipLocation?: boolean;
+  isAbroadOrder?: boolean;
 }
 
 export async function getCheckoutSummary(input: SummaryInput = {}): Promise<CheckoutSummary> {

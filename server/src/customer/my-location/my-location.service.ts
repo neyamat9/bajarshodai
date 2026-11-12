@@ -218,6 +218,50 @@ export class MyLocationService {
         },
       });
       if (claimed.count === 0) throw new BadRequestException('This link was already used. Thank you!');
+
+      // If linked to an order, attach the coordinates and distance to the order
+      if (r.orderId) {
+        const order = await tx.order.findUnique({ where: { id: r.orderId } });
+        if (order && !order.deliveryLat) {
+          await tx.order.update({
+            where: { id: r.orderId },
+            data: {
+              deliveryLat: input.lat,
+              deliveryLng: input.lng,
+              deliveryPlaceName: names.placeName,
+              deliveryDistanceKm: quote.distanceKm,
+              deliveryDirectDistanceKm: quote.directDistanceKm,
+              deliveryRoadDistanceKm: quote.roadDistanceKm,
+              deliveryDurationSec: quote.durationSec,
+              distanceEstimated: quote.estimated,
+              deliveryFee: quote.calculatedFee,
+            },
+          });
+          if (order.shippingAddressId) {
+            await tx.address.update({
+              where: { id: order.shippingAddressId },
+              data: {
+                latitude: input.lat,
+                longitude: input.lng,
+                placeName: names.placeName,
+                accuracyM: input.accuracyM ?? null,
+                locationSource: 'LINK',
+                locationCapturedAt: new Date(),
+              },
+            });
+          }
+          await tx.orderStatusHistory.create({
+            data: {
+              orderId: r.orderId,
+              fromStatus: order.status,
+              toStatus: order.status,
+              note: `Delivery location pinned via family share link (${names.placeName ?? `${input.lat.toFixed(4)}, ${input.lng.toFixed(4)}`})`,
+              changedBy: 'user',
+            },
+          });
+        }
+      }
+
       // a customer with this phone number also gets it saved, so the next order is prefilled
       if (r.phone) {
         const user = await tx.user.findFirst({ where: { phone: r.phone }, select: { id: true } });

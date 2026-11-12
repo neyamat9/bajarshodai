@@ -218,6 +218,7 @@ export class CheckoutService {
     const shipping = await this.shippingService.quote(subtotal, {
       lat: input.lat,
       lng: input.lng,
+      skipLocation: input.skipLocation,
       allItemsFreeShipping:
         (cartItems.length > 0 &&
           cartItems.every((ci) => ci.product.freeShipping)) ||

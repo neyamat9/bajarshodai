@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsBoolean,
   IsEmail,
   IsEnum,
   IsIn,
@@ -33,15 +34,17 @@ export class ShippingAddressDto {
   @IsString()
   address: string;
 
-  @ApiProperty({ description: 'Delivery pin: latitude. Required: the delivery charge comes from it.' })
+  @ApiPropertyOptional({ description: 'Delivery pin: latitude. Required when sharing location.' })
+  @IsOptional()
   @Type(() => Number)
   @IsLatitude()
-  latitude: number;
+  latitude?: number;
 
-  @ApiProperty({ description: 'Delivery pin: longitude' })
+  @ApiPropertyOptional({ description: 'Delivery pin: longitude' })
+  @IsOptional()
   @Type(() => Number)
   @IsLongitude()
-  longitude: number;
+  longitude?: number;
 
   @ApiPropertyOptional({ description: 'The place name shown on the map' })
   @IsOptional()
@@ -185,4 +188,31 @@ export class PlaceOrderDto {
   @IsNumber()
   @Min(0)
   redeemPoints?: number;
+
+  @ApiPropertyOptional({ description: 'Skip location pin (abroad / remote order)' })
+  @IsOptional()
+  @IsBoolean()
+  skipLocation?: boolean;
+
+  @ApiPropertyOptional({ description: 'True when the buyer is placing the order from abroad' })
+  @IsOptional()
+  @IsBoolean()
+  isAbroadOrder?: boolean;
+
+  @ApiPropertyOptional({ description: 'Buyer country of residence (e.g. Saudi Arabia, UAE, UK, USA)' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  senderCountry?: string;
+
+  @ApiPropertyOptional({ enum: ['WHATSAPP', 'IMO', 'PHONE'], description: 'Buyer contact method' })
+  @IsOptional()
+  @IsIn(['WHATSAPP', 'IMO', 'PHONE'])
+  senderContactMethod?: 'WHATSAPP' | 'IMO' | 'PHONE';
+
+  @ApiPropertyOptional({ description: 'Buyer WhatsApp / IMO phone number with country code' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  senderContactNumber?: string;
 }

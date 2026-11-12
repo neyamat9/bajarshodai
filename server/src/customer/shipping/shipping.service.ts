@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { SettingsService, DeliverySettings } from '../../common/settings';
 import { MapsService } from '../../common/maps';
-import { feeForDistance, haversineKm, withinRadius, isWithinShahrastiZone, type LatLng } from '../../common/delivery/fee';
+import { feeForDistance, haversineKm, withinRadius, isWithinShahrastiZone, isAbroadPoint, type LatLng } from '../../common/delivery/fee';
 
 export type DeliveryBlock =
   | 'DISABLED' // the shop is not taking delivery orders
@@ -33,6 +33,9 @@ export interface ShippingQuote {
   // Straight-line distance from the centre of the service area, and the limit
   straightKm: number | null;
   radiusKm: number;
+  // Detected overseas location or manual delivery fee pending
+  isAbroad?: boolean;
+  isPendingFee?: boolean;
 }
 
 export interface ShippingInput {
@@ -40,6 +43,8 @@ export interface ShippingInput {
   lng?: number | null;
   // True when every product in the cart is marked "free shipping".
   allItemsFreeShipping?: boolean;
+  // True when customer is ordering from abroad or remote without pin
+  skipLocation?: boolean;
 }
 
 /** The delivery settings a customer's browser may know (no secrets here: those live in the maps group). */
@@ -105,6 +110,20 @@ export class ShippingService {
     if (!d.enabled) return { ...base, block: 'DISABLED' };
     const origin = this.origin(d);
     if (!origin) return { ...base, block: 'ORIGIN_NOT_SET' };
+
+    // When customer is ordering from abroad or skipping location pin
+    if (input.skipLocation) {
+      return {
+        ...base,
+        available: true,
+        block: null,
+        calculatedFee: null,
+        cost: 0,
+        isFree: false,
+        isPendingFee: true,
+      };
+    }
+
     if (input.lat == null || input.lng == null) return { ...base, block: 'NO_LOCATION' };
 
     const dest = { lat: input.lat, lng: input.lng };
@@ -114,7 +133,8 @@ export class ShippingService {
     const enforceZone = d.restrictToZone !== false;
 
     if (!inside.ok || (enforceZone && !inZone)) {
-      return { ...base, block: 'OUT_OF_AREA', straightKm: inside.km };
+      const abroad = isAbroadPoint(dest);
+      return { ...base, block: 'OUT_OF_AREA', straightKm: inside.km, isAbroad: abroad };
     }
 
     const straight = haversineKm(origin, dest);

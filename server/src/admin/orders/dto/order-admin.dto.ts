@@ -69,6 +69,20 @@ export class OrderFilterDto {
   @IsIn(['true'])
   toVerify?: 'true';
 
+  @ApiPropertyOptional({
+    description: 'true = only orders awaiting delivery fee assignment',
+  })
+  @IsOptional()
+  @IsIn(['true', 'false'])
+  needsFee?: string;
+
+  @ApiPropertyOptional({
+    description: 'true = only orders placed from abroad',
+  })
+  @IsOptional()
+  @IsIn(['true', 'false'])
+  isAbroad?: string;
+
   @ApiPropertyOptional({ enum: PaymentStatus })
   @IsOptional()
   @IsIn(Object.values(PaymentStatus))

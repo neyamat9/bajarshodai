@@ -21,6 +21,8 @@ export interface ShippingQuote {
   minOrderAmount?: number;
   minOrderOk?: boolean;
   durationSec?: number | null;
+  isAbroad?: boolean;
+  isPendingFee?: boolean;
 }
 
 export interface SharedLocationResponse {

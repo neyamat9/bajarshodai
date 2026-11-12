@@ -8,7 +8,13 @@ import type { DeliveryConfig } from './site.service';
 export const getDeliveryConfig = () => api.get<DeliveryConfig>('/customer/shipping/options');
 
 /** Distance and delivery charge for a point: "check my delivery charge". */
-export const quoteDelivery = (p: GeoPoint, subtotal = 0) => api.post<DeliveryQuote>('/customer/shipping/quote', { lat: p.lat, lng: p.lng, subtotal });
+export const quoteDelivery = (p?: GeoPoint | null, subtotal = 0, skipLocation = false) =>
+  api.post<DeliveryQuote>('/customer/shipping/quote', {
+    lat: p?.lat,
+    lng: p?.lng,
+    subtotal,
+    skipLocation,
+  });
 
 /** A readable name for a point, in the page language. null when none could be found. */
 export async function getPlaceName(p: GeoPoint, lang: Locale = clientLocale()): Promise<string | null> {

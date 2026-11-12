@@ -70,4 +70,25 @@ describe('ShippingService.quote', () => {
     const q = await make({ centerLat: 23.5, centerLng: 90.9 }).service.quote(500, { lat: 23.21, lng: 90.9 });
     expect(q.block).toBe('OUT_OF_AREA');
   });
+
+  it('detects abroad locations outside Bangladesh', async () => {
+    // Dubai coordinates
+    const dubai = await make().service.quote(500, { lat: 25.2048, lng: 55.2708 });
+    expect(dubai.block).toBe('OUT_OF_AREA');
+    expect(dubai.isAbroad).toBe(true);
+
+    // Nearby town outside Shahrasti but inside Bangladesh (e.g. Dhaka)
+    const dhaka = await make().service.quote(500, { lat: 23.8103, lng: 90.4125 });
+    expect(dhaka.block).toBe('OUT_OF_AREA');
+    expect(dhaka.isAbroad).toBe(false);
+  });
+
+  it('allows skipping location for abroad and remote orders', async () => {
+    const q = await make().service.quote(500, { skipLocation: true });
+    expect(q.available).toBe(true);
+    expect(q.block).toBe(null);
+    expect(q.isPendingFee).toBe(true);
+    expect(q.cost).toBe(0);
+    expect(q.calculatedFee).toBe(null);
+  });
 });

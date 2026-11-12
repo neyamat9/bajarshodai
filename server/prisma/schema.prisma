@@ -998,6 +998,14 @@ model Order {
   deliverySlot              String?
   deliveryDate              DateTime? @db.Date
 
+  // Abroad & Remote Location Sharing
+  deliveryFeePending        Boolean   @default(false)
+  isAbroadOrder             Boolean   @default(false)
+  senderCountry             String?
+  senderContactMethod       String?   // 'WHATSAPP' | 'IMO' | 'PHONE'
+  senderContactNumber       String?
+  locationToken             String?   @unique
+
   // Billing
   billingAddressId String?
   billingAddress   Address? @relation("BillingAddress", fields: [billingAddressId], references: [id])

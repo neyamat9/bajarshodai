@@ -7,7 +7,7 @@ import { errorMessage } from "@/lib/api/client";
 import { useCart } from "@/lib/hooks/use-cart";
 import { cancelOrder, getOrderById, openInvoice, reorder } from "@/lib/services/orders.service";
 import { MOBILE_METHODS, type Order } from "@/lib/types";
-import { ArrowLeft, Banknote, Bike, Calendar, CheckCircle2, Clock, StickyNote, ExternalLink, FileText, Headset, MapPin, PackageSearch, Phone, RotateCcw, RotateCw, Smartphone, Truck, XCircle } from "lucide-react";
+import { ArrowLeft, Banknote, Bike, Calendar, CheckCircle2, Clock, Copy, Globe, MessageCircle, Navigation, StickyNote, ExternalLink, FileText, Headset, MapPin, PackageSearch, Phone, RotateCcw, RotateCw, Smartphone, Truck, XCircle } from "lucide-react";
 import Image from "next/image";
 import { useParams, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -165,6 +165,82 @@ function Detail() {
         <PlacedBannerGate order={order} />
       </Suspense>
 
+      {/* Dynamic Family Location Sharing Card (When location was skipped / pending) */}
+      {(order.deliveryFeePending || (order.locationToken && !order.deliveryDistanceKm)) && (
+        <div className="rounded-xl border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent p-5 sm:p-6 shadow-sm space-y-4">
+          <div className="flex items-start gap-3.5">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white shadow">
+              <MapPin className="h-6 w-6" aria-hidden="true" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="font-outfit text-base sm:text-lg font-bold text-foreground">
+                  {locale === "bn" ? "ডেলিভারি লোকেশন এখনও নিশ্চিত করা হয়নি" : "Delivery location is not shared yet"}
+                </h3>
+                <span className="rounded bg-amber-500/20 px-2 py-0.5 text-[11px] font-bold text-amber-700 dark:text-amber-300">
+                  {locale === "bn" ? "ফি যাচাই সাপেক্ষে" : "Fee Pending"}
+                </span>
+              </div>
+              <p className="mt-1.5 text-sm text-foreground/85 leading-relaxed font-medium">
+                {order.isAbroadOrder
+                  ? (locale === "bn"
+                      ? "আপনার বাংলাদেশে থাকা পরিবারের সাথে (যেমন: স্ত্রী, বাবা-মা) এই লিংকটি শেয়ার করুন, যাতে তারা এক ক্লিকেই সঠিক ডেলিভারি লোকেশন শেয়ার করতে পারেন।"
+                      : "Share this link with your family member (e.g. wife, parents) in Bangladesh so they can tap once to pin the exact delivery door.")
+                  : (locale === "bn"
+                      ? "আপনার পরিবারের সাথে এই লিংকটি শেয়ার করুন অথবা নিচের বাটনে ক্লিক করে আপনার ডেলিভারি লোকেশন যুক্ত করুন।"
+                      : "Share this link with your family member so they can tap once to pin the exact delivery door, or tap below to share your location.")}
+              </p>
+            </div>
+          </div>
+
+          {order.locationToken && (
+            <div className="space-y-3 pt-1">
+              <div className="flex items-center gap-2 rounded-lg border border-border bg-background p-2.5 text-xs font-mono">
+                <span className="truncate flex-1 text-muted-foreground select-all">
+                  {typeof window !== "undefined" ? `${window.location.origin}/l/${order.locationToken}` : `/l/${order.locationToken}`}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = `${window.location.origin}/l/${order.locationToken}`;
+                    navigator.clipboard.writeText(url);
+                    toast.success(locale === "bn" ? "লোকেশন লিংক কপি করা হয়েছে!" : "Location link copied to clipboard!");
+                  }}
+                  className="flex items-center gap-1.5 rounded bg-secondary px-3 py-1.5 font-bold text-foreground hover:bg-secondary/80 transition-colors"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  {locale === "bn" ? "কপি করুন" : "Copy"}
+                </button>
+              </div>
+
+              <div className="flex flex-wrap gap-2.5">
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(
+                    locale === "bn"
+                      ? `আসসালামু আলাইকুম, বাজার সদাই থেকে অর্ডারের (${order.orderNumber}) সঠিক ডেলিভারির জন্য অনুগ্রহ করে এই লিংকে ক্লিক করে বাসার লোকেশন পিন করুন: ${typeof window !== "undefined" ? window.location.origin : "https://bazarshodai.com"}/l/${order.locationToken}`
+                      : `Hello! Please click this link to pin our exact delivery location for our Bazar Shodai order (${order.orderNumber}): ${typeof window !== "undefined" ? window.location.origin : "https://bazarshodai.com"}/l/${order.locationToken}`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 text-xs shadow transition-all active:scale-[0.98]"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  {locale === "bn" ? "হোয়াটসঅ্যাপে পাঠান" : "Send via WhatsApp"}
+                </a>
+
+                <Link
+                  href={`/l/${order.locationToken}`}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card hover:bg-secondary font-bold px-4 py-2 text-xs text-foreground transition-all"
+                >
+                  <Navigation className="h-3.5 w-3.5 text-brand-fresh" />
+                  {locale === "bn" ? "নিজে লোকেশন যুক্ত করুন" : "Pin Location Now"}
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* summary header */}
       <div className={`${card} overflow-hidden`}>
         <div className="flex flex-wrap items-start justify-between gap-4 p-5 sm:p-6">
@@ -249,7 +325,14 @@ function Detail() {
           <div className="mt-2 space-y-2.5 border-t border-border pt-4">
             <Row label={t("subtotal")} value={formatBDT(order.subtotal)} />
             {!!order.discountAmount && <Row label={`${t("discount")}${order.couponCode ? ` (${order.couponCode})` : ""}`} value={`− ${formatBDT(order.discountAmount)}`} tone="text-emerald-700 dark:text-emerald-300" />}
-            <Row label={t("shipping")} value={order.shippingCost ? formatBDT(order.shippingCost) : t("free")} />
+            <Row
+              label={t("shipping")}
+              value={
+                order.deliveryFeePending
+                  ? (locale === "bn" ? "দোকান থেকে যাচাই সাপেক্ষে" : "To be confirmed by store")
+                  : order.shippingCost ? formatBDT(order.shippingCost) : t("free")
+              }
+            />
             <div className="border-t border-border pt-3">
               <Row label={t("total")} value={formatBDT(order.total)} strong />
             </div>
@@ -292,6 +375,24 @@ function Detail() {
               {order.deliveryDistanceKm != null && <p className="text-xs text-muted-foreground">{tc("distanceLine", { km: formatNumber(order.deliveryDistanceKm, locale, 1) })}</p>}
               <p className="text-muted-foreground">{addr.phone}</p>
             </address>
+            {order.isAbroadOrder && (
+              <div className="mt-3 rounded border border-sky-500/30 bg-sky-500/10 p-2.5 text-xs space-y-1">
+                <p className="font-bold text-sky-800 dark:text-sky-200 flex items-center gap-1.5">
+                  <Globe className="h-3.5 w-3.5 shrink-0" />
+                  <span>{locale === "bn" ? "প্রবাসী ক্রেতার তথ্য" : "Overseas Buyer Details"}</span>
+                </p>
+                {order.senderCountry && (
+                  <p className="text-foreground/85">
+                    {locale === "bn" ? "দেশ" : "Country"}: <b>{order.senderCountry}</b>
+                  </p>
+                )}
+                {order.senderContactNumber && (
+                  <p className="text-foreground/85">
+                    {order.senderContactMethod ?? "WhatsApp"}: <span className="font-mono font-bold">{order.senderContactNumber}</span>
+                  </p>
+                )}
+              </div>
+            )}
             {order.deliverySlot && (
               <p className="mt-3 flex items-center gap-2 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground/85">
                 <Clock className="h-3.5 w-3.5 shrink-0 text-accent-text" aria-hidden="true" />

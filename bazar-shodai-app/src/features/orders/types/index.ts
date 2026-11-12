@@ -50,6 +50,13 @@ export interface CustomerOrderRecord {
     longitude?: number;
   } | null;
   items: OrderItemRecord[];
+  deliveryFeePending?: boolean;
+  isAbroadOrder?: boolean;
+  senderCountry?: string | null;
+  senderContactMethod?: string | null;
+  senderContactNumber?: string | null;
+  locationToken?: string | null;
+  locationUrl?: string | null;
   createdAt: string;
   updatedAt?: string;
   deliveredAt?: string;

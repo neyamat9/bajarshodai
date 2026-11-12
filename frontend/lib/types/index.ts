@@ -255,6 +255,8 @@ export interface DeliveryQuote {
   amountForFreeDelivery: number | null;
   straightKm: number | null;
   radiusKm: number;
+  isAbroad?: boolean;
+  isPendingFee?: boolean;
 }
 
 // Where an order is delivered (checkout form)
@@ -268,6 +270,11 @@ export interface CheckoutAddress {
   landmark: string;
   /** the pin: set in the location step */
   location: PickedLocation | null;
+  skipLocation?: boolean;
+  isAbroadOrder?: boolean;
+  senderCountry?: string;
+  senderContactMethod?: 'WHATSAPP' | 'IMO' | 'PHONE';
+  senderContactNumber?: string;
 }
 
 // Only Cash on Delivery and manual bKash are supported — no payment gateway.
@@ -309,6 +316,13 @@ export interface Order {
   deliveryDistanceKm?: number | null;
   deliveryPlaceName?: string | null;
   deliveryLandmark?: string | null;
+  deliveryFeePending?: boolean;
+  isAbroadOrder?: boolean;
+  senderCountry?: string | null;
+  senderContactMethod?: 'WHATSAPP' | 'IMO' | 'PHONE' | null;
+  senderContactNumber?: string | null;
+  locationToken?: string | null;
+  locationUrl?: string | null;
   /** the rider, once the parcel is with them */
   rider?: { name: string; phone: string; status: "PICKED_UP" | "ON_THE_WAY" } | null;
   canCancel?: boolean;

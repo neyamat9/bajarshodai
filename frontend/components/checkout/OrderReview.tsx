@@ -10,7 +10,7 @@ import { MOBILE_METHODS, type CheckoutAddress, type PaymentMethod } from "@/lib/
 import { useState } from "react";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { MapPin, Loader2 } from "lucide-react";
+import { MapPin, Loader2, Globe } from "lucide-react";
 import { formatMoney, formatNumber } from "@/lib/format";
 import type { Locale } from "@/lib/locale";
 
@@ -45,7 +45,7 @@ export default function OrderReview({ summary, address, paymentMethod, deliveryS
   async function place() {
     if (placing) return;
     const pin = address.location;
-    if (!pin) {
+    if (!pin && !address.skipLocation) {
       setError(t("needLocation"));
       return;
     }
@@ -58,12 +58,12 @@ export default function OrderReview({ summary, address, paymentMethod, deliveryS
           fullName: address.fullName,
           phone: address.phone,
           address: address.address,
-          latitude: pin.lat,
-          longitude: pin.lng,
-          placeName: pin.placeName || address.address || undefined,
+          latitude: pin?.lat,
+          longitude: pin?.lng,
+          placeName: pin?.placeName || address.address || undefined,
           landmark: address.landmark || undefined,
-          accuracyM: pin.accuracyM ?? undefined,
-          locationSource: pin.source,
+          accuracyM: pin?.accuracyM ?? undefined,
+          locationSource: pin?.source,
         },
         deliverySlot: deliverySlot || undefined,
         ...(MOBILE_METHODS.includes(paymentMethod)
@@ -76,6 +76,11 @@ export default function OrderReview({ summary, address, paymentMethod, deliveryS
         deliveryNote: note.trim() || undefined,
         email: !user && address.email ? address.email : undefined,
         redeemPoints: redeemPoints || undefined,
+        skipLocation: address.skipLocation,
+        isAbroadOrder: address.isAbroadOrder,
+        senderCountry: address.senderCountry,
+        senderContactMethod: address.senderContactMethod,
+        senderContactNumber: address.senderContactNumber,
       });
       onOrderPlaced();
       router.push(`/orders/${order.id}?placed=1`);
@@ -108,6 +113,21 @@ export default function OrderReview({ summary, address, paymentMethod, deliveryS
         <p>{address.address}</p>
         {address.landmark && <p className="text-muted-foreground">{t("landmarkLine", { landmark: address.landmark })}</p>}
         {address.location?.placeName && <p className="flex items-start gap-1.5 text-muted-foreground"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-text" aria-hidden="true" />{address.location.placeName}</p>}
+        {address.skipLocation && (
+          <div className="mt-1 space-y-0.5 text-xs">
+            <p className="flex items-center gap-1.5 font-bold text-amber-600 dark:text-amber-400">
+              <Globe className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              {address.isAbroadOrder
+                ? (locale === "bn" ? `প্রবাসী অর্ডার (${address.senderCountry}) · ডেলিভারি চার্জ দোকান থেকে নিশ্চিত করা হবে` : `Abroad Order (${address.senderCountry}) · Delivery fee to be confirmed by store`)
+                : (locale === "bn" ? "লোকেশন পিন ছাড়া অর্ডার · ডেলিভারি চার্জ দোকান থেকে নিশ্চিত করা হবে" : "Order without pin · Delivery fee to be confirmed by store")}
+            </p>
+            {address.isAbroadOrder && address.senderContactNumber && (
+              <p className="text-muted-foreground">
+                {address.senderContactMethod}: <span className="font-mono">{address.senderContactNumber}</span>
+              </p>
+            )}
+          </div>
+        )}
         {summary.shipping.distanceKm !== null && <p className="text-xs text-muted-foreground">{t("distanceLine", { km: formatNumber(summary.shipping.distanceKm, locale, 1) })}</p>}
       </section>
 

@@ -11,8 +11,8 @@ export interface PlaceOrderInput {
     phone: string;
     address: string;
     /** the delivery pin */
-    latitude: number;
-    longitude: number;
+    latitude?: number;
+    longitude?: number;
     placeName?: string;
     landmark?: string;
     accuracyM?: number;
@@ -26,6 +26,11 @@ export interface PlaceOrderInput {
   deliveryNote?: string;
   email?: string; // guests
   redeemPoints?: number;
+  skipLocation?: boolean;
+  isAbroadOrder?: boolean;
+  senderCountry?: string;
+  senderContactMethod?: string;
+  senderContactNumber?: string;
 }
 
 export async function placeOrder(input: PlaceOrderInput): Promise<Order> {

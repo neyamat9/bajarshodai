@@ -88,6 +88,8 @@ export class AdminOrdersService {
       ...(q.paymentStatus ? { paymentStatus: q.paymentStatus } : {}),
       ...(q.paymentMethod ? { paymentMethod: q.paymentMethod } : {}),
       ...(q.source ? { source: q.source } : {}),
+      ...(q.needsFee ? { deliveryFeePending: q.needsFee === 'true' } : {}),
+      ...(q.isAbroad ? { isAbroadOrder: q.isAbroad === 'true' } : {}),
       ...((q.from || q.to) && {
         placedAt: {
           ...(q.from ? { gte: q.from } : {}),

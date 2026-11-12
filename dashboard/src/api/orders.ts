@@ -83,6 +83,13 @@ export interface OrderSummary {
   deliveryDistanceKm?: string | null;
   deliveryDirectDistanceKm?: string | null;
   deliveryRoadDistanceKm?: string | null;
+  deliveryFeePending?: boolean;
+  isAbroadOrder?: boolean;
+  senderCountry?: string | null;
+  senderContactMethod?: string | null;
+  senderContactNumber?: string | null;
+  locationToken?: string | null;
+  locationUrl?: string | null;
 }
 export interface Payment {
   id: string;
@@ -171,6 +178,10 @@ export interface OrderFilters {
   stage?: string;
   /** "true" = mobile payments still to verify */
   toVerify?: string;
+  /** "true" = orders with pending manual delivery fee */
+  needsFee?: string;
+  /** "true" = orders placed from abroad */
+  isAbroad?: string;
   paymentStatus?: string;
   paymentMethod?: string;
   source?: string;

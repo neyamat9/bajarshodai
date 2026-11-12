@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import {
   Injectable,
   NotFoundException,
@@ -59,8 +60,11 @@ export function toCustomerOrder<
   void _staffNote;
   void _createdByAdminId;
   void _shippingMethodId;
+  const token = (rest as any).locationToken;
+  const frontendUrl = (process.env.FRONTEND_URL || 'https://bazarshodai.com').replace(/\/+$/, '');
   return {
     ...rest,
+    locationUrl: token ? `${frontendUrl}/l/${token}` : null,
     ...(statusHistory
       ? {
           statusHistory: statusHistory.map((h) => {
@@ -225,6 +229,8 @@ export class OrdersService {
           lng: dto.shippingAddress.longitude,
           phone,
           redeemPoints: dto.redeemPoints,
+          skipLocation: dto.skipLocation,
+          isAbroadOrder: dto.isAbroadOrder,
         },
         tx,
       );
@@ -242,12 +248,12 @@ export class OrdersService {
       if (block === 'ORIGIN_NOT_SET') {
         throw new BadRequestException('Delivery is not set up yet. Please call us to order.');
       }
-      if (block === 'OUT_OF_AREA') {
+      if (!dto.skipLocation && block === 'OUT_OF_AREA') {
         throw new BadRequestException(
           'Sorry, this location is outside of our delivery zone. We only deliver within the full Shahrasti area.',
         );
       }
-      if (!quote.shipping.available) {
+      if (!dto.skipLocation && !quote.shipping.available) {
         throw new BadRequestException('Share your delivery location first.');
       }
       if (!quote.minOrderOk) {
@@ -299,6 +305,14 @@ export class OrdersService {
       const { subtotal, shippingCost, taxAmount, discountAmount, total } =
         quote;
 
+      const hasLocation =
+        !dto.skipLocation &&
+        dto.shippingAddress.latitude != null &&
+        dto.shippingAddress.longitude != null;
+      const locationToken = !hasLocation
+        ? randomBytes(18).toString('base64url')
+        : null;
+
       const shippingAddress = await tx.address.create({
         data: {
           fullName: dto.shippingAddress.fullName,
@@ -310,13 +324,13 @@ export class OrdersService {
           district: area.district,
           upazila: area.upazila,
           postalCode: dto.shippingAddress.postalCode ?? '',
-          latitude: dto.shippingAddress.latitude,
-          longitude: dto.shippingAddress.longitude,
+          latitude: dto.shippingAddress.latitude ?? null,
+          longitude: dto.shippingAddress.longitude ?? null,
           placeName: dto.shippingAddress.placeName ?? null,
           landmark: dto.shippingAddress.landmark ?? null,
           accuracyM: dto.shippingAddress.accuracyM ?? null,
-          locationSource: dto.shippingAddress.locationSource ?? 'PIN',
-          locationCapturedAt: new Date(),
+          locationSource: dto.shippingAddress.locationSource ?? (hasLocation ? 'PIN' : 'LINK'),
+          locationCapturedAt: hasLocation ? new Date() : null,
           country: 'Bangladesh',
           userId,
           label: 'Shipping',
@@ -370,8 +384,8 @@ export class OrdersService {
           estimatedDelivery,
           deliveryNote: dto.deliveryNote ?? null,
           shippingAddressId: shippingAddress.id,
-          deliveryLat: dto.shippingAddress.latitude,
-          deliveryLng: dto.shippingAddress.longitude,
+          deliveryLat: dto.shippingAddress.latitude ?? null,
+          deliveryLng: dto.shippingAddress.longitude ?? null,
           deliveryPlaceName: dto.shippingAddress.placeName ?? null,
           deliveryLandmark: dto.shippingAddress.landmark ?? null,
           deliveryDistanceKm: quote.shipping.distanceKm,
@@ -380,6 +394,12 @@ export class OrdersService {
           deliveryDurationSec: quote.shipping.durationSec,
           distanceEstimated: quote.shipping.estimated,
           deliveryFee: quote.shipping.calculatedFee,
+          deliveryFeePending: !hasLocation,
+          isAbroadOrder: !!dto.isAbroadOrder,
+          senderCountry: dto.senderCountry?.trim() || null,
+          senderContactMethod: dto.senderContactMethod || null,
+          senderContactNumber: dto.senderContactNumber?.trim() || null,
+          locationToken,
           deliverySlot: dto.deliverySlot ?? null,
           deliveryDate: dto.deliveryDate ? new Date(`${dto.deliveryDate}T00:00:00.000Z`) : null,
           items: {
@@ -409,7 +429,9 @@ export class OrdersService {
           statusHistory: {
             create: {
               toStatus: 'PENDING',
-              note: 'Order placed successfully',
+              note: !hasLocation
+                ? (dto.isAbroadOrder ? 'Order placed from abroad without location pin' : 'Order placed without location pin')
+                : 'Order placed successfully',
               changedBy: 'user',
             },
           },
@@ -420,6 +442,18 @@ export class OrdersService {
           shippingAddress: true,
         },
       });
+
+      if (locationToken) {
+        await tx.locationRequest.create({
+          data: {
+            token: locationToken,
+            phone,
+            name: dto.shippingAddress.fullName,
+            orderId: created.id,
+            expiresAt: new Date(Date.now() + 72 * 3600 * 1000), // 72 hours validity
+          },
+        });
+      }
 
       if (quote._coupon?.valid) {
         await this.couponsService.redeem(

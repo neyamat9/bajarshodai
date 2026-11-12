@@ -69,3 +69,20 @@ export function isWithinShahrastiZone(point: LatLng): boolean {
     point.lng <= 91.07
   );
 }
+
+/**
+ * Is the point completely outside Bangladesh (or > 300 km from the shop)?
+ * Used to detect overseas / abroad customers (Middle East, Europe, Americas, etc.)
+ */
+export function isAbroadPoint(point: LatLng): boolean {
+  if (
+    point.lat < 20.5 ||
+    point.lat > 26.7 ||
+    point.lng < 88.0 ||
+    point.lng > 92.7
+  ) {
+    return true;
+  }
+  const km = haversineKm({ lat: 23.2185, lng: 90.9525 }, point);
+  return km > 300;
+}

@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { IsIn, IsLatitude, IsLongitude, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import { IsBoolean, IsIn, IsLatitude, IsLongitude, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Public } from '../../common/decorators/public.decorator';
@@ -9,10 +9,12 @@ import { MapsService } from '../../common/maps';
 import { ShippingService } from './shipping.service';
 
 class QuoteDto {
-  @ApiProperty() @Type(() => Number) @IsLatitude() lat: number;
-  @ApiProperty() @Type(() => Number) @IsLongitude() lng: number;
+  @ApiPropertyOptional() @IsOptional() @Type(() => Number) @IsLatitude() lat?: number;
+  @ApiPropertyOptional() @IsOptional() @Type(() => Number) @IsLongitude() lng?: number;
   @ApiPropertyOptional({ description: 'Order subtotal, to see whether delivery would be free' })
   @IsOptional() @Type(() => Number) @IsNumber() @Min(0) subtotal?: number;
+  @ApiPropertyOptional({ description: 'Skip location pin (abroad / remote order)' })
+  @IsOptional() @IsBoolean() skipLocation?: boolean;
 }
 
 class PlaceQuery {
@@ -46,7 +48,7 @@ export class ShippingController {
   @Throttle({ medium: { ttl: 60000, limit: 30 } })
   @ApiOperation({ summary: 'Distance and delivery charge for a point on the map ("check my delivery charge")' })
   quote(@Body() dto: QuoteDto) {
-    return this.shippingService.quote(dto.subtotal ?? 0, { lat: dto.lat, lng: dto.lng });
+    return this.shippingService.quote(dto.subtotal ?? 0, { lat: dto.lat, lng: dto.lng, skipLocation: dto.skipLocation });
   }
 
   @Public()
