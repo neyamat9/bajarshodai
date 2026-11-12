@@ -76,10 +76,7 @@ export default function ProductDetailClient({ product: initial, relatedProducts,
             <section data-reveal="up" className="rounded border border-border bg-card p-4 sm:p-6">
               <div className="grid gap-6 md:grid-cols-[minmax(0,460px)_minmax(0,1fr)] md:gap-8 lg:gap-12">
                 <div className="relative min-w-0">
-                  {save > 0 && (
-                    <span className="absolute left-3 top-3 z-20 rounded bg-emerald-700 px-2.5 py-1 text-xs font-bold text-white shadow">Save: {money(save)}</span>
-                  )}
-                  <ImageGallery product={product} />
+                  <ImageGallery product={product} saveBadge={save > 0 ? `Save: ${money(save)}` : null} />
                 </div>
                 <ProductSummary product={product} atcRef={atcButtonRef} onVariantChange={handleVariantChange} paymentMethods={paymentMethods} />
               </div>

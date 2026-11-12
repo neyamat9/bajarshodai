@@ -1,26 +1,22 @@
 "use client";
 
-import { useWishlist } from "@/lib/hooks/use-wishlist";
 import type { Product, ProductImage } from "@/lib/types";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 
 interface ImageGalleryProps {
   product: Product;
+  saveBadge?: string | null;
 }
 
-export default function ImageGallery({ product }: ImageGalleryProps) {
+export default function ImageGallery({ product, saveBadge }: ImageGalleryProps) {
   const t = useTranslations("Product");
-  const { addToVault, removeFromVault, isInVault } = useWishlist();
   const [activeIndex, setActiveIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [mounted, setMounted] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
 
-  const inVault = isInVault(product.id);
   const images: ProductImage[] =
     product.images.length > 0
       ? product.images
@@ -63,28 +59,8 @@ export default function ImageGallery({ product }: ImageGalleryProps) {
     setLightboxOpen(true);
   }
 
-  function handleToggleWishlist() {
-    if (inVault) {
-      removeFromVault(product.id);
-      toast.info(t("gallery.removedWish"));
-    } else {
-      const primaryImg =
-        product.images.find((img) => img.isPrimary) ?? product.images[0];
-      addToVault({
-        productId: product.id,
-        slug: product.slug,
-        name: product.name,
-        price: product.price,
-        originalPrice: product.originalPrice,
-        imageUrl:
-          primaryImg?.url ?? "/placeholder.svg",
-        stock: product.stock,
-      });
-      setIsAnimating(true);
-      setTimeout(() => setIsAnimating(false), 400);
-      toast.success(t("gallery.addedWish"), { duration: 2000 });
-    }
-  }
+  // Filter out "NEW" badge from the product details image
+  const otherBadges = product.badges.filter((b) => b.toUpperCase() !== "NEW");
 
   return (
     <div className="flex flex-col gap-4">
@@ -99,7 +75,7 @@ export default function ImageGallery({ product }: ImageGalleryProps) {
       >
         {/* Scale-in entrance */}
         <div
-          className="w-full h-full flex items-center justify-center p-8"
+          className="relative w-full h-full flex items-center justify-center overflow-hidden"
           style={{
             opacity: mounted ? 1 : 0,
             transform: mounted ? "scale(1)" : "scale(0.92)",
@@ -113,7 +89,7 @@ export default function ImageGallery({ product }: ImageGalleryProps) {
               src={img.url}
               alt={img.alt}
               fill
-              className="object-contain p-8"
+              className="object-contain"
               style={{
                 opacity: i === activeIndex ? 1 : 0,
                 transform: i === activeIndex ? "scale(1)" : "scale(1.06)",
@@ -136,44 +112,17 @@ export default function ImageGallery({ product }: ImageGalleryProps) {
           </div>
         </div>
 
-        {/* ── Floating Wishlist Button ──────────────────── */}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleToggleWishlist();
-          }}
-          aria-label={
-            inVault
-              ? t("card.wishRemove", { name: product.name })
-              : t("card.wishAdd", { name: product.name })
-          }
-          className={`absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center rounded border transition-all ${
-            inVault
-              ? "bg-brand-fresh/20 border-brand-fresh/40 text-accent-text"
-              : "bg-brand-deep/40 border-border text-muted-foreground/70 hover:text-accent-text hover:border-brand-fresh/30 hover:bg-brand-fresh/10"
-          }`}
-        >
-          <svg
-            className={`w-5 h-5 ${isAnimating ? "animate-heartbeat" : ""}`}
-            fill={inVault ? "currentColor" : "none"}
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-            />
-          </svg>
-        </button>
+        {/* ── Save Badge Overlaid On Top Of Image ── */}
+        {saveBadge && (
+          <span className="absolute left-3 top-3 z-10 rounded bg-emerald-700 px-2.5 py-1 text-xs font-bold text-white shadow pointer-events-none">
+            {saveBadge}
+          </span>
+        )}
 
-        {/* Product badges */}
-        {product.badges.length > 0 && (
-          <div className="absolute bottom-4 left-4 flex flex-col gap-1.5 pointer-events-none opacity-100 transition-opacity duration-200 group-hover:opacity-0">
-            {product.badges.map((badge) => (
+        {/* Product badges (excluding "NEW") */}
+        {otherBadges.length > 0 && (
+          <div className="absolute bottom-3 left-3 z-10 flex flex-col gap-1.5 pointer-events-none opacity-100 transition-opacity duration-200 group-hover:opacity-0">
+            {otherBadges.map((badge) => (
               <BadgeChip key={badge} badge={badge} />
             ))}
           </div>
