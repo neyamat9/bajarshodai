@@ -214,10 +214,17 @@ export default function SiteHeader() {
           <div className="order-3 w-full lg:order-2 lg:w-auto lg:flex-1" ref={searchContainerRef}>
             <form onSubmit={handleSearchSubmit} className="flex flex-col gap-1.5">
               <div className="relative">
-                <Search
-                  className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted-foreground"
-                  aria-hidden="true"
-                />
+                {isLoadingSuggestions ? (
+                  <Loader2
+                    className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 animate-spin text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <Search
+                    className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                )}
                 <input
                   ref={inputRef}
                   id="site-search"
@@ -243,19 +250,8 @@ export default function SiteHeader() {
                   aria-activedescendant={
                     activeSuggestion < 0 ? undefined : activeSuggestion < suggestionCount ? `suggestion-${activeSuggestion}` : `history-${activeSuggestion - suggestionCount}`
                   }
-                  className="h-11 w-full rounded border border-input bg-secondary/60 pl-11 pr-14 text-sm font-medium text-foreground transition-all placeholder:text-muted-foreground focus:border-brand-fresh focus:bg-card focus:outline-none focus:ring-4 focus:ring-brand-fresh/15 md:h-12"
+                  className="h-11 w-full rounded border border-input bg-secondary/60 pl-11 pr-4 text-sm font-medium text-foreground transition-all placeholder:text-muted-foreground focus:border-brand-fresh focus:bg-card focus:outline-none focus:ring-4 focus:ring-brand-fresh/15 md:h-12"
                 />
-                <button
-                  type="submit"
-                  aria-label={t("search")}
-                  className="absolute right-1.5 top-1/2 flex h-8 w-9 -translate-y-1/2 items-center justify-center rounded bg-primary text-primary-foreground transition-colors hover:bg-primary/90 md:h-9"
-                >
-                  {isLoadingSuggestions ? (
-                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                  ) : (
-                    <Search className="h-4 w-4" aria-hidden="true" />
-                  )}
-                </button>
 
                 {/* One panel: product suggestions (when there is text) and the customer's recent searches */}
                 {(showDropdown || showHistory) && (
