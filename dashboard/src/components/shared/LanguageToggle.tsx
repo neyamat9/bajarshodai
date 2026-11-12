@@ -20,8 +20,8 @@ export function LanguageToggle({ className }: { className?: string }) {
   );
   return (
     <div role="group" aria-label="Language" className={cn("flex items-center rounded border border-border bg-background p-0.5", className)}>
-      {btn("bn", "বাং", "বাংলা")}
       {btn("en", "EN", "English")}
+      {btn("bn", "বাং", "বাংলা")}
     </div>
   );
 }

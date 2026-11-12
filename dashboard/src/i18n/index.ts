@@ -2,17 +2,17 @@ import i18next from "i18next";
 import { initReactI18next } from "react-i18next";
 import { bn } from "./bn";
 
-// The dashboard is written in English: the English text IS the key. Bangla is the shop's working language,
-// so it is the default; a text that has no Bangla yet simply shows in English.
+// The dashboard is written in English: the English text IS the key. English is the default
+// language for the admin dashboard; users can switch to Bangla anytime via the language toggle.
 export type Lang = "bn" | "en";
 const STORAGE = "bs-admin-lang";
 
 export function savedLang(): Lang {
   try {
     const v = localStorage.getItem(STORAGE);
-    return v === "en" ? "en" : "bn";
+    return v === "bn" ? "bn" : "en";
   } catch {
-    return "bn";
+    return "en";
   }
 }
 

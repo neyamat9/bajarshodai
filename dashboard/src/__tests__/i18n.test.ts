@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import i18n, { setLang, tr } from "@/i18n";
+import i18n, { savedLang, setLang, tr } from "@/i18n";
 import { bn } from "@/i18n/bn";
 import { can, canDeliver, isAdminRole } from "@/lib/access";
 import { digits, money, num, orderStatusLabel } from "@/lib/format";
@@ -43,6 +43,16 @@ describe("language switch", () => {
     expect(money(6245)).toBe("৳6,245");
     expect(digits("12")).toBe("12");
     await i18n.changeLanguage("bn");
+  });
+
+  it("defaults to English when no language preference is saved", () => {
+    localStorage.removeItem("bs-admin-lang");
+    expect(savedLang()).toBe("en");
+    localStorage.setItem("bs-admin-lang", "bn");
+    expect(savedLang()).toBe("bn");
+    localStorage.setItem("bs-admin-lang", "en");
+    expect(savedLang()).toBe("en");
+    localStorage.removeItem("bs-admin-lang");
   });
 });
 
