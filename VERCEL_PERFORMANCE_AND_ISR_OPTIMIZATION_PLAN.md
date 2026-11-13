@@ -1,9 +1,9 @@
 # Next.js 16 & Vercel Performance Optimization Plan
 ## Bulletproof Architecture for Instant Speed, Minimal ISR Writes & Zero-Crash VPS Readiness
 
-**Document Version:** 1.0.0  
+**Document Version:** 1.1.0 (Corrections Applied)  
 **Target Environment:** Vercel (Current Production) & Linux VPS / Docker / PM2 (Future Portability)  
-**Status:** Approved for Documentation — Awaiting Final Confirmation Before Execution  
+**Status:** Approved for Documentation — Ready for Execution on User Approval  
 
 ---
 
@@ -112,6 +112,9 @@ function tagsFor(path: string): string[] {
 - **Change:**
   Extract the entity slug from the URL so that updating one product only invalidates that specific product's page.
 
+> [!IMPORTANT]
+> **Both files below are mandatory.** The `revalidate/route.ts` change is not optional — the current code uses `ALLOWED.has(t)` which is a fixed Set and will silently reject any dynamic tag like `product-fresh-suji-500g`. Without updating `route.ts`, the granular tags generated in `client.ts` will never be accepted by the revalidation endpoint and the entire Step 2 fix will silently fail.
+
 ```ts
 // frontend/lib/api/client.ts
 function cacheTagsFor(endpoint: string): string[] {
@@ -142,27 +145,38 @@ function cacheTagsFor(endpoint: string): string[] {
 
 ```ts
 // frontend/app/api/revalidate/route.ts
-// Allow dynamic granular tags (e.g., 'product-fresh-suji-500g', 'category-cooking-rice')
+// REQUIRED: Replace ALLOWED.has(t) filter with this prefix-aware check.
+// The current Set-only check silently drops granular tags like 'product-{slug}'.
 function isAllowedTag(tag: string): boolean {
   if (ALLOWED.has(tag)) return true;
   if (tag.startsWith('product-') || tag.startsWith('category-') || tag.startsWith('brand-')) return true;
   return false;
 }
+
+// Update the tags filter line from:
+//   tags = body.tags.filter((t): t is string => typeof t === "string" && ALLOWED.has(t));
+// To:
+//   tags = body.tags.filter((t): t is string => typeof t === "string" && isAllowedTag(t));
 ```
 
 ---
 
-### Step 3: Convert Private Routes to Dynamic Client Shells
-- **Target File:** `frontend/app/[locale]/(account)/layout.tsx`
-- **Target File:** `frontend/app/[locale]/(checkout)/cart/page.tsx`
-- **Target File:** `frontend/app/[locale]/(checkout)/checkout/page.tsx`
+### Step 3: Convert Private Account Routes to Dynamic Client Shells
+- **Target File:** `frontend/app/[locale]/(account)/layout.tsx` ← **only this file**
+
+> [!NOTE]
+> **Scope is limited to `(account)/layout.tsx` only.**
+> `(checkout)/layout.tsx` has been verified to have **no** `revalidate` export and no ISR configuration — it is already safe and must NOT be modified. The `cart` and `checkout` pages under `(checkout)/` are also already clean.
+
 - **Change:**
-  Remove `export const revalidate = 300;` from `(account)/layout.tsx`.
-  Add `export const dynamic = "force-dynamic";` to prevent Vercel from setting up background ISR write loops for private user pages.
+  Remove `export const revalidate = 300;` from `(account)/layout.tsx` and replace with `export const dynamic = "force-dynamic"`. This stops Vercel from running ISR write loops every 5 minutes for 14 private account-only page shells (`/account`, `/orders`, `/wishlist`, `/account/settings`, etc.) that never serve public cached content.
 
 ```tsx
 // frontend/app/[locale]/(account)/layout.tsx
-// REMOVE: export const revalidate = 300;
+// REMOVE this line:
+// export const revalidate = 300; // only the shop chrome is rendered here; the account pages load their own data in the browser
+
+// ADD this line instead:
 export const dynamic = "force-dynamic";
 ```
 
@@ -201,11 +215,13 @@ if (changed) {
 
 ---
 
-### Step 6: Bypass Data Cache on Arbitrary User Search Queries
+### Step 6: Prevent Search from Caching Category Data Unnecessarily
 - **Target File:** `frontend/app/[locale]/(home)/search/page.tsx`
-- **Change:**
-  Pass `{ revalidate: 0 }` to `listProducts` and `getProductFacets` for search queries.
-  Search queries are dynamic user inputs that should not fill up persistent server cache storage.
+
+> [!NOTE]
+> **Partially already done.** The search page already has `export const dynamic = "force-dynamic"` which prevents search result queries (`listProducts`, `getProductFacets`) from being cached. No change needed for search result fetches.
+>
+> **One remaining issue:** The `getCategories(locale)` call inside the search page still runs through the standard `'categories'` Data Cache tag. Since the search page is `force-dynamic`, this fetch re-runs on every search request but could share stale cached category data. No critical action required here — it is already protected by `force-dynamic`. This step is effectively **complete as-is**; no code changes needed for search/page.tsx.
 
 ---
 
