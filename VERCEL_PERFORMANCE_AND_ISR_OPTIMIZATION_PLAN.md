@@ -1,7 +1,7 @@
 # Next.js 16 & Vercel Performance Optimization Plan
 ## Bulletproof Architecture for Instant Speed, Minimal ISR Writes & Zero-Crash VPS Readiness
 
-**Document Version:** 1.1.0 (Corrections Applied)  
+**Document Version:** 1.2.0 (Granular Tagging & Revalidate Inheritance Refined)  
 **Target Environment:** Vercel (Current Production) & Linux VPS / Docker / PM2 (Future Portability)  
 **Status:** Approved for Documentation — Ready for Execution on User Approval  
 
@@ -49,7 +49,7 @@ flowchart TD
     end
 
     subgraph Phase 3: Route & Cache Fine-Tuning
-        E1["5. frontend/lib/services/reviews.service.ts"] -->|Align revalidation to 1800s| F1["Restores product page to 30m cache"]
+        E1["5. frontend/lib/services/reviews.service.ts"] -->|Align revalidation to 300s| F1["Stops 120s downgrade; aligns with layout"]
         E2["6. frontend/app/[locale]/(home)/search/page.tsx"] -->|Bypass Data Cache on search| F2["Prevents search query bloat"]
         E3["7. frontend/components/chat/LiveChatContext.tsx"] -->|Lazy-load Socket on chat click| F3["Removes initial load WebSocket overhead"]
         E4["8. frontend/app/robots.ts & sitemap.ts"] -->|Generate standard XML sitemap| F4["Optimal search engine crawl rate"]
@@ -72,8 +72,9 @@ function tagsFor(path: string): string[] {
   // Live stock and prices are already verified in real-time on cart & product mount.
   if (/\/customer\/(orders|checkout)/i.test(path)) return [];
 
-  if (/\/customer\/(products\/[^/]+\/)?(reviews|questions)/i.test(path))
-    return ['products'];
+  // Customer reviews or questions affect only that specific product's page
+  const reviewMatch = /\/customer\/products\/([^/]+)\/(reviews|questions)/i.exec(path);
+  if (reviewMatch) return [`product-${reviewMatch[1]}`];
 
   const m = /\/admin\/([a-z-]+)/i.exec(path);
   if (!m) return [];
@@ -106,14 +107,13 @@ function tagsFor(path: string): string[] {
 
 ---
 
-### Step 2: Implement Granular Cache Tagging
+### Step 2: Implement True Granular Cache Tagging (Isolate Detail Pages from Listing Wipes)
 - **Target File:** `frontend/lib/api/client.ts`
 - **Target File:** `frontend/app/api/revalidate/route.ts`
-- **Change:**
-  Extract the entity slug from the URL so that updating one product only invalidates that specific product's page.
-
-> [!IMPORTANT]
-> **Both files below are mandatory.** The `revalidate/route.ts` change is not optional — the current code uses `ALLOWED.has(t)` which is a fixed Set and will silently reject any dynamic tag like `product-fresh-suji-500g`. Without updating `route.ts`, the granular tags generated in `client.ts` will never be accepted by the revalidation endpoint and the entire Step 2 fix will silently fail.
+- **Target File:** `server/src/common/storefront/storefront-revalidate.interceptor.ts`
+- **Architectural Principle:**
+  In Next.js App Router, if a cache entry is tagged with multiple tags (e.g., `['product-fresh-suji-500g', 'products']`), calling `revalidateTag('products')` purges **all** entries carrying `'products'`.
+  Therefore, individual product detail pages **must not** carry the broad `'products'` tag. They must be tagged **exclusively** with `product-${slug}`.
 
 ```ts
 // frontend/lib/api/client.ts
@@ -123,23 +123,56 @@ function cacheTagsFor(endpoint: string): string[] {
 
   if (path === '/customer/home') return ['home'];
   if (parts[1] === 'products') {
+    // Individual product detail page gets its OWN tag ONLY (isolates it from catalog wipes)
     if (parts[2] && parts[2] !== 'filters' && parts[2] !== 'suggestions') {
-      return [`product-${parts[2]}`, 'products'];
+      return [`product-${parts[2]}`];
     }
+    // Catalog listing, category grids, search cards
     return ['products'];
   }
   if (parts[1] === 'categories') {
-    if (parts[2]) return [`category-${parts[2]}`, 'categories'];
+    if (parts[2]) return [`category-${parts[2]}`];
     return ['categories'];
   }
   if (parts[1] === 'brands') {
-    if (parts[2]) return [`brand-${parts[2]}`, 'brands'];
+    if (parts[2]) return [`brand-${parts[2]}`];
     return ['brands'];
   }
   if (parts[1] === 'banners') return ['banners', 'home'];
   if (parts[1] === 'settings') return ['settings'];
   if (parts[1] === 'shipping') return ['shipping', 'settings'];
   return [];
+}
+```
+
+```ts
+// server/src/common/storefront/storefront-revalidate.interceptor.ts
+// Extract product slug from controller response to invalidate that specific detail page:
+@Injectable()
+export class StorefrontRevalidateInterceptor implements NestInterceptor {
+  constructor(private readonly sync: StorefrontSyncService) {}
+
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    if (context.getType() !== 'http') return next.handle();
+    const req = context.switchToHttp().getRequest<Request>();
+    if (!WRITES.has(req.method)) return next.handle();
+    const staticTags = tagsFor(req.originalUrl ?? req.url);
+
+    return next.handle().pipe(
+      tap({
+        next: (body: unknown) => {
+          const tags = [...staticTags];
+          // When an admin updates a product, extract its slug so its specific detail page updates immediately:
+          if (body && typeof body === 'object') {
+            const b = body as { slug?: string; product?: { slug?: string } };
+            const slug = b.slug ?? b.product?.slug;
+            if (slug) tags.push(`product-${slug}`);
+          }
+          if (tags.length) this.sync.notify(tags);
+        },
+      }),
+    );
+  }
 }
 ```
 
@@ -206,12 +239,17 @@ if (changed) {
 
 ---
 
-### Step 5: Align Product & Review/Question Revalidation Intervals
-- **Target File:** `frontend/app/[locale]/(home)/products/[slug]/page.tsx`
+### Step 5: Stop Reviews/Questions from Downgrading Product Page ISR (Align to 300s)
 - **Target File:** `frontend/lib/services/reviews.service.ts`
+- **Target File:** `frontend/app/[locale]/(home)/products/[slug]/page.tsx`
+- **Context & Next.js App Router Precedence:**
+  In Next.js App Router, the effective revalidation period for any route is `Math.min(layout, page, ...fetches)`.
+  Because `frontend/app/[locale]/(home)/layout.tsx` exports `revalidate = 300` (5 minutes), child routes cannot revalidate slower than 300 seconds without modifying the layout. 300s (5 minutes) is the desired e-commerce production baseline.
+- **The Actual Root Bottleneck:**
+  `frontend/lib/services/reviews.service.ts` had hardcoded `revalidate: 120` in `getReviews()` (line 14) and `getQuestions()` (line 24). This forced Next.js to downgrade the entire product detail route from 300s down to 120s (2 minutes), accelerating ISR cache writes by 2.5x.
 - **Change:**
-  Set product page `revalidate = 1800` (30 minutes) and update `getReviews` & `getQuestions` from `revalidate: 120` to `revalidate: 1800` (or `no-store` on client tab open).
-  This prevents the route from being downgraded to a 2-minute regeneration cycle.
+  1. Update `getReviews()` and `getQuestions()` in `frontend/lib/services/reviews.service.ts` from `revalidate: 120` to `revalidate: 300` (aligning with the 300s layout floor).
+  2. Maintain `export const revalidate = 300;` on `products/[slug]/page.tsx` so the entire tree is uniformly aligned at 5 minutes.
 
 ---
 
