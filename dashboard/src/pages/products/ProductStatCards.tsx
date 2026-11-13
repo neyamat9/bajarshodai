@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router";
 import { AlertTriangle, Boxes, CheckCircle2, EyeOff, PackageX, Package, Percent, Trophy } from "lucide-react";
 import { productsApi } from "@/api/products";
 import { StatCard } from "@/components/shared/StatCard";
 import { money, num } from "@/lib/format";
-import { openInNewTab } from "@/lib/utils";
 import { tr } from "@/i18n";
 
 export interface ProductCardFilter {
@@ -16,6 +16,7 @@ const none: ProductCardFilter = { status: "", visibility: "", stock: "", onDisco
 
 /** The cards above the products list (whole catalogue). Clicking one filters the list to it; clicking it again clears it. */
 export function ProductStatCards({ current, onPick }: { current: ProductCardFilter; onPick: (f: ProductCardFilter) => void }) {
+  const navigate = useNavigate();
   const q = useQuery({ queryKey: ["products", "stats"], queryFn: productsApi.stats, placeholderData: (p) => p });
   const s = q.data;
   const loading = q.isLoading;
@@ -39,7 +40,7 @@ export function ProductStatCards({ current, onPick }: { current: ProductCardFilt
         hint={s ? (s.bestSeller?.name ?? tr("no sales yet")) : undefined}
         icon={<Trophy size={18} />}
         loading={loading}
-        onClick={s?.bestSeller ? () => openInNewTab(`/products/${s.bestSeller!.id}/edit`) : undefined}
+        onClick={s?.bestSeller ? () => navigate(`/products/${s.bestSeller!.id}/edit`) : undefined}
       />
       <StatCard hintSk label={tr("On discount now")} value={s?.onDiscount.toLocaleString() ?? ""} hint={s ? "live promo price" : undefined} icon={<Percent size={18} />} loading={loading} active={only("onDiscount", "true")} onClick={pick("onDiscount", "true")} />
     </div>

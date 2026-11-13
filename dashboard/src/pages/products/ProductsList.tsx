@@ -21,7 +21,6 @@ import { useAct } from "@/hooks/useAct";
 import { patchListRows, useInfiniteList } from "@/hooks/useInfiniteList";
 import { useUrlState } from "@/hooks/useUrlState";
 import { money, titleCase } from "@/lib/format";
-import { openInNewTab } from "@/lib/utils";
 import { BulkBar } from "@/components/shared/BulkBar";
 import { SavedViews } from "@/components/shared/SavedViews";
 import { useProductNameDisplay } from "@/lib/productName";
@@ -124,7 +123,7 @@ export default function ProductsList() {
           <div className="flex items-center gap-3">
             <Thumb src={p.mainImage} alt={nameInfo.primary} className="size-11" />
             <div className="min-w-0 max-w-[280px]">
-              <a href={`/products/${p.id}/edit`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="block truncate font-medium hover:text-primary">{nameInfo.primary}</a>
+              <Link to={`/products/${p.id}/edit`} onClick={(e) => e.stopPropagation()} className="block truncate font-medium hover:text-primary">{nameInfo.primary}</Link>
               <p className="truncate text-[11px] text-muted-foreground">{[nameInfo.secondary, p.productCode, p.categoryName, p.unit ? `per ${p.unit.shortLabel}` : null].filter(Boolean).join(" · ")}</p>
             </div>
           </div>
@@ -188,7 +187,7 @@ export default function ProductsList() {
               <Button variant="ghost" size="icon-sm" aria-label={tr("Actions")}><MoreHorizontal /></Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => openInNewTab(`/products/${p.id}/edit`)}><Pencil />{" "}{tr("Edit")}</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => navigate(`/products/${p.id}/edit`)}><Pencil />{" "}{tr("Edit")}</DropdownMenuItem>
               <DropdownMenuItem onSelect={() => dup.mutate(p.id)}><Copy />{" "}{tr("Duplicate")}</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-destructive" onSelect={(e) => { e.preventDefault(); setDel(p); }}><Trash2 />{" "}{tr("Delete")}</DropdownMenuItem>
@@ -218,7 +217,7 @@ export default function ProductsList() {
         selected={sel}
         onSelect={setSel}
         columns={columns}
-        onRowClick={(p) => openInNewTab(`/products/${p.id}/edit`)}
+        onRowClick={(p) => navigate(`/products/${p.id}/edit`)}
         empty={{ title: filtered ? tr("No products match these filters") : "No products yet", description: filtered ? tr("Try clearing a filter.") : "Add your first product to start selling.", action: filtered ? undefined : <Button asChild variant="brand" size="sm"><Link to="/products/new">{tr("Add product")}</Link></Button> }}
         toolbar={
           <FilterBar>
