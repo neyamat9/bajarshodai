@@ -5,6 +5,12 @@ import { clientLocale, pick, type Locale } from '../locale';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export function mapCartItem(i: any, locale: Locale = clientLocale()): CartItem {
   const price = i.variant?.price != null ? Number(i.variant.price) : Number(i.product.sellingPrice);
+  const isUntracked = i.product?.trackStock === false;
+  const rawStock = i.variant ? Number(i.variant.stock) : Number(i.product?.stock ?? 0);
+  const effectiveStock = isUntracked ? 9999 : rawStock;
+  const rawMax = i.product?.unit?.maxQty ?? i.product?.maxQty ?? null;
+  const maxQty = rawMax !== undefined && rawMax !== null ? Number(rawMax) : null;
+
   return {
     id: i.id,
     productId: i.product.id,
@@ -15,7 +21,9 @@ export function mapCartItem(i: any, locale: Locale = clientLocale()): CartItem {
     variantLabel: i.variant?.name ?? undefined,
     quantity: Number(i.quantity),
     imageUrl: assetUrl(i.product.images?.[0]?.url),
-    stock: i.variant ? Number(i.variant.stock) : Number(i.product.stock),
+    stock: effectiveStock,
+    trackStock: i.product?.trackStock,
+    maxQty,
     unit: i.product.unit
       ? {
           code: i.product.unit.code ?? '',
@@ -23,6 +31,7 @@ export function mapCartItem(i: any, locale: Locale = clientLocale()): CartItem {
           allowDecimal: !!i.product.unit.allowDecimal,
           step: Number(i.product.unit.step ?? 1),
           minQty: Number(i.product.unit.minQty ?? 1),
+          maxQty,
         }
       : null,
   };

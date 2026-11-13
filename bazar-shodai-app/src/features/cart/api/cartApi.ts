@@ -137,7 +137,18 @@ export function useServerCart() {
                 it.product?.unit?.shortLabel ||
                 it.unit ||
                 'pc',
-              stock: it.variant ? Number(it.variant.stock) : Number(it.product?.stock ?? 999),
+              stock:
+                it.product?.trackStock === false
+                  ? 9999
+                  : it.variant
+                    ? Number(it.variant.stock)
+                    : Number(it.product?.stock ?? 999),
+              maxQty:
+                it.product?.unit?.maxQty != null
+                  ? Number(it.product.unit.maxQty)
+                  : it.product?.maxQty != null
+                    ? Number(it.product.maxQty)
+                    : null,
             };
           });
 

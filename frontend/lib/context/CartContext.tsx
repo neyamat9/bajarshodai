@@ -93,9 +93,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     async (p: Omit<CartItem, "id">): Promise<CartResult> => {
       const existing = cartRef.current.items.find((i) => i.productId === p.productId && i.variantId === p.variantId);
       const have = existing?.quantity ?? 0;
-      if (p.stock > 0 && have + p.quantity > p.stock) {
+      const isUntracked = p.trackStock === false;
+      const maxLimit = p.unit?.maxQty ?? p.maxQty ?? null;
+
+      if (!isUntracked && p.stock > 0 && have + p.quantity > p.stock) {
         return { ok: false, error: have > 0 ? t("onlyStockHave", { count: formatQuantity(p.stock, locale), have: formatQuantity(have, locale) }) : t("onlyStock", { count: formatQuantity(p.stock, locale) }) };
       }
+
+      if (maxLimit !== null && maxLimit > 0 && have + p.quantity > maxLimit) {
+        return {
+          ok: false,
+          error: have > 0
+            ? t("maxOrderLimitHave", { count: formatQuantity(maxLimit, locale), have: formatQuantity(have, locale) })
+            : t("maxOrderLimit", { count: formatQuantity(maxLimit, locale) }),
+        };
+      }
+
       const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       setCart((c) => ({
         ...c,
@@ -153,8 +166,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const updateQuantity = useCallback(
     async (id: string, quantity: number) => {
-      // the buttons already follow the unit's step; the server checks the rule again
-      const q = Math.max(0.001, Math.min(round3(quantity), 99));
+      const item = cartRef.current.items.find((i) => i.id === id);
+      const isUntracked = item?.trackStock === false;
+      const rawStock = item ? (isUntracked ? 9999 : item.stock) : 99;
+      const maxLimit = item?.unit?.maxQty ?? item?.maxQty ?? null;
+      const effectiveCap = maxLimit !== null && maxLimit > 0
+        ? (isUntracked ? maxLimit : Math.min(rawStock, maxLimit))
+        : Math.min(rawStock, 99);
+      const minLimit = item?.unit?.minQty ?? 0.001;
+
+      // the buttons and input follow the unit's step and limits; the server checks the rule again
+      const q = Math.max(minLimit, Math.min(round3(quantity), effectiveCap));
       setCart((c) => ({ ...c, items: c.items.map((i) => (i.id === id ? { ...i, quantity: q } : i)) }));
       const rid = await realId(id);
       if (!rid) return { ok: true } as CartResult;

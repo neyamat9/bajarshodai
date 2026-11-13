@@ -8,8 +8,8 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { formatMoney, formatQuantity } from "@/lib/format";
-import { stepDown, stepUp } from "@/lib/quantity";
+import { formatMoney, formatQuantity, latinDigits } from "@/lib/format";
+import { round3, stepDown, stepUp } from "@/lib/quantity";
 import type { Locale } from "@/lib/locale";
 
 interface CartItemProps {
@@ -69,9 +69,57 @@ export default function CartItem({ item, variant = "compact" }: CartItemProps) {
     if (!r.ok) toast.error(r.error ?? t("qtyFailed"));
   }
 
+  const isUntracked = item.trackStock === false;
+  const rawStock = isUntracked ? 9999 : item.stock;
+  const maxLimit = item.unit?.maxQty ?? item.maxQty ?? null;
+  const effectiveCap = maxLimit !== null && maxLimit > 0
+    ? (isUntracked ? maxLimit : Math.min(rawStock, maxLimit))
+    : Math.min(rawStock, 99);
+  const minLimit = Math.max(item.unit?.minQty ?? 1, item.unit?.step ?? 1);
+
   // the buttons follow the unit: 0.5 kg steps for fish, whole pieces for soap
   const lessQty = stepDown(item.quantity, item.unit);
-  const moreQty = stepUp(item.quantity, item.unit, Math.min(item.stock, 99));
+  const moreQty = stepUp(item.quantity, item.unit, effectiveCap);
+
+  // Local state for direct typing
+  const [inputValue, setInputValue] = useState<string>(() => formatQuantity(item.quantity, locale));
+
+  useEffect(() => {
+    setInputValue(formatQuantity(item.quantity, locale));
+  }, [item.quantity, locale]);
+
+  function commitQuantity(valStr: string) {
+    const latinStr = latinDigits(valStr.trim().replace(",", "."));
+    if (!latinStr) {
+      setInputValue(formatQuantity(item.quantity, locale));
+      return;
+    }
+    const parsed = parseFloat(latinStr);
+    if (isNaN(parsed) || parsed <= 0) {
+      setInputValue(formatQuantity(item.quantity, locale));
+      return;
+    }
+
+    const allowDecimal = !!item.unit?.allowDecimal;
+    let target = allowDecimal ? round3(parsed) : Math.round(parsed);
+
+    if (target < minLimit) {
+      target = minLimit;
+      toast.info(t("minOrderLimit", { count: formatQuantity(minLimit, locale) }));
+    } else if (target > effectiveCap) {
+      target = effectiveCap;
+      if (maxLimit !== null && maxLimit > 0 && effectiveCap === maxLimit) {
+        toast.info(t("maxOrderLimit", { count: formatQuantity(maxLimit, locale) }));
+      } else {
+        toast.info(t("onlyStock", { count: formatQuantity(item.stock, locale) }));
+      }
+    }
+
+    setInputValue(formatQuantity(target, locale));
+    if (Math.abs(target - item.quantity) > 1e-6) {
+      void change(target);
+    }
+  }
 
   function handleDecrement() {
     if (lessQty === null) return;
@@ -80,7 +128,11 @@ export default function CartItem({ item, variant = "compact" }: CartItemProps) {
 
   function handleIncrement() {
     if (moreQty === null) {
-      toast.info(t("onlyStock", { count: formatQuantity(item.stock, locale) }));
+      if (maxLimit !== null && maxLimit > 0 && item.quantity >= maxLimit - 1e-9) {
+        toast.info(t("maxOrderLimit", { count: formatQuantity(maxLimit, locale) }));
+      } else {
+        toast.info(t("onlyStock", { count: formatQuantity(item.stock, locale) }));
+      }
       return;
     }
     void change(moreQty);
@@ -130,6 +182,7 @@ export default function CartItem({ item, variant = "compact" }: CartItemProps) {
             {/* Stepper */}
             <div className="flex items-center overflow-hidden rounded border border-input bg-card">
               <button
+                type="button"
                 onClick={handleDecrement}
                 disabled={lessQty === null}
                 aria-label={t("decrease")}
@@ -137,11 +190,34 @@ export default function CartItem({ item, variant = "compact" }: CartItemProps) {
               >
                 <Minus className="h-3.5 w-3.5" />
               </button>
-              <span className="min-w-12 select-none px-1 text-center text-sm font-bold leading-tight text-foreground">
-                {formatQuantity(item.quantity, locale)}
-                {item.unit?.label && <span className="block text-[10px] font-medium text-muted-foreground">{item.unit.label}</span>}
-              </span>
+              <div className="flex min-w-12 flex-col items-center justify-center px-1">
+                <input
+                  type="text"
+                  inputMode={item.unit?.allowDecimal ? "decimal" : "numeric"}
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  onBlur={(e) => commitQuantity(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      commitQuantity((e.target as HTMLInputElement).value);
+                      (e.target as HTMLInputElement).blur();
+                    } else if (e.key === "Escape") {
+                      setInputValue(formatQuantity(item.quantity, locale));
+                      (e.target as HTMLInputElement).blur();
+                    }
+                  }}
+                  aria-label={t("qtyAria", { name: item.name })}
+                  className="w-12 text-center font-outfit text-sm font-bold leading-tight text-foreground bg-transparent border-0 p-0 focus:outline-none focus:ring-1 focus:ring-brand-fresh/60 rounded"
+                />
+                {item.unit?.label && (
+                  <span className="block text-[10px] font-medium text-muted-foreground pointer-events-none select-none">
+                    {item.unit.label}
+                  </span>
+                )}
+              </div>
               <button
+                type="button"
                 onClick={handleIncrement}
                 disabled={moreQty === null}
                 aria-label={t("increase")}
@@ -196,6 +272,7 @@ export default function CartItem({ item, variant = "compact" }: CartItemProps) {
       {/* Quantity stepper */}
       <div className="flex items-center gap-1 bg-secondary rounded overflow-hidden mt-3 sm:mt-0 w-28">
         <button
+          type="button"
           onClick={handleDecrement}
           disabled={lessQty === null}
           aria-label={t("decrease")}
@@ -203,11 +280,34 @@ export default function CartItem({ item, variant = "compact" }: CartItemProps) {
         >
           −
         </button>
-        <span className="flex-1 text-center text-sm font-semibold text-foreground select-none">
-          {formatQuantity(item.quantity, locale)}
-          {item.unit?.label && <span className="ml-1 text-[11px] font-medium text-muted-foreground">{item.unit.label}</span>}
-        </span>
+        <div className="flex-1 flex items-center justify-center px-0.5">
+          <input
+            type="text"
+            inputMode={item.unit?.allowDecimal ? "decimal" : "numeric"}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onFocus={(e) => e.target.select()}
+            onBlur={(e) => commitQuantity(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                commitQuantity((e.target as HTMLInputElement).value);
+                (e.target as HTMLInputElement).blur();
+              } else if (e.key === "Escape") {
+                setInputValue(formatQuantity(item.quantity, locale));
+                (e.target as HTMLInputElement).blur();
+              }
+            }}
+            aria-label={t("qtyAria", { name: item.name })}
+            className="w-10 text-center font-outfit text-sm font-semibold text-foreground bg-transparent border-0 p-0 focus:outline-none focus:ring-1 focus:ring-brand-fresh/60 rounded"
+          />
+          {item.unit?.label && (
+            <span className="ml-0.5 text-[11px] font-medium text-muted-foreground pointer-events-none select-none">
+              {item.unit.label}
+            </span>
+          )}
+        </div>
         <button
+          type="button"
           onClick={handleIncrement}
           disabled={moreQty === null}
           aria-label={t("increase")}

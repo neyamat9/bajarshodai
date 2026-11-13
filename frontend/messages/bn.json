@@ -236,6 +236,7 @@
       "wishRemove": "{name} পছন্দের তালিকা থেকে সরান",
       "chooseOptionFirst": "আগে একটি অপশন বেছে নিন",
       "onlyStock": "স্টকে আছে মাত্র {count}",
+      "maxOrderLimit": "সর্বোচ্চ {count} অর্ডার করা যাবে",
       "qtyOf": "{name}: কার্টে পরিমাণ",
       "decrease": "পরিমাণ কমান",
       "increase": "পরিমাণ বাড়ান"
@@ -513,6 +514,10 @@
     "qtyFailed": "পরিমাণ বদলানো যায়নি",
     "onlyStock": "স্টকে আছে মাত্র {count}",
     "onlyStockHave": "স্টকে আছে মাত্র {count} (আপনার কার্টে আগেই {have} আছে)",
+    "maxOrderLimit": "সর্বোচ্চ {count} অর্ডার করা যাবে",
+    "maxOrderLimitHave": "সর্বোচ্চ {count} অর্ডার করা যাবে (আপনার কার্টে আগেই {have} আছে)",
+    "minOrderLimit": "সর্বনিম্ন {count} অর্ডার করতে হবে",
+    "qtyAria": "{name}-এর পরিমাণ",
     "decrease": "পরিমাণ কমান",
     "increase": "পরিমাণ বাড়ান",
     "each": "প্রতিটি {price}",

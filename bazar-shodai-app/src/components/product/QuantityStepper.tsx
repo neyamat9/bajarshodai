@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { haptics } from '@/services/haptics';
 import { toBengaliNumerals } from '@/utils/format';
 import { TouchTarget, Radius } from '@/constants/layout';
@@ -44,7 +44,31 @@ export function QuantityStepper({
     onQuantityChange(nextVal);
   };
 
-  const displayQuantity = locale === 'bn' ? toBengaliNumerals(quantity) : String(quantity);
+  const [inputText, setInputText] = useState(() =>
+    locale === 'bn' ? toBengaliNumerals(quantity) : String(quantity),
+  );
+
+  useEffect(() => {
+    setInputText(locale === 'bn' ? toBengaliNumerals(quantity) : String(quantity));
+  }, [quantity, locale]);
+
+  const commitInput = (text: string) => {
+    const raw = text.replace(/[০-৯]/g, (d) => String('০১২৩৪৫৬৭৮৯'.indexOf(d))).replace(',', '.').trim();
+    if (!raw) {
+      setInputText(locale === 'bn' ? toBengaliNumerals(quantity) : String(quantity));
+      return;
+    }
+    const val = parseFloat(raw);
+    if (isNaN(val) || val < 0) {
+      setInputText(locale === 'bn' ? toBengaliNumerals(quantity) : String(quantity));
+      return;
+    }
+    const clamped = Math.max(min, Math.min(max, Math.round(val * 100) / 100));
+    setInputText(locale === 'bn' ? toBengaliNumerals(clamped) : String(clamped));
+    if (Math.abs(clamped - quantity) > 1e-4) {
+      onQuantityChange(clamped);
+    }
+  };
 
   const sizeStyles = {
     sm: { buttonSize: 28, fontSize: 13, paddingH: 6 },
@@ -72,10 +96,17 @@ export function QuantityStepper({
       </TouchableOpacity>
 
       <View style={[styles.textSlot, { paddingHorizontal: sizeStyles.paddingH }]}>
-        <Text className="font-bold text-foreground" style={{ fontSize: sizeStyles.fontSize }}>
-          {displayQuantity}
-          {unit && <Text className="text-xs font-normal text-muted-foreground"> {unit}</Text>}
-        </Text>
+        <TextInput
+          value={inputText}
+          onChangeText={setInputText}
+          onBlur={() => commitInput(inputText)}
+          onSubmitEditing={() => commitInput(inputText)}
+          keyboardType="numeric"
+          selectTextOnFocus
+          style={[styles.input, { fontSize: sizeStyles.fontSize }]}
+          accessibilityLabel="Quantity"
+        />
+        {unit && <Text className="text-xs font-normal text-muted-foreground"> {unit}</Text>}
       </View>
 
       <TouchableOpacity
@@ -119,8 +150,16 @@ const styles = StyleSheet.create({
     color: '#9dbba6',
   },
   textSlot: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: 32,
+  },
+  input: {
+    fontWeight: '700',
+    color: '#111827',
+    textAlign: 'center',
+    padding: 0,
+    minWidth: 20,
   },
 });

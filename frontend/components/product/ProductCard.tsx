@@ -87,7 +87,17 @@ export default function ProductCard({
     e.stopPropagation();
     if (outOfStock) return;
     playClick();
-    const base = { id: product.id, slug: product.slug, name: product.name, price: product.price, stock: isUntracked ? 9999 : product.stock, imageUrl: primaryImage?.url ?? "", unit };
+    const base = {
+      id: product.id,
+      slug: product.slug,
+      name: product.name,
+      price: product.price,
+      stock: isUntracked ? 9999 : product.stock,
+      imageUrl: primaryImage?.url ?? "",
+      unit,
+      trackStock: product.trackStock,
+      maxQty: product.maxQty,
+    };
     if (!product.hasVariants) {
       void quickAdd(base, startQty(unit));
       return;
@@ -124,6 +134,8 @@ export default function ProductCard({
       imageUrl: primaryImage?.url ?? "",
       stock: v.stock,
       unit,
+      trackStock: product.trackStock,
+      maxQty: unit?.maxQty ?? product.maxQty,
     });
     if (res.ok) toast.success(t("card.added", { name: product.name }), { description: `${v.label} · ${formatBDT(v.price)}`, duration: 2000 });
     else toast.error(res.error ?? t("card.couldNotAdd"));
@@ -132,10 +144,15 @@ export default function ProductCard({
   async function more(e: React.MouseEvent) {
     e.preventDefault();
     if (!line) return;
+    const maxLimit = unit?.maxQty ?? product.maxQty ?? null;
     const maxStock = isUntracked ? 9999 : line.stock;
     const next = stepUp(line.quantity, unit, maxStock);
     if (next === null) {
-      toast.info(t("card.onlyStock", { count: formatQuantity(maxStock, locale) }), { id: `stock-${product.id}` });
+      if (maxLimit !== null && maxLimit > 0 && line.quantity >= maxLimit - 1e-9) {
+        toast.info(t("card.maxOrderLimit", { count: formatQuantity(maxLimit, locale) }), { id: `limit-${product.id}` });
+      } else {
+        toast.info(t("card.onlyStock", { count: formatQuantity(maxStock, locale) }), { id: `stock-${product.id}` });
+      }
       return;
     }
     playClick();

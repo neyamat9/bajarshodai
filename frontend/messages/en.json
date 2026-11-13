@@ -236,6 +236,7 @@
       "wishRemove": "Remove {name} from wishlist",
       "chooseOptionFirst": "Choose an option first",
       "onlyStock": "Only {count} in stock",
+      "maxOrderLimit": "Maximum order limit is {count}",
       "qtyOf": "{name}: quantity in cart",
       "decrease": "Decrease quantity",
       "increase": "Increase quantity"
@@ -513,6 +514,10 @@
     "qtyFailed": "Could not change the quantity",
     "onlyStock": "Only {count} in stock",
     "onlyStockHave": "Only {count} in stock (you already have {have})",
+    "maxOrderLimit": "Maximum order limit is {count}",
+    "maxOrderLimitHave": "Maximum order limit is {count} (you already have {have})",
+    "minOrderLimit": "Minimum order quantity is {count}",
+    "qtyAria": "Quantity of {name}",
     "decrease": "Decrease quantity",
     "increase": "Increase quantity",
     "each": "{price} each",

@@ -80,6 +80,8 @@ export default function ProductSummary({ product, atcRef, onVariantChange, payme
       imageUrl: image?.url ?? "/placeholder.svg",
       stock,
       unit,
+      trackStock: product.trackStock,
+      maxQty: unit?.maxQty ?? product.maxQty,
     });
     if (res.ok) toast.success(t("card.added", { name: product.name }), { description: t("summary.addedDesc", { qty: `${formatQuantity(quantity, locale)}${unit ? ` ${unit.label}` : ""}`, price: money(price) }), duration: 2500 });
     else toast.error(res.error ?? t("card.couldNotAdd"));

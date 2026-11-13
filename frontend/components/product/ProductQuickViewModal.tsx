@@ -291,6 +291,8 @@ function QuickViewModalContent({
       imageUrl: activeImage.url,
       stock,
       unit,
+      trackStock: product.trackStock,
+      maxQty: unit?.maxQty ?? product.maxQty,
     });
 
     setBusy(false);

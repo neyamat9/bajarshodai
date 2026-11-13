@@ -177,6 +177,8 @@ export interface CartItem {
   quantity: number;
   imageUrl: string;
   stock: number;
+  trackStock?: boolean;
+  maxQty?: number | null;
   /** how the product is sold: the unit text and the step / minimum of the + and − buttons */
   unit?: ProductUnit | null;
 }

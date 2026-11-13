@@ -26,6 +26,7 @@ export function useQuickAdd() {
         hasVariants?: boolean;
         unit?: ProductUnit | null;
         trackStock?: boolean;
+        maxQty?: number | null;
       },
       quantity = p.unit?.minQty ?? 1,
     ) => {
@@ -49,6 +50,8 @@ export function useQuickAdd() {
         imageUrl: p.imageUrl,
         stock: effectiveStock,
         unit: p.unit ?? null,
+        trackStock: p.trackStock,
+        maxQty: p.unit?.maxQty ?? p.maxQty ?? null,
       });
       // no "added" message: the card turns into a quantity stepper and the floating cart counts up
       if (res.ok) {
