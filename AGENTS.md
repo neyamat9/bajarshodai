@@ -60,5 +60,17 @@
     - `minQty`: `1`
   - Customers purchase these items as discrete pre-packaged units (1 packet, 2 packets, etc.) with whole step increments, avoiding confusing decimal weight fractions.
 
+- **Product Image Standards & Generation Rules:**
+  - **Canvas & Dimensions:** Strictly **1200×1200 px** square ($1:1$ aspect ratio).
+  - **Format & Compression:** Modern **WebP** (quality 90, typically 70–130 KB) for razor-sharp display on mobile Retina screens (2x/3x DPR) and desktop detail galleries without performance penalty.
+  - **Background:** Pure solid white (`#ffffff` / `RGB 255, 255, 255`) throughout. No off-white tints, colored backdrops, or gradients.
+  - **Framing & Presentation:**
+    - Centered raw/real product with balanced 8%–10% breathing margins around edges (never clipped).
+    - Subtle, soft natural contact shadow directly beneath the item to ground it in reality (avoiding flat sticker cutouts).
+    - Strictly **NO overlays, NO watermarks, NO promotional badges** ("HOT", "NEW", discount starbursts), and NO marketing slogans on the image.
+  - **Authentic Bangladeshi Visual Styling:**
+    - **Loose/Bulk Staples (dal, rice, spices):** Presented in authentic wooden bowls, open burlap jute sacks (`খোলা বস্তা / চালের বস্তা`), or clean natural product mounds showing authentic grain/texture.
+    - **Branded Products:** Official, clean manufacturer packaging standing upright on the white canvas.
+
 
 
