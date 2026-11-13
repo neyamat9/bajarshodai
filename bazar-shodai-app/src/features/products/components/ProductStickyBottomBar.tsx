@@ -69,14 +69,14 @@ export function ProductStickyBottomBar({
             {productName && productSlug ? (
               <>
                 <WhatsAppOrderButton
-                  variant="compact"
+                  variant="icon"
                   productName={productName}
                   productSlug={productSlug}
                   productPrice={unitPrice}
                   style={styles.whatsAppCompactBtn}
                 />
                 <MessengerOrderButton
-                  variant="compact"
+                  variant="icon"
                   productName={productName}
                   productSlug={productSlug}
                   productPrice={unitPrice}

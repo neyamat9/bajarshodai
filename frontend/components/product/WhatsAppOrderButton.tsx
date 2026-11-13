@@ -78,10 +78,10 @@ export default function WhatsAppOrderButton({
         rel="noopener noreferrer"
         aria-label={`${buttonLabel}: ${productName}`}
         title={buttonLabel}
-        className={`inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#25D366] hover:bg-[#20BA56] active:scale-95 text-white font-bold px-3 py-2 text-xs shadow-sm transition-all ${className}`}
+        className={`inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#25D366] hover:bg-[#20BA56] active:scale-95 text-white font-bold h-10 w-10 sm:w-auto p-2 sm:px-3.5 text-xs shadow-sm transition-all ${className}`}
       >
         <WhatsAppIcon className="h-4 w-4 shrink-0" />
-        <span className="truncate">{buttonLabel}</span>
+        <span className="hidden sm:inline truncate">{buttonLabel}</span>
       </a>
     );
   }

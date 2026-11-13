@@ -53,7 +53,14 @@ export default function StickyATCBar({
     observerRef.current = new IntersectionObserver(
       ([entry]) => {
         // When the main ATC button is NOT visible → show sticky bar
-        setVisible(!entry.isIntersecting);
+        const isShown = !entry.isIntersecting;
+        setVisible(isShown);
+        if (typeof document !== "undefined") {
+          document.documentElement.style.setProperty(
+            "--sticky-bar-offset",
+            isShown ? "64px" : "0px"
+          );
+        }
       },
       { threshold: 0, rootMargin: "0px" }
     );
@@ -62,6 +69,9 @@ export default function StickyATCBar({
 
     return () => {
       observerRef.current?.disconnect();
+      if (typeof document !== "undefined") {
+        document.documentElement.style.setProperty("--sticky-bar-offset", "0px");
+      }
     };
   }, [atcButtonRef]);
 
@@ -106,7 +116,7 @@ export default function StickyATCBar({
     >
       {/* Backdrop blur bar */}
       <div className="bg-card/95 backdrop-blur-xl border-t border-border shadow-[0_-20px_60px_rgba(11,98,52,0.3)]">
-        <div className="max-w-[1440px] mx-auto px-4 md:px-8 py-3 flex items-center gap-4">
+        <div className="max-w-[1440px] mx-auto px-3 sm:px-6 md:px-8 py-2.5 sm:py-3 flex items-center gap-2 sm:gap-3">
           {/* Product thumbnail */}
           {primaryImage && (
             <div className="relative w-10 h-10 flex-shrink-0 rounded overflow-hidden bg-muted border border-border hidden sm:block">
@@ -121,11 +131,11 @@ export default function StickyATCBar({
           )}
 
           {/* Product name + price */}
-          <div className="flex-1 min-w-0">
-            <p className="text-foreground font-black text-sm uppercase tracking-tight truncate font-outfit">
+          <div className="flex-1 min-w-0 pr-1">
+            <p className="text-foreground font-black text-xs sm:text-sm uppercase tracking-tight truncate font-outfit">
               {product.name}
             </p>
-            <p className="text-accent-text font-black text-base tracking-tighter">
+            <p className="text-accent-text font-black text-sm sm:text-base tracking-tighter">
               {formatBDT(currentPrice)}
             </p>
           </div>
@@ -138,31 +148,31 @@ export default function StickyATCBar({
             </div>
           )}
 
-          {/* WhatsApp Direct Order Button */}
+          {/* WhatsApp Direct Order Button (Icon on mobile, full label on sm+) */}
           <WhatsAppOrderButton
             variant="compact"
             productName={product.name}
             productSlug={product.slug}
             productPrice={currentPrice}
-            className="flex-shrink-0 h-10 px-3 sm:px-4"
+            className="flex-shrink-0"
           />
 
-          {/* Messenger Direct Order Button */}
+          {/* Messenger Direct Order Button (Icon on mobile, full label on sm+) */}
           <MessengerOrderButton
             variant="compact"
             productName={product.name}
             productSlug={product.slug}
             productPrice={currentPrice}
-            className="flex-shrink-0 h-10 px-3 sm:px-4"
+            className="flex-shrink-0"
           />
 
-          {/* Add to Cart */}
+          {/* Add to Cart (Icon on mobile, label on sm+) */}
           <button
             type="button"
             onClick={handleAddToCart}
             disabled={loading || isOutOfStock}
             aria-label={t("card.addNamed", { name: product.name })}
-            className="flex-shrink-0 h-10 px-6 flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-tight text-sm rounded transition-all shadow-[0_4px_16px_rgba(69,162,44,0.3)] disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97]"
+            className="flex-shrink-0 h-10 w-10 sm:w-auto p-0 sm:px-5 flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-tight text-sm rounded transition-all shadow-[0_4px_16px_rgba(69,162,44,0.3)] disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97]"
           >
             {loading ? (
               <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">

@@ -28,8 +28,8 @@ export default function LiveChatButton() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [scrolledPast]);
 
-  // Position: shifts from right-6 (24px) to right-22 (88px) smoothly
-  const positionClass = scrolledPast ? "right-[84px] md:right-[88px]" : "right-4 md:right-6";
+  // Position: shifts from right-3.5 (14px) to right-[54px] smoothly when scroll-to-top appears
+  const positionClass = scrolledPast ? "right-[54px] sm:right-[72px]" : "right-3.5 sm:right-6";
 
   return (
     <button
@@ -41,17 +41,20 @@ export default function LiveChatButton() {
           : locale === "bn" ? "লাইভ চ্যাট সাপোর্ট" : "Live chat support"
       }
       title={locale === "bn" ? "লাইভ চ্যাট সাপোর্ট" : "Live Chat Support"}
-      className={`fixed bottom-6 ${positionClass} z-[1500] flex h-12 w-12 md:h-12 md:w-12 items-center justify-center rounded-full bg-brand-fresh text-on-fresh shadow-xl shadow-brand-fresh/25 transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-brand-fresh/35 cursor-pointer`}
+      style={{
+        bottom: "calc(var(--sticky-bar-offset, 0px) + 1rem)",
+      }}
+      className={`fixed ${positionClass} z-[1500] flex h-9.5 w-9.5 sm:h-10.5 sm:w-10.5 items-center justify-center rounded-full bg-brand-fresh text-on-fresh shadow-lg shadow-brand-fresh/25 transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-brand-fresh/35 cursor-pointer`}
     >
       {isOpen ? (
-        <X className="h-6 w-6 stroke-[2.5]" aria-hidden="true" />
+        <X className="h-4.5 w-4.5 sm:h-5 sm:w-5 stroke-[2.5]" aria-hidden="true" />
       ) : (
-        <MessageCircle className="h-6 w-6 fill-current" aria-hidden="true" />
+        <MessageCircle className="h-4.5 w-4.5 sm:h-5 sm:w-5 fill-current" aria-hidden="true" />
       )}
 
       {/* Unread badge dot */}
       {!isOpen && unreadCount > 0 && (
-        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white shadow-md animate-pulse">
+        <span className="absolute -top-1 -right-1 flex h-4 w-4 sm:h-4.5 sm:w-4.5 items-center justify-center rounded-full bg-red-600 text-[9px] font-bold text-white shadow-md animate-pulse">
           {unreadCount > 9 ? "9+" : unreadCount}
         </span>
       )}

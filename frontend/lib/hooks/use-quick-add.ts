@@ -15,17 +15,41 @@ export function useQuickAdd() {
   const t = useTranslations("Product.card");
 
   return useCallback(
-    async (p: { id: string; slug: string; name: string; price: number; stock: number; imageUrl: string; hasVariants?: boolean; unit?: ProductUnit | null }, quantity = p.unit?.minQty ?? 1) => {
+    async (
+      p: {
+        id: string;
+        slug: string;
+        name: string;
+        price: number;
+        stock: number;
+        imageUrl: string;
+        hasVariants?: boolean;
+        unit?: ProductUnit | null;
+        trackStock?: boolean;
+      },
+      quantity = p.unit?.minQty ?? 1,
+    ) => {
       if (p.hasVariants) {
         toast.info(t("chooseOptionFirst"), { description: p.name });
         router.push(`/products/${p.slug}`);
         return false;
       }
-      if (p.stock <= 0) {
+      const isUntracked = p.trackStock === false;
+      const effectiveStock = isUntracked ? 9999 : p.stock;
+      if (!isUntracked && effectiveStock <= 0) {
         toast.error(t("outOfStockNamed", { name: p.name }));
         return false;
       }
-      const res = await addToCart({ productId: p.id, slug: p.slug, name: p.name, price: p.price, quantity, imageUrl: p.imageUrl, stock: p.stock, unit: p.unit ?? null });
+      const res = await addToCart({
+        productId: p.id,
+        slug: p.slug,
+        name: p.name,
+        price: p.price,
+        quantity,
+        imageUrl: p.imageUrl,
+        stock: effectiveStock,
+        unit: p.unit ?? null,
+      });
       // no "added" message: the card turns into a quantity stepper and the floating cart counts up
       if (res.ok) {
         // nothing more to do

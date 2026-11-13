@@ -113,9 +113,9 @@ export default function ProductDetailClient({ product: initial, relatedProducts,
             </div>
           </RevealGroup>
 
-          {/* On phones/tablets the related list sits below instead of beside */}
+          {/* Related products carousel */}
           {relatedProducts.length > 0 && (
-            <div className="mt-10 lg:hidden">
+            <div className="mt-10">
               <RelatedProductsCarousel products={relatedProducts} title={t("detail.related")} />
             </div>
           )}

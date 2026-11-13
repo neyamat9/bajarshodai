@@ -113,10 +113,10 @@ export default function MessengerOrderButton({
         onClick={handleClick}
         aria-label={`${buttonLabel}: ${productName}`}
         title={buttonLabel}
-        className={`inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#0084FF] hover:bg-[#0073E6] active:scale-95 text-white font-bold px-3 py-2 text-xs shadow-sm transition-all ${className}`}
+        className={`inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#0084FF] hover:bg-[#0073E6] active:scale-95 text-white font-bold h-10 w-10 sm:w-auto p-2 sm:px-3.5 text-xs shadow-sm transition-all ${className}`}
       >
         <MessengerIcon className="h-4 w-4 shrink-0" />
-        <span className="truncate">{buttonLabel}</span>
+        <span className="hidden sm:inline truncate">{buttonLabel}</span>
       </a>
     );
   }

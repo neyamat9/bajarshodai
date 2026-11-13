@@ -17,7 +17,7 @@ export interface MessengerOrderButtonProps {
   productName: string;
   productSlug: string;
   productPrice: number;
-  variant?: 'full' | 'compact';
+  variant?: 'full' | 'compact' | 'icon';
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
   messengerUsername?: string | null;
@@ -74,6 +74,20 @@ export function MessengerOrderButton({
   };
 
   const label = isBn ? 'মেসেঞ্জারে অর্ডার' : 'Order on Messenger';
+
+  if (variant === 'icon') {
+    return (
+      <TouchableOpacity
+        activeOpacity={0.85}
+        onPress={handlePress}
+        style={[styles.iconBtn, style]}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+      >
+        <MessengerIcon size={18} color="#ffffff" />
+      </TouchableOpacity>
+    );
+  }
 
   if (variant === 'compact') {
     return (
@@ -149,5 +163,18 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 12,
     fontWeight: '700',
+  },
+  iconBtn: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0084FF',
+    borderRadius: 8,
+    shadowColor: '#0084FF',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
   },
 });
