@@ -94,7 +94,10 @@ export default function LiveChatModal() {
   return (
     <>
       <div
-        className="fixed bottom-20 right-4 md:right-6 z-[1490] flex h-[520px] max-h-[82vh] w-[calc(100vw-2rem)] sm:w-[380px] flex-col overflow-hidden rounded-2xl border border-border/80 bg-card/95 shadow-2xl backdrop-blur-xl transition-all duration-300 ease-out animate-scale-in"
+        className="fixed right-4 md:right-6 z-[1490] flex h-[520px] max-h-[82vh] w-[calc(100vw-2rem)] sm:w-[380px] flex-col overflow-hidden rounded-2xl border border-border/80 bg-card/95 shadow-2xl backdrop-blur-xl transition-all duration-300 ease-out animate-scale-in"
+        style={{
+          bottom: "calc(var(--floating-bottom, 1.25rem) + 2.75rem)",
+        }}
         role="dialog"
         aria-modal="true"
         aria-label={locale === "bn" ? "লাইভ চ্যাট উইন্ডো" : "Live chat window"}

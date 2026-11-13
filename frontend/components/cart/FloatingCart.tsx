@@ -40,10 +40,27 @@ export default function FloatingCart() {
     gsap.fromTo(targets, { scale: 1 }, { scale: 1.08, duration: 0.14, yoyo: true, repeat: 1, ease: "power2.out", overwrite: true });
   }, [cartCount, cartTotal, visible]);
 
-  // the "scroll to top" button moves up out of the phone bar's way
+  // the "scroll to top" and live chat buttons move up out of the phone bar's way
   useEffect(() => {
     document.documentElement.toggleAttribute("data-cart-bar", visible);
-    return () => document.documentElement.removeAttribute("data-cart-bar");
+    const updateOffset = () => {
+      const isMobile = window.innerWidth < 768;
+      if (typeof document !== "undefined") {
+        document.documentElement.style.setProperty(
+          "--cart-bar-offset",
+          visible && isMobile ? "74px" : "0px"
+        );
+      }
+    };
+    updateOffset();
+    window.addEventListener("resize", updateOffset);
+    return () => {
+      document.documentElement.removeAttribute("data-cart-bar");
+      if (typeof document !== "undefined") {
+        document.documentElement.style.setProperty("--cart-bar-offset", "0px");
+      }
+      window.removeEventListener("resize", updateOffset);
+    };
   }, [visible]);
 
   if (!visible) return null;

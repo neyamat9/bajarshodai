@@ -42,7 +42,7 @@ export default function LiveChatButton() {
       }
       title={locale === "bn" ? "লাইভ চ্যাট সাপোর্ট" : "Live Chat Support"}
       style={{
-        bottom: "calc(var(--sticky-bar-offset, 0px) + 1rem)",
+        bottom: "var(--floating-bottom, 1rem)",
       }}
       className={`fixed ${positionClass} z-[1500] flex h-9.5 w-9.5 sm:h-10.5 sm:w-10.5 items-center justify-center rounded-full bg-brand-fresh text-on-fresh shadow-lg shadow-brand-fresh/25 transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-brand-fresh/35 cursor-pointer`}
     >
