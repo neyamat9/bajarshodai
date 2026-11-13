@@ -42,5 +42,23 @@
 - **Always Communicate in English:**
   - Regardless of the presence of Bengali UI strings, product names, or prompt snippets, ALWAYS address the user and write all responses, status reports, plans, and explanations in clear English.
 
+## Product Onboarding & Inventory Rules
+
+- **Zero Stock Tracking on Product Creation (`trackStock: false`, `stock: 0`):**
+  - ALL products across all categories (groceries, fresh produce, cooking staples, spices, dal, rice, packaged items, medicines, etc.) MUST be created and added WITHOUT tracking stock:
+    - `trackStock: false`
+    - `stock: 0`
+  - NEVER assign, set, or seed positive stock numbers for any product.
+  - The store owner will manually add or adjust stock in the dashboard, or explicitly request it, if stock tracking is ever needed.
+
+- **Gram-Based Products Sold as Packets (`unit: packet`):**
+  - Any product that specifies a gram measurement (e.g., 25g, 50g, 100g, 200g, 250g, 400g, 500g, etc.) MUST be configured with the unit **`packet`** (`প্যাকেট`):
+    - `unit`: `packet` (`প্যাকেট`)
+    - `packSize`: The exact gram amount (e.g., `"250 g"`, `"500 g"`)
+    - `allowDecimal`: `false`
+    - `step`: `1`
+    - `minQty`: `1`
+  - Customers purchase these items as discrete pre-packaged units (1 packet, 2 packets, etc.) with whole step increments, avoiding confusing decimal weight fractions.
+
 
 
