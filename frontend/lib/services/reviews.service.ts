@@ -11,7 +11,7 @@ export interface ReviewPage {
   totalPages: number;
 }
 export async function getReviews(productId: string, page = 1, limit = 10): Promise<ReviewPage> {
-  const r = await api.get<any>(`/customer/products/${productId}/reviews?page=${page}&limit=${limit}`, { revalidate: 120 });
+  const r = await api.get<any>(`/customer/products/${productId}/reviews?page=${page}&limit=${limit}`, { revalidate: 300 });
   return {
     reviews: r.data.map((x: any) => mapReview(x, productId)),
     total: r.meta.totalReviews ?? r.meta.total,
@@ -21,7 +21,7 @@ export async function getReviews(productId: string, page = 1, limit = 10): Promi
   };
 }
 export async function getQuestions(productId: string): Promise<Question[]> {
-  const rows = await api.get<any[]>(`/customer/products/${productId}/questions`, { revalidate: 120 });
+  const rows = await api.get<any[]>(`/customer/products/${productId}/questions`, { revalidate: 300 });
   return rows.map((q) => mapQuestion(q, productId));
 }
 export const createReview = (b: { productId: string; rating: number; title?: string; comment: string }) => api.post('/customer/reviews', b);

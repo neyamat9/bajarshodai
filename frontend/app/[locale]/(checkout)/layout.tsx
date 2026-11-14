@@ -2,6 +2,8 @@ import CheckoutHeader from "@/components/checkout/CheckoutHeader";
 import NavigationGate from "@/components/layout/NavigationGate";
 import { setRequestLocale } from "next-intl/server";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Checkout group layout — simplified header (logo, back to cart, secure label),
  * no CategoryNav or footer to keep the user focused on the checkout flow.

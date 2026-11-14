@@ -132,10 +132,11 @@ export function LiveChatProvider({ children }: { children: React.ReactNode }) {
   }, [isAuthenticated, isOpen, playChime]);
 
   useEffect(() => {
+    if (!isOpen) return;
     initSession();
 
     const handleAuthChange = () => {
-      initSession();
+      if (isOpen) initSession();
     };
 
     window.addEventListener(AUTH_CHANGED_EVENT, handleAuthChange);
@@ -147,7 +148,7 @@ export function LiveChatProvider({ children }: { children: React.ReactNode }) {
       }
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     };
-  }, [initSession]);
+  }, [isOpen, initSession]);
 
   const openChat = useCallback(() => {
     setIsOpen(true);

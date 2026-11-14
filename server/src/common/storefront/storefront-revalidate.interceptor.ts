@@ -13,31 +13,32 @@ const WRITES = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 /** Which cached storefront data an admin change makes stale (the same names the storefront tags its fetches with). */
 function tagsFor(path: string): string[] {
-  // a customer posting a review or question changes what the product page shows
-  if (/\/customer\/(products\/[^/]+\/)?(reviews|questions)/i.test(path))
-    return ['products'];
-  // placing or cancelling an order moves stock and the sold counts shown on cards and product pages
-  if (/\/customer\/(orders|checkout)/i.test(path)) return ['products', 'home'];
+  // Customer checkout / orders should NEVER invalidate the static product cache.
+  // Live stock and prices are already verified in real-time on cart & product mount.
+  if (/\/customer\/(orders|checkout)/i.test(path)) return [];
+
+  // Note: POST /customer/reviews and POST /customer/questions do NOT contain a product slug in
+  // their URLs, so they fall through to the default [] below — meaning a new review does not
+  // immediately wipe a product's cache. The existing 5-minute ISR cycle picks it up.
   const m = /\/admin\/([a-z-]+)/i.exec(path);
   if (!m) return [];
   switch (m[1].toLowerCase()) {
     case 'products':
     case 'product':
-    case 'inventory':
-    case 'reviews':
     case 'flash-deals':
-    case 'questions': // an answered question shows on the product page
-    case 'orders': // status changes put stock back and count sales
-    case 'returns': // an accepted return restocks
       return ['products', 'home'];
+    case 'inventory':
+    case 'orders':
+    case 'returns':
+      return []; // Do not purge public marketing catalog on routine status/stock changes
     case 'categories':
     case 'category':
     case 'sub-categories':
     case 'sub-category':
-      return ['categories', 'products', 'home'];
+      return ['categories'];
     case 'brands':
     case 'brand':
-      return ['brands', 'products', 'home'];
+      return ['brands'];
     case 'banners':
       return ['banners', 'home'];
     case 'settings':
@@ -60,8 +61,33 @@ export class StorefrontRevalidateInterceptor implements NestInterceptor {
     if (context.getType() !== 'http') return next.handle();
     const req = context.switchToHttp().getRequest<Request>();
     if (!WRITES.has(req.method)) return next.handle();
-    const tags = tagsFor(req.originalUrl ?? req.url);
-    if (!tags.length) return next.handle();
-    return next.handle().pipe(tap({ next: () => this.sync.notify(tags) }));
+    const staticTags = tagsFor(req.originalUrl ?? req.url);
+
+    return next.handle().pipe(
+      tap({
+        next: (body: unknown) => {
+          const tags = [...staticTags];
+          if (body && typeof body === 'object') {
+            const b = body as { slug?: string; product?: { slug?: string } };
+            const slug = b.slug ?? b.product?.slug;
+            const url = (req.originalUrl ?? req.url).toLowerCase();
+            if (slug) {
+              if (url.includes('/admin/categor')) {
+                tags.push(`category-${slug}`);
+              } else if (url.includes('/admin/brand')) {
+                tags.push(`brand-${slug}`);
+              } else if (
+                url.includes('/admin/product') ||
+                url.includes('/customer/reviews') ||
+                url.includes('/customer/questions')
+              ) {
+                tags.push(`product-${slug}`);
+              }
+            }
+          }
+          if (tags.length) this.sync.notify(tags);
+        },
+      }),
+    );
   }
 }

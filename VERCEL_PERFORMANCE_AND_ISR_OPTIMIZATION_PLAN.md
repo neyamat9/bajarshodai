@@ -1,9 +1,10 @@
 # Next.js 16 & Vercel Performance Optimization Plan
+
 ## Bulletproof Architecture for Instant Speed, Minimal ISR Writes & Zero-Crash VPS Readiness
 
-**Document Version:** 1.2.0 (Granular Tagging & Revalidate Inheritance Refined)  
+**Document Version:** 1.6.0 (Sitemap Routes Verified Against Actual App Pages)  
 **Target Environment:** Vercel (Current Production) & Linux VPS / Docker / PM2 (Future Portability)  
-**Status:** Approved for Documentation — Ready for Execution on User Approval  
+**Status:** Approved for Documentation — Ready for Execution on User Approval
 
 ---
 
@@ -12,6 +13,7 @@
 This plan addresses excessive Vercel ISR Writes, unnecessary cache invalidations, and server load spikes across the Bazar Shodai storefront (`frontend/`) and backend synchronization service (`server/`).
 
 ### Guiding Principles & Commitments:
+
 1. **Zero Slowdown / Faster Loads:** Page response times will be faster (sub-50ms) because cached pages will stay warm on Vercel's Edge Network (Singapore `sin1`) rather than being wiped out repeatedly.
 2. **Freshness Guaranteed:** When product prices, stock, or details are updated in the admin dashboard, they will continue to update immediately. Live prices and stock remain verified on client mount.
 3. **100% Visual & Functional Parity:** Zero UI, styling, or checkout changes.
@@ -21,16 +23,16 @@ This plan addresses excessive Vercel ISR Writes, unnecessary cache invalidations
 
 ## 2. Identified Critical Bottlenecks & Root Causes
 
-| # | Severity | Problem | File Location & Line Numbers | Root Cause & Impact |
-|:---:|:---:|---|---|---|
-| **1** | **CRITICAL** | Customer Orders & Checkouts Purging Storefront Cache | `server/src/common/storefront/storefront-revalidate.interceptor.ts:20` | Every order placed or checkout calls `notify(['products', 'home'])`, wiping the entire product catalog and homepage cache on every purchase. |
-| **2** | **CRITICAL** | Thundering Herd via Dual `router.refresh()` | `frontend/components/layout/FreshnessWatcher.tsx:34-36` | Whenever `content-version` moves, every open visitor browser fires `router.refresh()` **twice** in 3 seconds, triggering hundreds of simultaneous serverless executions. |
-| **3** | **HIGH** | Private Account & Checkout Routes on 300s ISR Loops | `frontend/app/[locale]/(account)/layout.tsx:13` | `export const revalidate = 300;` forces Vercel to continuously rebuild and bill ISR Writes for 14 private client-only shells (`/account`, `/orders`, `/cart`, `/checkout`, etc.). |
-| **4** | **HIGH** | Monolithic Coarse Cache Tagging | `frontend/lib/api/client.ts:169-178` | All endpoints starting with `/customer/products` get tagged with single string `'products'`. Updating 1 product purges all 1,000 products. |
-| **5** | **HIGH** | Product Page Revalidation Interval Downgrade (120s vs 300s) | `frontend/lib/services/reviews.service.ts:14,24` | Inner reviews and questions fetches use `revalidate: 120`, which lowers the entire product route revalidation from 300s to 120s (2 minutes). |
-| **6** | **MEDIUM** | Dynamic Search Query Cache Pollution | `frontend/app/[locale]/(home)/search/page.tsx:56`, `frontend/lib/api/client.ts:199` | Every unique search query string (`search=rice`) gets cached in the Next.js Data Cache tagged with `products`. |
-| **7** | **MEDIUM** | Eager LiveChat WebSocket Connection on Every Page Load | `frontend/components/chat/LiveChatContext.tsx:134-135` | Establishes a Socket.IO connection and 2 API calls on page mount for 100% of visitors, even if chat is never opened. |
-| **8** | **MEDIUM** | Missing `robots.ts` and `sitemap.ts` | `frontend/app/` | Search engines crawl randomly without structured index hints, triggering unnecessary SSR executions. |
+|   #   |   Severity   | Problem                                                     | File Location & Line Numbers                                                        | Root Cause & Impact                                                                                                                                                               |
+| :---: | :----------: | ----------------------------------------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1** | **CRITICAL** | Customer Orders & Checkouts Purging Storefront Cache        | `server/src/common/storefront/storefront-revalidate.interceptor.ts:20`              | Every order placed or checkout calls `notify(['products', 'home'])`, wiping the entire product catalog and homepage cache on every purchase.                                      |
+| **2** | **CRITICAL** | Thundering Herd via Dual `router.refresh()`                 | `frontend/components/layout/FreshnessWatcher.tsx:34-36`                             | Whenever `content-version` moves, every open visitor browser fires `router.refresh()` **twice** in 3 seconds, triggering hundreds of simultaneous serverless executions.          |
+| **3** |   **HIGH**   | Private Account & Checkout Routes on 300s ISR Loops         | `frontend/app/[locale]/(account)/layout.tsx:13`                                     | `export const revalidate = 300;` forces Vercel to continuously rebuild and bill ISR Writes for 14 private client-only shells (`/account`, `/orders`, `/cart`, `/checkout`, etc.). |
+| **4** |   **HIGH**   | Monolithic Coarse Cache Tagging                             | `frontend/lib/api/client.ts:169-178`                                                | All endpoints starting with `/customer/products` get tagged with single string `'products'`. Updating 1 product purges all 1,000 products.                                        |
+| **5** |   **HIGH**   | Product Page Revalidation Interval Downgrade (120s vs 300s) | `frontend/lib/services/reviews.service.ts:14,24`                                    | Inner reviews and questions fetches use `revalidate: 120`, which lowers the entire product route revalidation from 300s to 120s (2 minutes).                                      |
+| **6** |  **MEDIUM**  | Dynamic Search Query Cache Pollution                        | `frontend/app/[locale]/(home)/search/page.tsx:56`, `frontend/lib/api/client.ts:199` | Every unique search query string (`search=rice`) gets cached in the Next.js Data Cache tagged with `products`.                                                                    |
+| **7** |  **MEDIUM**  | Eager LiveChat WebSocket Connection on Every Page Load      | `frontend/components/chat/LiveChatContext.tsx:134-135`                              | Establishes a Socket.IO connection and 2 API calls on page mount for 100% of visitors, even if chat is never opened.                                                              |
+| **8** |  **MEDIUM**  | Missing `robots.ts` and `sitemap.ts`                        | `frontend/app/`                                                                     | Search engines crawl randomly without structured index hints, triggering unnecessary SSR executions.                                                                              |
 
 ---
 
@@ -59,6 +61,7 @@ flowchart TD
 ---
 
 ### Step 1: Decouple Customer Orders & Checkouts from Catalog Invalidation
+
 - **Target File:** `server/src/common/storefront/storefront-revalidate.interceptor.ts`
 - **Change:**
   1. Remove `orders` and `checkout` from `tagsFor()`. Customer purchases only mutate inventory rows in PostgreSQL; they do not change static product titles, images, or descriptions.
@@ -72,33 +75,34 @@ function tagsFor(path: string): string[] {
   // Live stock and prices are already verified in real-time on cart & product mount.
   if (/\/customer\/(orders|checkout)/i.test(path)) return [];
 
-  // Customer reviews or questions affect only that specific product's page
-  const reviewMatch = /\/customer\/products\/([^/]+)\/(reviews|questions)/i.exec(path);
-  if (reviewMatch) return [`product-${reviewMatch[1]}`];
+  // Note: POST /customer/reviews and POST /customer/questions do NOT contain a product slug in
+  // their URLs, so they fall through to the default [] below — meaning a new review does not
+  // immediately wipe a product's cache. The existing 5-minute ISR cycle picks it up. This is
+  // acceptable: reviews are low-urgency and cache-busting every review would waste ISR writes.
 
   const m = /\/admin\/([a-z-]+)/i.exec(path);
   if (!m) return [];
   switch (m[1].toLowerCase()) {
-    case 'products':
-    case 'product':
-    case 'flash-deals':
-      return ['products', 'home'];
-    case 'inventory':
-    case 'orders':
-    case 'returns':
+    case "products":
+    case "product":
+    case "flash-deals":
+      return ["products", "home"];
+    case "inventory":
+    case "orders":
+    case "returns":
       return []; // Do not purge public marketing catalog on routine status/stock changes
-    case 'categories':
-    case 'category':
-    case 'sub-categories':
-    case 'sub-category':
-      return ['categories'];
-    case 'brands':
-    case 'brand':
-      return ['brands'];
-    case 'banners':
-      return ['banners', 'home'];
-    case 'settings':
-      return ['settings', 'shipping'];
+    case "categories":
+    case "category":
+    case "sub-categories":
+    case "sub-category":
+      return ["categories"];
+    case "brands":
+    case "brand":
+      return ["brands"];
+    case "banners":
+      return ["banners", "home"];
+    case "settings":
+      return ["settings", "shipping"];
     default:
       return [];
   }
@@ -108,6 +112,7 @@ function tagsFor(path: string): string[] {
 ---
 
 ### Step 2: Implement True Granular Cache Tagging (Isolate Detail Pages from Listing Wipes)
+
 - **Target File:** `frontend/lib/api/client.ts`
 - **Target File:** `frontend/app/api/revalidate/route.ts`
 - **Target File:** `server/src/common/storefront/storefront-revalidate.interceptor.ts`
@@ -118,42 +123,42 @@ function tagsFor(path: string): string[] {
 ```ts
 // frontend/lib/api/client.ts
 function cacheTagsFor(endpoint: string): string[] {
-  const [path] = endpoint.split('?');
-  const parts = path.split('/').filter(Boolean); // e.g. ['customer', 'products', 'fresh-suji-500g']
+  const [path] = endpoint.split("?");
+  const parts = path.split("/").filter(Boolean); // e.g. ['customer', 'products', 'fresh-suji-500g']
 
-  if (path === '/customer/home') return ['home'];
-  if (parts[1] === 'products') {
+  if (path === "/customer/home") return ["home"];
+  if (parts[1] === "products") {
     // Individual product detail page gets its OWN tag ONLY (isolates it from catalog wipes)
-    if (parts[2] && parts[2] !== 'filters' && parts[2] !== 'suggestions') {
+    if (parts[2] && parts[2] !== "filters" && parts[2] !== "suggestions") {
       return [`product-${parts[2]}`];
     }
     // Catalog listing, category grids, search cards
-    return ['products'];
+    return ["products"];
   }
-  if (parts[1] === 'categories') {
+  if (parts[1] === "categories") {
     if (parts[2]) return [`category-${parts[2]}`];
-    return ['categories'];
+    return ["categories"];
   }
-  if (parts[1] === 'brands') {
+  if (parts[1] === "brands") {
     if (parts[2]) return [`brand-${parts[2]}`];
-    return ['brands'];
+    return ["brands"];
   }
-  if (parts[1] === 'banners') return ['banners', 'home'];
-  if (parts[1] === 'settings') return ['settings'];
-  if (parts[1] === 'shipping') return ['shipping', 'settings'];
+  if (parts[1] === "banners") return ["banners", "home"];
+  if (parts[1] === "settings") return ["settings"];
+  if (parts[1] === "shipping") return ["shipping", "settings"];
   return [];
 }
 ```
 
 ```ts
 // server/src/common/storefront/storefront-revalidate.interceptor.ts
-// Extract product slug from controller response to invalidate that specific detail page:
+// Extract entity slug from controller response to invalidate that specific detail page:
 @Injectable()
 export class StorefrontRevalidateInterceptor implements NestInterceptor {
   constructor(private readonly sync: StorefrontSyncService) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
-    if (context.getType() !== 'http') return next.handle();
+    if (context.getType() !== "http") return next.handle();
     const req = context.switchToHttp().getRequest<Request>();
     if (!WRITES.has(req.method)) return next.handle();
     const staticTags = tagsFor(req.originalUrl ?? req.url);
@@ -162,11 +167,23 @@ export class StorefrontRevalidateInterceptor implements NestInterceptor {
       tap({
         next: (body: unknown) => {
           const tags = [...staticTags];
-          // When an admin updates a product, extract its slug so its specific detail page updates immediately:
-          if (body && typeof body === 'object') {
+          if (body && typeof body === "object") {
             const b = body as { slug?: string; product?: { slug?: string } };
             const slug = b.slug ?? b.product?.slug;
-            if (slug) tags.push(`product-${slug}`);
+            const url = (req.originalUrl ?? req.url).toLowerCase();
+            if (slug) {
+              if (url.includes("/admin/categor")) {
+                tags.push(`category-${slug}`);
+              } else if (url.includes("/admin/brand")) {
+                tags.push(`brand-${slug}`);
+              } else if (
+                url.includes("/admin/product") ||
+                url.includes("/customer/reviews") ||
+                url.includes("/customer/questions")
+              ) {
+                tags.push(`product-${slug}`);
+              }
+            }
           }
           if (tags.length) this.sync.notify(tags);
         },
@@ -182,7 +199,12 @@ export class StorefrontRevalidateInterceptor implements NestInterceptor {
 // The current Set-only check silently drops granular tags like 'product-{slug}'.
 function isAllowedTag(tag: string): boolean {
   if (ALLOWED.has(tag)) return true;
-  if (tag.startsWith('product-') || tag.startsWith('category-') || tag.startsWith('brand-')) return true;
+  if (
+    tag.startsWith("product-") ||
+    tag.startsWith("category-") ||
+    tag.startsWith("brand-")
+  )
+    return true;
   return false;
 }
 
@@ -195,6 +217,7 @@ function isAllowedTag(tag: string): boolean {
 ---
 
 ### Step 3: Convert Private Account Routes to Dynamic Client Shells
+
 - **Target File:** `frontend/app/[locale]/(account)/layout.tsx` ← **only this file**
 
 > [!NOTE]
@@ -216,6 +239,7 @@ export const dynamic = "force-dynamic";
 ---
 
 ### Step 4: Stabilize `FreshnessWatcher` (Eliminate Dual Refresh & Add Jitter)
+
 - **Target File:** `frontend/components/layout/FreshnessWatcher.tsx`
 - **Change:**
   1. Increase polling interval from 60s to 120s.
@@ -240,6 +264,7 @@ if (changed) {
 ---
 
 ### Step 5: Stop Reviews/Questions from Downgrading Product Page ISR (Align to 300s)
+
 - **Target File:** `frontend/lib/services/reviews.service.ts`
 - **Target File:** `frontend/app/[locale]/(home)/products/[slug]/page.tsx`
 - **Context & Next.js App Router Precedence:**
@@ -254,6 +279,7 @@ if (changed) {
 ---
 
 ### Step 6: Prevent Search from Caching Category Data Unnecessarily
+
 - **Target File:** `frontend/app/[locale]/(home)/search/page.tsx`
 
 > [!NOTE]
@@ -264,35 +290,114 @@ if (changed) {
 ---
 
 ### Step 7: Lazy-Load Live Chat WebSocket
+
 - **Target File:** `frontend/components/chat/LiveChatContext.tsx`
 - **Change:**
-  Connect the Socket.IO client and load message history only when the user opens the live chat modal (or hovers over the button), removing immediate socket overhead for normal shoppers.
+  Connect the Socket.IO client and load message history only when the user opens the live chat modal (or clicks the button), removing immediate socket overhead for normal shoppers.
+
+```tsx
+// frontend/components/chat/LiveChatContext.tsx
+// Before: initSession() called on mount for all visitors
+// After: Guard with isOpen so normal shoppers make 0 WebSocket connections:
+useEffect(() => {
+  if (!isOpen) return;
+  initSession();
+
+  const handleAuthChange = () => {
+    if (isOpen) initSession();
+  };
+
+  window.addEventListener(AUTH_CHANGED_EVENT, handleAuthChange);
+  return () => {
+    window.removeEventListener(AUTH_CHANGED_EVENT, handleAuthChange);
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+  };
+}, [isOpen, initSession]);
+```
 
 ---
 
 ### Step 8: Add SEO `robots.ts` & `sitemap.ts`
+
 - **Target File:** `frontend/app/robots.ts`
 - **Target File:** `frontend/app/sitemap.ts`
 - **Change:**
   Add standard App Router sitemap and robots handlers with 24-hour cache headers so search crawlers index canonical product and category URLs without hitting random dynamic routes.
 
+```ts
+// frontend/app/robots.ts
+import type { MetadataRoute } from "next";
+
+export default function robots(): MetadataRoute.Robots {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://bazarshodai.com";
+  return {
+    rules: {
+      userAgent: "*",
+      allow: "/",
+      disallow: ["/account*", "/orders*", "/cart*", "/checkout*", "/api*"],
+    },
+    sitemap: `${baseUrl}/sitemap.xml`,
+  };
+}
+```
+
+```ts
+// frontend/app/sitemap.ts
+import type { MetadataRoute } from "next";
+import { getShopCategories } from "@/lib/services/categories.service";
+
+export const revalidate = 86400; // 24 hours
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://bazarshodai.com";
+  const categories = await getShopCategories("bn").catch(() => []);
+
+  const staticRoutes = [
+    "", // homepage /bn (default locale)
+    "/products",
+    "/contact",
+    "/returns-policy",
+    "/track-order",
+  ].map((route) => ({
+    url: `${baseUrl}${route}`,
+    lastModified: new Date(),
+    changeFrequency: "daily" as const,
+    priority: route === "" ? 1.0 : 0.8,
+  }));
+
+  const categoryRoutes = categories.map((c) => ({
+    url: `${baseUrl}/category/${c.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "daily" as const,
+    priority: 0.7,
+  }));
+
+  return [...staticRoutes, ...categoryRoutes];
+}
+```
+
 ---
 
 ## 4. Expected Results & Resource Impact
 
-| Metric | Current State | Optimized State | Business & Infrastructure Impact |
-|---|---|---|---|
-| **Vercel ISR Writes** | ~50,000 – 150,000+ / mo | ~5,000 – 15,000 / mo | **70% – 85% Cost Reduction** |
-| **Serverless Function Invocations** | Spikes on every order (thundering herd) | Smooth, predictable baseline | **40% – 60% Invocations Cut** |
-| **Edge Cache Hit Ratio** | Low (frequently wiped by checkouts) | 95%+ High | **Sub-50ms Instant Page Loads** |
-| **PostgreSQL Database Load** | High query spikes on cache clears | Low & Steady | **Prevents Neon DB connection exhaustion** |
-| **VPS Portability** | At risk of 100% CPU crash on orders | 100% Safe & Stable | **Runs smoothly on a modest $10–$20/mo VPS** |
+| Metric                              | Current State                           | Optimized State              | Business & Infrastructure Impact             |
+| ----------------------------------- | --------------------------------------- | ---------------------------- | -------------------------------------------- |
+| **Vercel ISR Writes**               | ~50,000 – 150,000+ / mo                 | ~5,000 – 15,000 / mo         | **70% – 85% Cost Reduction**                 |
+| **Serverless Function Invocations** | Spikes on every order (thundering herd) | Smooth, predictable baseline | **40% – 60% Invocations Cut**                |
+| **Edge Cache Hit Ratio**            | Low (frequently wiped by checkouts)     | 95%+ High                    | **Sub-50ms Instant Page Loads**              |
+| **PostgreSQL Database Load**        | High query spikes on cache clears       | Low & Steady                 | **Prevents Neon DB connection exhaustion**   |
+| **VPS Portability**                 | At risk of 100% CPU crash on orders     | 100% Safe & Stable           | **Runs smoothly on a modest $10–$20/mo VPS** |
 
 ---
 
 ## 5. Verification & Testing Matrix
 
 Before concluding execution, the following verification will be conducted:
+
 1. **TypeScript Typecheck:**
    - Web: `node frontend/node_modules/typescript/bin/tsc -p frontend/tsconfig.json --noEmit`
    - Mobile: `npm --prefix bazar-shodai-app run type-check`
@@ -306,4 +411,3 @@ Before concluding execution, the following verification will be conducted:
    - Cart, checkout, and order history function without regression.
 4. **Build Verification:**
    - Run `npm --prefix frontend run build` to verify `prerender-manifest.json` confirms no private routes are trapped in ISR loops.
-

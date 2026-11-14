@@ -5,6 +5,12 @@ import { NextResponse } from "next/server";
 /** The groups of cached shop data the API may refresh (the same names `lib/api/client.ts` puts on its server fetches). */
 const ALLOWED = new Set(["products", "categories", "brands", "banners", "settings", "shipping", "home"]);
 
+function isAllowedTag(tag: string): boolean {
+  if (ALLOWED.has(tag)) return true;
+  if (tag.startsWith("product-") || tag.startsWith("category-") || tag.startsWith("brand-")) return true;
+  return false;
+}
+
 const same = (a: string, b: string) => {
   const x = Buffer.from(a);
   const y = Buffer.from(b);
@@ -24,7 +30,7 @@ export async function POST(req: Request) {
   let tags: string[] = [];
   try {
     const body = (await req.json()) as { tags?: unknown };
-    if (Array.isArray(body.tags)) tags = body.tags.filter((t): t is string => typeof t === "string" && ALLOWED.has(t));
+    if (Array.isArray(body.tags)) tags = body.tags.filter((t): t is string => typeof t === "string" && isAllowedTag(t));
   } catch {
     /* no / bad body → nothing to do */
   }

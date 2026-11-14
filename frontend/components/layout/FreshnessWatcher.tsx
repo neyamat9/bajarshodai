@@ -5,7 +5,7 @@ import { API_BASE_URL } from "@/lib/api/client";
 import { useCallback, useEffect, useRef } from "react";
 
 /** How often an open, visible tab asks "did the shop change?" (a ~150-byte request) */
-const EVERY_MS = 60_000;
+const EVERY_MS = 120_000;
 
 /**
  * Invisible. Pages open instantly from the cache; this makes sure a page that is already open (or cached in the browser)
@@ -31,9 +31,10 @@ export default function FreshnessWatcher() {
       const changed = last.current !== null && last.current !== v;
       last.current = v;
       if (changed) {
-        router.refresh();
-        // the shop's own cache is refreshed a moment after the version moves: ask once more so the new copy is not missed
-        window.setTimeout(() => router.refresh(), 3000);
+        const jitter = Math.floor(Math.random() * 1400) + 100;
+        window.setTimeout(() => {
+          router.refresh();
+        }, jitter);
       }
     } catch {
       /* offline or API asleep: try again next time */

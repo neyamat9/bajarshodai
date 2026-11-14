@@ -167,14 +167,29 @@ export interface RequestOptions extends Omit<RequestInit, 'body'> {
 
 /** Names for the shared server cache, so the API can refresh just the right pages when the admin changes something. */
 function cacheTagsFor(endpoint: string): string[] {
-  const p = endpoint.split('?')[0];
-  if (p.startsWith('/customer/home')) return ['home', 'products'];
-  if (p.startsWith('/customer/products')) return ['products'];
-  if (p.startsWith('/customer/categories')) return ['categories'];
-  if (p.startsWith('/customer/brands')) return ['brands'];
-  if (p.startsWith('/customer/banners')) return ['banners', 'home'];
-  if (p.startsWith('/customer/settings')) return ['settings'];
-  if (p.startsWith('/customer/shipping')) return ['shipping', 'settings'];
+  const [path] = endpoint.split('?');
+  const parts = path.split('/').filter(Boolean); // e.g. ['customer', 'products', 'fresh-suji-500g']
+
+  if (path === '/customer/home') return ['home'];
+  if (parts[1] === 'products') {
+    // Individual product detail page gets its OWN tag ONLY (isolates it from catalog wipes)
+    if (parts[2] && parts[2] !== 'filters' && parts[2] !== 'suggestions') {
+      return [`product-${parts[2]}`];
+    }
+    // Catalog listing, category grids, search cards
+    return ['products'];
+  }
+  if (parts[1] === 'categories') {
+    if (parts[2]) return [`category-${parts[2]}`];
+    return ['categories'];
+  }
+  if (parts[1] === 'brands') {
+    if (parts[2]) return [`brand-${parts[2]}`];
+    return ['brands'];
+  }
+  if (parts[1] === 'banners') return ['banners', 'home'];
+  if (parts[1] === 'settings') return ['settings'];
+  if (parts[1] === 'shipping') return ['shipping', 'settings'];
   return [];
 }
 
